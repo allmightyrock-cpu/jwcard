@@ -1633,6 +1633,41 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-hint success"><span class="man-hint-icon">⑥</span><div>전도인에게 <strong>publisher.html URL</strong> 공유 (QR코드, 카카오톡 등)<br>예: <code>https://my-jwcard.pages.dev/publisher.html</code></div></div>
               </div>
 
+              <!-- GitHub 업데이트 -->
+              <div class="man-sec">
+                <div class="man-sec-title">🔄 시스템 업데이트 받는 방법 (GitHub)</div>
+                <p class="man-p">새 기능 추가나 오류 수정이 있을 때 아래 순서로 간단히 업데이트할 수 있습니다.</p>
+                <div class="man-hint success"><span class="man-hint-icon">①</span><div>
+                  브라우저에서 아래 주소로 접속합니다:<br>
+                  <code>https://github.com/allmightyrock-cpu/jwcard</code>
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">②</span><div>
+                  초록색 <strong>[&lt;&gt; Code]</strong> 버튼 클릭 → <strong>[Download ZIP]</strong> 클릭<br>
+                  다운로드된 ZIP 파일을 압축 해제합니다.
+                </div></div>
+                <div class="man-hint warn"><span class="man-hint-icon">③</span><div>
+                  <strong>⚠ config.js 는 교체하지 마세요!</strong><br>
+                  압축 해제한 폴더에는 <code>config.js</code>가 없습니다 (개인 Firebase 키라 GitHub에 올리지 않음).<br>
+                  <strong>기존에 직접 만들어 둔 config.js를 새 폴더에 복사</strong>해 넣은 뒤 Cloudflare에 업로드하세요.
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">④</span><div>
+                  Cloudflare 대시보드 → Workers &amp; Pages → 해당 프로젝트<br>
+                  → <strong>[배포 관리]</strong> → <strong>[새 배포 만들기]</strong> → 폴더 전체 드래그&amp;드롭 → 배포
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑤</span><div>
+                  배포 완료 후 앱을 열면 <strong>"새 버전이 있습니다"</strong> 배너가 표시됩니다.<br>
+                  [업데이트] 버튼을 눌러 주세요. 배너가 안 보이면 <strong>Ctrl+Shift+R</strong> 로 강력 새로고침하세요.
+                </div></div>
+                <div class="man-hint"><span class="man-hint-icon">🔔</span><div>
+                  <strong>업데이트 알림 자동으로 받으려면:</strong><br>
+                  GitHub 저장소에서 <strong>[Watch]</strong> → <strong>[Releases only]</strong> 선택<br>
+                  → 새 버전이 올라올 때 이메일로 알림이 옵니다. (GitHub 계정 필요)
+                </div></div>
+                <div class="man-hint warn"><span class="man-hint-icon">📞</span><div>
+                  업데이트 중 문제가 생기면 <strong>080-966-0404</strong> 로 연락해 주세요.
+                </div></div>
+              </div>
+
               <!-- 비용 확인 -->
               <div class="man-sec">
                 <div class="man-sec-title">비용 및 한도 안내</div>

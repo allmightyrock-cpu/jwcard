@@ -700,6 +700,86 @@ service cloud.firestore {
         </div>
       </div>
 
+      <!-- GitHub 업데이트 -->
+      <div class="section">
+        <div class="section-title">🔄 시스템 업데이트 받는 방법 (GitHub)</div>
+        <p style="font-size:13px;color:#475569;margin-bottom:14px;line-height:1.8">
+          이 시스템은 <strong>GitHub</strong>를 통해 배포됩니다.
+          새 기능이 추가되거나 오류가 수정되면 GitHub에 새 버전이 올라오며,
+          아래 방법으로 간단히 업데이트할 수 있습니다.
+        </p>
+
+        <div class="hint info">
+          <span class="hint-icon">①</span>
+          <div class="hint-body">
+            <strong>GitHub 저장소 접속</strong><br>
+            브라우저에서 아래 주소로 이동합니다:<br>
+            <code>https://github.com/allmightyrock-cpu/jwcard</code>
+          </div>
+        </div>
+
+        <div class="hint info">
+          <span class="hint-icon">②</span>
+          <div class="hint-body">
+            <strong>최신 파일 다운로드</strong><br>
+            초록색 <strong>[&lt;&gt; Code]</strong> 버튼 클릭
+            → <strong>[Download ZIP]</strong> 클릭<br>
+            → 다운로드된 ZIP 파일 압축 해제
+          </div>
+        </div>
+
+        <div class="hint warn">
+          <span class="hint-icon">③</span>
+          <div class="hint-body">
+            <strong>⚠ config.js 는 교체하지 마세요!</strong><br>
+            압축 해제한 폴더 안에 <code>config.example.js</code> 파일은 있지만
+            <code>config.js</code>는 없습니다.<br>
+            <strong>본인이 기존에 만들어둔 config.js 파일을 그대로 유지</strong>하고,
+            나머지 파일만 새 버전으로 교체합니다.
+          </div>
+        </div>
+
+        <div class="hint info">
+          <span class="hint-icon">④</span>
+          <div class="hint-body">
+            <strong>Cloudflare Pages 재배포</strong><br>
+            Cloudflare 대시보드 → Workers &amp; Pages → 해당 프로젝트
+            → <strong>[배포 관리]</strong> → <strong>[새 배포 만들기]</strong><br>
+            → 업데이트된 파일 전체(config.js 포함)를 드래그&amp;드롭 → 배포
+          </div>
+        </div>
+
+        <div class="hint success">
+          <span class="hint-icon">✅</span>
+          <div class="hint-body">
+            <strong>업데이트 확인</strong><br>
+            배포 완료 후 앱 접속 → 화면 아래쪽에 <strong>"새 버전이 있습니다"</strong> 배너가 뜨면
+            [업데이트] 버튼을 눌러 주세요.<br>
+            <small style="color:#64748B">배너가 안 뜨면 브라우저에서 Ctrl+Shift+R (강력 새로고침) 한 번 해주세요.</small>
+          </div>
+        </div>
+
+        <div class="hint info">
+          <span class="hint-icon">💬</span>
+          <div class="hint-body">
+            <strong>업데이트 알림 받는 방법</strong><br>
+            GitHub 저장소 페이지 오른쪽 상단 <strong>[Watch]</strong> 버튼
+            → <strong>[Releases only]</strong> 선택<br>
+            → 새 버전이 출시될 때 이메일로 자동 알림을 받을 수 있습니다.<br>
+            <small style="color:#64748B">(GitHub 계정이 있어야 합니다)</small>
+          </div>
+        </div>
+
+        <div class="hint warn">
+          <span class="hint-icon">📞</span>
+          <div class="hint-body">
+            <strong>업데이트 중 문의</strong><br>
+            설치·업데이트 과정에서 문제가 생기면 아래로 연락해 주세요:<br>
+            <strong>080-966-0404</strong>
+          </div>
+        </div>
+      </div>
+
       <div class="section">
         <div class="section-title">시스템 구조 요약</div>
         <div class="hint info">
