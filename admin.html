@@ -1,0 +1,2652 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=5.0">
+<title>구역카드 관리자</title>
+<link rel="stylesheet" href="css/admin.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap" rel="stylesheet">
+<script src="/config.js"></script>
+<script>
+// ── 네이버 지도 동적 로드 (config.js 또는 Firestore 설정값 사용) ──
+window._naverMapsLoaded = false;
+window._loadNaverMaps = function(key) {
+  if (!key || key.indexOf('YOUR_') === 0) return;         // 플레이스홀더 무시
+  if (window._naverMapsLoaded) return;                     // 중복 로드 방지
+  if (window.naver && window.naver.maps) { window._naverMapsLoaded = true; return; }
+  window._naverMapsLoaded = true;
+  var s = document.createElement('script');
+  s.type = 'text/javascript';
+  s.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=' + encodeURIComponent(key) + '&submodules=geocoder';
+  s.onerror = function() {
+    window._naverMapsLoaded = false;
+    console.error('[Naver Maps] 로드 실패 — Client ID를 확인해 주세요.');
+  };
+  document.head.appendChild(s);
+};
+// config.js 값으로 즉시 로드 시도
+if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
+  window._loadNaverMaps(window.APP_CONFIG.naverClientId);
+}
+</script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- PWA -->
+<link rel="manifest" href="/admin-manifest.json">
+<meta name="theme-color" content="#14532D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="관리자">
+<link rel="apple-touch-icon" href="/icon-admin-192.png">
+</head>
+<body>
+
+<!-- ══ 로그인 화면 ══ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="badge">관리자 전용</div>
+      <h1>구역카드 관리</h1>
+      <p id="login-cong-name"></p>
+    </div>
+    <div id="setup-notice" class="login-setup">
+      최초 접속입니다. 관리자 비밀번호를 설정해 주세요.
+    </div>
+
+    <!-- 통합 로그인 폼 -->
+    <div class="form-group">
+      <label>이름 <span style="font-size:11px;color:#94A3B8;font-weight:400">(개인 PIN 로그인 시 입력)</span></label>
+      <input type="text" id="login-name-input" placeholder="이름 입력 (선택)"
+             autocomplete="name" oninput="adminNameInput()"
+             onkeydown="if(event.key==='Enter')document.getElementById('pw-input').focus()">
+    </div>
+    <div class="form-group">
+      <label id="login-pw-label">비밀번호 / PIN</label>
+      <input type="password" id="pw-input" placeholder="비밀번호 또는 PIN 입력"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')handleLogin()">
+    </div>
+    <div id="pw-confirm-group" class="form-group" style="display:none">
+      <label>비밀번호 확인</label>
+      <input type="password" id="pw-confirm" placeholder="비밀번호 재입력">
+    </div>
+    <div id="login-hint" style="font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.6;display:none"></div>
+    <button class="btn-primary" id="login-btn" onclick="handleLogin()">로그인</button>
+
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ══ 관리자 대시보드 ══ -->
+<div id="admin-screen">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="title">구역카드 관리</div>
+      <div class="sub" id="sidebar-cong-name"></div>
+    </div>
+    <nav>
+      <div class="nav-item" onclick="switchTab('territory',this)">
+        <span class="nav-icon">▪</span>구역관리
+      </div>
+      <div id="nav-publisher" class="nav-item active" onclick="switchTab('publisher',this)">
+        <span class="nav-icon">▲</span>전도인관리
+      </div>
+      <div class="nav-item" onclick="switchTab('schedule',this)">
+        <span class="nav-icon">🗓</span>봉사일정
+      </div>
+      <div id="nav-map" class="nav-item" onclick="switchTab('map',this)">
+        <span class="nav-icon">◇</span>구역지도
+      </div>
+      <div id="nav-visit" class="nav-item" onclick="switchTab('visit',this)">
+        <span class="nav-icon">○</span>방문내역
+      </div>
+      <div id="nav-memo" class="nav-item" onclick="switchTab('memo',this)">
+        <span class="nav-icon">▪</span>메모관리
+      </div>
+      <div id="nav-s13" class="nav-item" onclick="switchTab('s13',this)">
+        <span class="nav-icon">≡</span>S-13 기록
+      </div>
+      <div id="nav-settings" class="nav-item" onclick="switchTab('settings',this)">
+        <span class="nav-icon">⚙</span>설정
+      </div>
+      <div class="nav-item" onclick="switchTab('manual',this)">
+        <span class="nav-icon">🗂</span>메뉴얼
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:8px">개인정보 미수집 시스템 v1.0</div>
+      <button class="btn-logout" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" aria-label="메뉴" title="메뉴 열기">
+          <span></span><span></span><span></span>
+        </button>
+        <h2 id="page-title">전도인관리</h2>
+      </div>
+      <span class="admin-badge">관리자</span>
+    </div>
+    <div class="content">
+
+      <!-- 구역관리 -->
+      <div id="tab-territory" class="tab-content">
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-label">전체 구역</div><div class="stat-value" id="t-stat-total">—</div></div>
+          <div class="stat-box"><div class="stat-label">진행 중</div><div class="stat-value" id="t-stat-active" style="color:#1B3A6B">—</div></div>
+          <div class="stat-box"><div class="stat-label">완료</div><div class="stat-value" id="t-stat-done" style="color:#166534">—</div></div>
+          <div class="stat-box"><div class="stat-label">미배정</div><div class="stat-value" id="t-stat-unassigned" style="color:#92400E">—</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">구역 목록</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-warn" onclick="manualReset()" title="모든 구역을 1회차로 리셋">↺ 전체 리셋</button>
+              <button class="btn" onclick="openBatchUploadModal()" title="여러 엑셀 파일 또는 ZIP을 한 번에 업로드">📦 일괄 업로드</button>
+              <button class="btn" onclick="openUploadModal()">엑셀 업로드</button>
+              <button class="btn btn-navy" onclick="openTerritoryModal()">+ 구역 추가</button>
+            </div>
+          </div>
+          <!-- 새 툴바 -->
+          <div class="terr-toolbar">
+            <div class="terr-toolbar-left">
+              <select id="terr-status-filter" onchange="setTerrStatusFilter(this.value)" title="상태 필터">
+                <option value="all">전체</option>
+                <option value="active">활성만</option>
+                <option value="inactive">비활성만</option>
+                <option value="진행중">진행중</option>
+                <option value="완료">완료</option>
+                <option value="미배정">미배정</option>
+              </select>
+              <select id="terr-sort" onchange="setTerrSort(this.value)" title="정렬 기준">
+                <option value="no">번호순</option>
+                <option value="old">오래된순</option>
+                <option value="recent">최근순</option>
+                <option value="cycle">회차순</option>
+                <option value="progress">진행률순</option>
+              </select>
+              <input class="terr-search-input" type="text" id="terr-search"
+                placeholder="🔍  구역명, 번호, 회차 검색"
+                oninput="renderTerritoryTable()">
+            </div>
+            <div class="terr-toolbar-right">
+              <button class="terr-view-btn active" id="btn-view-list" onclick="setTerrView('list')" title="리스트 뷰">☰</button>
+              <button class="terr-view-btn" id="btn-view-card" onclick="setTerrView('card')" title="카드 뷰">⊞</button>
+              <button class="terr-view-btn" onclick="downloadAllTerritoriesExcel()" title="전체 엑셀 백업 (ZIP)">⬇</button>
+              <button class="terr-cmpl-btn" id="filter-complete-req"
+                onclick="filterCompletionStatus('complete',this)" title="완료 신청된 구역만 보기">
+                🔔 <span class="badge" id="complete-req-count">0</span>
+              </button>
+              <button class="terr-cmpl-btn" id="filter-incomplete-req"
+                onclick="filterCompletionStatus('incomplete',this)" title="미완료 신청된 구역만 보기">
+                ⏸ <span class="badge" id="incomplete-req-count">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 유형 탭 (개수 포함) -->
+          <div class="terr-type-tabs" id="cat-tabs">
+            <button class="terr-type-tab active" onclick="filterTerritory('전체',this)">전체 <span class="cnt">(0)</span></button>
+          </div>
+
+          <div id="territory-table-wrap">
+            <div class="loading">구역 목록을 불러오는 중...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 전도인관리 -->
+      <div id="tab-publisher" class="tab-content active">
+
+        <!-- 실시간 접속 현황 패널 -->
+        <div class="presence-panel">
+          <div class="presence-panel-title">
+            <span class="live-dot"></span>
+            전도인 활동 현황
+          </div>
+          <div class="presence-section">
+            <div class="presence-section-label">🟢 지금 활동중</div>
+            <div class="presence-grid" id="admin-active-now">
+              <span class="presence-empty">접속 중인 전도인 없음</span>
+            </div>
+          </div>
+          <div class="presence-section" style="margin-bottom:0">
+            <div class="presence-section-label">📅 오늘 사용한 전도인</div>
+            <div class="presence-grid" id="admin-today-list">
+              <span class="presence-empty">오늘 활동 기록 없음</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-grid" id="pub-stats">
+          <div class="stat-box"><div class="stat-label">전체 전도인</div><div class="stat-value" id="stat-total">—</div></div>
+          <div class="stat-box"><div class="stat-label">승인 완료</div><div class="stat-value" id="stat-approved" style="color:#166534">—</div></div>
+          <div class="stat-box"><div class="stat-label">승인 대기</div><div class="stat-value" id="stat-pending" style="color:#92400E">—</div></div>
+          <div class="stat-box"><div class="stat-label">인도자</div><div class="stat-value" id="stat-leader" style="color:#5B21B6">—</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">전도인 명단</div>
+            <button class="btn btn-navy" onclick="openAddModal()">+ 전도인 추가</button>
+          </div>
+          <div class="info-note">
+            등록된 명단에 있는 이름만 구역카드에 접속할 수 있습니다. 별도 비밀번호나 코드 없이 이름만으로 접속됩니다.
+          </div>
+          <div class="search-bar">
+            <input type="text" id="search-input" placeholder="이름으로 검색..." oninput="renderPublisherTable()">
+          </div>
+          <div id="pub-table-wrap">
+            <div class="loading">전도인 명단을 불러오는 중...</div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 봉사일정 -->
+      <div id="tab-schedule" class="tab-content">
+
+        <!-- 서브탭 네비게이션 -->
+        <div class="sched-subtab-nav">
+          <button class="sched-subtab active" onclick="switchSchedSubtab('weekly',this)">📋 요일별 구역</button>
+          <button class="sched-subtab" onclick="switchSchedSubtab('calendar',this)">📅 월간 캘린더</button>
+          <button class="sched-subtab" onclick="switchSchedSubtab('notice',this)">📢 공지 관리</button>
+        </div>
+
+        <!-- ① 요일별 구역 설정 -->
+        <div id="sched-weekly" class="sched-subview active">
+          <div class="section-card">
+
+            <!-- 헤더 -->
+            <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:8px;gap:6px">
+              <h3 class="section-title" style="margin:0;flex:1;min-width:80px">요일별 봉사 구역 설정</h3>
+              <button class="btn-auto-dist" onclick="openAutoDistPanel()">⚡ 자동 배분</button>
+              <button id="sched-undo-btn" onclick="undoAutoDist()" title="마지막 자동 배분 되돌리기" disabled style="font-size:12px;padding:5px 11px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;cursor:pointer;color:#64748B;font-family:inherit;transition:all 0.15s;flex-shrink:0;opacity:0.4">↩ 되돌리기</button>
+              <button onclick="clearAllSchedDist()" title="전체 배분 초기화" style="font-size:12px;padding:5px 11px;border:1.5px solid #FECACA;background:#FFF5F5;border-radius:8px;cursor:pointer;color:#DC2626;font-family:inherit;transition:all 0.15s;flex-shrink:0">🗑 초기화</button>
+              <button onclick="toggleSchedDayManager()" style="font-size:12px;padding:5px 11px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;cursor:pointer;color:#64748B;font-family:inherit;transition:all 0.15s;flex-shrink:0" id="sched-day-mgr-btn">⚙️ 요일 설정</button>
+            </div>
+            <p style="font-size:13px;color:#64748B;margin-bottom:14px;line-height:1.6">
+              봉사 요일에 사용할 구역카드를 미리 지정합니다. 인도자가 앱을 열면 오늘 요일의 구역이 <strong>상단에 자동 표시</strong>됩니다.
+            </p>
+
+            <!-- 요일 관리 패널 (토글) -->
+            <div id="sched-day-manager" style="display:none;margin-bottom:14px;padding:14px;background:#F8FAFC;border-radius:10px;border:1px solid #E2E8F0">
+              <div style="font-size:12px;font-weight:600;color:#475569;margin-bottom:10px">봉사하는 요일 활성화 (비활성 요일은 흐리게 표시됩니다)</div>
+              <div id="sched-day-toggles" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            </div>
+
+            <!-- ① 주간 날짜 범위 -->
+            <div id="sched-week-range" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:6px 12px;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0">
+              <span id="sched-week-label" style="font-size:12.5px;font-weight:600;color:#1B3A6B"></span>
+              <span id="sched-week-nav" style="display:flex;gap:4px">
+                <button onclick="schedWeekMove(-1)" style="font-size:13px;padding:2px 9px;border:1.5px solid #E2E8F0;background:#fff;border-radius:6px;cursor:pointer;color:#64748B;font-family:inherit">‹</button>
+                <button onclick="schedWeekMove(0)"  style="font-size:11px;padding:2px 9px;border:1.5px solid #2563EB;background:#EFF6FF;border-radius:6px;cursor:pointer;color:#1D4ED8;font-family:inherit;font-weight:600">이번 주</button>
+                <button onclick="schedWeekMove(1)"  style="font-size:13px;padding:2px 9px;border:1.5px solid #E2E8F0;background:#fff;border-radius:6px;cursor:pointer;color:#64748B;font-family:inherit">›</button>
+              </span>
+            </div>
+
+            <!-- ② 주간 배정 현황판 -->
+            <div id="sched-weekly-board" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px"></div>
+
+            <!-- ② 선택된 요일 상세 -->
+            <div id="sched-day-content" style="display:none">
+
+              <!-- 요일 제목 + 배분 수 -->
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div id="sched-day-title" style="font-size:15px;font-weight:700;color:#1B3A6B"></div>
+                <span id="sched-count-badge" style="font-size:12px;background:#EFF6FF;color:#1D4ED8;padding:3px 10px;border-radius:10px;font-weight:600"></span>
+              </div>
+
+              <!-- 자동 반납 설정 -->
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:#F8FAFC;border-radius:8px;border:1px solid #F1F5F9">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;cursor:pointer;user-select:none;flex:1">
+                  <input type="checkbox" id="sched-auto-return-chk" checked onchange="toggleSchedAutoReturn()" style="width:15px;height:15px;accent-color:#16A34A;cursor:pointer;flex-shrink:0">
+                  자정에 자동 반납
+                </label>
+                <span id="sched-auto-return-hint" style="font-size:11px;color:#94A3B8">해제 시 다음 주에도 유지</span>
+              </div>
+
+              <!-- 배분된 구역 목록 -->
+              <div style="font-size:11px;color:#94A3B8;margin-bottom:6px">배분된 구역 &nbsp;·&nbsp; ✕ 터치로 제거</div>
+              <div id="sched-terr-chips"></div>
+
+              <!-- 카드 배분 영역 -->
+              <div style="margin-top:16px;padding-top:14px;border-top:1px solid #F1F5F9">
+                <div style="font-size:13px;font-weight:700;color:#1B3A6B;margin-bottom:10px">📋 카드 배분 <span style="font-size:11px;font-weight:400;color:#94A3B8">— 미할당 카드에서 선택</span></div>
+
+                <!-- 모드 토글 -->
+                <div style="display:flex;gap:6px;margin-bottom:10px">
+                  <button id="sched-btn-search" class="sched-mode-btn active" onclick="setSchedMode('search')">📋 미할당</button>
+                  <button id="sched-btn-gallery" class="sched-mode-btn" onclick="setSchedMode('gallery')">📇 전체 목록</button>
+                </div>
+
+                <!-- 미할당 패널 -->
+                <div id="sched-panel-search">
+                  <div class="sched-filter-bar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+                    <div class="sched-filter-chips" id="sched-cat-chips" style="flex:1"><button class="sched-filter-chip active" onclick="setSchedCatFilter('',this)">전체</button></div>
+                    <div class="sched-filter-chips" id="sched-status-chips" style="flex-shrink:0">
+                      <button class="sched-filter-chip active" onclick="setSchedStatusFilter('incomplete',this)">미완료</button>
+                      <button class="sched-filter-chip" onclick="setSchedStatusFilter('',this)">전체</button>
+                    </div>
+                  </div>
+                  <div class="sched-search-wrap">
+                    <input class="sched-search-input" id="sched-search-input"
+                      placeholder="번호 · 이름으로 필터..."
+                      oninput="searchSchedTerr()" autocomplete="off">
+                  </div>
+                  <div id="sched-search-results" class="sched-search-results"></div>
+                </div>
+
+                <!-- 전체 목록(갤러리) 패널 -->
+                <div id="sched-panel-gallery" style="display:none">
+                  <div class="sched-filter-bar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+                    <div class="sched-filter-chips" id="sched-gal-cat-chips" style="flex:1"><button class="sched-filter-chip active" onclick="setSchedGalCatFilter('',this)">전체</button></div>
+                    <div class="sched-filter-chips" id="sched-gal-status-chips" style="flex-shrink:0">
+                      <button class="sched-filter-chip active" onclick="setSchedGalStatusFilter('incomplete',this)">미완료</button>
+                      <button class="sched-filter-chip" onclick="setSchedGalStatusFilter('',this)">전체</button>
+                    </div>
+                  </div>
+                  <div style="font-size:11px;color:#94A3B8;margin-bottom:8px">탭 → 이 요일에 배분 / 다시 탭 → 제거 &nbsp;|&nbsp; ✓ = 이미 배분됨</div>
+                  <div id="sched-gallery-grid"></div>
+                </div>
+
+              </div><!-- /카드 배분 -->
+
+              <div class="sched-save-msg" id="sched-save-msg">✓ 저장되었습니다</div>
+            </div><!-- /sched-day-content -->
+
+          </div><!-- /section-card -->
+        </div>
+
+        <!-- ② 월간 캘린더 -->
+        <div id="sched-calendar" class="sched-subview">
+          <div class="section-card">
+            <div class="sched-cal-header">
+              <button class="sched-cal-nav" onclick="schedCalMove(-1)">‹</button>
+              <div class="sched-cal-title" id="sched-cal-title">로딩 중...</div>
+              <button class="sched-cal-nav" onclick="schedCalMove(1)">›</button>
+            </div>
+            <!-- 범례 + 오늘로 이동 -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:10px 14px;background:#F8FAFC;border-radius:8px">
+              <div id="map-legend-groups" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"></div>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#64748B"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;border:2px solid #1B3A6B;background:#EFF6FF;flex-shrink:0"></span>오늘</span>
+              <button onclick="schedGoToday()" style="margin-left:auto;font-size:12px;padding:4px 12px;border:1.5px solid #2563EB;background:#EFF6FF;color:#1D4ED8;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:600;transition:background 0.15s" onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF6FF'">📅 오늘로 이동</button>
+            </div>
+            <!-- 요일 헤더 -->
+            <div class="sched-cal-grid">
+              <div class="sched-cal-dow" style="color:#EF4444">일</div>
+              <div class="sched-cal-dow">월</div>
+              <div class="sched-cal-dow">화</div>
+              <div class="sched-cal-dow">수</div>
+              <div class="sched-cal-dow">목</div>
+              <div class="sched-cal-dow">금</div>
+              <div class="sched-cal-dow" style="color:#2563EB">토</div>
+            </div>
+            <!-- 날짜 셀 -->
+            <div class="sched-cal-cells" id="sched-cal-cells"></div>
+          </div>
+        </div>
+
+        <!-- ③ 공지 관리 -->
+        <div id="sched-notice" class="sched-subview">
+          <div class="section-card">
+            <h3 class="section-title">공지 관리</h3>
+            <p style="font-size:13px;color:#64748B;margin-bottom:20px;line-height:1.6">
+              활성화된 공지는 전도인 구역카드 앱 로그인 화면 상단에 표시됩니다.<br>
+              동시에 하나의 공지만 활성화할 수 있습니다.
+            </p>
+
+            <!-- 공지 작성 폼 -->
+            <div class="notice-editor">
+              <div class="notice-editor-title">✍️ 새 공지 작성</div>
+              <div class="notice-field">
+                <label>제목</label>
+                <input type="text" id="notice-title-input" placeholder="예: 이번 주 봉사 안내">
+              </div>
+              <div class="notice-field">
+                <label>내용</label>
+                <textarea id="notice-body-input" placeholder="공지 내용을 입력하세요..."></textarea>
+              </div>
+              <div class="notice-expire-row">
+                <label>만료일</label>
+                <input type="date" id="notice-expire-input">
+                <span class="notice-expire-hint">비우면 수동 비활성화</span>
+              </div>
+              <button class="btn btn-navy" onclick="saveNotice()" style="width:100%;padding:11px">📢 저장 및 활성화</button>
+            </div>
+
+            <!-- 공지 목록 -->
+            <div style="font-size:13px;font-weight:500;color:#475569;margin-bottom:12px">저장된 공지</div>
+            <div id="notice-list">
+              <div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">공지가 없습니다</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 구역지도 -->
+      <div id="tab-map" class="tab-content">
+        <div id="map-container">
+          <div id="admin-naver-map"></div>
+          <div class="map-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#94A3B8"></div>미배정</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#2563EB"></div>진행중</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#16A34A"></div>완료</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 방문내역 -->
+      <div id="tab-visit" class="tab-content">
+
+        <!-- 필터 바 -->
+        <div style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+          <span style="font-size:13px;color:#475569;font-weight:600;white-space:nowrap">기간</span>
+          <input type="date" id="vf-date-from" onchange="applyVisitFilter()" style="padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;outline:none">
+          <span style="font-size:12px;color:#94A3B8">~</span>
+          <input type="date" id="vf-date-to" onchange="applyVisitFilter()" style="padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;outline:none">
+          <span style="font-size:13px;color:#475569;font-weight:600;white-space:nowrap;margin-left:6px">구역번호</span>
+          <input type="number" id="vf-no-from" placeholder="1" min="1" onchange="applyVisitFilter()" style="padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;outline:none;width:72px">
+          <span style="font-size:12px;color:#94A3B8">~</span>
+          <input type="number" id="vf-no-to" placeholder="999" min="1" onchange="applyVisitFilter()" style="padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;outline:none;width:72px">
+          <button class="btn btn-sm" style="background:#1B3A6B;color:#fff;border:none" onclick="applyVisitFilter()">🔍 검색</button>
+          <button class="btn btn-sm" onclick="switchTab('s13',document.querySelector('.nav-item[onclick*=s13]'))">📋 S-13 보기</button>
+          <button class="btn btn-sm" onclick="clearVisitFilter()">초기화</button>
+          <!-- 보기 전환 -->
+          <div style="margin-left:auto;display:flex;gap:4px">
+            <button id="vv-card-btn" onclick="switchVisitView('card')" style="padding:6px 12px;border-radius:6px;border:1.5px solid #1B3A6B;background:#1B3A6B;color:#fff;font-size:12px;font-family:inherit;cursor:pointer">▦ 카드</button>
+            <button id="vv-list-btn" onclick="switchVisitView('list')" style="padding:6px 12px;border-radius:6px;border:1.5px solid #CBD5E1;background:#fff;color:#64748B;font-size:12px;font-family:inherit;cursor:pointer">☰ 목록</button>
+          </div>
+        </div>
+
+        <!-- 통계 요약 -->
+        <div class="stat-grid" id="visit-stat-grid" style="margin-bottom:14px">
+          <div class="stat-box"><div class="stat-label">배정 완료 회차</div><div class="stat-value" id="vs-total" style="color:#1B3A6B">—</div></div>
+          <div class="stat-box"><div class="stat-label">활동 구역 수</div><div class="stat-value" id="vs-resp" style="color:#166534">—</div></div>
+          <div class="stat-box"><div class="stat-label">미활동 구역</div><div class="stat-value" id="vs-revisit" style="color:#94A3B8">—</div></div>
+          <div class="stat-box"><div class="stat-label">전도인 방문</div><div class="stat-value" id="vs-refuse" style="color:#1D4ED8">—</div></div>
+        </div>
+
+        <!-- 카드 그리드 -->
+        <div id="visit-card-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+
+        <!-- 목록 테이블 (숨김) -->
+        <div id="visit-table-wrap" style="display:none">
+          <div class="loading">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+
+      <!-- 메모관리 -->
+      <div id="tab-memo" class="tab-content">
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-label">전체 메모</div><div class="stat-value" id="ms-total" style="color:#1B3A6B">—</div></div>
+          <div class="stat-box"><div class="stat-label">승인 대기</div><div class="stat-value" id="ms-pending" style="color:#92400E">—</div></div>
+          <div class="stat-box"><div class="stat-label">승인 완료</div><div class="stat-value" id="ms-approved" style="color:#166534">—</div></div>
+          <div class="stat-box"><div class="stat-label">관리자 메모</div><div class="stat-value" id="ms-admin" style="color:#5B21B6">—</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">메모 목록</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-navy" onclick="openMemoAddModal()">+ 관리자 메모 추가</button>
+            </div>
+          </div>
+
+          <div class="info-note" style="margin-bottom:14px">
+            메모는 구역에 대한 내부 관리 기록입니다. 개인정보(이름·외모·종교 등)는 절대 기록하지 마세요.<br>
+            전도인이 구역카드에서 제출한 메모는 <strong>승인 대기</strong> 상태로 나타납니다.
+          </div>
+
+          <!-- 필터 -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+            <select id="mf-territory" onchange="applyMemoFilter()" style="padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;outline:none;max-width:180px">
+              <option value="">전체 구역</option>
+            </select>
+            <select id="mf-status" onchange="applyMemoFilter()" style="padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;outline:none">
+              <option value="">전체 상태</option>
+              <option value="pending">승인 대기</option>
+              <option value="approved">승인 완료</option>
+            </select>
+            <select id="mf-type" onchange="applyMemoFilter()" style="padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;outline:none">
+              <option value="">전체 유형</option>
+              <option value="admin">관리자 작성</option>
+              <option value="pub">전도인 제출</option>
+            </select>
+          </div>
+
+          <div id="memo-table-wrap">
+            <div class="loading">메모 데이터를 불러오는 중...</div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- S-13 구역 배정 기록 -->
+      <div id="tab-s13" class="tab-content">
+        <div class="s13-toolbar">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <label style="font-size:12px;color:#64748B;font-weight:500;white-space:nowrap">검사 기간</label>
+              <input type="date" id="s13-start" style="padding:6px 8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit">
+              <span style="font-size:13px;color:#64748B">~</span>
+              <input type="date" id="s13-end"   style="padding:6px 8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit">
+            </div>
+            <button class="btn btn-navy" onclick="renderS13Preview()" style="display:flex;align-items:center;gap:5px">
+              👁 미리보기
+            </button>
+            <button class="btn" style="background:#1B3A6B;color:#fff;border-color:#1B3A6B;display:flex;align-items:center;gap:5px" onclick="printS13()">
+              🖨 PDF / 인쇄
+            </button>
+            <button class="btn" style="background:#166534;color:#fff;border-color:#166534;display:flex;align-items:center;gap:5px" onclick="downloadS13Excel()">
+              ⬇ Excel
+            </button>
+          </div>
+          <div style="margin-top:10px;padding:8px 12px;background:#F0F9FF;border-radius:8px;border:1px solid #BAE6FD;font-size:11px;color:#0369A1;line-height:1.8">
+            📋 전체 구역이 출력되며, 선택 기간 내 배정·완료 기록이 표시됩니다 &nbsp;|&nbsp;
+            기본값: 오늘 기준 최근 <strong>6개월</strong> &nbsp;|&nbsp;
+            🖨 <strong>PDF 저장</strong>: 버튼 클릭 → 새 창 → 브라우저 인쇄 대화상자 → <em>PDF로 저장</em>
+          </div>
+        </div>
+        <div id="s13-preview" style="margin-top:16px"></div>
+      </div>
+
+      <!-- 설정 -->
+      <div id="tab-settings" class="tab-content">
+        <div style="max-width:480px;padding:8px 0">
+
+          <!-- 회중명 변경 -->
+          <div class="settings-card">
+            <div class="settings-card-title">회중 정보</div>
+            <div class="form-group">
+              <label>회중명</label>
+              <input type="text" id="s-congregation" placeholder="예: 동두천남부회중">
+            </div>
+            <button class="btn btn-navy" onclick="saveCongregation()">저장</button>
+          </div>
+
+          <!-- 네이버 지도 API -->
+          <div class="settings-card">
+            <div class="settings-card-title">🗺 네이버 지도 API</div>
+            <div class="form-group">
+              <label>Client ID (ncpKeyId)</label>
+              <input type="text" id="s-naver-key" placeholder="네이버 클라우드 Client ID"
+                style="font-family:monospace;font-size:13px;letter-spacing:0.5px">
+            </div>
+            <button class="btn btn-navy" onclick="saveNaverClientId()">저장</button>
+            <div id="s-naver-msg" style="margin-top:8px;font-size:13px;display:none"></div>
+            <p style="margin-top:10px;font-size:12px;color:#64748B;line-height:1.6">
+              네이버 클라우드 콘솔(console.ncloud.com) → Application → 앱 이름 클릭 → <strong>Client ID</strong> 복사<br>
+              저장 후 지도 기능이 바로 활성화됩니다.
+            </p>
+          </div>
+
+          <!-- Cart Witnessing 비밀번호 -->
+          <div class="settings-card">
+            <div class="settings-card-title" style="display:flex;align-items:center;gap:6px"><svg width="15" height="17" viewBox="0 0 80 90" fill="none"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.55)" stroke-width="1.5"/><text x="40" y="24" text-anchor="middle" dominant-baseline="middle" font-family="Arial Black,Arial" font-weight="900" font-size="16" fill="white" opacity="0.95">JW</text><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 전시대 봉사 — 인도자 비밀번호</div>
+            <p style="font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.6">
+              전시대 봉사 앱(cart.html)에서 <strong>인도자 모드</strong>로 입장할 때 사용하는 <strong>공용 비밀번호</strong>입니다.<br>
+              모바일 숫자패드로 입력 가능하도록 <strong>숫자만</strong> 사용해 주세요.<br>
+              인도자로 등록된 전도인이 이 비밀번호로 입장하면 명단 생성·편집·배정이 가능합니다.
+            </p>
+            <div class="form-group">
+              <label>인도자 공용 비밀번호</label>
+              <input type="text" id="s-cart-admin-pw" placeholder="숫자 4자리 이상 (예: 0126)"
+                inputmode="numeric" pattern="[0-9]*" style="font-family:monospace;letter-spacing:2px;max-width:220px">
+            </div>
+            <button class="btn btn-navy" onclick="saveCartPasswords()">저장</button>
+            <div id="s-cart-pw-msg" style="margin-top:8px;font-size:13px;display:none"></div>
+          </div>
+
+          <!-- 회차제한 -->
+          <div class="settings-card">
+            <div class="settings-card-title">회차제한</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <input type="number" id="s-cycle-limit" min="1" max="20" value="6"
+                     style="width:72px;padding:8px;border:1px solid #CBD5E1;border-radius:8px;font-size:15px;text-align:center;font-family:inherit">
+              <span style="font-size:13px;color:#475569">회차 이상 카드를 비활성화</span>
+            </div>
+            <p style="font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.6">구역이 설정된 회차에 도달하면 자동으로 비활성화됩니다.<br>봉사감독자 또는 관리자가 수동으로 재활성화할 수 있습니다.</p>
+            <button class="btn btn-navy" onclick="saveCycleLimit()">저장</button>
+          </div>
+
+          <!-- 방문횟수 -->
+          <div class="settings-card">
+            <div class="settings-card-title">방문횟수</div>
+            <style>
+              .vm-chip{padding:7px 14px;border:1.5px solid #CBD5E1;border-radius:20px;background:#fff;color:#475569;font-size:13px;cursor:pointer;font-family:inherit;transition:all 0.15s}
+              .vm-chip.selected{background:#1B3A6B !important;color:#fff !important;border-color:#1B3A6B !important}
+              .vm-chip:hover:not(.selected){background:#F8FAFC;border-color:#94A3B8}
+            </style>
+            <div id="s-visit-mode" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+              <button type="button" class="vm-chip selected" data-val="호별" onclick="selectVisitMode(this)">호별만</button>
+              <button type="button" class="vm-chip" data-val="부재1" onclick="selectVisitMode(this)">호별 + 부재 1회</button>
+              <button type="button" class="vm-chip" data-val="부재2" onclick="selectVisitMode(this)">호별 + 부재 2회</button>
+            </div>
+            <p style="font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.6">
+              <strong>호별만</strong>: 호별방문 완료 후 바로 다음 회차<br>
+              <strong>부재 1회</strong>: 호별 → 부재방문 1회 → 다음 회차<br>
+              <strong>부재 2회</strong>: 호별 → 부재방문 1회 → 부재방문 2회 → 다음 회차
+            </p>
+            <button class="btn btn-navy" onclick="saveVisitMode()">저장</button>
+          </div>
+
+          <!-- 구역그룹관리 -->
+          <div class="settings-card">
+            <div class="settings-card-title">구역그룹관리</div>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <input type="text" id="s-group-input" placeholder="그룹 이름"
+                style="flex:1;padding:8px 11px;border:1px solid #CBD5E1;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+                onkeydown="if(event.key==='Enter')addTerritoryGroup()">
+              <button class="btn btn-navy" onclick="addTerritoryGroup()" style="white-space:nowrap">그룹 추가</button>
+            </div>
+            <div style="font-size:11px;color:#64748B;margin-bottom:10px">
+              ℹ 그룹관리의 변경사항은 [저장]을 누르지 않아도 즉시 적용됩니다.
+            </div>
+            <div id="s-group-chips" style="display:flex;flex-wrap:wrap;gap:7px">
+              <span style="font-size:12px;color:#94A3B8">로딩 중...</span>
+            </div>
+          </div>
+
+          <!-- 비밀번호 변경 (비상용 관리자 비밀번호) -->
+          <div class="settings-card">
+            <div class="settings-card-title">관리자 비밀번호 변경 <span style="font-size:11px;font-weight:400;color:#94A3B8">(비상 접근용)</span></div>
+            <p style="font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.6">
+              ℹ️ 일반 로그인은 <strong>구역카드 앱의 개인 PIN</strong>을 사용합니다.<br>
+              여기서 변경하는 비밀번호는 비상 시 또는 최초 설정에만 사용됩니다.
+            </p>
+            <div class="form-group">
+              <label>현재 비밀번호</label>
+              <input type="password" id="s-pw-current" placeholder="현재 비밀번호 입력" autocomplete="current-password">
+            </div>
+            <div class="form-group">
+              <label>새 비밀번호</label>
+              <input type="password" id="s-pw-new" placeholder="새 비밀번호 (4자리 이상)" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+              <label>새 비밀번호 확인</label>
+              <input type="password" id="s-pw-confirm" placeholder="새 비밀번호 재입력" autocomplete="new-password">
+            </div>
+            <button class="btn btn-navy" onclick="changePassword()">비밀번호 변경</button>
+            <div id="s-pw-msg" style="margin-top:8px;font-size:13px;display:none"></div>
+          </div>
+
+          <!-- 데이터 정비 -->
+          <div class="settings-card" style="border-color:#FEF3C7">
+            <div class="settings-card-title" style="color:#92400E">🔧 데이터 정비</div>
+            <p style="font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.7">
+              도로명·번지가 바뀌는 행에서 이전 건물명이 잘못 이어진 경우를 자동으로 찾아 지웁니다.<br>
+              <strong>기존에 가져온 구역카드</strong>의 건물명 오류를 일괄 정리합니다.
+            </p>
+            <button class="btn" style="background:#FFFBEB;color:#92400E;border:1px solid #FCD34D" onclick="fixBuildingCarryForward()">
+              건물명 오류 일괄 정비
+            </button>
+            <div id="fix-building-msg" style="margin-top:8px;font-size:13px;display:none"></div>
+          </div>
+
+          <!-- 위험 영역 -->
+          <div class="settings-card" style="border-color:#FEE2E2">
+            <div class="settings-card-title" style="color:#991B1B">관리자 계정 초기화</div>
+            <p style="font-size:12px;color:#64748B;margin-bottom:12px">
+              비밀번호를 분실했거나 관리자를 변경해야 할 때 사용합니다.<br>
+              초기화 후 다음 로그인 시 새 비밀번호를 설정하게 됩니다.
+            </p>
+            <button class="btn" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="resetAdminPassword()">
+              관리자 비밀번호 초기화
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+      <!-- 메뉴얼 -->
+      <div id="tab-manual" class="tab-content" style="padding:0">
+        <style>
+          /* ── 메뉴얼 기본 ── */
+          #man-wrap{max-width:780px;margin:0 auto;padding:20px 20px 60px;box-sizing:border-box;font-size:15px;line-height:1.75;color:#1E293B}
+          .man-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #E2E8F0}
+          .man-toolbar-title{font-size:13px;color:#64748B;font-weight:500}
+          .man-pdf-btn{background:#1B3A6B;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit}
+          .man-pdf-btn:hover{background:#2563EB}
+          /* 표지 */
+          .man-cover{background:linear-gradient(135deg,#1B3A6B 0%,#2563EB 100%);color:#fff;padding:36px 28px 32px;border-radius:16px;margin-bottom:28px;text-align:center}
+          .man-cover h1{font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-0.3px}
+          .man-cover p{font-size:14px;opacity:0.85;margin:0}
+          /* 목차 */
+          .man-toc{background:#EFF6FF;border-left:4px solid #2563EB;border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:28px}
+          .man-toc h2{font-size:14px;font-weight:700;color:#1B3A6B;margin-bottom:12px}
+          .man-toc ol{padding-left:18px;margin:0;columns:2;column-gap:20px}
+          .man-toc li{font-size:14px;margin-bottom:6px;break-inside:avoid}
+          .man-toc a{color:#2563EB;text-decoration:none;font-weight:500}
+          .man-toc a:hover{text-decoration:underline}
+          /* 챕터 */
+          .man-ch{margin-bottom:36px;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
+          .man-ch-hdr{background:#1B3A6B;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+          .man-ch-num{background:rgba(255,255,255,0.2);border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700;flex-shrink:0}
+          .man-ch-title{font-size:16px;font-weight:700;flex:1;letter-spacing:-0.2px}
+          .man-ch-arrow{font-size:22px;line-height:1;transition:transform 0.25s;flex-shrink:0;
+            width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+            background:rgba(255,255,255,0.15);border-radius:50%}
+          .man-ch-body{display:block;background:#fff;padding:20px 20px 8px}
+          .man-ch-body.collapsed{display:none}
+          /* 섹션 */
+          .man-sec{margin-bottom:24px}
+          .man-sec-title{font-size:15px;font-weight:700;color:#1B3A6B;padding:0 0 8px;margin-bottom:13px;border-bottom:2px solid #EFF6FF;display:flex;align-items:center;gap:8px}
+          .man-sec-title::before{content:'';display:inline-block;width:4px;height:16px;background:#2563EB;border-radius:2px;flex-shrink:0}
+          .man-sub{font-size:14px;font-weight:700;color:#334155;margin:14px 0 7px;padding-left:4px}
+          .man-p{font-size:14px;color:#374151;margin-bottom:8px;line-height:1.75}
+          /* 힌트 박스 */
+          .man-hint{border-radius:8px;padding:11px 15px;margin:10px 0;font-size:13px;display:flex;gap:10px;align-items:flex-start;line-height:1.65}
+          .man-hint.info{background:#EFF6FF;color:#1E40AF;border-left:3px solid #3B82F6}
+          .man-hint.warn{background:#FFFBEB;color:#92400E;border-left:3px solid #F59E0B}
+          .man-hint.danger{background:#FFF1F2;color:#991B1B;border-left:3px solid #F43F5E}
+          .man-hint.success{background:#F0FDF4;color:#166534;border-left:3px solid #22C55E}
+          .man-hint-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+          /* 테이블 */
+          .man-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;margin:10px 0;border:1px solid #E2E8F0}
+          .man-table{width:100%;border-collapse:collapse;font-size:13px;margin:0}
+          .man-table th{background:#1B3A6B;color:#fff;padding:9px 12px;text-align:left;font-weight:600;white-space:nowrap}
+          .man-table td{padding:9px 12px;border-bottom:1px solid #E2E8F0;vertical-align:top;line-height:1.6}
+          .man-table tr:last-child td{border-bottom:none}
+          .man-table tr:nth-child(even) td{background:#F8FAFC}
+          /* 단계 목록 */
+          .man-steps{counter-reset:ms;list-style:none;padding:0;margin:10px 0}
+          .man-steps li{counter-increment:ms;padding:10px 14px 10px 46px;margin-bottom:7px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;font-size:14px;position:relative;line-height:1.65}
+          .man-steps li::before{content:counter(ms);position:absolute;left:13px;top:50%;transform:translateY(-50%);width:22px;height:22px;background:#1B3A6B;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+          /* 뱃지 */
+          .man-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600}
+          .man-badge.blue{background:#DBEAFE;color:#1D4ED8}
+          .man-badge.green{background:#DCFCE7;color:#166534}
+          .man-badge.amber{background:#FEF3C7;color:#92400E}
+          .man-badge.red{background:#FEE2E2;color:#991B1B}
+          .man-badge.gray{background:#F1F5F9;color:#475569}
+          .man-badge.navy{background:#1B3A6B;color:#fff}
+          .man-badge.purple{background:#EDE9FE;color:#6D28D9}
+          /* 새기능 뱃지 */
+          .man-new{display:inline-block;background:#DCFCE7;color:#166534;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle}
+          /* 반응형 */
+          @media(max-width:768px){
+            #man-wrap{padding:14px 14px 60px}
+            .man-cover{padding:24px 16px 20px;border-radius:12px}
+            .man-cover h1{font-size:20px}
+            .man-toc ol{columns:1}
+            .man-toc li,.man-toc a{font-size:13px}
+            .man-ch-title{font-size:14px}
+            .man-ch-body{padding:16px 14px 6px}
+            .man-sec-title{font-size:14px}
+            .man-p,.man-steps li,.man-table td,.man-table th{font-size:13px}
+          }
+          /* 인쇄/PDF */
+          @media print{
+            /* 부모 컨테이너 강제 표시 */
+            #admin-screen{display:block!important}
+            .main{margin-left:0!important}
+            /* 메뉴얼 탭만 표시, 나머지 탭 숨김 */
+            .tab-content{display:none!important}
+            #tab-manual{display:block!important;padding:0!important}
+            /* 불필요한 UI 숨김 */
+            .sidebar,.top-bar,#tab-manual .man-toolbar{display:none!important}
+            .main-content{margin:0!important;padding:0!important}
+            #man-left-nav,#man-right-nav{display:none!important}
+            .man-toc-grid{display:none!important}
+            /* 콘텐츠 레이아웃 */
+            #man-layout{display:block!important}
+            #man-wrap{padding:10px 16px!important;max-width:100%!important;margin:0!important}
+            /* 모든 챕터 내용 펼치기 */
+            .man-ch-body.collapsed{display:block!important}
+            .man-ch-body{display:block!important}
+            /* 카드/박스 스타일 */
+            .man-ch{box-shadow:none!important;border:1px solid #ddd!important;page-break-inside:avoid}
+            .man-ch-hdr{background:#1B3A6B!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+            .man-table th{background:#1B3A6B!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+            .man-cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+            /* 페이지 여백 */
+            body{margin:0;padding:0}
+          }
+
+          /* ── 3단 레이아웃 ── */
+          #man-layout{display:flex;align-items:flex-start}
+          #man-wrap{flex:1;min-width:0;max-width:none;margin:0;padding:20px 28px 60px;box-sizing:border-box}
+
+          /* ── 왼쪽 사이드바 ── */
+          #man-left-nav{width:220px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto;background:#FAFBFD;border-right:1px solid #E2E8F0;padding:0 0 40px;scrollbar-width:thin}
+          .mln-header{padding:14px 16px 12px;border-bottom:1px solid #E2E8F0;margin-bottom:6px}
+          .mln-logo{font-size:22px;margin-bottom:3px}
+          .mln-sitename{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:1px}
+          .mln-title-text{font-size:13px;font-weight:700;color:#1B3A6B;line-height:1.3}
+          .mln-list{list-style:none;padding:4px 0 8px;margin:0}
+          .mln-item{padding:8px 14px 8px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:#4B5563;line-height:1.45;border-left:3px solid transparent;transition:background .12s,color .12s}
+          .mln-item:hover{background:#EFF6FF;color:#1B3A6B}
+          .mln-item.active{background:#EFF6FF;color:#1E40AF;font-weight:600;border-left-color:#2563EB}
+          .mln-num{font-size:10px;background:#CBD5E1;color:#fff;border-radius:4px;padding:1px 5px;flex-shrink:0;margin-top:2px;line-height:1.4;font-weight:700}
+          .mln-item.active .mln-num{background:#2563EB}
+
+          /* ── 오른쪽 "이 페이지에서" ── */
+          #man-right-nav{width:185px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto;padding:22px 12px 40px;scrollbar-width:thin}
+          .mrn-title{font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:10px;padding-left:12px}
+          #man-otp-list{list-style:none;padding:0;margin:0}
+          #man-otp-list li{margin-bottom:2px}
+          #man-otp-list a{font-size:12px;color:#6B7280;text-decoration:none;display:block;padding:4px 6px 4px 12px;border-left:2px solid #E2E8F0;line-height:1.4;transition:color .12s,border-color .12s}
+          #man-otp-list a:hover{color:#1B3A6B;border-left-color:#93C5FD;background:#F8FAFC}
+          #man-otp-list a.man-otp-active{color:#1D4ED8;font-weight:600;border-left-color:#2563EB;background:#EFF6FF}
+
+          /* ── 카드형 챕터 목차 ── */
+          .man-toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
+          .man-toc-card{background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;padding:14px 14px 12px;cursor:pointer;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:4px}
+          .man-toc-card:hover{border-color:#93C5FD;box-shadow:0 2px 10px rgba(37,99,235,.08)}
+          .man-toc-card:active{background:#F8FAFC}
+          .man-toc-card-top{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+          .man-toc-card-icon{font-size:18px;line-height:1;flex-shrink:0}
+          .man-toc-card-num{font-size:10px;font-weight:700;background:#1B3A6B;color:#fff;border-radius:4px;padding:1px 6px;flex-shrink:0}
+          .man-toc-card-title{font-size:13px;font-weight:700;color:#1B3A6B;line-height:1.35}
+          .man-toc-card-desc{font-size:11.5px;color:#64748B;line-height:1.5;padding-left:2px}
+          @media(max-width:959px){.man-toc-grid{grid-template-columns:repeat(2,1fr);gap:8px}}
+          @media(max-width:480px){.man-toc-grid{grid-template-columns:1fr 1fr;gap:7px}.man-toc-card{padding:10px 10px 9px}.man-toc-card-title{font-size:12px}.man-toc-card-desc{display:none}}
+
+          /* 인라인 ol 목차 숨김 (카드 그리드로 대체) */
+          .man-toc ol{display:none}
+          .man-toc h2{display:none}
+
+          /* 모바일: 사이드바 숨김, 단일 컬럼 */
+          @media(max-width:959px){
+            #man-layout{display:block}
+            #man-left-nav,#man-right-nav{display:none!important}
+            #man-wrap{padding:14px 14px 60px}
+          }
+        </style>
+
+        <div id="man-layout">
+
+          <!-- ▌왼쪽 사이드바 내비게이션 -->
+          <nav id="man-left-nav">
+            <div class="mln-header">
+              <div class="mln-logo">🗂</div>
+              <div class="mln-sitename">전자구역카드</div>
+              <div class="mln-title-text">관리자 메뉴얼</div>
+            </div>
+            <ul class="mln-list">
+              <li class="mln-item" data-ch="man-ch1" onclick="manGoTo('man-ch1')"><span class="mln-num">01</span><span>로그인 및 메뉴 구성</span></li>
+              <li class="mln-item" data-ch="man-ch2" onclick="manGoTo('man-ch2')"><span class="mln-num">02</span><span>구역관리</span></li>
+              <li class="mln-item" data-ch="man-ch3" onclick="manGoTo('man-ch3')"><span class="mln-num">03</span><span>전도인관리</span></li>
+              <li class="mln-item" data-ch="man-ch4" onclick="manGoTo('man-ch4')"><span class="mln-num">04</span><span>봉사일정</span></li>
+              <li class="mln-item" data-ch="man-ch5" onclick="manGoTo('man-ch5')"><span class="mln-num">05</span><span>구역지도 · 방문내역 · 메모 · S-13</span></li>
+              <li class="mln-item" data-ch="man-ch6" onclick="manGoTo('man-ch6')"><span class="mln-num">06</span><span>설정</span></li>
+              <li class="mln-item" data-ch="man-ch7" onclick="manGoTo('man-ch7')"><span class="mln-num">07</span><span>권한 체계 및 회차 개념</span></li>
+              <li class="mln-item" data-ch="man-ch8" onclick="manGoTo('man-ch8')"><span class="mln-num">08</span><span>🔧 타 회중 설치 절차</span></li>
+              <li class="mln-item" data-ch="man-ch9" onclick="manGoTo('man-ch9')"><span class="mln-num">09</span><span>📲 전시대봉사</span></li>
+              <li class="mln-item" data-ch="man-ch10" onclick="manGoTo('man-ch10')"><span class="mln-num">10</span><span>📱 앱 설치 안내 (iOS/Android)</span></li>
+            </ul>
+          </nav>
+
+          <!-- ▌본문 -->
+          <div id="man-wrap">
+
+          <!-- 툴바 -->
+          <div class="man-toolbar">
+            <span class="man-toolbar-title">전자구역카드 관리자 메뉴얼</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="man-expand-btn" onclick="manToggleAll()" style="padding:7px 13px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#475569;font-family:inherit;transition:all .15s">▾ 전체 펼치기</button>
+              <button class="man-pdf-btn" onclick="window.print()">🖨 PDF / 인쇄</button>
+            </div>
+          </div>
+
+          <!-- 표지 -->
+          <div class="man-cover">
+            <div style="font-size:36px;margin-bottom:10px">🗂</div>
+            <h1>관리자 메뉴얼</h1>
+            <p><span id="manual-cong-name"></span> 전자구역카드 시스템</p>
+          </div>
+
+          <!-- 카드형 챕터 목차 -->
+          <div class="man-toc-grid">
+            <div class="man-toc-card" onclick="manGoTo('man-ch1')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">🔐</span><span class="man-toc-card-num">01</span></div>
+              <div class="man-toc-card-title">로그인 및 메뉴 구성</div>
+              <div class="man-toc-card-desc">비밀번호 설정 · 메뉴별 기능 안내</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch2')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">🗺</span><span class="man-toc-card-num">02</span></div>
+              <div class="man-toc-card-title">구역관리</div>
+              <div class="man-toc-card-desc">구역 추가 · 편집 · 배정 · 완료 처리</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch3')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">👤</span><span class="man-toc-card-num">03</span></div>
+              <div class="man-toc-card-title">전도인관리</div>
+              <div class="man-toc-card-desc">계정 추가 · 권한 설정 · PIN 관리</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch4')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">📅</span><span class="man-toc-card-num">04</span></div>
+              <div class="man-toc-card-title">봉사일정</div>
+              <div class="man-toc-card-desc">요일별 배분 · 자동 배분 · 자동 반납</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch5')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">📍</span><span class="man-toc-card-num">05</span></div>
+              <div class="man-toc-card-title">지도 · 방문내역 · 메모 · S-13</div>
+              <div class="man-toc-card-desc">구역지도 · 방문기록 · 배정이력 출력</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch6')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">⚙️</span><span class="man-toc-card-num">06</span></div>
+              <div class="man-toc-card-title">설정</div>
+              <div class="man-toc-card-desc">회차 · 방문횟수 · 구역그룹 · 공지</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch7')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">🔑</span><span class="man-toc-card-num">07</span></div>
+              <div class="man-toc-card-title">권한 체계 및 회차 개념</div>
+              <div class="man-toc-card-desc">권한 레벨 · 회차 운영 방식</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch8')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">🔧</span><span class="man-toc-card-num">08</span></div>
+              <div class="man-toc-card-title">타 회중 설치 절차</div>
+              <div class="man-toc-card-desc">신규 회중 도입 단계별 가이드</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch9')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon"><svg width="28" height="32" viewBox="0 0 80 90" fill="none"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.55)" stroke-width="1.5"/><text x="40" y="24" text-anchor="middle" dominant-baseline="middle" font-family="Arial Black,Arial" font-weight="900" font-size="16" fill="white" opacity="0.95">JW</text><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg></span><span class="man-toc-card-num">09</span></div>
+              <div class="man-toc-card-title">전시대봉사</div>
+              <div class="man-toc-card-desc">전시대 봉사 앱 운영 · 인도자 기능</div>
+            </div>
+            <div class="man-toc-card" onclick="manGoTo('man-ch10')">
+              <div class="man-toc-card-top"><span class="man-toc-card-icon">📱</span><span class="man-toc-card-num">10</span></div>
+              <div class="man-toc-card-title">앱 설치 안내</div>
+              <div class="man-toc-card-desc">아이폰·아이패드·안드로이드 홈 화면 설치</div>
+            </div>
+          </div>
+
+          <!-- CH1 -->
+          <div class="man-ch" id="man-ch1">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)">
+              <span class="man-ch-num">01</span>
+              <span class="man-ch-title">로그인 및 메뉴 구성</span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body collapsed">
+              <div class="man-sec">
+                <div class="man-sec-title">로그인</div>
+                <p class="man-p">로그인 방식은 <strong>두 가지</strong>입니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>방식</th><th>대상</th><th>입력 내용</th></tr>
+                  <tr><td><strong>이름 + 개인 PIN</strong></td><td><span class="man-badge amber">봉사감독자</span> <span class="man-badge navy">관리자</span></td><td>이름 입력 후 개인 PIN 입력<br><small>이름 입력 시 비밀번호 칸이 자동으로 <strong>숫자 키패드</strong>로 전환됩니다</small></td></tr>
+                  <tr><td><strong>비밀번호만</strong></td><td>익명 관리자</td><td>이름 비워두고 관리자 비밀번호 입력 (최초 설정 또는 비상 접근)</td></tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div><span class="man-badge blue">인도자</span> 권한 전도인은 admin.html에 접속할 수 없습니다. 전도인 앱(publisher.html)을 이용해 주세요.</div></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>비밀번호를 분실했을 경우 <strong>설정 탭 → 관리자 계정 초기화</strong>를 사용하세요. 구역 데이터에는 영향이 없습니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">메뉴 구성</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>메뉴</th><th>주요 기능</th><th>접근 권한</th></tr>
+                  <tr><td>▪ 구역관리</td><td>구역 추가·편집·삭제, 배정, 완료/미완료 처리, 엑셀 업로드·다운로드</td><td><span class="man-badge amber">봉사감독자</span> <span class="man-badge navy">관리자</span></td></tr>
+                  <tr><td>▲ 전도인관리</td><td>계정 추가·삭제, 권한 설정, 주소편집 허용, PIN 초기화</td><td><span class="man-badge navy">관리자</span> 전용</td></tr>
+                  <tr><td>📅 봉사일정</td><td>요일별 구역 배정 일정, 출석 현황, 공지 관리</td><td><span class="man-badge amber">봉사감독자</span> <span class="man-badge navy">관리자</span></td></tr>
+                  <tr><td>◇ 구역지도</td><td>네이버 지도에 전체 구역 마커 표시</td><td><span class="man-badge amber">봉사감독자</span> <span class="man-badge navy">관리자</span></td></tr>
+                  <tr><td>○ 방문내역</td><td>방문 기록 조회, CSV 내보내기</td><td><span class="man-badge amber">봉사감독자</span> <span class="man-badge navy">관리자</span></td></tr>
+                  <tr><td>▪ 메모관리</td><td>관리자 메모 작성, 전도인 제출 메모 승인</td><td><span class="man-badge amber">봉사감독자</span> <span class="man-badge navy">관리자</span></td></tr>
+                  <tr><td>≡ S-13 기록</td><td>봉사연도별 배정 이력 표 출력</td><td><span class="man-badge amber">봉사감독자</span> <span class="man-badge navy">관리자</span></td></tr>
+                  <tr><td>⚙ 설정</td><td>회중명, 방문횟수, 회차제한, 구역그룹 관리</td><td><span class="man-badge navy">관리자</span> 전용</td></tr>
+                  <tr><td>🗂 메뉴얼</td><td>이 문서</td><td><span class="man-badge amber">봉사감독자</span> <span class="man-badge navy">관리자</span></td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>봉사감독자로 로그인하면 <strong>전도인관리</strong>·<strong>설정</strong> 탭이 자동으로 숨겨지고, 구역관리 탭으로 진입합니다.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CH2 -->
+          <div class="man-ch" id="man-ch2">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)">
+              <span class="man-ch-num">02</span>
+              <span class="man-ch-title">구역관리</span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body">
+
+              <div class="man-sec">
+                <div class="man-sec-title">목록 보기 및 필터</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>요소</th><th>기능</th></tr>
+                  <tr><td>☰ 리스트 뷰</td><td>기본 목록 형식 — 번호·이름·그룹·상태·세대수 표시</td></tr>
+                  <tr><td>⊞ 카드 뷰<span class="man-new">NEW</span></td><td>미니 카드 그리드 형식 — 회차·날짜·진행률 한눈에 파악</td></tr>
+                  <tr><td>⬇ 전체 백업<span class="man-new">NEW</span></td><td>모든 구역을 엑셀 파일로 묶어 ZIP 다운로드</td></tr>
+                  <tr><td>🔍 검색</td><td>구역번호 또는 구역명 실시간 검색</td></tr>
+                  <tr><td>유형 탭</td><td>구역그룹별 필터</td></tr>
+                  <tr><td>🔔 완료 신청</td><td>전도인이 완료 신청한 구역만 표시</td></tr>
+                  <tr><td>⏸ 미완료 신청</td><td>미완료로 마친 구역만 표시</td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">구역 추가 방법</div>
+                <div class="man-sub">① 수동 추가</div>
+                <ul class="man-steps">
+                  <li><strong>+ 구역 추가</strong> 버튼 클릭</li>
+                  <li>구역번호(정수), 구역명, 그룹 입력 후 저장</li>
+                  <li>이후 편집 모달 → 호수 목록 탭에서 세대 직접 입력</li>
+                </ul>
+                <div class="man-sub">② 엑셀 업로드</div>
+                <p class="man-p">파일명 형식: <strong>{번호}_{구역명}.xlsx</strong> (예: <code>1_에이스3,4단지.xlsx</code>)</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>열 순서</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>
+                  <tr><td>항목</td><td>도로명</td><td>번지</td><td>건물명</td><td>세부주소</td><td>금지(Y)</td><td>메모</td></tr>
+                </table></div>
+                <div class="man-sub">③ 일괄 업로드</div>
+                <p class="man-p"><strong>📦 일괄 업로드</strong> 버튼 → 여러 xlsx 파일을 한꺼번에 선택하거나 ZIP 파일로 묶어 업로드. 이미 존재하는 구역번호는 자동 건너뜀.</p>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>구역번호는 <strong>정수만</strong> 가능합니다. 001, 13-1, 23.5 형식은 인식되지 않습니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">구역 카드 팝업 (⋮ 버튼)</div>
+                <p class="man-p">목록에서 <strong>⋮</strong> 버튼을 누르면 구역 상세 팝업이 열립니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>버튼</th><th>기능</th></tr>
+                  <tr><td>👤 배정</td><td>전도인 배정 모달 열기</td></tr>
+                  <tr><td>✅ 완료 처리</td><td>현재 회차 완료 → 회차+1</td></tr>
+                  <tr><td>⏸ 미완료</td><td>완료 상태를 진행중으로 되돌림</td></tr>
+                  <tr><td>👁 미리보기</td><td>전도인 구역카드 화면을 새 창으로 미리보기</td></tr>
+                  <tr><td>✏️ 편집</td><td>편집 모달 열기 (기본정보/호수목록/엑셀교체)</td></tr>
+                  <tr><td>⬇ 엑셀<span class="man-new">NEW</span></td><td>해당 구역 주소 목록을 xlsx 파일로 다운로드</td></tr>
+                  <tr><td>🗑 방문삭제</td><td>가장 최근 완료 이력 1건 삭제</td></tr>
+                  <tr><td>카드 활성화 상태<span class="man-new">NEW</span></td><td>현재 활성/비활성 상태 표시 (관리자는 조회만 가능, 변경은 봉사감독자 전용)</td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">편집 모달 (3개 탭)</div>
+                <div class="man-sub">① 기본정보</div>
+                <p class="man-p">구역번호·구역명·그룹 변경 후 저장.</p>
+                <div class="man-sub">② 호수 목록</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기능</th><th>사용법</th></tr>
+                  <tr><td>행 선택</td><td>왼쪽 번호 클릭 / Shift+클릭으로 연속 선택</td></tr>
+                  <tr><td>⬆ 위에 집 삽입</td><td>선택 행 바로 위에 빈 행 삽입</td></tr>
+                  <tr><td>↪ 다른 카드로 이동</td><td>선택 세대를 다른 구역으로 이동 (카드 합치기/나누기)</td></tr>
+                  <tr><td>동행필수 ⚠</td><td>체크 시 전도인 앱에 ⚠ 경고 표시</td></tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>다른 카드로 이동 시 방문 기록이 초기화됩니다. 세대 정보만 이동됩니다.</div></div>
+                <div class="man-sub">③ 엑셀 교체</div>
+                <p class="man-p">기존 호수 전체를 새 엑셀로 교체합니다. 방문 기록이 초기화됩니다.</p>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">구역 활성/비활성화<span class="man-new">NEW</span></div>
+                <p class="man-p">비활성화된 구역카드는 전도인이 열면 사용 불가 화면이 표시됩니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>권한</th><th>가능한 작업</th></tr>
+                  <tr><td><span class="man-badge navy">관리자</span></td><td>카드 팝업에서 현재 상태 조회 가능. 변경 불가.</td></tr>
+                  <tr><td><span class="man-badge amber">봉사감독자</span></td><td>전도인 앱 → 구역 관리 탭에서 개별 활성/비활성화, 사유 입력 가능</td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>회차제한에 도달하면 완료 처리 시 구역이 자동으로 비활성화됩니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">완료 / 미완료 처리</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>상황</th><th>처리 방법</th></tr>
+                  <tr><td>전도인이 완료 신청</td><td>목록 <span class="man-badge green">🔔 완료 신청</span> 뱃지 클릭 → 회차+1, 방문기록 초기화</td></tr>
+                  <tr><td>관리자 직접 완료</td><td>구역 카드 팝업 → ✅ 완료 처리</td></tr>
+                  <tr><td>미완료 취소</td><td>구역 카드 팝업 → ⏸ 미완료</td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">전체 리셋</div>
+                <p class="man-p">모든 구역을 1회차로 초기화합니다. 팝업 2회 + <strong>"전체리셋"</strong> 직접 입력 후 실행.</p>
+                <div class="man-hint danger"><span class="man-hint-icon">🚨</span><div>전체 리셋은 <strong>되돌릴 수 없습니다.</strong> 반드시 백업 후 진행하세요.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CH3 -->
+          <div class="man-ch" id="man-ch3">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)">
+              <span class="man-ch-num">03</span>
+              <span class="man-ch-title">전도인관리</span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body collapsed">
+              <div class="man-sec">
+                <div class="man-sec-title">권한 4단계</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>권한</th><th>주요 기능</th><th>개인 PIN</th><th>admin.html 접근</th></tr>
+                  <tr><td><span class="man-badge gray">일반</span></td><td>이름으로 로그인, 배정된 구역카드 사용</td><td>불필요</td><td>❌</td></tr>
+                  <tr><td><span class="man-badge blue">인도자</span></td><td>구역 배정 패널, 오늘 봉사 출석 관리</td><td>필수</td><td>❌</td></tr>
+                  <tr><td><span class="man-badge amber">봉사감독자</span></td><td>인도자 기능 + 구역 활성/비활성화 + 관리 대시보드(일부)</td><td>필수</td><td>✅ <small>(전도인관리·설정 제외)</small></td></tr>
+                  <tr><td><span class="man-badge navy">관리자</span></td><td>시스템 전체 관리 (모든 탭)</td><td>필수</td><td>✅ <small>(전체)</small></td></tr>
+                </table></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">주소편집 허용<span class="man-new">NEW</span></div>
+                <p class="man-p">전도인 목록의 <strong>✏️ ON / ✏️ OFF</strong> 버튼으로 개인별로 설정합니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>상태</th><th>설명</th></tr>
+                  <tr><td><span class="man-badge green">✏️ ON</span></td><td>전도인 앱 구역카드 화면 하단에 <strong>✏️ 주소 목록 편집</strong> 버튼이 표시됩니다. 세대 주소 직접 편집 가능.</td></tr>
+                  <tr><td><span class="man-badge gray">✏️ OFF</span></td><td>편집 버튼이 표시되지 않습니다 (기본값)</td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>권한(일반/인도자/봉사감독자)과 무관하게 개인별로 부여합니다. 역할이 일반 전도인이어도 ON으로 설정 가능합니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">PIN 관리</div>
+                <p class="man-p">인도자 이상은 최초 로그인 시 본인이 직접 4자리 이상 PIN을 설정합니다. PIN은 관리자도 확인할 수 없습니다.</p>
+                <p class="man-p"><strong>PIN 분실 시:</strong> 전도인 편집 → <strong>PIN 초기화</strong> → 다음 로그인 시 본인이 재설정.</p>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">전도인 추가 / 삭제</div>
+                <ul class="man-steps">
+                  <li><strong>+ 전도인 추가</strong> 버튼 클릭</li>
+                  <li>이름 입력, 시스템 권한 선택 후 저장</li>
+                  <li>삭제 시 해당 전도인의 방문 기록은 유지됩니다</li>
+                </ul>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>등록 이름과 전도인이 앱에서 입력하는 이름이 <strong>대소문자·공백·받침까지 정확히</strong> 일치해야 접속됩니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">전시대봉사 역할 설정 <span class="man-new">NEW</span></div>
+                <p class="man-p">전도인 목록의 <strong><svg width="11" height="13" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:1px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 버튼</strong>을 클릭할 때마다 전시대봉사 역할이 순환됩니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>버튼 표시</th><th>역할</th><th>cart.html 표시 위치</th></tr>
+                  <tr><td><span class="man-badge gray"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#94A3B8"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#94A3B8" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#94A3B8"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#94A3B8" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#94A3B8"/></svg> –</span></td><td>미등록</td><td>전시대봉사 앱 접근 불가</td></tr>
+                  <tr><td><span class="man-badge purple"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#5B21B6"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#5B21B6"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#5B21B6"/></svg> 인원</span></td><td>봉사자</td><td>봉사자 명단에만 표시</td></tr>
+                  <tr><td><span class="man-badge navy"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자</span></td><td>인도자</td><td>봉사자 명단 + 인도자 명단 모두 표시</td></tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>
+                  <strong>– → 인원 → 인도자 → –</strong> 순서로 순환합니다.<br>
+                  실제 인도자만 두 번 클릭하세요. 전원을 인도자로 설정하면 인도자 명단과 봉사자 명단이 동일해집니다.
+                </div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CH4 -->
+          <div class="man-ch" id="man-ch4">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)">
+              <span class="man-ch-num">04</span>
+              <span class="man-ch-title">봉사일정</span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body">
+
+              <!-- 전체 흐름 -->
+              <div class="man-sec">
+                <div class="man-sec-title">전체 운영 흐름 <span class="man-new">NEW</span></div>
+                <p class="man-p">봉사일정은 관리자가 구역을 요일에 <strong>배분</strong>하고, 인도자가 사용 후 <strong>반납</strong>하는 주간 순환 구조로 운영됩니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th style="width:32px">단계</th><th>주체</th><th>내용</th></tr>
+                  <tr><td style="text-align:center">①</td><td><span class="man-badge navy">관리자</span></td><td>미할당 카드를 요일별로 배분 (수동 또는 자동 배분)</td></tr>
+                  <tr><td style="text-align:center">②</td><td><span class="man-badge blue">인도자</span></td><td>배분된 카드를 확인하고, 전도인에게 배정</td></tr>
+                  <tr><td style="text-align:center">③</td><td><span class="man-badge blue">인도자</span></td><td>사용 후 남은 카드를 반납 (또는 자정에 자동 반납)</td></tr>
+                  <tr><td style="text-align:center">④</td><td><span class="man-badge navy">관리자</span></td><td>반납된 카드가 미할당 풀로 돌아옴 → 다시 배분</td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>완료 처리된 구역(<strong>completionStatus = 완료</strong>)은 배분 대상에서 자동 제외됩니다.</div></div>
+              </div>
+
+              <!-- 주간 현황판 -->
+              <div class="man-sec">
+                <div class="man-sec-title">주간 배정 현황판</div>
+                <p class="man-p">화면 상단에 일주일 7칸 현황판이 표시됩니다. 각 칸을 클릭하면 해당 요일의 배분 상세로 이동합니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>표시</th><th>의미</th></tr>
+                  <tr><td>흰 배경 · 테두리</td><td>활성 요일 (배분 가능)</td></tr>
+                  <tr><td>파란 테두리</td><td>오늘 요일</td></tr>
+                  <tr><td>진한 파란 배경</td><td>현재 선택된 요일</td></tr>
+                  <tr><td>N장</td><td>해당 요일에 배분된 구역 수</td></tr>
+                </table></div>
+              </div>
+
+              <!-- 요일 설정 -->
+              <div class="man-sec">
+                <div class="man-sec-title">요일 활성/비활성 관리</div>
+                <p class="man-p"><strong>⚙ 요일 설정</strong> 버튼 → 요일 토글 표시. 봉사 없는 요일을 비활성화하면 현황판에서 흐리게 처리되며, 자동 배분 대상에서도 제외됩니다.</p>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>비활성화된 요일도 기존 배분 데이터는 유지됩니다.</div></div>
+              </div>
+
+              <!-- 미할당 / 전체 목록 -->
+              <div class="man-sec">
+                <div class="man-sec-title">카드 배분 방법 <span class="man-new">NEW</span></div>
+                <p class="man-p">요일을 선택하면 하단 배분 영역에 두 가지 모드가 제공됩니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>모드</th><th>내용</th><th>적합한 상황</th></tr>
+                  <tr><td>📋 미할당</td><td>어떤 요일에도 배분되지 않은 카드 목록을 즉시 표시. 입력창으로 번호·이름 필터 가능. 탭 → 현재 요일에 즉시 배분</td><td>주간 배분 작업 시 (기본 모드)</td></tr>
+                  <tr><td>📇 전체 목록</td><td>모든 카드를 갤러리로 표시. 이미 배분된 카드는 ✓ 표시. 탭 → 배분/해제 토글</td><td>전체 현황을 보며 수정할 때</td></tr>
+                </table></div>
+                <div class="man-hint success"><span class="man-hint-icon">✅</span><div>📋 미할당 모드에서는 타 요일에 이미 배분된 카드가 목록에서 자동으로 제외됩니다. 중복 배분 걱정 없이 사용하세요.</div></div>
+              </div>
+
+              <!-- 배분된 구역 칩 카드 -->
+              <div class="man-sec">
+                <div class="man-sec-title">배분된 구역 칩 카드</div>
+                <p class="man-p">선택된 요일에 배분된 구역이 한 줄 카드 형식으로 표시됩니다. <strong>✕ 버튼</strong>을 탭하면 즉시 제거됩니다.</p>
+              </div>
+
+              <!-- 자동 배분 -->
+              <div class="man-sec">
+                <div class="man-sec-title">⚡ 자동 배분</div>
+                <p class="man-p">헤더의 <strong>⚡ 자동 배분</strong> 버튼을 클릭하면 설정 패널이 열립니다. 미할당 카드를 조건에 따라 선택한 요일에 자동으로 나눠 배분합니다. 편지 구역·개인 구역·완료 구역은 자동으로 제외됩니다.</p>
+
+                <div class="man-sub">① 배분 방식 선택</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>방식</th><th>동작</th><th>언제 사용</th></tr>
+                  <tr>
+                    <td><strong>스마트 배분</strong></td>
+                    <td>우선순위·유형별 설정을 적용해 균형 있게 배분</td>
+                    <td>주간 정기 배분 — 세밀한 배분이 필요할 때</td>
+                  </tr>
+                  <tr>
+                    <td><strong>번호순 배분</strong></td>
+                    <td>구역 번호 오름차순으로 요일에 순서대로 배분. 우선순위·유형 설정 무시</td>
+                    <td>빠른 일괄 배분이 필요할 때. 미리보기에서 배분 순서 확인 필수</td>
+                  </tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div><strong>번호순 배분</strong>은 구역 특성을 고려하지 않으므로 미리보기 표에서 배분 순서를 반드시 확인한 뒤 확정하세요.</div></div>
+
+                <div class="man-sub">② 대상 요일 선택</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>옵션</th><th>설명</th></tr>
+                  <tr><td>활성 요일 전체</td><td>설정에서 활성화된 모든 요일에 균등 배분</td></tr>
+                  <tr><td>현재 선택 요일만</td><td>현재 화면에 선택된 요일 1개에만 배분</td></tr>
+                  <tr><td><strong>요일 직접 선택</strong></td><td>활성 요일 중 원하는 요일만 체크해서 배분. 특정 요일만 업데이트할 때 유용</td></tr>
+                </table></div>
+
+                <div class="man-sub">③ 스마트 배분 세부 설정</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>항목</th><th>선택지</th><th>설명</th></tr>
+                  <tr><td>배분 수</td><td>자동 균등 / 직접 입력</td><td>자동: 미할당 카드 수 ÷ 대상 요일 수</td></tr>
+                  <tr><td>우선순위</td><td>☑ 미배정 카드 우선<br>☑ 오래된 순<br>☑ 진행률 낮은 순</td><td>복수 선택 가능. 위에서 아래 순서로 적용</td></tr>
+                  <tr><td>유형별 균등</td><td>☑ 켜기 (기본)</td><td>아파트·주택·상가 등 유형이 각 요일에 고르게 섞이도록 배분</td></tr>
+                  <tr><td>기존 배분 처리</td><td>유지 후 추가 / 초기화 후 재배분</td><td>초기화 선택 시 기존 배분 전체 제거 후 새로 배분</td></tr>
+                </table></div>
+
+                <div class="man-sub">④ 사용 순서</div>
+                <ul class="man-steps">
+                  <li>배분 방식 · 대상 요일 · 세부 설정 선택</li>
+                  <li><strong>🔍 배분 미리보기</strong> 클릭 → 요일별 예정 수량·유형 통계 확인 (번호순은 배분 순서 표 함께 표시)</li>
+                  <li>결과 확인 후 <strong>⚡ 배분 확정</strong> 클릭 → 확인 다이얼로그 → 즉시 저장</li>
+                </ul>
+              </div>
+
+              <!-- 배분 되돌리기 / 초기화 -->
+              <div class="man-sec">
+                <div class="man-sec-title">↩ 되돌리기 / 🗑 초기화</div>
+                <p class="man-p">자동 배분 버튼 옆에 두 개의 보조 버튼이 있습니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>버튼</th><th>동작</th><th>비고</th></tr>
+                  <tr>
+                    <td><strong>↩ 되돌리기</strong></td>
+                    <td>마지막 자동 배분 확정 직전 상태로 복원</td>
+                    <td>배분 확정 후 활성화됨. 1단계만 지원 (페이지 새로고침 시 초기화)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>🗑 초기화</strong></td>
+                    <td>활성 요일 전체의 배분 카드를 모두 비움</td>
+                    <td>확인 다이얼로그 포함. 실행 후 되돌리기 불가</td>
+                  </tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div><strong>🗑 초기화</strong>는 되돌릴 수 없습니다. 실수를 방지하려면 초기화 전 미리보기로 현재 배분 상태를 확인하세요.</div></div>
+              </div>
+
+              <!-- 자동 반납 -->
+              <div class="man-sec">
+                <div class="man-sec-title">자동 반납 설정 <span class="man-new">NEW</span></div>
+                <p class="man-p">요일을 선택하면 배분 현황 상단에 <strong>자정에 자동 반납</strong> 체크박스가 표시됩니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>설정</th><th>동작</th><th>사용 상황</th></tr>
+                  <tr><td>☑ 자동 반납 (기본값)</td><td>해당 요일 자정이 지난 후 관리자 또는 인도자가 앱에 접속하면 그 요일의 배분 카드가 자동으로 미할당 풀로 반납</td><td>매주 새로운 배분이 필요할 때</td></tr>
+                  <tr><td>☐ 자동 반납 해제</td><td>자정이 지나도 카드 유지 — 다음 주에도 동일 요일에 이어서 사용 가능</td><td>특정 구역을 인도자가 2주 이상 연속으로 담당할 때</td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>이 설정은 <strong>관리자와 인도자 모두</strong> 변경할 수 있으며, 어느 쪽에서 변경해도 즉시 양쪽 화면에 실시간으로 반영됩니다.</div></div>
+              </div>
+
+              <!-- 인도자 화면 기능 -->
+              <div class="man-sec">
+                <div class="man-sec-title">인도자 패널 — 구조 <span class="man-new">NEW</span></div>
+                <p class="man-p">인도자·봉사감독자가 publisher.html에서 PIN 로그인하면 화면 우측 하단에 <strong>📋 플로팅 버튼</strong>이 표시됩니다. 탭하면 전체화면 인도자 패널이 열리며 3개 탭으로 구성됩니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>탭</th><th>기능</th><th>접근 권한</th></tr>
+                  <tr><td>📋 구역 배정</td><td>오늘 예정 구역 · 구역 검색/필터 · 전도인 배정</td><td><span class="man-badge blue">인도자</span> <span class="man-badge amber">봉사감독자</span></td></tr>
+                  <tr><td>🗓 오늘의 봉사</td><td>출석 확인 → 구역 선택 → 배정 매칭 3단계</td><td><span class="man-badge blue">인도자</span> <span class="man-badge amber">봉사감독자</span></td></tr>
+                  <tr><td>구역 비활성화</td><td>구역 활성/비활성 전환, 사유 입력</td><td><span class="man-badge amber">봉사감독자</span> 전용</td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">📅 오늘 예정 구역 섹션</div>
+                <p class="man-p">배정 탭 상단에 오늘 요일에 배분된 구역이 자동으로 표시됩니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기능</th><th>설명</th></tr>
+                  <tr><td><strong style="color:#DC2626">반납</strong> 버튼</td><td>예정 구역 우측에 위치. 탭하면 해당 구역이 미할당 풀로 즉시 복귀. 현장에서 사용하지 않을 구역 수동 반납 시 사용</td></tr>
+                  <tr><td>🌙 자정에 자동 반납</td><td>체크(기본값)하면 자정 후 앱 접속 시 해당 요일 카드 전체가 자동 반납. 해제하면 다음 주도 그대로 유지</td></tr>
+                  <tr><td>➕ 미할당 카드 현장 추가</td><td><strong>▼ 목록 보기</strong> 탭 → 아직 어느 요일에도 배분되지 않은 카드를 검색·추가. 카테고리 필터 칩으로 빠르게 범위 좁히기 가능</td></tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>타 요일에 이미 배분된 카드는 현장 추가 목록에 표시되지 않습니다. 미할당 카드만 검색됩니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">🔍 구역 목록 — 정렬 · 필터 · 칩</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>구분</th><th>항목</th></tr>
+                  <tr><td>정렬</td><td>예정 우선 / 오래된 순 / 최근 완료 다음 / 세대 적은 순 / 진행률 낮은 순</td></tr>
+                  <tr><td>필터</td><td>유형(주택구역·상가구역 등) / 상태(미배정만·전체·미완료만) / 회차(1~6회차)</td></tr>
+                  <tr><td>칩 필터</td><td>
+                    <strong>📅 오늘 예정만</strong> — 오늘 배분된 구역만 표시 (기본 켜짐)<br>
+                    <strong style="color:#991B1B">⚠ 동행필수 없는 구역만</strong> — 혼자 방문 가능한 구역만<br>
+                    <strong>⏰ 재방문 세대 있는 구역</strong> — 재방문 코드 기록 세대 존재<br>
+                    <strong>🕐 6개월+ 미사용</strong> — 최근 6개월 배정 이력 없음
+                  </td></tr>
+                </table></div>
+              </div>
+
+              <!-- 출석 현황 -->
+              <div class="man-sec">
+                <div class="man-sec-title">오늘 봉사 출석 현황</div>
+                <p class="man-p">전도인이 앱에서 <strong>✋ 오늘 봉사 참여 신청</strong>을 누르면 이 탭에 실시간으로 표시됩니다. 인도자가 배정 확정 시 배정 결과도 함께 확인할 수 있습니다.</p>
+              </div>
+
+              <!-- 공지 -->
+              <div class="man-sec">
+                <div class="man-sec-title">공지 관리</div>
+                <p class="man-p">전도인 앱 로그인 화면 상단에 공지를 표시합니다. 동시에 하나만 활성화됩니다.</p>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>구역별 개별 공지는 구역 카드 팝업 → <strong>구역별 공지사항</strong> 필드에서 설정합니다. 해당 구역 접속 시 카드 상단에 표시됩니다.</div></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- CH5 -->
+          <div class="man-ch" id="man-ch5">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)">
+              <span class="man-ch-num">05</span>
+              <span class="man-ch-title">구역지도 · 방문내역 · 메모관리 · S-13</span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body collapsed">
+              <div class="man-sec">
+                <div class="man-sec-title">구역지도</div>
+                <p class="man-p">네이버 지도 위에 등록된 모든 구역을 마커로 표시합니다. 마커 클릭 시 회차·상태·배정 전도인·진행률 팝업이 표시됩니다. <strong>구역 편집</strong> 버튼으로 바로 편집 모달을 열 수 있습니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>마커 색상</th><th>의미</th></tr>
+                  <tr><td>🔵 파랑</td><td>진행중</td></tr>
+                  <tr><td>🟢 초록</td><td>완료</td></tr>
+                  <tr><td>⚫ 회색</td><td>미배정</td></tr>
+                </table></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">방문내역</div>
+                <p class="man-p">전도인·날짜·구역별로 방문 코드 집계를 조회합니다. <strong>CSV 내보내기</strong>로 엑셀 분석도 가능합니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>코드</th><th>의미</th><th>코드</th><th>의미</th></tr>
+                  <tr><td><span class="man-badge green">응답</span></td><td>집주인 만남</td><td><span class="man-badge gray">부재</span></td><td>아무도 없음</td></tr>
+                  <tr><td><span class="man-badge blue">재방문</span></td><td>다시 방문 예정</td><td><span class="man-badge red">거절</span></td><td>방문 거절</td></tr>
+                  <tr><td><span class="man-badge gray">공실</span></td><td>빈 집</td><td><span class="man-badge amber">동행필수</span></td><td>2인 이상 필요</td></tr>
+                  <tr><td><span class="man-badge navy">형제/자매댁</span></td><td>JW 거주</td><td><span class="man-badge purple">관심자</span></td><td>성서 연구 중</td></tr>
+                </table></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">메모관리</div>
+                <p class="man-p"><strong>관리자 메모</strong>: 특정 구역에 대한 내부 메모를 작성합니다. 전도인에게는 보이지 않습니다.</p>
+                <p class="man-p"><strong>전도인 제출 메모</strong>: 전도인이 앱에서 제출한 메모는 관리자 승인 후 반영됩니다. 미승인 메모는 주황색으로 표시됩니다.</p>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">S-13 기록</div>
+                <p class="man-p">봉사연도(9월~8월)별 구역 배정 이력을 S-13 양식 표로 집계합니다.</p>
+                <ul class="man-steps">
+                  <li>봉사연도 드롭다운에서 연도 선택</li>
+                  <li><strong>PDF 출력</strong> 버튼 → 새 창 열림</li>
+                  <li>Ctrl+P (또는 Cmd+P) → PDF 저장 또는 인쇄</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- CH6 -->
+          <div class="man-ch" id="man-ch6">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)">
+              <span class="man-ch-num">06</span>
+              <span class="man-ch-title">설정</span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body collapsed">
+              <div class="man-sec">
+                <div class="man-sec-title">회차제한</div>
+                <p class="man-p">설정한 회차에 도달하면 완료 처리 시 구역이 자동으로 비활성화됩니다.</p>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>예: 7로 설정 시 7회차 완료 시점에 자동 비활성화. 이후 봉사감독자가 수동으로 재활성화할 수 있습니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">방문횟수 (부재방문 설정)</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>설정</th><th>한 회차의 진행 순서</th></tr>
+                  <tr><td><span class="man-badge navy">호별만</span></td><td>호별방문 → 완료 → 다음 회차</td></tr>
+                  <tr><td><span class="man-badge blue">호별 + 부재 1회</span></td><td>호별방문 → 부재방문 → 완료 → 다음 회차</td></tr>
+                  <tr><td><span class="man-badge blue">호별 + 부재 2회</span></td><td>호별방문 → 부재방문 1회 → 부재방문 2회 → 완료 → 다음 회차</td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div><strong>부재방문</strong>은 이전 호별방문에서 만나지 못한 세대만 재방문하는 방식입니다. 전도인 앱에서는 이미 응답한 세대가 회색으로 표시되어 구분됩니다.</div></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>설정 변경 후 반드시 <strong>저장</strong> 버튼을 눌러야 적용됩니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">장기부재자</div>
+                <p class="man-p">설정한 개월 수보다 오랫동안 한 번도 만나지 못한 세대에 <strong>🕐 시계 아이콘</strong>을 표시해 전도인이 우선 방문할 수 있도록 돕습니다.</p>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>구역카드를 처음 도입한 직후에는 방문 기록이 없어 모든 세대가 장기부재자로 표시될 수 있습니다. 전체 구역을 1회 이상 방문한 뒤 기능을 활성화하길 권장합니다. <strong>999개월</strong>로 설정하면 사실상 표시되지 않습니다.</div></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>한 번도 만나지 않은 집은 기간과 관계없이 장기부재자에 포함됩니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">기본주소</div>
+                <p class="man-p">동일한 도로명을 사용하는 다른 지역과 혼선을 막기 위해 <strong>시·도 단위 기본주소</strong>를 설정합니다.</p>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>예: <code>경기도</code>, <code>서울시</code>, <code>경상북도</code>. 일반적으로 도단위 주소면 충분합니다. 구역이 두 지역에 걸쳐 있는 경우 기본주소를 생략할 수도 있습니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">공지사항</div>
+                <p class="man-p">전도인 앱(구역카드 화면) 상단에 표시되는 공지 메시지를 설정합니다. 임시 안내, 봉사 일정 변경, 주의사항 등을 알릴 때 사용합니다.</p>
+                <div class="man-hint success"><span class="man-hint-icon">✅</span><div>공지를 비워 두면 공지 영역이 표시되지 않습니다. 저장 버튼을 누른 즉시 전도인 앱에 반영됩니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">구역그룹 관리</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기능</th><th>방법</th></tr>
+                  <tr><td>그룹 추가</td><td>이름 입력 후 <strong>그룹 추가</strong> 버튼 (Enter 키 가능)</td></tr>
+                  <tr><td>이름 변경 ✏</td><td>✏ 클릭 → 인라인 편집 → Enter 저장 / ESC 취소<br>해당 그룹 모든 구역 카테고리가 자동으로 일괄 변경됨</td></tr>
+                  <tr><td>삭제 ×</td><td>해당 그룹을 사용 중인 구역이 0개일 때만 삭제 가능</td></tr>
+                </table></div>
+                <div class="man-hint success"><span class="man-hint-icon">✅</span><div>그룹 변경사항은 저장 버튼 없이 <strong>즉시 적용</strong>됩니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">회중명 설정 <span class="man-new">NEW</span></div>
+                <p class="man-p">설정한 회중명은 관리자 화면 사이드바·로그인 화면, 그리고 <strong>전시대봉사(cart.html) 로그인 화면</strong>에 자동으로 표시됩니다.</p>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>회중명을 변경하면 저장 즉시 브라우저 탭 제목 및 화면 내 모든 표시가 업데이트됩니다. 별도로 파일을 수정할 필요가 없습니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">전시대봉사 — 인도자 공용 비밀번호 설정 <span class="man-new">NEW</span></div>
+                <p class="man-p">cart.html(전시대봉사 앱)에서 <strong>인도자 모드</strong>로 입장할 때 사용하는 <strong>공용 비밀번호</strong>를 설정합니다. 숫자 4자리 이상을 권장합니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>역할</th><th>입장 방법</th><th>권한</th></tr>
+                  <tr><td>봉사자</td><td>이름 선택 후 <strong>입장하기</strong> — 비밀번호 없음</td><td>일정 조회, 참여 신청·취소</td></tr>
+                  <tr><td><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자</td><td>이름 선택 → <strong>인도자 모드로 입장</strong> → <strong>공용 비밀번호</strong> 입력</td><td>일정 생성·편집·팀 배정 관리</td></tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>인도자 비밀번호가 설정되지 않으면 인도자 모드 입장 버튼 클릭 시 "관리자에게 문의하세요" 안내가 표시됩니다. 반드시 사전에 설정해 두세요.</div></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>이 비밀번호는 Firestore에 저장되며 cart.html 로드 시 자동으로 적용됩니다. 인도자 역할(<svg width="9" height="11" viewBox="0 0 80 90" fill="none" style="vertical-align:middle"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg>)로 등록된 전도인만 인도자 모드 입장이 가능합니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">🔧 데이터 정비 <span class="man-new">NEW</span></div>
+                <p class="man-p">엑셀 업로드 시 도로명·번지가 바뀌는 행에서 이전 건물명이 잘못 이어진 경우를 자동으로 찾아 일괄 수정합니다.</p>
+                <ul class="man-steps">
+                  <li>구역관리 탭을 먼저 열어 구역 데이터 로드</li>
+                  <li>설정 → <strong>🔧 데이터 정비</strong> → <strong>건물명 오류 일괄 정비</strong> 버튼 클릭</li>
+                  <li>완료 후 수정된 구역 수와 세대 수가 표시됨</li>
+                </ul>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>같은 번지의 여러 행 중 일부만 오류가 남은 경우(이전 정비 실행 후 잔여 오류)도 자동으로 감지하여 수정합니다.</div></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">비밀번호 변경 / 계정 초기화</div>
+                <p class="man-p">현재 비밀번호 확인 후 새 비밀번호(4자리 이상)로 변경합니다. 계정 초기화는 구역 데이터에 영향 없이 로그인 비밀번호만 삭제합니다.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CH7 -->
+          <div class="man-ch" id="man-ch7">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)">
+              <span class="man-ch-num">07</span>
+              <span class="man-ch-title">권한 체계 및 회차 개념</span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body collapsed">
+              <div class="man-sec">
+                <div class="man-sec-title">기능별 권한 요약</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기능</th><th>일반</th><th>인도자</th><th>구역의종</th><th>봉사감독자</th><th>관리자</th></tr>
+                  <tr><td>구역카드 사용</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>주소 편집 (허용 시)</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>구역 배정 패널</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>구역 비활성화/활성화</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>조회만</td></tr>
+                  <tr><td>admin.html 로그인</td><td>❌</td><td>❌</td><td>✅ <small>(개인 PIN)</small></td><td>✅ <small>(개인 PIN)</small></td><td>✅ <small>(개인 PIN 또는 비밀번호)</small></td></tr>
+                  <tr><td>전도인관리 · 설정 탭</td><td>❌</td><td>❌</td><td>❌ <small>(메뉴 숨김)</small></td><td>❌ <small>(메뉴 숨김)</small></td><td>✅</td></tr>
+                  <tr><td>구역관리 · 봉사일정</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                </table></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">회차 개념</div>
+                <p class="man-p"><strong>회차</strong>는 단순 1회 방문이 아니라 호별방문(+ 설정에 따라 부재방문)을 모두 완료한 하나의 사이클입니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>상황</th><th>동작</th></tr>
+                  <tr><td>전도인 완료 신청</td><td>부재방문 설정 시 다음 단계로 진행. 마지막 단계면 관리자 처리 대기 상태로 전환.</td></tr>
+                  <tr><td>관리자 완료 처리</td><td>회차 +1, 방문기록 초기화, 다음 호별방문 시작</td></tr>
+                  <tr><td>회차제한 도달</td><td>완료 처리 시 구역 자동 비활성화</td></tr>
+                </table></div>
+              </div>
+              <div class="man-sec">
+                <div class="man-sec-title">개인정보 보호 원칙</div>
+                <div class="man-hint success"><span class="man-hint-icon">🔒</span><div>
+                  자유 메모 입력창 없음 — 코드 선택 방식만 사용<br>
+                  전도인 이름 외 개인정보 수집 안 함<br>
+                  방문 기록은 코드 및 시각 데이터만 저장
+                </div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 챕터 8: 타 회중 설치 절차 ── -->
+          <div class="man-ch" id="man-ch8">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)" style="background:#0F4C2A">
+              <span class="man-ch-num">08</span>
+              <span class="man-ch-title">🔧 타 회중 설치 절차 (시스템 배포 안내)</span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body">
+
+              <!-- 개요 -->
+              <div class="man-sec">
+                <div class="man-sec-title">개요 — 사용 서비스 및 비용</div>
+                <p class="man-p">이 시스템은 모두 <strong>무료 클라우드 서비스</strong>로 운영됩니다. 회중당 월 비용 <strong>0원</strong>으로 사용 가능합니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>서비스</th><th>용도</th><th>무료 한도</th><th>가입 주소</th></tr>
+                  <tr><td><strong>Firebase</strong><br><small>(Google)</small></td><td>데이터베이스 (구역·전도인·방문 기록)</td><td>저장 1GB · 읽기 5만/일 · 쓰기 2만/일</td><td>firebase.google.com</td></tr>
+                  <tr><td><strong>Cloudflare Pages</strong></td><td>웹사이트 호스팅</td><td>무제한 트래픽 · 배포 500회/월</td><td>cloudflare.com</td></tr>
+                  <tr><td><strong>Naver Cloud</strong></td><td>구역 지도 표시</td><td>300만 요청/월</td><td>ncloud.com</td></tr>
+                </table></div>
+                <div class="man-hint"><span class="man-hint-icon">📋</span><div>준비물: <strong>Google 계정</strong> 1개, <strong>Cloudflare 계정</strong> 1개, <strong>Naver Cloud 계정</strong> 1개 (휴대폰 본인인증 필요)</div></div>
+              </div>
+
+              <!-- STEP 1: Firebase -->
+              <div class="man-sec">
+                <div class="man-sec-title">STEP 1 — Firebase 프로젝트 설정</div>
+                <div class="man-hint success"><span class="man-hint-icon">①</span><div><strong>firebase.google.com</strong> 접속 → Google 계정으로 로그인 → <strong>[프로젝트 추가]</strong> 클릭</div></div>
+                <div class="man-hint success"><span class="man-hint-icon">②</span><div>프로젝트 이름 입력 (예: <code>jwcard-회중이름</code>) → Google 애널리틱스 <strong>사용 안 함</strong> → <strong>[프로젝트 만들기]</strong></div></div>
+                <div class="man-hint success"><span class="man-hint-icon">③</span><div>왼쪽 메뉴 <strong>[Firestore Database]</strong> → <strong>[데이터베이스 만들기]</strong> → <strong>프로덕션 모드</strong> → 리전 <strong>asia-northeast3 (서울)</strong> → <strong>[완료]</strong></div></div>
+                <div class="man-hint warn"><span class="man-hint-icon">④</span><div><strong>[규칙]</strong> 탭 클릭 → 아래 내용으로 교체 후 <strong>[게시]</strong><br>
+                  <code style="display:block;background:#F8FAFC;border-radius:6px;padding:10px;margin-top:8px;font-size:12px;line-height:1.7">rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code>
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑤</span><div><strong>[프로젝트 설정(⚙)]</strong> → <strong>[일반]</strong> 탭 → 아래로 스크롤 → <strong>[앱 추가]</strong> → <strong>웹(&lt;/&gt;)</strong> 선택 → 앱 닉네임 입력 → <strong>[앱 등록]</strong></div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑥</span><div>표시되는 <code>firebaseConfig</code> 값을 복사해 둡니다 (다음 단계에서 코드에 입력)</div></div>
+              </div>
+
+              <!-- STEP 2: Naver Maps -->
+              <div class="man-sec">
+                <div class="man-sec-title">STEP 2 — 네이버 클라우드 Maps API 설정</div>
+                <div class="man-hint success"><span class="man-hint-icon">①</span><div><strong>ncloud.com</strong> 접속 → <strong>[회원가입]</strong> (휴대폰 인증 필요 · 카드 등록 요구 시 등록하되 무료 한도 내 과금 없음)</div></div>
+                <div class="man-hint success"><span class="man-hint-icon">②</span><div>로그인 후 상단 <strong>[콘솔]</strong> → 왼쪽 메뉴 <strong>[AI·NAVER API]</strong> → <strong>[Maps]</strong></div></div>
+                <div class="man-hint success"><span class="man-hint-icon">③</span><div><strong>[Application 등록]</strong> → 이름 입력 → 서비스 선택:<br>
+                  ✅ <strong>Maps — Web Dynamic Map</strong><br>
+                  ✅ <strong>Maps — Geocoding</strong>
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">④</span><div><strong>Web 서비스 URL</strong>에 배포 후 발급받을 Cloudflare 도메인 추가<br>
+                  예: <code>https://my-jwcard.pages.dev</code><br>
+                  (도메인이 아직 없으면 일단 <code>http://localhost</code> 입력 후 나중에 수정 가능)
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑤</span><div>등록 완료 후 <strong>Client ID (ncpKeyId)</strong> 값 복사</div></div>
+              </div>
+
+              <!-- STEP 3: 코드 수정 -->
+              <div class="man-sec">
+                <div class="man-sec-title">STEP 3 — 소스 코드 설정값 변경</div>
+                <p class="man-p">총 <strong>4개 파일</strong>에서 아래 값들을 교체합니다. 텍스트 편집기(메모장, VS Code 등)로 파일을 열어 찾기·바꾸기(Ctrl+H)를 사용하세요.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>파일</th><th>찾을 내용</th><th>바꿀 내용</th></tr>
+                  <tr>
+                    <td><code>js/admin.js</code><br><small>5~12번 줄</small></td>
+                    <td><small>기존 firebaseConfig 블록 전체</small></td>
+                    <td><small>STEP 1에서 복사한 본인 firebaseConfig 붙여넣기</small></td>
+                  </tr>
+                  <tr>
+                    <td><code>publisher.html</code><br><small>약 1860번 줄</small></td>
+                    <td><small>기존 firebaseConfig 블록 전체</small></td>
+                    <td><small>동일하게 본인 firebaseConfig 붙여넣기</small></td>
+                  </tr>
+                  <tr>
+                    <td><code>admin.html</code><br><small>&lt;head&gt; 상단</small></td>
+                    <td><code>config.js</code> 파일의 <code>naverClientId</code> 값</td>
+                    <td><code>ncpKeyId=본인_Client_ID</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>publisher.html</code><br><small>&lt;head&gt; 상단</small></td>
+                    <td><code>config.js</code> 파일의 <code>naverClientId</code> 값</td>
+                    <td><code>ncpKeyId=본인_Client_ID</code></td>
+                  </tr>
+                  <tr>
+                    <td>설정 탭</td>
+                    <td colspan="2">소스 파일 수정 불필요. 배포 후 <strong>관리자 → 설정 → 회중명</strong> 입력란에 본인 회중 이름 입력 후 저장</td>
+                  </tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>firebaseConfig는 <strong>admin.js와 publisher.html 두 곳 모두</strong> 교체해야 합니다. 하나라도 빠지면 데이터가 두 개의 서로 다른 DB에 저장됩니다.</div></div>
+              </div>
+
+              <!-- STEP 4: Cloudflare -->
+              <div class="man-sec">
+                <div class="man-sec-title">STEP 4 — Cloudflare Pages 배포</div>
+                <div class="man-hint success"><span class="man-hint-icon">①</span><div><strong>cloudflare.com</strong> 접속 → <strong>[Sign Up]</strong> (이메일로 가입, 무료 플랜 선택)</div></div>
+                <div class="man-hint success"><span class="man-hint-icon">②</span><div>대시보드 왼쪽 메뉴 <strong>[Workers &amp; Pages]</strong> → <strong>[Create]</strong> → <strong>[Pages]</strong> 탭 → <strong>[업로드로 배포]</strong></div></div>
+                <div class="man-hint success"><span class="man-hint-icon">③</span><div>프로젝트 이름 입력 (예: <code>my-jwcard</code>) → 파일 업로드 영역에 <strong>소스 폴더 전체를 드래그 앤 드롭</strong></div></div>
+                <div class="man-hint success"><span class="man-hint-icon">④</span><div><strong>[사이트 배포]</strong> 클릭 → 완료 후 <strong>자동 생성된 URL</strong> 확인<br>
+                  예: <code>https://my-jwcard.pages.dev</code></div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑤</span><div>이 URL을 <strong>Naver Cloud</strong>의 Web 서비스 URL에 등록 (STEP 2-④ 업데이트)</div></div>
+                <div class="man-hint"><span class="man-hint-icon">🔄</span><div>이후 파일 변경 시: Pages → 해당 프로젝트 → <strong>[배포 관리]</strong> → <strong>[새 배포 만들기]</strong> → 수정된 파일 업로드</div></div>
+              </div>
+
+              <!-- STEP 5: 초기 설정 -->
+              <div class="man-sec">
+                <div class="man-sec-title">STEP 5 — 시스템 초기 설정</div>
+                <div class="man-hint success"><span class="man-hint-icon">①</span><div>배포된 URL 뒤에 <code>/admin</code> 추가하여 관리자 화면 접속<br>예: <code>https://my-jwcard.pages.dev/admin</code></div></div>
+                <div class="man-hint success"><span class="man-hint-icon">②</span><div><strong>최초 접속</strong> 시 "비밀번호 설정 모드"로 진입 → 관리자 비밀번호 설정 (4자리 이상)</div></div>
+                <div class="man-hint success"><span class="man-hint-icon">③</span><div><strong>[전도인관리]</strong> → 전도인 이름 등록</div></div>
+                <div class="man-hint success"><span class="man-hint-icon">④</span><div><strong>[구역관리]</strong> → <strong>[엑셀 일괄등록]</strong> → 양식 다운로드 후 구역 데이터 입력 → 업로드</div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑤</span><div><strong>[설정]</strong>에서 회중 이름, 봉사감독자 PIN, 인도자 PIN, 부재방문 여부 등 설정</div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑥</span><div>전도인에게 <strong>publisher.html URL</strong> 공유 (QR코드, 카카오톡 등)<br>예: <code>https://my-jwcard.pages.dev/publisher.html</code></div></div>
+              </div>
+
+              <!-- 비용 확인 -->
+              <div class="man-sec">
+                <div class="man-sec-title">비용 및 한도 안내</div>
+                <div class="man-hint success"><span class="man-hint-icon">💰</span><div>
+                  <strong>Firebase 무료(Spark) 플랜 실제 사용량 예상</strong><br>
+                  전도인 50명 · 구역 200개 기준 일일 읽기 약 500~2,000회 → 무료 한도(5만/일) 대비 여유 충분<br>
+                  저장 용량: 구역 200개 × 방문 기록 포함 약 5MB → 무료 한도(1GB) 대비 미미
+                </div></div>
+                <div class="man-hint"><span class="man-hint-icon">📌</span><div>Firebase 콘솔 → <strong>[사용량]</strong> 탭에서 실시간으로 사용량 모니터링 가능</div></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- CH9 -->
+          <div class="man-ch" id="man-ch9">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)" style="background:#0F4C2A">
+              <span class="man-ch-num">09</span>
+              <span class="man-ch-title">📲 전시대봉사 (Cart Witnessing) <span style="font-size:11px;background:rgba(255,255,255,0.2);padding:2px 7px;border-radius:6px;margin-left:6px">NEW</span></span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body">
+
+              <div class="man-sec">
+                <div class="man-sec-title">개요</div>
+                <p class="man-p">전시대봉사 앱(cart.html)은 전시대 봉사 일정을 관리하는 별도 화면입니다. 전도인은 참여 신청을, 인도자는 일정 생성·팀 배정을 관리합니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>접속 URL</th><th>대상</th></tr>
+                  <tr><td><code>/cart.html</code></td><td>전도인 (봉사자·인도자 공통)</td></tr>
+                  <tr><td><code>/admin.html</code></td><td>관리자 — 전도인 역할 설정·비밀번호 관리</td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">사전 준비 (관리자)</div>
+                <ul class="man-steps">
+                  <li>관리자 → <strong>전도인관리</strong> → 각 전도인의 <svg width="11" height="13" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin:0 1px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 버튼으로 역할 설정<br>
+                    <span class="man-badge purple"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#5B21B6"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#5B21B6"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#5B21B6"/></svg> 인원</span> 봉사자 &nbsp;|&nbsp; <span class="man-badge navy"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자</span> 인도자</li>
+                  <li>관리자 → <strong>설정</strong> → <strong>전시대봉사 — 인도자 공용 비밀번호</strong> 설정 (숫자 4자리 이상)</li>
+                  <li>전도인에게 <code>cart.html</code> URL 공유, 인도자에게 공용 비밀번호 별도 전달</li>
+                </ul>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">로그인</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>역할</th><th>입장 방법</th><th>권한</th></tr>
+                  <tr><td>봉사자</td><td>이름 선택 → <strong>입장하기</strong> (비밀번호 없음)</td><td>일정 조회, 참여 신청·취소</td></tr>
+                  <tr><td><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자</td><td>이름 선택 → <strong>인도자 모드로 입장</strong> → <strong>인도자 공용 비밀번호</strong> 입력</td><td>일정 생성·편집·팀 배정·요일 관리</td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>publisher.html(전도인 앱)에서 이름을 확인한 전도인은 cart.html 접속 시 봉사자로 자동 로그인됩니다. (인도자 모드는 공용 비밀번호가 필요하므로 자동 입장 없음)</div></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>인도자 역할(<svg width="9" height="11" viewBox="0 0 80 90" fill="none" style="vertical-align:middle"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg>)로 등록된 이름만 인도자 모드 입장이 가능합니다. 역할 미설정 시 "인도자로 등록된 이름이 아닙니다" 오류가 표시됩니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">인도자 기능</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기능</th><th>방법</th></tr>
+                  <tr><td>일정 생성</td><td><strong>+ 새 일정 만들기</strong> → 요일·날짜·장소·인도자·팀 구성 입력</td></tr>
+                  <tr><td>팀 배정</td><td>일정 상세 → 팀별 이름 칸에 봉사자 선택</td></tr>
+                  <tr><td>완료 처리</td><td>일정 상세 → <strong>✅ 완료로 변경</strong></td></tr>
+                  <tr><td>일정 삭제</td><td>일정 상세 → <strong>🗑 삭제</strong></td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">봉사 요일 관리 <span class="man-new">NEW</span></div>
+                <p class="man-p">인도자 모드 → <strong>⚙ 목록 관리</strong> → <strong>봉사 요일</strong> 탭에서 봉사 요일 유형을 추가·삭제·순서 변경할 수 있습니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기능</th><th>방법</th></tr>
+                  <tr><td>추가</td><td>이모지·요일명·시작시각·종료시각 입력 후 <strong>+ 봉사 요일 추가</strong></td></tr>
+                  <tr><td>순서 변경</td><td>▲ / ▼ 버튼으로 위아래 이동</td></tr>
+                  <tr><td>삭제</td><td>× 버튼 (2개 이상일 때만 가능)</td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>변경사항은 Firestore에 저장되어 모든 기기에 즉시 반영됩니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">명단 관리 (인도자)</div>
+                <p class="man-p">⚙ 목록 관리 → 탭 선택</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>탭</th><th>내용</th><th>기본값 출처</th></tr>
+                  <tr><td>봉사자 명단</td><td>일정 팀 배정 시 선택 가능한 전도인</td><td><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:1px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#5B21B6"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#5B21B6"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#5B21B6"/></svg> 인원 + <svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:1px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자 전체</td></tr>
+                  <tr><td>인도자 명단</td><td>일정 인도자 선택 드롭다운</td><td><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:1px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자만</td></tr>
+                  <tr><td>장소 목록</td><td>일정 장소 선택 드롭다운</td><td>admin/cartConfig.locations</td></tr>
+                </table></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>명단은 관리자가 전도인관리에서 <svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin:0 1px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 역할을 설정해야 올바르게 분리됩니다. 인도자 역할 미설정 시 인도자 명단이 비어 있거나 봉사자 명단과 동일하게 표시될 수 있습니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">앱 업데이트 자동 감지 <span class="man-new">NEW</span></div>
+                <p class="man-p">새 버전이 배포되면 cart.html 화면 상단에 <strong>"🔄 새 버전이 업데이트됐습니다 [지금 업데이트]"</strong> 배너가 자동으로 표시됩니다. 버튼을 누르면 즉시 새로고침됩니다.</p>
+                <div class="man-hint success"><span class="man-hint-icon">✅</span><div>Ctrl+Shift+R 강제 새로고침 없이도 항상 최신 버전을 사용할 수 있습니다. 탭을 오래 열어둔 경우에도 30분마다 자동으로 업데이트 여부를 확인합니다.</div></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── 챕터 10: 앱 설치 안내 ── -->
+          <div class="man-ch" id="man-ch10">
+            <div class="man-ch-hdr" onclick="toggleManCh(this)" style="background:#0F4C2A">
+              <span class="man-ch-num">10</span>
+              <span class="man-ch-title">📱 앱 설치 안내 (홈 화면 추가) <span style="font-size:11px;background:rgba(255,255,255,0.2);padding:2px 7px;border-radius:6px;margin-left:6px">NEW</span></span>
+              <span class="man-ch-arrow" style="transform:rotate(-90deg)">▾</span>
+            </div>
+            <div class="man-ch-body collapsed">
+
+              <div class="man-sec">
+                <div class="man-sec-title">개요</div>
+                <p class="man-p">구역카드 앱은 별도 앱 스토어 설치 없이 <strong>홈 화면에 아이콘을 추가</strong>하는 방식(PWA)으로 설치합니다. 앱을 실행하면 주소창·탭바가 사라지고 일반 앱처럼 전체 화면으로 열립니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기기</th><th>설치 브라우저</th><th>비고</th></tr>
+                  <tr><td>🍎 아이폰 (iPhone)</td><td><strong>Safari만 가능</strong></td><td>크롬·네이버앱 불가</td></tr>
+                  <tr><td>🍎 아이패드 (iPad)</td><td><strong>Safari만 가능</strong></td><td>공유 버튼 위치가 아이폰과 다름</td></tr>
+                  <tr><td>🤖 안드로이드</td><td>크롬 (자동 팝업)</td><td>삼성 브라우저도 지원</td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">🍎 아이폰 설치 방법</div>
+                <ul class="man-steps">
+                  <li><strong>Safari</strong>로 구역카드 주소 접속<br>
+                    <div class="man-hint warn" style="margin-top:6px"><span class="man-hint-icon">⚠</span><div>크롬, 네이버, 카카오톡 내장 브라우저에서는 홈 화면 추가가 불가능합니다. 반드시 기본 앱인 <strong>Safari</strong>를 사용하세요.</div></div>
+                  </li>
+                  <li>화면 하단 가운데 <strong>📤 공유 버튼</strong>(네모에 화살표) 탭</li>
+                  <li>아래로 스크롤하여 <strong>"홈 화면에 추가"</strong> 선택</li>
+                  <li>이름 확인 후 오른쪽 위 <strong>"추가"</strong> 탭</li>
+                  <li>홈 화면의 <strong>구역카드 아이콘</strong>을 탭하여 실행</li>
+                </ul>
+                <div class="man-hint success"><span class="man-hint-icon">✅</span><div>설치 후 실행 시 주소창이 사라지고 앱처럼 전체 화면으로 열립니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">🍎 아이패드 설치 방법</div>
+                <p class="man-p">설치 순서는 아이폰과 동일하나, <strong>공유 버튼 위치가 다릅니다.</strong></p>
+                <ul class="man-steps">
+                  <li><strong>Safari</strong>로 구역카드 주소 접속</li>
+                  <li>화면 <strong>상단 주소창 오른쪽</strong>의 <strong>📤 공유 버튼</strong> 탭<br>
+                    <span style="font-size:12px;color:#64748B">(아이폰처럼 하단 중앙이 아닌 주소창 오른쪽에 있음)</span>
+                  </li>
+                  <li>팝오버 메뉴에서 <strong>"홈 화면에 추가"</strong> 선택</li>
+                  <li>이름 확인 후 <strong>"추가"</strong> 탭</li>
+                  <li>홈 화면의 구역카드 아이콘 탭하여 실행</li>
+                </ul>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>아이패드는 가로/세로 회전이 모두 지원됩니다. 화면 비율도 태블릿 크기에 맞게 자동 최적화됩니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">🤖 안드로이드 설치 방법</div>
+                <ul class="man-steps">
+                  <li><strong>크롬 브라우저</strong>로 구역카드 주소 접속</li>
+                  <li>잠시 후 하단에 <strong>"홈 화면에 추가"</strong> 팝업이 자동으로 표시됨 → <strong>"추가"</strong> 탭</li>
+                  <li>팝업이 안 뜰 경우: 크롬 오른쪽 위 <strong>⋮ 메뉴</strong> → <strong>"앱 설치"</strong> 또는 <strong>"홈 화면에 추가"</strong> 선택</li>
+                </ul>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>삼성 인터넷 브라우저도 지원됩니다. 주소창 아래 <strong>"설치"</strong> 배너가 표시됩니다.</div></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">자주 묻는 질문</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>문의</th><th>답변</th></tr>
+                  <tr><td>"홈 화면에 추가"가 안 보여요</td><td>Safari인지 확인하세요. 크롬·네이버·카카오 내장 브라우저에서는 표시되지 않습니다.</td></tr>
+                  <tr><td>설치 후 화면이 작게 뜨거나 세로 기둥처럼 보여요</td><td>PWA를 처음 설치했을 때 캐시가 구버전일 수 있습니다. 앱을 종료 후 다시 열어 보세요. 여전히 좁게 보이면 아이콘을 꾹 눌러 삭제 후 Safari에서 재설치하세요.</td></tr>
+                  <tr><td>업데이트는 어떻게 하나요?</td><td>자동 업데이트됩니다. 새 버전이 배포되면 앱 실행 시 "🔄 새 버전이 있습니다" 배너가 표시되며, 버튼을 탭하면 즉시 최신 버전으로 갱신됩니다.</td></tr>
+                  <tr><td>인터넷이 없어도 되나요?</td><td>방문 기록 입력·저장은 인터넷 연결이 필요합니다. 오프라인 시 화면은 열리지만 데이터 저장이 되지 않으니 반드시 인터넷 연결 상태에서 사용하세요.</td></tr>
+                  <tr><td>여러 기기에 설치할 수 있나요?</td><td>가능합니다. 개인 폰과 태블릿 모두에 설치해도 데이터는 클라우드에서 동기화됩니다.</td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">인도자 배포용 안내문 (단톡방 공유)</div>
+                <p class="man-p">아래 내용을 그대로 복사하여 단체 대화방에 공유하세요.</p>
+                <div style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.9;color:#334155;white-space:pre-wrap;word-break:break-word">📱 <strong>구역카드 앱 설치 방법</strong>
+
+<strong>[ 아이폰 / 아이패드 ]</strong>
+① Safari로 앱 주소 접속
+   (크롬·네이버앱은 설치 불가, 반드시 Safari 사용)
+② 📤 공유 버튼 탭
+   • 아이폰 → 화면 하단 가운데
+   • 아이패드 → 상단 주소창 오른쪽
+③ 아래로 스크롤 → <strong>"홈 화면에 추가"</strong> 선택
+④ <strong>"추가"</strong> 탭
+⑤ 홈 화면 아이콘으로 실행
+
+<strong>[ 안드로이드 ]</strong>
+① 크롬으로 앱 주소 접속
+② 자동 팝업 "홈 화면에 추가" → 추가
+   (팝업 없을 시: 크롬 ⋮ 메뉴 → 앱 설치)
+
+설치 후에는 앱처럼 전체 화면으로 열립니다 ✅</div>
+              </div>
+
+            </div>
+          </div>
+
+          <div style="text-align:center;padding:20px 0 10px;color:#94A3B8;font-size:12px">
+            전자구역카드 시스템 · 관리자 메뉴얼
+          </div>
+
+          </div><!-- /man-wrap -->
+
+          <!-- ▌오른쪽 "이 페이지에서" -->
+          <aside id="man-right-nav">
+            <div class="mrn-title">이 페이지에서</div>
+            <ul id="man-otp-list"></ul>
+          </aside>
+
+        </div><!-- /man-layout -->
+
+        <script>
+          /* ── 챕터 아코디언 토글 ── */
+          function toggleManCh(hdr) {
+            const body = hdr.nextElementSibling;
+            const arrow = hdr.querySelector('.man-ch-arrow');
+            const collapsed = body.classList.toggle('collapsed');
+            arrow.style.transform = collapsed ? 'rotate(-90deg)' : '';
+          }
+
+          /* ── 전체 펼치기 / 접기 ── */
+          function manToggleAll() {
+            const bodies = document.querySelectorAll('#man-wrap .man-ch-body');
+            const arrows = document.querySelectorAll('#man-wrap .man-ch-arrow');
+            const btn = document.getElementById('man-expand-btn');
+            const anyCollapsed = [...bodies].some(b => b.classList.contains('collapsed'));
+            bodies.forEach(b => b.classList.toggle('collapsed', !anyCollapsed));
+            arrows.forEach(a => a.style.transform = anyCollapsed ? '' : 'rotate(-90deg)');
+            if (btn) btn.textContent = anyCollapsed ? '▴ 전체 접기' : '▾ 전체 펼치기';
+          }
+
+          /* ── 챕터 스크롤 + 열기 ── */
+          function manScrollTo(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.scrollIntoView({ behavior:'smooth', block:'start' });
+            const body = el.querySelector('.man-ch-body');
+            const arrow = el.querySelector('.man-ch-arrow');
+            if (body && body.classList.contains('collapsed')) {
+              body.classList.remove('collapsed');
+              if (arrow) arrow.style.transform = '';
+            }
+          }
+
+          /* ── 왼쪽 사이드바 클릭 → 이동 ── */
+          function manGoTo(id) {
+            document.querySelectorAll('.mln-item').forEach(i => i.classList.remove('active'));
+            const item = document.querySelector('.mln-item[data-ch="'+id+'"]');
+            if (item) item.classList.add('active');
+            _manPopOTP(id);
+            manScrollTo(id);
+          }
+
+          /* ── "이 페이지에서" 목록 구성 ── */
+          function _manPopOTP(chId) {
+            const ch = document.getElementById(chId);
+            const list = document.getElementById('man-otp-list');
+            if (!ch || !list) return;
+            list.innerHTML = '';
+            ch.querySelectorAll('.man-sec-title').forEach(function(el, i) {
+              const sid = chId + '-s' + i;
+              el.id = sid;
+              const li = document.createElement('li');
+              const a = document.createElement('a');
+              a.textContent = el.textContent.replace(/NEW/g, '').replace(/\s+/g, ' ').trim();
+              a.href = 'javascript:void(0)';
+              a.dataset.sid = sid;
+              a.onclick = (function(s) { return function() { s.scrollIntoView({ behavior:'smooth', block:'start' }); }; })(el);
+              li.appendChild(a);
+              list.appendChild(li);
+            });
+          }
+
+          /* ── 스크롤 감지: 왼쪽 nav 자동 하이라이트 + OTP 갱신 ── */
+          (function _manInitScroll() {
+            var _tid = null, _curId = null;
+
+            function _getTopChId() {
+              var best = null;
+              document.querySelectorAll('#man-wrap .man-ch').forEach(function(ch) {
+                if (ch.getBoundingClientRect().top <= 160) best = ch.id;
+              });
+              return best;
+            }
+
+            function _update() {
+              var id = _getTopChId();
+              if (!id || id === _curId) return;
+              _curId = id;
+              document.querySelectorAll('.mln-item').forEach(function(i) { i.classList.remove('active'); });
+              var item = document.querySelector('.mln-item[data-ch="'+id+'"]');
+              if (item) {
+                item.classList.add('active');
+                // 사이드바 내 스크롤 보정
+                var nav = document.getElementById('man-left-nav');
+                if (nav) {
+                  var iRect = item.getBoundingClientRect();
+                  var nRect = nav.getBoundingClientRect();
+                  if (iRect.bottom > nRect.bottom || iRect.top < nRect.top) {
+                    item.scrollIntoView({ block:'nearest' });
+                  }
+                }
+              }
+              _manPopOTP(id);
+            }
+
+            // 스크롤 이벤트 등록
+            var mc = document.querySelector('.main-content');
+            if (mc) mc.addEventListener('scroll', function() { clearTimeout(_tid); _tid = setTimeout(_update, 60); });
+
+            // 초기 실행 (탭 전환 후 렌더링 대기)
+            setTimeout(_update, 400);
+
+            // 탭 전환 감지: 메뉴얼 탭 클릭 시 재실행
+            var tabBtn = document.querySelector('[data-tab="manual"], [onclick*="manual"]');
+            if (tabBtn) tabBtn.addEventListener('click', function() { setTimeout(_update, 300); });
+          })();
+        </script>
+      </div><!-- /tab-manual -->
+
+
+<!-- ══ 전도인 추가 모달 ══ -->
+<div class="modal-wrap" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">전도인 추가</div>
+    <div class="info-note">
+      이름만 등록합니다. 별도 코드·비밀번호 없음.<br>
+      등록된 이름과 정확히 일치해야 접속이 허용됩니다.
+    </div>
+    <div class="form-row">
+      <label>이름 *</label>
+      <input type="text" id="new-name" placeholder="예: 홍길동">
+    </div>
+    <div class="info-note" style="margin-bottom:12px">
+      <strong>조직 역할</strong>은 회중 내 직분, <strong>시스템 권한</strong>은 앱 접근 수준입니다.<br>
+      두 가지가 다를 수 있습니다. 예: 장로 + 일반권한
+    </div>
+    <div class="form-row">
+      <label>조직 역할 (회중 내 직분)</label>
+      <select id="new-org-role">
+        <option value="전도인">전도인</option>
+        <option value="봉사의 종">봉사의 종</option>
+        <option value="장로">장로</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>시스템 권한 (앱 접근 수준)</label>
+      <select id="new-permission">
+        <option value="일반">일반 — 배정된 구역카드만 열람</option>
+        <option value="인도자">인도자 — 구역 배정 + 전도인 임명</option>
+        <option value="구역의종">구역의종 — 구역관리·봉사일정 보조</option>
+        <option value="봉사감독자">봉사감독자 — 구역 비활성화 최종 권한</option>
+        <option value="관리자">관리자 — 시스템 전체 관리</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-navy" onclick="addPublisher()">명단에 추가</button>
+      <button class="btn" onclick="closeModal('add-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- ══ 전도인 편집 모달 ══ -->
+<div class="modal-wrap" id="edit-pub-modal">
+  <div class="modal">
+    <div class="modal-title">전도인 정보 수정</div>
+    <div class="form-row">
+      <label>이름</label>
+      <input type="text" id="ep-name" placeholder="이름">
+    </div>
+    <div class="info-note" style="margin-bottom:12px">
+      <strong>조직 역할</strong>은 회중 내 직분, <strong>시스템 권한</strong>은 앱 접근 수준입니다.
+    </div>
+    <div class="form-row">
+      <label>조직 역할 (회중 내 직분)</label>
+      <select id="ep-org-role">
+        <option value="전도인">전도인</option>
+        <option value="봉사의 종">봉사의 종</option>
+        <option value="장로">장로</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>시스템 권한 (앱 접근 수준)</label>
+      <select id="ep-permission">
+        <option value="일반">일반 — 배정된 구역카드만 열람</option>
+        <option value="인도자">인도자 — 구역 배정 + 전도인 임명</option>
+        <option value="구역의종">구역의종 — 구역관리·봉사일정 보조</option>
+        <option value="봉사감독자">봉사감독자 — 구역 비활성화 최종 권한</option>
+        <option value="관리자">관리자 — 시스템 전체 관리</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>승인 상태</label>
+      <select id="ep-approved">
+        <option value="true">승인</option>
+        <option value="false">대기 (미승인)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Cart Witnessing</label>
+      <select id="ep-cart-role">
+        <option value="">비허용</option>
+        <option value="member">전시대인원 (참여·일정 조회)</option>
+        <option value="admin">전시대인도자 (일정 생성·편집)</option>
+      </select>
+    </div>
+    <!-- PIN 상태 표시 + 초기화 (인도자 이상인 경우) -->
+    <div id="ep-pin-section" style="display:none;background:#FFF7ED;border:1px solid #FDE68A;border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:#92400E;margin-bottom:6px">🔐 PIN 관리</div>
+      <div style="font-size:12px;color:#78350F;margin-bottom:8px" id="ep-pin-status">—</div>
+      <button class="btn btn-sm btn-warn" onclick="resetPublisherPin()">PIN 초기화</button>
+      <span style="font-size:11px;color:#94A3B8;margin-left:8px">초기화 후 본인이 다시 설정하게 됩니다</span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-navy" onclick="savePublisherEdit()">저장</button>
+      <button class="btn" onclick="closeModal('edit-pub-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 구역 카드 팝업 ══ -->
+<div class="modal-wrap" id="terr-card-modal">
+  <div class="modal" style="max-width:480px;width:95vw">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E2E8F0">
+      <div id="tc-no-badge" style="width:36px;height:36px;border-radius:50%;background:#1B3A6B;color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">—</div>
+      <div class="modal-title" style="margin:0;flex:1">구역정보</div>
+      <button class="btn btn-sm btn-danger" onclick="deleteTerritoryFromCard()">삭제</button>
+      <button class="btn btn-sm btn-navy" onclick="saveTerritoryCard()">저장</button>
+      <button class="btn btn-sm" onclick="closeModal('terr-card-modal')">✕</button>
+    </div>
+    <div class="form-row">
+      <label>구역번호</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="tc-no" style="width:80px">
+        <button class="btn btn-sm btn-navy" onclick="saveTerritoryCardNo()">변경</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>구역이름</label>
+      <input type="text" id="tc-name">
+    </div>
+    <div class="form-row">
+      <label>구역그룹</label>
+      <div id="tc-groups" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+    </div>
+    <div class="form-row">
+      <label>지도이미지</label>
+      <button class="btn btn-sm btn-navy" onclick="openTerritoryMiniMap(window._tcTargetId)">🗺 지도에서 보기</button>
+    </div>
+    <div class="form-row">
+      <label>개인구역</label>
+      <select id="tc-personal" style="width:100%;padding:8px 10px;border:1.5px solid #E2E8F0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;background:#fff;cursor:pointer;transition:border 0.2s" onfocus="this.style.borderColor='#1B3A6B'" onblur="this.style.borderColor='#E2E8F0'">
+        <option value="">— 전도인 선택 —</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>구역별 공지사항<br><span style="font-size:10px;color:#94A3B8;font-weight:400">(구역카드 상단에 표시)</span></label>
+      <textarea id="tc-notice" style="width:100%;min-height:60px;resize:vertical;padding:8px;border:1.5px solid #E2E8F0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box;transition:border 0.2s" onfocus="this.style.borderColor='#1B3A6B'" onblur="this.style.borderColor='#E2E8F0'"></textarea>
+    </div>
+    <div class="form-row">
+      <label>메모</label>
+      <textarea id="tc-memo" style="width:100%;min-height:60px;resize:vertical;padding:8px;border:1.5px solid #E2E8F0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box;transition:border 0.2s" onfocus="this.style.borderColor='#1B3A6B'" onblur="this.style.borderColor='#E2E8F0'"></textarea>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 10px">
+      <button class="btn btn-sm" style="background:#DCFCE7;color:#166534;border:1.5px solid #BBF7D0" onclick="completeTerritoryFromCard()">✅ 완료 처리</button>
+      <button class="btn btn-sm" style="background:#FEF9C3;color:#A16207;border:1.5px solid #FDE68A" onclick="incompleteTerritoryFromCard()">⏸ 미완료</button>
+      <button class="btn btn-sm" onclick="previewTerritoryFromCard()">👁 미리보기</button>
+      <button class="btn btn-sm" onclick="openEditModalFromCard()">✏️ 편집</button>
+      <button class="btn btn-sm" style="background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE" onclick="downloadTerritoryExcel(window._tcTargetId)">⬇ 엑셀</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteLastVisitFromCard()">🗑 방문삭제</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:8px 10px;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0">
+      <span style="font-size:12px;color:#64748B;font-weight:600">카드 활성화 상태</span>
+      <button id="tc-active-status" disabled style="cursor:not-allowed;opacity:0.75;font-size:12px;padding:3px 10px;border-radius:6px;border:1.5px solid;font-weight:600">—</button>
+      <span style="font-size:11px;color:#94A3B8">(변경은 봉사감독자 전용)</span>
+    </div>
+    <div style="border-top:1px solid #E2E8F0;padding-top:12px">
+      <div style="font-size:12px;font-weight:600;color:#64748B;margin-bottom:8px">방문 이력</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table style="width:100%;min-width:360px;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:#F8FAFC">
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #E2E8F0;font-weight:600;color:#475569;white-space:nowrap">회차</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #E2E8F0;font-weight:600;color:#475569;white-space:nowrap">타입</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #E2E8F0;font-weight:600;color:#475569;white-space:nowrap">방문일자</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #E2E8F0;font-weight:600;color:#475569">전도인</th>
+            </tr>
+          </thead>
+          <tbody id="tc-history"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="tc-unit-grid"></div>
+  </div>
+</div>
+
+<!-- ══ 방문내역 세부 팝업 ══ -->
+<div class="modal-wrap" id="visit-detail-modal">
+  <div class="modal" style="max-width:900px;width:96vw;padding:0;overflow:hidden;border-radius:14px;display:flex;flex-direction:column;max-height:90vh">
+    <!-- 헤더 -->
+    <div id="vd-header" style="display:flex;align-items:center;gap:12px;padding:14px 18px;background:#2E7D7A;color:#fff;flex-shrink:0">
+      <span id="vd-no"  style="font-size:20px;font-weight:700"></span>
+      <span id="vd-name" style="font-size:14px;opacity:0.9;flex:1"></span>
+      <span id="vd-count" style="font-size:12px;opacity:0.75"></span>
+      <button onclick="closeModal('visit-detail-modal')" style="border:none;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- 테이블 -->
+    <div style="overflow:auto;flex:1">
+      <table id="vd-table" style="border-collapse:collapse;font-size:12px;width:100%;min-width:600px">
+        <thead id="vd-thead"></thead>
+        <tbody id="vd-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 미니 지도 팝업 ══ -->
+<div class="modal-wrap" id="mini-map-modal">
+  <div class="modal" style="max-width:520px;width:95vw;padding:0;overflow:hidden;border-radius:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #E2E8F0">
+      <div id="mini-map-title" style="font-size:15px;font-weight:600;color:#1E293B">구역 위치</div>
+      <button class="btn btn-sm" onclick="closeModal('mini-map-modal')">✕</button>
+    </div>
+    <div style="position:relative;width:100%;height:360px">
+      <div id="admin-mini-map" style="width:100%;height:100%"></div>
+      <div id="mini-map-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F8FAFC;gap:10px;font-size:13px;color:#64748B">
+        <div style="font-size:28px">🗺</div>
+        <div id="mini-map-loading-text">위치를 불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 구역 편집 모달 ══ -->
+<div class="modal-wrap" id="edit-modal">
+  <div class="modal edit-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="modal-title" style="margin-bottom:0" id="edit-modal-title">구역 편집</div>
+      <button class="btn btn-sm" onclick="closeModal('edit-modal')">닫기</button>
+    </div>
+    <div class="edit-tabs">
+      <button class="edit-tab active" onclick="switchEditTab('info',this)">기본정보</button>
+      <button class="edit-tab" onclick="switchEditTab('units',this)">호수 목록</button>
+      <button class="edit-tab" onclick="switchEditTab('excel',this)">엑셀 교체</button>
+    </div>
+
+    <!-- 기본정보 탭 -->
+    <div id="edit-tab-info" class="edit-tab-content active">
+      <div class="form-row">
+        <label>구역 번호</label>
+        <input type="text" id="edit-no" placeholder="예: 1">
+      </div>
+      <div class="form-row">
+        <label>구역 이름</label>
+        <input type="text" id="edit-name" placeholder="예: 에이스 3,4단지">
+      </div>
+      <div class="form-row">
+        <label>유형</label>
+        <select id="edit-category"><option>로딩 중...</option></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-navy" onclick="saveBasicInfo()">기본정보 저장</button>
+        <button class="btn" onclick="closeModal('edit-modal')">취소</button>
+      </div>
+    </div>
+
+    <!-- 호수 목록 탭 -->
+    <div id="edit-tab-units" class="edit-tab-content">
+      <div class="info-note" style="font-size:11px;margin-bottom:8px">
+        행 번호를 클릭하면 선택됩니다. <strong>Shift+클릭</strong>으로 연속 선택할 수 있습니다.
+      </div>
+      <!-- 선택 액션 바 -->
+      <div class="unit-sel-bar" id="unit-sel-bar">
+        <span class="sel-count">0개 선택됨</span>
+        <button class="unit-sel-btn" onclick="insertUnitAbove()"
+          style="background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE">⬆ 위에 집 삽입</button>
+        <button class="unit-sel-btn" onclick="showMoveToCardPanel()"
+          style="background:#F0FDF4;color:#166534;border-color:#BBF7D0">↪ 다른 카드로 이동</button>
+        <button class="unit-sel-btn" onclick="clearUnitSelection()"
+          style="background:#F1F5F9;color:#475569;border-color:#E2E8F0">✕ 선택 해제</button>
+      </div>
+      <!-- 다른 카드로 이동 패널 -->
+      <div id="move-card-panel" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px">
+        <div style="font-weight:600;color:#166534;margin-bottom:8px">↪ 이동할 구역 선택</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="move-target-select"
+            style="flex:1;padding:7px 10px;border:1px solid #BBF7D0;border-radius:6px;font-size:13px;font-family:inherit;outline:none;min-width:150px">
+            <option value="">-- 구역 선택 --</option>
+          </select>
+          <button class="btn btn-navy" onclick="executeMoveToCard()" style="font-size:12px;padding:7px 14px">이동 실행</button>
+          <button class="btn" onclick="hideMoveToCardPanel()" style="font-size:12px;padding:7px 10px">취소</button>
+        </div>
+        <div style="font-size:11px;color:#166534;margin-top:6px">
+          ⚠ 이동 후 각 구역의 <strong>호수 목록 저장</strong>이 자동으로 실행됩니다.
+        </div>
+      </div>
+      <div class="unit-col-header">
+        <span>#</span><span>도로명</span><span>번지</span><span>건물명</span><span>호수</span><span>동행필수</span>
+      </div>
+      <div class="unit-edit-list" id="unit-edit-list"></div>
+      <div style="font-size:12px;font-weight:500;color:#475569;margin-bottom:6px;margin-top:12px">+ 새 호수 추가</div>
+      <div class="add-unit-row">
+        <input type="text" id="add-road" placeholder="도로명">
+        <input type="text" id="add-jibun" placeholder="번지">
+        <input type="text" id="add-building" placeholder="건물명">
+        <input type="text" id="add-unit" placeholder="호수">
+        <button class="btn btn-sm btn-navy" onclick="addUnit()">추가</button>
+      </div>
+      <div class="modal-footer" style="margin-top:14px">
+        <button class="btn btn-navy" onclick="saveUnits()">호수 목록 저장</button>
+        <button class="btn" onclick="closeModal('edit-modal')">취소</button>
+      </div>
+    </div>
+
+    <!-- 엑셀 교체 탭 -->
+    <div id="edit-tab-excel" class="edit-tab-content">
+      <div class="warn-note">
+        기존 호수 데이터 전체가 새 엑셀로 교체됩니다. 방문 기록은 유지됩니다.
+      </div>
+      <div class="info-note" style="font-size:11px;margin-bottom:10px">
+        열 순서: <strong>도로명 | 번지 | 건물명 | 호수</strong><br>
+        같은 건물은 도로명·번지·건물명을 첫 행에만 입력하고 나머지는 비워두세요.
+      </div>
+      <div class="upload-area" onclick="document.getElementById('replace-file-input').click()" id="replace-upload-area">
+        <div class="upload-icon">📄</div>
+        <p id="replace-upload-label">클릭하여 새 엑셀 파일 선택</p>
+        <div class="upload-hint">.xlsx, .xls 파일 지원</div>
+      </div>
+      <input type="file" id="replace-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleReplaceFile(this)">
+      <div id="replace-preview-wrap" style="display:none">
+        <div style="font-size:12px;font-weight:500;color:#475569;margin-bottom:6px">미리보기 (최대 5행)</div>
+        <div class="excel-preview" id="replace-preview"></div>
+        <div style="font-size:12px;color:#64748B" id="replace-count"></div>
+      </div>
+      <div class="modal-footer" style="margin-top:14px">
+        <button class="btn btn-danger" id="replace-btn" disabled onclick="replaceWithExcel()">엑셀로 전체 교체</button>
+        <button class="btn" onclick="closeModal('edit-modal')">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 미리보기 모달 ══ -->
+<div class="modal-wrap" id="preview-modal">
+  <div class="modal preview-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="modal-title" style="margin-bottom:0">구역카드 미리보기</div>
+      <button class="btn btn-sm" onclick="closeModal('preview-modal')">닫기</button>
+    </div>
+    <div id="preview-content"></div>
+  </div>
+</div>
+
+<!-- ══ 구역 추가 모달 ══ -->
+<div class="modal-wrap" id="territory-modal">
+  <div class="modal">
+    <div class="modal-title">구역 추가</div>
+    <div class="form-row">
+      <label>구역 번호 *</label>
+      <input type="text" id="t-no" placeholder="예: 01">
+    </div>
+    <div class="form-row">
+      <label>구역 이름 *</label>
+      <input type="text" id="t-name" placeholder="예: 에이스 3,4단지">
+    </div>
+    <div class="form-row">
+      <label>유형</label>
+      <select id="t-category"><option>로딩 중...</option></select>
+    </div>
+    <div class="form-row">
+      <label>총 세대수</label>
+      <input type="number" id="t-units" placeholder="예: 68" min="1">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-navy" onclick="addTerritory()">구역 추가</button>
+      <button class="btn" onclick="closeModal('territory-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 엑셀 업로드 모달 ══ -->
+<div class="modal-wrap" id="upload-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">엑셀로 구역카드 생성</div>
+    <div class="info-note" style="font-size:12px;line-height:1.6">
+      <strong>📋 엑셀 포맷 (두 가지 모두 지원)</strong><br>
+      <div style="margin-top:6px;padding:8px;background:#fff;border:1px solid #E2E8F0;border-radius:6px">
+        <div style="font-weight:600;color:#1B3A6B;margin-bottom:3px">① 기본 (헤더부터 시작)</div>
+        <div style="font-size:11px;color:#64748B">헤더: <code>도로명 | 번지 | 건물명 | 세부주소 | 금지 | 메모</code></div>
+      </div>
+      <div style="margin-top:6px;padding:8px;background:#fff;border:1px solid #E2E8F0;border-radius:6px">
+        <div style="font-weight:600;color:#1B3A6B;margin-bottom:3px">② 메타정보 포함 (자동인식)</div>
+        <div style="font-size:11px;color:#64748B">상단에 <code>구역번호 | 636</code>, <code>구역이름 | 에이스5단지</code> 행</div>
+      </div>
+      <div style="margin-top:8px;padding:6px 8px;background:#FEF3C7;border-radius:6px;font-size:11px;color:#92400E">
+        ⚡ <strong>파일명</strong>도 자동 인식: <code>636번구역.xlsx</code> → 번호 636<br>
+        ⚡ <strong>금지 Y</strong> → 해당 세대 '거절' 자동체크<br>
+        ⚡ <strong>메모</strong>는 전도인에게 안 보이고 관리자만 확인
+      </div>
+    </div>
+    <div class="upload-area" onclick="document.getElementById('file-input').click()">
+      <div class="upload-icon">📄</div>
+      <p id="upload-label">클릭하여 엑셀 파일 선택</p>
+      <div class="upload-hint">.xlsx, .xls 파일 지원 · 파일명에서 구역번호 자동 추출</div>
+    </div>
+    <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this)">
+    <div id="excel-preview-wrap" style="display:none">
+      <div id="auto-extract-box" style="display:none;margin-bottom:10px;padding:10px;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;font-size:12px">
+        <div style="font-weight:600;color:#1D4ED8;margin-bottom:4px">✨ 파일에서 자동 추출됨</div>
+        <div id="auto-extract-detail" style="color:#1E40AF"></div>
+      </div>
+      <div style="font-size:12px;font-weight:500;color:#475569;margin-bottom:6px">미리보기 (최대 5행)</div>
+      <div class="excel-preview" id="excel-preview"></div>
+      <div style="font-size:12px;color:#64748B;margin-top:4px" id="excel-count"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <div class="form-row" style="margin:0">
+        <label style="font-size:12px">구역 번호 *</label>
+        <input type="text" id="u-no" placeholder="자동 추출 또는 직접 입력">
+      </div>
+      <div class="form-row" style="margin:0">
+        <label style="font-size:12px">유형 *</label>
+        <select id="u-category"><option>로딩 중...</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label style="font-size:12px">구역 이름 *</label>
+      <input type="text" id="u-name" placeholder="자동 추출 또는 직접 입력 (예: 에이스5단지)">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-navy" onclick="uploadTerritory()" id="upload-btn" disabled>구역카드 생성</button>
+      <button class="btn" onclick="closeModal('upload-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 일괄 업로드 모달 ══ -->
+<div class="modal-wrap" id="batch-upload-modal">
+  <div class="modal" style="max-width:960px">
+    <div class="modal-title">📦 엑셀 일괄 업로드</div>
+    <div class="info-note" style="font-size:12px;line-height:1.6">
+      <strong>📦 여러 구역카드를 한 번에 생성합니다 (최대 600+ 파일 가능)</strong>
+      <div style="margin-top:8px;padding:8px;background:#fff;border:1px solid #BFDBFE;border-radius:6px">
+        <div style="font-weight:600;color:#1B3A6B;margin-bottom:4px">✨ 권장 파일명 형식</div>
+        <code style="background:#EFF6FF;padding:2px 8px;border-radius:4px;color:#1E40AF;font-size:12px">구역번호_구역이름.xlsx</code>
+        <div style="font-size:11px;color:#64748B;margin-top:4px">
+          예: <code>1_에이스3,4단지.xlsx</code>, <code>636_에이스5단지.xlsx</code><br>
+          → 번호와 이름이 자동 인식되어 별도 입력 없이 한 번에 생성됩니다
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#64748B">
+        • 다중 .xlsx 파일 직접 선택 또는 .zip 압축 모두 지원<br>
+        • 다른 파일명 형식(<code>1번구역.xlsx</code>, <code>1.xlsx</code> 등)도 인식됨<br>
+        • 이미 존재하는 구역번호는 자동 <strong style="color:#92400E">건너뜀</strong><br>
+        • 이름 누락 시 표에서 직접 입력 가능
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="form-row" style="margin:0">
+        <label style="font-size:12px">유형(그룹) 일괄 적용 *</label>
+        <select id="bu-category"><option>로딩 중...</option></select>
+      </div>
+      <div class="form-row" style="margin:0">
+        <label style="font-size:12px">총 선택된 파일</label>
+        <input type="text" id="bu-file-count" value="0개" readonly style="background:#F8FAFC">
+      </div>
+    </div>
+
+    <div class="upload-area" onclick="document.getElementById('batch-file-input').click()">
+      <div class="upload-icon">📦</div>
+      <p id="batch-upload-label">엑셀 파일들 또는 ZIP을 선택 (다중 선택 가능)</p>
+      <div class="upload-hint">.xlsx, .xls 다중 선택 또는 .zip 압축 파일</div>
+    </div>
+    <input type="file" id="batch-file-input" accept=".xlsx,.xls,.zip" multiple
+           onchange="handleBatchFiles(this)">
+
+    <div id="batch-preview-wrap" style="display:none;margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;font-weight:600;color:#1B3A6B">📋 업로드 목록</div>
+        <div id="batch-summary" style="font-size:12px;color:#64748B"></div>
+      </div>
+      <div style="max-height:420px;overflow-y:auto;border:1px solid #E2E8F0;border-radius:8px">
+        <table id="batch-preview-table" style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead style="position:sticky;top:0;background:#F8FAFC;z-index:1">
+            <tr>
+              <th style="padding:8px;text-align:left;border-bottom:1px solid #E2E8F0;width:32px"></th>
+              <th style="padding:8px;text-align:left;border-bottom:1px solid #E2E8F0;width:80px">번호</th>
+              <th style="padding:8px;text-align:left;border-bottom:1px solid #E2E8F0">구역이름</th>
+              <th style="padding:8px;text-align:center;border-bottom:1px solid #E2E8F0;width:60px">세대</th>
+              <th style="padding:8px;text-align:center;border-bottom:1px solid #E2E8F0;width:50px">거절</th>
+              <th style="padding:8px;text-align:center;border-bottom:1px solid #E2E8F0;width:50px">메모</th>
+              <th style="padding:8px;text-align:left;border-bottom:1px solid #E2E8F0;width:140px">상태</th>
+            </tr>
+          </thead>
+          <tbody id="batch-preview-tbody"></tbody>
+        </table>
+      </div>
+      <div id="batch-progress-wrap" style="display:none;margin-top:12px">
+        <div style="background:#F1F5F9;border-radius:8px;height:8px;overflow:hidden">
+          <div id="batch-progress-bar" style="background:#1B3A6B;height:100%;width:0%;transition:width 0.2s"></div>
+        </div>
+        <div id="batch-progress-text" style="font-size:12px;color:#64748B;margin-top:6px;text-align:center"></div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-navy" id="batch-upload-btn" onclick="uploadBatchTerritories()" disabled>일괄 생성</button>
+      <button class="btn" onclick="closeModal('batch-upload-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 배정 모달 ══ -->
+<div class="modal-wrap" id="assign-modal">
+  <div class="modal">
+    <div class="modal-title">전도인 배정</div>
+    <div class="info-note" id="assign-info"></div>
+    <div class="form-row">
+      <label>전도인 선택 (최대 6명)</label>
+      <div id="assign-pub-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-navy" onclick="confirmAssign()">배정 확정</button>
+      <button class="btn" onclick="closeModal('assign-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 삭제 확인 모달 ══ -->
+<div class="modal-wrap" id="delete-modal">
+  <div class="modal">
+    <div class="modal-title">명단에서 제거</div>
+    <div class="warn-note">
+      <strong id="delete-name-label"></strong> 전도인을 명단에서 제거하면<br>
+      해당 전도인은 구역카드에 접속할 수 없게 됩니다.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="confirmDelete()">제거 확인</button>
+      <button class="btn" onclick="closeModal('delete-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 메모 추가 모달 ══ -->
+<div class="modal-wrap" id="memo-add-modal">
+  <div class="modal">
+    <div class="modal-title">관리자 메모 추가</div>
+    <div class="warn-note" style="font-size:12px">
+      ⚠ 개인정보(이름·외모·종교·언어 등)는 기록하지 마세요.<br>
+      장소·상황 중심으로만 기록합니다.
+    </div>
+    <div class="form-row">
+      <label>구역 선택 *</label>
+      <select id="ma-territory" style="width:100%;padding:9px 12px;border:1px solid #CBD5E1;border-radius:6px;font-size:14px;font-family:inherit;outline:none">
+        <option value="">구역을 선택하세요</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>메모 유형 *</label>
+      <select id="ma-category" style="width:100%;padding:9px 12px;border:1px solid #CBD5E1;border-radius:6px;font-size:14px;font-family:inherit;outline:none">
+        <option value="general">일반 안내</option>
+        <option value="caution">주의 사항</option>
+        <option value="access">출입 정보</option>
+        <option value="revisit">재방문 정보</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>내용 *</label>
+      <textarea id="ma-content" placeholder="예: 1~3층 엘리베이터 이용 불가 (계단 이용)" rows="4"
+        style="width:100%;padding:9px 12px;border:1px solid #CBD5E1;border-radius:6px;font-size:14px;font-family:inherit;outline:none;resize:vertical;line-height:1.6"></textarea>
+    </div>
+    <div class="form-row">
+      <label>작성자</label>
+      <input type="text" id="ma-author" placeholder="작성자 이름 (선택)" style="width:100%;padding:9px 12px;border:1px solid #CBD5E1;border-radius:6px;font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-navy" onclick="submitAdminMemo()">메모 저장</button>
+      <button class="btn" onclick="closeModal('memo-add-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+
+<script type="module" src="js/admin.js"></script>
+
+<script src="js/map-admin.js"></script>
+
+<script src="js/s13.js"></script>
+
+<script src="js/settings.js"></script>
+
+<!-- 📅 캘린더 날짜 상세 모달 -->
+<div id="cal-modal-overlay" onclick="if(event.target===this)closeCalModal()">
+  <div id="cal-modal">
+    <div class="cal-modal-header">
+      <div class="cal-modal-date" id="cal-modal-date"></div>
+      <div class="cal-modal-count" id="cal-modal-count"></div>
+      <button class="cal-modal-close" onclick="closeCalModal()">✕</button>
+    </div>
+    <div class="cal-modal-body" id="cal-modal-body"></div>
+  </div>
+</div>
+
+<!-- ⚡ 자동 배분 오버레이 패널 -->
+<div id="auto-dist-overlay">
+  <div class="adp-wrap">
+    <!-- 헤더 -->
+    <div class="adp-header">
+      <div class="adp-header-title">⚡ 자동 배분 설정</div>
+      <button class="adp-close" onclick="closeAutoDistPanel()">✕</button>
+    </div>
+
+    <!-- 설정 본문 -->
+    <div class="adp-body">
+
+      <!-- 배분 방식 -->
+      <div class="adp-section">
+        <div class="adp-section-title">배분 방식</div>
+        <label class="adp-label">
+          <input type="radio" name="adp-mode" id="adp-mode-smart" value="smart" checked onchange="adpOnModeChange()">
+          스마트 배분 <span class="adp-section-sub">(우선순위·유형 설정 적용)</span>
+        </label>
+        <label class="adp-label">
+          <input type="radio" name="adp-mode" id="adp-mode-byno" value="byno" onchange="adpOnModeChange()">
+          번호순 배분 <span class="adp-section-sub">(구역 번호 오름차순 · 빠른 배분용)</span>
+        </label>
+        <div id="adp-byno-notice" style="display:none;margin-top:8px;padding:9px 11px;background:#FEF3C7;border-radius:7px;font-size:12px;color:#92400E;line-height:1.6;border:1px solid #FDE68A">
+          ⚠️ <strong>번호순 배분</strong>은 우선순위·유형 설정을 무시하고 구역 번호 오름차순으로 요일별 순환 배분합니다.<br>
+          세밀한 배분이 필요할 경우 <strong>스마트 배분</strong>을 사용하세요.
+        </div>
+      </div>
+
+      <hr class="adp-divider">
+
+      <!-- 대상 요일 -->
+      <div class="adp-section">
+        <div class="adp-section-title">대상 요일</div>
+        <label class="adp-label"><input type="radio" name="adp-target" value="all" checked onchange="adpOnTargetChange()"> 활성 요일 전체</label>
+        <label class="adp-label"><input type="radio" name="adp-target" value="current" onchange="adpOnTargetChange()"> 현재 선택 요일만</label>
+        <label class="adp-label"><input type="radio" name="adp-target" value="pick" onchange="adpOnTargetChange()"> 요일 직접 선택</label>
+        <div id="adp-day-picks" style="display:none;margin-top:8px;padding:8px 10px;background:#F8FAFC;border-radius:7px;border:1px solid #E2E8F0">
+          <div id="adp-day-pick-boxes" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+
+      <hr class="adp-divider">
+
+      <!-- 요일당 배분 수 -->
+      <div class="adp-section">
+        <div class="adp-section-title">요일당 배분 수</div>
+        <label class="adp-label"><input type="radio" name="adp-count" value="auto" checked> 자동 균등 분배</label>
+        <label class="adp-label" style="gap:6px">
+          <input type="radio" name="adp-count" value="manual">
+          직접 입력
+          <input class="adp-count-input" type="number" id="adp-count-val" min="1" max="99" value="5" onclick="document.querySelector('[name=adp-count][value=manual]').checked=true">
+          장
+        </label>
+      </div>
+
+      <hr class="adp-divider">
+
+      <!-- 우선순위 (스마트 배분 전용) -->
+      <div class="adp-section adp-smart-only">
+        <div class="adp-section-title">배분 우선순위 <span class="adp-section-sub">(복수 선택 → 순서대로 적용)</span></div>
+        <label class="adp-label"><input type="checkbox" id="adp-pri-unassigned" checked> 미배정 카드 우선</label>
+        <label class="adp-label"><input type="checkbox" id="adp-pri-oldest" checked> 오래된 순 (마지막 배정일 기준)</label>
+        <label class="adp-label"><input type="checkbox" id="adp-pri-lowrate"> 진행률 낮은 순</label>
+      </div>
+
+      <hr class="adp-divider adp-smart-only">
+
+      <!-- 카테고리별 균등 배분 (스마트 배분 전용) -->
+      <div class="adp-section adp-smart-only">
+        <div class="adp-section-title">유형별 고르게 배분 <span class="adp-section-sub">(편지·개인 구역 제외)</span></div>
+        <label class="adp-label"><input type="checkbox" id="adp-cat-dist" checked> 각 요일에 유형별로 고르게 섞어 배분</label>
+      </div>
+
+      <hr class="adp-divider adp-smart-only">
+
+      <!-- 기존 배분 처리 -->
+      <div class="adp-section">
+        <div class="adp-section-title">기존 배분 처리</div>
+        <label class="adp-label"><input type="radio" name="adp-existing" value="keep" checked> 유지 후 추가 (기존 배분된 카드 보존)</label>
+        <label class="adp-label"><input type="radio" name="adp-existing" value="reset"> 초기화 후 재배분 (기존 모두 제거)</label>
+      </div>
+
+      <!-- 미리보기 버튼 -->
+      <button class="adp-preview-btn" onclick="previewAutoDist()">🔍 배분 미리보기</button>
+
+      <!-- 미리보기 결과 -->
+      <div id="adp-preview" style="display:none"></div>
+
+    </div><!-- /adp-body -->
+
+    <!-- 하단 버튼 -->
+    <div class="adp-footer">
+      <button class="adp-btn-cancel" onclick="closeAutoDistPanel()">취소</button>
+      <button class="adp-btn-confirm" id="adp-confirm-btn" disabled onclick="confirmAutoDist()">⚡ 배분 확정</button>
+    </div>
+  </div>
+</div>
+
+<!-- 서비스워커 등록 -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin.html' })
+      .then(function(reg) { console.log('[SW] 관리자 SW 등록 완료', reg.scope); })
+      .catch(function(err) { console.warn('[SW] 등록 실패', err); });
+  });
+}
+</script>
+
+</body>
+</html>

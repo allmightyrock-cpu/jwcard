@@ -1,0 +1,39 @@
+{
+  "id": "/admin.html",
+  "name": "JW카드 관리자",
+  "short_name": "관리자",
+  "description": "JW카드 관리자 모드",
+  "start_url": "/admin.html?pwa=1",
+  "scope": "/admin.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#14532D",
+  "background_color": "#14532D",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/icon-admin-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-admin-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-admin-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-admin-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+/config.js
+  Content-Type: application/javascript
+  Cache-Control: no-cache
+
+/manifest.json
+  Content-Type: application/manifest+json
+  Cache-Control: no-cache
+
+/sw.js
+  Content-Type: application/javascript
+  Cache-Control: no-store, no-cache
+
+/publisher.html
+  Cache-Control: no-cache
+
+/cart.html
+  Cache-Control: no-cache
