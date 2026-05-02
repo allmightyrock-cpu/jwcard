@@ -383,17 +383,31 @@
 
   /* ── 편집 모달 ── */
   .edit-modal{max-width:600px;width:95vw;transition:max-width .25s ease,max-height .25s ease}
-  .edit-modal.expanded{max-width:960px;width:95vw;max-height:92vh;display:flex;flex-direction:column}
-  .edit-modal.fullscreen{max-width:100vw!important;width:100vw!important;max-height:100vh!important;height:100vh;margin:0!important;border-radius:0!important;display:flex;flex-direction:column}
+  .edit-modal.expanded{max-width:1100px;width:97vw;max-height:94vh;height:94vh;display:flex;flex-direction:column;padding:16px 20px 12px}
+  .edit-modal.fullscreen{max-width:100vw!important;width:100vw!important;max-height:100vh!important;height:100vh;margin:0!important;border-radius:0!important;display:flex;flex-direction:column;padding:16px 20px 12px}
+  /* 탭 컨텐츠 → flex column으로 남은 높이 채움 */
   .edit-modal.expanded .edit-tab-content.active,
-  .edit-modal.fullscreen .edit-tab-content.active{flex:1;overflow-y:auto;min-height:0}
+  .edit-modal.fullscreen .edit-tab-content.active{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+  /* units 탭 내부 레이아웃 */
+  .edit-modal.expanded #edit-tab-units,
+  .edit-modal.fullscreen #edit-tab-units{display:flex!important;flex-direction:column;min-height:0;height:100%}
+  /* 테이블 영역이 남은 높이 모두 차지 */
+  .edit-modal.expanded .unit-edit-list,
+  .edit-modal.fullscreen .unit-edit-list{flex:1;max-height:none!important;min-height:0}
+  /* 고정 요소는 축소 방지 */
+  .edit-modal.expanded .info-note,.edit-modal.fullscreen .info-note,
+  .edit-modal.expanded .unit-sel-bar,.edit-modal.fullscreen .unit-sel-bar,
+  .edit-modal.expanded .addr-change-bar,.edit-modal.fullscreen .addr-change-bar,
+  .edit-modal.expanded .addr-tbl-hdr,.edit-modal.fullscreen .addr-tbl-hdr,
+  .edit-modal.expanded .addr-add-btn,.edit-modal.fullscreen .addr-add-btn,
+  .edit-modal.expanded .modal-footer,.edit-modal.fullscreen .modal-footer{flex-shrink:0}
   .edit-modal.expanded .modal-footer,
-  .edit-modal.fullscreen .modal-footer{position:static!important;margin-bottom:0!important;padding-top:12px}
+  .edit-modal.fullscreen .modal-footer{position:static!important;margin-bottom:0!important;padding-top:10px;margin-top:0}
   .edit-modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-shrink:0}
   .edit-modal-acts{display:flex;align-items:center;gap:6px}
   .btn-expand{padding:4px 8px;border-radius:6px;border:1px solid #E2E8F0;background:#F8FAFC;cursor:pointer;font-size:14px;color:#64748B;line-height:1;transition:all .15s}
   .btn-expand:hover{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
-  .edit-tabs{display:flex;border-bottom:1px solid #E2E8F0;margin-bottom:16px}
+  .edit-tabs{display:flex;border-bottom:1px solid #E2E8F0;margin-bottom:16px;flex-shrink:0}
   .edit-tab{padding:9px 16px;font-size:13px;cursor:pointer;border:none;background:none;font-family:inherit;color:#64748B;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s}
   .edit-tab.active{color:#1B3A6B;border-bottom-color:#1B3A6B;font-weight:500}
   .edit-tab-content{display:none}
