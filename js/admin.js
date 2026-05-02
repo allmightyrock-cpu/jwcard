@@ -2213,7 +2213,7 @@ window.incompleteTerritory = async function(id) {
 // 미리보기 — 실제 publisher.html을 새 창으로 열기
 window.previewTerritory = function(id) {
   try { sessionStorage.setItem('jwcard_admin_preview', id); } catch(e) {}
-  window.open('publisher.html?preview=1&id=' + encodeURIComponent(id) + '&_t=' + Date.now(), '_blank');
+  window.open('publisher.html?preview=1&id=' + encodeURIComponent(id) + '&_t=' + Date.now(), '_blank', 'width=480,height=860,resizable=yes');
 };
 
 
