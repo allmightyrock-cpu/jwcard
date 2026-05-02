@@ -2043,7 +2043,10 @@ const db = getFirestore(app);
   try {
     const snap = await getDocs(query(collection(db, 'adminNotices'), where('active', '==', true)));
     if (snap.empty) return;
-    const n = snap.docs[0].data();
+    // target 필터: 'all' 또는 'publisher' 대상 공지만 표시 (target 없으면 all로 간주)
+    const validDocs = snap.docs.filter(d => { const t = d.data().target || 'all'; return t === 'all' || t === 'publisher'; });
+    if (!validDocs.length) return;
+    const n = validDocs[0].data();
     // 만료일 체크
     if (n.expiresAt) {
       const expDate = n.expiresAt.toDate ? n.expiresAt.toDate() : new Date(n.expiresAt);
@@ -3338,9 +3341,9 @@ function extractFloor(unitStr) {
 
 function buildSections(units, visitMap) {
   try {
-  // 3단계 그룹핑: 건물 → 층 → 호수
-  const bldGroups = {};   // key: road__jibun__building
-  const bldOrder = [];
+  // 2단계 그룹핑: 건물 → 호수 (라인별 연속 표시 — 층별 서브그룹 없음)
+  const bldGroups = {};
+  const bldOrder  = [];
 
   units.forEach((u, i) => {
     const bldKey = `${u.road}__${u.jibun}__${u.building}`;
@@ -3349,52 +3352,39 @@ function buildSections(units, visitMap) {
       const bldLabel = [addrPart, u.building].filter(Boolean).join(' · ') || '—';
       bldGroups[bldKey] = {
         bldLabel, road: u.road||'', jibun: u.jibun||'', building: u.building||'',
-        floors: {}, floorOrder: []
+        entries: []
       };
       bldOrder.push(bldKey);
     }
-    const bld = bldGroups[bldKey];
     const floorInfo = extractFloor(u.unit);
-    const floorKey = floorInfo.label || '__none__';
-    if (!bld.floors[floorKey]) {
-      bld.floors[floorKey] = { label: floorInfo.label, order: floorInfo.order, units: [], indices: [] };
-      bld.floorOrder.push(floorKey);
-    }
-    bld.floors[floorKey].units.push(u);
-    bld.floors[floorKey].indices.push(i);
+    bldGroups[bldKey].entries.push({ u, i, floorOrder: floorInfo.order, floorLabel: floorInfo.label });
   });
 
-  // _sections 구축 (건물+층 조합)
+  // _sections 구축 (건물 단위 — 1건물 1섹션)
   _sections = [];
   bldOrder.forEach(bldKey => {
     const bld = bldGroups[bldKey];
-    // 층 정렬
-    const sortedFloors = bld.floorOrder
-      .map(fk => bld.floors[fk])
-      .sort((a, b) => a.order - b.order);
-
-    const hasMultiFloor = sortedFloors.length > 1 || sortedFloors[0]?.label !== null;
-
-    sortedFloors.forEach(floor => {
-      const secKey = `${bldKey}__${floor.label||'none'}`;
-      _sections.push({
-        key: secKey,
-        bldKey,
-        bldLabel: bld.bldLabel,
-        road: bld.road, jibun: bld.jibun, building: bld.building,
-        floorLabel: hasMultiFloor ? floor.label : null,
-        label: floor.label ? `${bld.building||bld.bldLabel} ${floor.label}` : bld.bldLabel,
-        units: floor.units,
-        indices: floor.indices
-      });
+    // 층 오름차순 정렬 (같은 층 안에서는 입력 순서 유지)
+    bld.entries.sort((a, b) => a.floorOrder !== b.floorOrder ? a.floorOrder - b.floorOrder : a.i - b.i);
+    _sections.push({
+      key:        bldKey,
+      bldKey,
+      bldLabel:   bld.bldLabel,
+      road:       bld.road,
+      jibun:      bld.jibun,
+      building:   bld.building,
+      floorLabel: null,
+      label:      bld.bldLabel,
+      units:       bld.entries.map(e => e.u),
+      indices:     bld.entries.map(e => e.i),
+      floorLabels: bld.entries.map(e => e.floorLabel), // 인라인 층 구분선용
     });
   });
 
   renderUnitList(visitMap);
   } catch(e) {
     console.error('buildSections error:', e);
-    // 오류 시 단순 렌더링으로 폴백
-    _sections = [{ key:'all', label:'전체', road:'', jibun:'', building:'', floorLabel:null, units, indices: units.map((_,i)=>i) }];
+    _sections = [{ key:'all', label:'전체', road:'', jibun:'', building:'', floorLabel:null, floorLabels:[], units, indices: units.map((_,i)=>i) }];
     renderUnitList(visitMap);
   }
 }
@@ -3435,6 +3425,17 @@ function renderUnitList(visitMap) {
       const code = visit?.code || null;
       const isDimmed = status === 'partial' && hereAt !== undefined && globalIdx > hereAt && !code;
       const isEscort = code === 'escort' || u.escortRequired;
+
+      // 층 구분선 (층이 바뀔 때 얇은 인라인 구분선 표시)
+      const curFloorLbl  = sec.floorLabels?.[localIdx] || null;
+      const prevFloorLbl = localIdx > 0 ? (sec.floorLabels?.[localIdx - 1] || null) : null;
+      if (curFloorLbl && (localIdx === 0 || curFloorLbl !== prevFloorLbl)) {
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 16px 3px;pointer-events:none">
+          <div style="flex:1;height:1px;background:#E2E8F0"></div>
+          <span style="font-size:10px;color:#94A3B8;font-weight:600;white-space:nowrap;letter-spacing:0.3px">${curFloorLbl}</span>
+          <div style="flex:1;height:1px;background:#E2E8F0"></div>
+        </div>`;
+      }
 
       // 여기까지 마커
       if (status === 'partial' && hereAt !== undefined && globalIdx === hereAt + 1 && !shownHere) {
@@ -4823,15 +4824,19 @@ window.saveAddrEdit = async function() {
 
 <!-- ══ iOS/iPadOS PWA 자동 설치 안내 팝업 ══ -->
 <div id="ios-install-popup" style="display:none;position:fixed;inset:0;z-index:9500;align-items:flex-end;justify-content:center">
+  <!-- 반투명 배경 -->
   <div onclick="dismissIOSPwaPopup(false)"
        style="position:absolute;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+  <!-- 시트 카드 -->
   <div id="ios-install-sheet"
        style="position:relative;z-index:1;background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;
               padding-bottom:env(safe-area-inset-bottom,16px);box-shadow:0 -8px 40px rgba(0,0,0,0.2);
               transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.15,0.64,1)">
+    <!-- 드래그 핸들 -->
     <div style="display:flex;justify-content:center;padding:14px 0 6px">
       <div style="width:40px;height:4px;background:#E2E8F0;border-radius:2px"></div>
     </div>
+    <!-- 헤더 -->
     <div style="padding:4px 20px 16px;display:flex;align-items:center;gap:14px">
       <div style="width:52px;height:52px;background:linear-gradient(135deg,#1B3A6B 0%,#2B5299 100%);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(27,58,107,0.35)">
         <span style="font-size:28px">📋</span>
@@ -4843,6 +4848,7 @@ window.saveAddrEdit = async function() {
       <button onclick="dismissIOSPwaPopup(false)"
               style="background:none;border:none;font-size:22px;color:#CBD5E1;cursor:pointer;padding:4px;line-height:1;flex-shrink:0">✕</button>
     </div>
+    <!-- 기기 안내 탭 -->
     <div id="iip-steps-iphone" style="padding:0 20px 8px">
       <div style="font-size:12px;font-weight:600;color:#64748B;margin-bottom:10px;letter-spacing:0.3px">🍎 아이폰 설치 방법</div>
       <div style="display:flex;flex-direction:column;gap:10px">
@@ -4882,6 +4888,7 @@ window.saveAddrEdit = async function() {
         </div>
       </div>
     </div>
+    <!-- 하단 버튼 -->
     <div style="padding:16px 20px;display:flex;gap:10px">
       <button onclick="dismissIOSPwaPopup(true)"
               style="flex:1;padding:14px;background:linear-gradient(135deg,#2B5299 0%,#1B3A6B 100%);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(27,58,107,0.3)">
@@ -5127,13 +5134,15 @@ window.saveAddrEdit = async function() {
   window.visualViewport.addEventListener('resize', () => {
     const vvH     = window.visualViewport.height;
     const winH    = window.innerHeight;
-    const kbH     = winH - vvH;
-    const kbOn    = kbH > 120;
+    const kbH     = winH - vvH;          // 키보드 높이 (0이면 키보드 없음)
+    const kbOn    = kbH > 120;           // 120px 이상이면 키보드 등장으로 판단
 
+    // 로그인 화면: 키보드 올라오면 flex-start로 전환 → 입력란이 위로 밀리지 않음
     const ls = document.getElementById('login-screen');
     if (ls && ls.style.display !== 'none') {
       if (kbOn) {
         ls.style.justifyContent = 'flex-start';
+        // 카드가 너무 상단에 붙지 않도록 여백 확보
         const topPad = Math.max(20, Math.round((vvH - 420) / 2));
         ls.style.paddingTop = topPad + 'px';
       } else {
@@ -5143,12 +5152,13 @@ window.saveAddrEdit = async function() {
     }
   });
 
+  // 입력란 포커스 시 키보드 올라온 후 해당 입력란이 화면 중앙에 오도록 스크롤
   document.addEventListener('focusin', (e) => {
     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') return;
     clearTimeout(_kbTimer);
     _kbTimer = setTimeout(() => {
       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 380);
+    }, 380); // 키보드 슬라이드 애니메이션 완료 후
   });
 })();
 

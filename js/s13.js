@@ -401,3 +401,247 @@ window.downloadS13Excel = function() {
   XLSX.utils.book_append_sheet(wb, ws, 'S-13');
   XLSX.writeFile(wb, 'S-13_' + serviceYear + '봉사연도_' + (cong || '구역배정기록') + '.xlsx');
 };
+
+
+// ══════════════════════════════════════════════════════
+// S-13 기록 관리 (편집 / 삭제 / 기간 일괄 삭제)
+// ══════════════════════════════════════════════════════
+
+// ── 서브탭 전환 ──
+window.s13SwitchSubtab = function(tab) {
+  var isPreview = (tab === 'preview');
+  document.getElementById('s13-panel-preview').style.display = isPreview ? '' : 'none';
+  document.getElementById('s13-panel-manage').style.display  = isPreview ? 'none' : '';
+
+  var stPrev = document.getElementById('s13-st-preview');
+  var stMgmt = document.getElementById('s13-st-manage');
+  if (stPrev) {
+    stPrev.style.color       = isPreview ? '#1B3A6B' : '#94A3B8';
+    stPrev.style.borderBottomColor = isPreview ? '#1B3A6B' : 'transparent';
+  }
+  if (stMgmt) {
+    stMgmt.style.color       = isPreview ? '#94A3B8' : '#1B3A6B';
+    stMgmt.style.borderBottomColor = isPreview ? 'transparent' : '#1B3A6B';
+  }
+
+  // 기록관리 탭 진입 시 날짜 기본값 설정
+  if (!isPreview) {
+    var ms = document.getElementById('s13m-start');
+    var me = document.getElementById('s13m-end');
+    if (ms && !ms.value) {
+      var today = new Date();
+      var sixAgo = new Date(today); sixAgo.setMonth(sixAgo.getMonth() - 6);
+      ms.value = _s13ToInputDate(sixAgo);
+      me.value = _s13ToInputDate(today);
+    }
+  }
+};
+
+// ── 관리 목록 로드·렌더링 ──
+window.renderS13Manager = function() {
+  var startVal = (document.getElementById('s13m-start') || {}).value || '';
+  var endVal   = (document.getElementById('s13m-end')   || {}).value || '';
+  var range    = {
+    start: startVal ? new Date(startVal + 'T00:00:00') : null,
+    end:   endVal   ? new Date(endVal   + 'T23:59:59') : null
+  };
+
+  var territories = (window._territories || []).slice()
+    .sort(function(a, b) { return parseInt(a.no || 0) - parseInt(b.no || 0); });
+
+  // 기간 내 cycleHistory 항목을 플랫 리스트로 수집
+  var records = [];
+  territories.forEach(function(t) {
+    var hist = t.cycleHistory || [];
+    hist.forEach(function(h, idx) {
+      if (!range.start && !range.end) {
+        records.push({ terId: t.id, no: t.no||'', name: t.name||'', h: h, histIdx: idx });
+        return;
+      }
+      // 배정일 또는 완료일이 기간 내이면 포함
+      var inRange = s13InRange(h.completedAt, range) || s13InRange(h.assignedAt, range);
+      if (inRange) records.push({ terId: t.id, no: t.no||'', name: t.name||'', h: h, histIdx: idx });
+    });
+  });
+
+  var tableEl = document.getElementById('s13m-table');
+  var toolbar = document.getElementById('s13m-toolbar');
+  if (!tableEl) return;
+
+  if (!records.length) {
+    tableEl.innerHTML = '<div style="text-align:center;padding:32px;color:#94A3B8;font-size:13px;border:1.5px dashed #E2E8F0;border-radius:10px">해당 기간에 배정 기록이 없습니다.</div>';
+    if (toolbar) toolbar.style.display = 'none';
+    return;
+  }
+
+  if (toolbar) {
+    toolbar.style.display = 'flex';
+    document.getElementById('s13m-sel-count').textContent = '총 ' + records.length + '건';
+  }
+
+  var rows = records.map(function(r, i) {
+    var pubs = Array.isArray(r.h.publishers) ? r.h.publishers.join(', ') : (r.h.publishers || '');
+    var aDate = s13Fmt(r.h.assignedAt)  || '—';
+    var cDate = r.h.completedAt ? s13Fmt(r.h.completedAt) : '<span style="color:#B45309;font-weight:600">진행중</span>';
+    return '<tr style="border-bottom:1px solid #F1F5F9">'
+      + '<td style="padding:8px 10px;text-align:center"><input type="checkbox" class="s13m-chk" data-idx="' + i + '" onchange="s13UpdateSelCount()"></td>'
+      + '<td style="padding:8px 6px;font-weight:700;color:#1B3A6B;text-align:center">' + r.no + '</td>'
+      + '<td style="padding:8px 6px;font-size:12px;color:#374151;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + r.name + '">' + r.name + '</td>'
+      + '<td style="padding:8px 6px;font-size:12px;color:#1E293B">' + pubs + '</td>'
+      + '<td style="padding:8px 6px;font-size:12px;color:#64748B;white-space:nowrap">' + aDate + '</td>'
+      + '<td style="padding:8px 6px;font-size:12px;white-space:nowrap">' + cDate + '</td>'
+      + '<td style="padding:8px 6px;white-space:nowrap">'
+      +   '<button class="btn btn-sm" onclick="s13OpenEdit(' + i + ')" style="font-size:11px;padding:3px 9px;margin-right:4px">✏ 편집</button>'
+      +   '<button class="btn btn-sm" onclick="s13DeleteOne(' + i + ')" style="font-size:11px;padding:3px 9px;background:#FEF2F2;color:#991B1B;border-color:#FECACA">🗑</button>'
+      + '</td>'
+      + '</tr>';
+  }).join('');
+
+  tableEl.innerHTML =
+    '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+    + '<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">'
+    + '<th style="padding:8px 10px;text-align:center;width:36px"><input type="checkbox" id="s13m-chk-all" onchange="s13CheckAll(this.checked)"></th>'
+    + '<th style="padding:8px 6px;text-align:center;color:#475569;font-size:11px;width:50px">구역</th>'
+    + '<th style="padding:8px 6px;text-align:left;color:#475569;font-size:11px">구역명</th>'
+    + '<th style="padding:8px 6px;text-align:left;color:#475569;font-size:11px">전도인</th>'
+    + '<th style="padding:8px 6px;text-align:left;color:#475569;font-size:11px;white-space:nowrap">배정일</th>'
+    + '<th style="padding:8px 6px;text-align:left;color:#475569;font-size:11px;white-space:nowrap">완료일</th>'
+    + '<th style="padding:8px 6px;text-align:left;color:#475569;font-size:11px">작업</th>'
+    + '</tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table></div>'
+    + '<div style="font-size:11px;color:#94A3B8;margin-top:8px;text-align:right">총 ' + records.length + '건</div>';
+
+  // 현재 records를 전역 보관 (편집/삭제 시 참조)
+  window._s13mRecords = records;
+};
+
+// ── 체크박스 전체 선택 ──
+window.s13CheckAll = function(checked) {
+  document.querySelectorAll('.s13m-chk').forEach(function(el) { el.checked = checked; });
+  s13UpdateSelCount();
+};
+
+// ── 선택 카운트 업데이트 ──
+window.s13UpdateSelCount = function() {
+  var cnt = document.querySelectorAll('.s13m-chk:checked').length;
+  var total = (window._s13mRecords || []).length;
+  var el = document.getElementById('s13m-sel-count');
+  if (el) el.textContent = cnt > 0 ? cnt + '건 선택 / 총 ' + total + '건' : '총 ' + total + '건';
+};
+
+// ── 편집 모달 열기 ──
+window.s13OpenEdit = function(recordIdx) {
+  var r = (window._s13mRecords || [])[recordIdx];
+  if (!r) return;
+  window._s13EditIdx = recordIdx;
+
+  var subtitle = document.getElementById('s13-edit-subtitle');
+  if (subtitle) subtitle.textContent = '구역 ' + r.no + ' · ' + r.name;
+
+  var pubs = Array.isArray(r.h.publishers) ? r.h.publishers.join(', ') : (r.h.publishers || '');
+  document.getElementById('s13-edit-pub').value = pubs;
+  document.getElementById('s13-edit-assigned').value  = r.h.assignedAt  ? _s13ToInputDate(s13ParseDate(r.h.assignedAt))  : '';
+  document.getElementById('s13-edit-completed').value = r.h.completedAt ? _s13ToInputDate(s13ParseDate(r.h.completedAt)) : '';
+
+  openModal('s13-edit-modal');
+};
+
+// ── 편집 저장 ──
+window.s13SaveEdit = async function() {
+  var idx = window._s13EditIdx;
+  var r   = (window._s13mRecords || [])[idx];
+  if (!r) return;
+
+  var pubStr = (document.getElementById('s13-edit-pub').value || '').trim();
+  var aStr   = document.getElementById('s13-edit-assigned').value;
+  var cStr   = document.getElementById('s13-edit-completed').value;
+
+  if (!pubStr) { alert('전도인 이름을 입력해 주세요.'); return; }
+
+  var publishers   = pubStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+  var assignedAt   = aStr ? new Date(aStr + 'T00:00:00') : null;
+  var completedAt  = cStr ? new Date(cStr + 'T23:59:59') : null;
+
+  try {
+    // 해당 구역의 cycleHistory 전체를 가져와서 idx 항목 교체 후 저장
+    var territory = (window._territories || []).find(function(t) { return t._id === r.terId; });
+    if (!territory) { alert('구역을 찾을 수 없습니다.'); return; }
+    var newHistory = (territory.cycleHistory || []).slice();
+    newHistory[r.histIdx] = { publishers: publishers, assignedAt: assignedAt, completedAt: completedAt };
+
+    await window._db_updateTerritory(r.terId, { cycleHistory: newHistory });
+
+    // 로컬 캐시 업데이트
+    territory.cycleHistory = newHistory;
+    closeModal('s13-edit-modal');
+    renderS13Manager();
+    alert('✅ 저장됐습니다.');
+  } catch(e) {
+    console.error('S13 편집 오류:', e);
+    alert('저장 중 오류가 발생했습니다: ' + e.message);
+  }
+};
+
+// ── 단건 삭제 ──
+window.s13DeleteOne = async function(recordIdx) {
+  var r = (window._s13mRecords || [])[recordIdx];
+  if (!r) return;
+  var pubs = Array.isArray(r.h.publishers) ? r.h.publishers.join(', ') : (r.h.publishers || '');
+  if (!confirm('구역 ' + r.no + ' — ' + pubs + '\n이 기록을 삭제하시겠습니까? 복구할 수 없습니다.')) return;
+  await _s13RemoveRecords([r]);
+  renderS13Manager();
+};
+
+// ── 선택 삭제 ──
+window.s13DeleteSelected = async function() {
+  var checked = Array.from(document.querySelectorAll('.s13m-chk:checked'));
+  if (!checked.length) { alert('삭제할 항목을 선택해 주세요.'); return; }
+  var records = window._s13mRecords || [];
+  var targets = checked.map(function(el) { return records[parseInt(el.dataset.idx)]; }).filter(Boolean);
+  if (!confirm(targets.length + '건의 배정 기록을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.')) return;
+  await _s13RemoveRecords(targets);
+  renderS13Manager();
+};
+
+// ── 기간 전체 삭제 ──
+window.s13DeleteByRange = async function() {
+  var records = window._s13mRecords || [];
+  if (!records.length) { alert('조회된 기록이 없습니다.'); return; }
+  var startVal = (document.getElementById('s13m-start') || {}).value || '';
+  var endVal   = (document.getElementById('s13m-end')   || {}).value || '';
+  var label    = (startVal || '시작일 없음') + ' ~ ' + (endVal || '종료일 없음');
+  if (!confirm('⚠ 기간 전체 삭제\n\n[' + label + ']\n해당 기간의 배정 기록 ' + records.length + '건을 모두 삭제합니다.\n\n삭제 후 복구할 수 없습니다. 계속하시겠습니까?')) return;
+  await _s13RemoveRecords(records);
+  renderS13Manager();
+  alert('✅ ' + records.length + '건이 삭제됐습니다.');
+};
+
+// ── 공통 삭제 로직 (여러 records를 구역별로 묶어 한 번에 업데이트) ──
+async function _s13RemoveRecords(targets) {
+  // terId별로 삭제할 histIdx 모음
+  var byTer = {};
+  targets.forEach(function(r) {
+    if (!byTer[r.terId]) byTer[r.terId] = [];
+    byTer[r.terId].push(r.histIdx);
+  });
+
+  var terIds = Object.keys(byTer);
+  for (var i = 0; i < terIds.length; i++) {
+    var terId = terIds[i];
+    var territory = (window._territories || []).find(function(t) { return t._id === terId; });
+    if (!territory) continue;
+
+    var removeSet = {};
+    byTer[terId].forEach(function(idx) { removeSet[idx] = true; });
+    var newHistory = (territory.cycleHistory || []).filter(function(_, idx) { return !removeSet[idx]; });
+
+    try {
+      await window._db_updateTerritory(terId, { cycleHistory: newHistory });
+      territory.cycleHistory = newHistory;
+    } catch(e) {
+      console.error('삭제 오류 (구역 ' + terId + '):', e);
+      alert('삭제 중 오류: ' + e.message);
+    }
+  }
+}

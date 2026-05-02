@@ -273,6 +273,7 @@ async function _loadCartConfig() {
     S.role = 'member'; // 항상 봉사자 모드로 자동 입장 (인도자 모드는 PIN 필요)
     localStorage.setItem('cw_myname', _savedPubName);
     await loadData();
+    loadCartNotice(); // 공지 비동기 로드 (로그인 후)
     return;
   }
 
@@ -292,6 +293,8 @@ const S = {
   settingsModal:false, settingsTab:"members",
   applyModal:false,
   showCompleted:false,
+  notice:null,           // 공지 { title, body }
+  noticeDismissed:false, // 이번 세션 중 닫은 경우
 };
 
 // ── UTILS ──
@@ -550,6 +553,20 @@ function renderScheduleCard(s,isDone=false){
   </div>`;
 }
 
+function cartNoticeBannerHTML(){
+  if(!S.notice || S.noticeDismissed) return "";
+  const title = S.notice.title || '공지';
+  const body  = (S.notice.body || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+  return `<div id="cart-notice-banner" style="background:linear-gradient(135deg,#FFF7ED,#FFFBEB);border:1.5px solid #FED7AA;border-radius:12px;padding:14px 16px;margin-bottom:14px;animation:fadeIn .4s ease">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
+      <span style="font-size:15px;flex-shrink:0">📢</span>
+      <span style="font-size:13px;font-weight:700;color:#92400E;flex:1">${title}</span>
+      <button onclick="S.noticeDismissed=true;render()" style="background:none;border:none;color:#D97706;cursor:pointer;font-size:20px;padding:0;line-height:1">×</button>
+    </div>
+    <div style="font-size:13px;color:#78350F;line-height:1.7;white-space:pre-wrap;word-break:break-word">${body}</div>
+  </div>`;
+}
+
 function listHTML(){
   if(S.loadErr) return `<div class="empty-state">
     <div class="empty-state-icon">⚠️</div>
@@ -565,7 +582,7 @@ function listHTML(){
     <div class="empty-state-text">등록된 명단이 없습니다</div>
     ${S.role==="admin"?`<div style="margin-top:14px"><button class="btn btn-navy btn-sm" id="ecreate">첫 명단 만들기</button></div>`:`<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">인도자가 아직 명단을 등록하지 않았거나,<br>다른 탭을 확인해 보세요.</div>`}
   </div>`;
-  let html=active.map(s=>renderScheduleCard(s,false)).join("");
+  let html=cartNoticeBannerHTML()+active.map(s=>renderScheduleCard(s,false)).join("");
   if(!active.length) html+=`<div class="empty-state" style="padding:32px 20px">
     <div class="empty-state-icon">📋</div>
     <div class="empty-state-text">진행 중인 명단이 없습니다</div>
@@ -1100,6 +1117,7 @@ function bindLogin(){
     S.role = 'member'; S.screen = 'list';
     localStorage.setItem('cw_myname', name);
     loadData();
+    loadCartNotice();
   };
 
   // 인도자 모드 (이름 + publishers PIN 인증)
@@ -1130,6 +1148,7 @@ function bindLogin(){
     S.role = 'admin'; S.screen = 'list';
     localStorage.setItem('cw_myname', name);
     loadData();
+    loadCartNotice();
   };
 
   // PIN 입력 중 Enter → 인도자 입장 버튼 클릭
@@ -1381,6 +1400,29 @@ async function loadData(){
     if(S.schedules.length) toast("오프라인 모드: 로컬 데이터 표시 중",3000);
   }
   S.loading=false;render();
+}
+
+// ── 전시대 공지 로드 ──
+async function loadCartNotice(){
+  if(!db) return;
+  try{
+    const snap=await db.collection('adminNotices')
+      .where('active','==',true).get();
+    const valid=snap.docs.filter(d=>{
+      const t=d.data().target||'all';
+      return t==='all'||t==='cart';
+    });
+    if(!valid.length){S.notice=null;return;}
+    const n=valid[0].data();
+    // 만료일 체크
+    if(n.expiresAt){
+      const exp=n.expiresAt.toDate?n.expiresAt.toDate():new Date(n.expiresAt);
+      if(new Date()>exp){S.notice=null;return;}
+    }
+    S.notice={title:n.title||'공지',body:n.body||''};
+    S.noticeDismissed=false;
+    render();
+  }catch(e){/* 공지 로드 실패는 무시 */}
 }
 
 function goBack(){

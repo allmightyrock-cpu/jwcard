@@ -1632,23 +1632,26 @@ function renderNoticeList() {
     wrap.innerHTML = '<div style="text-align:center;padding:28px;color:#94A3B8;font-size:13px;border:1.5px dashed #E2E8F0;border-radius:10px">저장된 공지가 없습니다</div>';
     return;
   }
+  const targetLabel = { all:'📢 전체', publisher:'🗺 구역카드', cart:'🛒 전시대' };
   wrap.innerHTML = _notices.map(n => {
     const isActive = !!n.active;
     const dateStr  = n.createdAt ? n.createdAt.toDate().toLocaleDateString('ko-KR') : '';
     const expDate  = n.expiresAt ? (n.expiresAt.toDate ? n.expiresAt.toDate() : new Date(n.expiresAt)) : null;
     const expStr   = expDate ? expDate.toLocaleDateString('ko-KR') + ' 만료' : '';
     const bodyHtml = (n.body || '').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+    const tLabel   = targetLabel[n.target || 'all'] || '📢 전체';
     return `<div class="notice-item${isActive ? ' is-active' : ''}">
       <div class="notice-item-body">
         <div class="notice-item-header">
           <span class="${isActive ? 'notice-badge-active' : 'notice-badge-inactive'}">${isActive ? '🔴 활성' : '비활성'}</span>
+          <span style="font-size:11px;background:#EFF6FF;color:#1D4ED8;border-radius:20px;padding:1px 8px;font-weight:600">${tLabel}</span>
           <span class="notice-item-title">${n.title || '(제목 없음)'}</span>
         </div>
         <div class="notice-item-text">${bodyHtml}</div>
         <div class="notice-item-meta">${dateStr}${expStr ? ' · ' + expStr : ''}</div>
       </div>
       <div class="notice-actions">
-        <button class="btn btn-sm ${isActive ? 'btn-warn' : 'btn-navy'}" onclick="toggleNotice('${n.id}',${!isActive})">${isActive ? '비활성화' : '활성화'}</button>
+        <button class="btn btn-sm ${isActive ? 'btn-warn' : 'btn-navy'}" onclick="toggleNotice('${n.id}',${!isActive},'${n.target||'all'}')">${isActive ? '비활성화' : '활성화'}</button>
         <button class="btn btn-sm btn-danger" onclick="deleteNotice('${n.id}')">삭제</button>
       </div>
     </div>`;
@@ -1659,17 +1662,19 @@ window.saveNotice = async function() {
   const title  = (document.getElementById('notice-title-input').value || '').trim();
   const body   = (document.getElementById('notice-body-input').value  || '').trim();
   const expStr = document.getElementById('notice-expire-input').value;
+  const target = document.getElementById('notice-target-input')?.value || 'all';
   if (!body) { alert('공지 내용을 입력해 주세요.'); return; }
 
-  // 기존 활성 공지 모두 비활성화
-  const batch = _notices.filter(n => n.active);
-  for (const n of batch) {
+  // 같은 대상의 기존 활성 공지만 비활성화 (대상별 1개 유지)
+  const sameTarget = _notices.filter(n => n.active && (n.target || 'all') === target);
+  for (const n of sameTarget) {
     await setDoc(doc(db, 'adminNotices', n.id), {active: false}, {merge: true});
   }
 
   const data = {
     title,
     body,
+    target,
     active: true,
     createdAt: serverTimestamp(),
     expiresAt: expStr ? new Date(expStr + 'T23:59:59') : null
@@ -1679,15 +1684,17 @@ window.saveNotice = async function() {
   document.getElementById('notice-title-input').value = '';
   document.getElementById('notice-body-input').value  = '';
   document.getElementById('notice-expire-input').value = '';
+  if (document.getElementById('notice-target-input')) document.getElementById('notice-target-input').value = 'all';
 
+  const targetNames = { all:'전체 앱', publisher:'구역카드 앱', cart:'전시대 봉사 앱' };
   await loadNotices();
-  alert('✅ 공지가 저장되어 전도인 앱에 표시됩니다.');
+  alert(`✅ 공지가 저장되어 ${targetNames[target] || ''}에 표시됩니다.`);
 };
 
-window.toggleNotice = async function(id, active) {
+window.toggleNotice = async function(id, active, target = 'all') {
   if (active) {
-    // 동시에 하나만 활성화: 나머지 비활성
-    for (const n of _notices.filter(n => n.active && n.id !== id)) {
+    // 같은 대상의 기존 활성 공지만 비활성화
+    for (const n of _notices.filter(n => n.active && n.id !== id && (n.target || 'all') === target)) {
       await setDoc(doc(db, 'adminNotices', n.id), {active: false}, {merge: true});
     }
   }
@@ -2421,6 +2428,11 @@ window.replaceWithExcel = async function() {
 // ════════════════════════════════
 window._territories = [];
 window._currentCategory = '전체';
+
+// S-13 기록관리에서 사용하는 Firestore 업데이트 헬퍼
+window._db_updateTerritory = async function(terId, data) {
+  await updateDoc(doc(db, 'territories', terId), data);
+};
 window._currentCycle = '전체';
 window._currentCompletionFilter = '전체';
 window._currentSort = 'no'; // 정렬: no | old | recent | cycle | progress
