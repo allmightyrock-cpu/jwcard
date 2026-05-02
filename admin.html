@@ -2288,20 +2288,31 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           ⚠ 이동 후 각 구역의 <strong>호수 목록 저장</strong>이 자동으로 실행됩니다.
         </div>
       </div>
-      <div class="unit-col-header">
-        <span>#</span><span>도로명</span><span>번지</span><span>건물명</span><span>호수</span><span>동행필수</span>
+      <!-- 변경 알림 바 -->
+      <div class="addr-change-bar" id="addr-change-bar" style="display:none">
+        <div class="addr-change-dot"></div>
+        <span id="addr-change-count">0</span>개 행 변경됨 — 저장해야 반영됩니다
+        <button onclick="revertUnitChanges()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:11px;color:#92400E;text-decoration:underline;font-family:inherit">되돌리기</button>
       </div>
+      <!-- 테이블 헤더 -->
+      <div class="addr-tbl-hdr">
+        <span></span>
+        <span>#</span>
+        <span>도로명</span>
+        <span>번지</span>
+        <span>건물명</span>
+        <span class="unit-col">세부주소</span>
+        <span>동행</span>
+      </div>
+      <!-- 테이블 바디 -->
       <div class="unit-edit-list" id="unit-edit-list"></div>
-      <div style="font-size:12px;font-weight:500;color:#475569;margin-bottom:6px;margin-top:12px">+ 새 호수 추가</div>
-      <div class="add-unit-row">
-        <input type="text" id="add-road" placeholder="도로명">
-        <input type="text" id="add-jibun" placeholder="번지">
-        <input type="text" id="add-building" placeholder="건물명">
-        <input type="text" id="add-unit" placeholder="호수">
-        <button class="btn btn-sm btn-navy" onclick="addUnit()">추가</button>
-      </div>
-      <div class="modal-footer" style="margin-top:14px">
-        <button class="btn btn-navy" onclick="saveUnits()">호수 목록 저장</button>
+      <!-- 행 추가 버튼 -->
+      <button class="addr-add-btn" onclick="appendUnitRow()">
+        <span style="font-size:15px;font-weight:800;line-height:1">+</span>
+        <span>새 행 추가</span>
+      </button>
+      <div class="modal-footer" style="margin-top:12px">
+        <button class="btn btn-navy" onclick="saveUnits()">💾 저장</button>
         <button class="btn" onclick="closeModal('edit-modal')">취소</button>
       </div>
     </div>

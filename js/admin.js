@@ -2230,6 +2230,13 @@ window.previewTerritory = function(id) {
 let _editTargetId = null;
 let _editUnits = [];
 let _replaceExcelData = null;
+let _editChangedRows = new Set();
+let _editNewRows = new Set();
+let _uDragSrc = null;
+
+function _escH(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 window.switchEditTab = function(tab, el) {
   document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
@@ -2259,7 +2266,10 @@ window.openEditModal = function(id) {
 
   // 호수 목록 로드
   _editUnits = JSON.parse(JSON.stringify(t.units || []));
+  _editChangedRows = new Set();
+  _editNewRows = new Set();
   renderUnitEditList();
+  updateAddrChangeBar();
 
   // 엑셀 교체 초기화
   _replaceExcelData = null;
@@ -2278,66 +2288,162 @@ window.openEditModal = function(id) {
 };
 
 function renderUnitEditList() {
-  const html = _editUnits.map((u, i) => `
-    <div class="unit-edit-row" id="unit-row-${i}">
-      <input value="${u.road||''}" oninput="_editUnits[${i}].road=this.value" placeholder="도로명">
-      <input value="${u.jibun||''}" oninput="_editUnits[${i}].jibun=this.value" placeholder="번지">
-      <input value="${u.building||''}" oninput="_editUnits[${i}].building=this.value" placeholder="건물명">
-      <input value="${u.unit||''}" oninput="_editUnits[${i}].unit=this.value" placeholder="호수">
-      <label class="escort-check">
-        <input type="checkbox" ${u.escortRequired?'checked':''} onchange="_editUnits[${i}].escortRequired=this.checked">⚠
-      </label>
-      <button class="btn btn-sm btn-danger" style="flex-shrink:0" onclick="removeUnit(${i})">삭제</button>
-    </div>`).join('');
-  document.getElementById('unit-edit-list').innerHTML = html || '<div style="color:#94A3B8;font-size:13px;text-align:center;padding:16px">호수가 없습니다</div>';
+  const html = _editUnits.map((u, i) => {
+    const prev    = _editUnits[i-1];
+    const sameAddr = prev && prev.road === u.road && prev.jibun === u.jibun;
+    const sameBld  = sameAddr && prev.building === u.building;
+    const changed  = _editChangedRows.has(i);
+    const isNew    = _editNewRows.has(i);
+    return `
+    <div class="addr-tbl-row${isNew?' row-new':changed?' row-changed':''}" id="unit-row-${i}"
+         ondragover="uDragOver(event,${i})" ondrop="uDrop(event,${i})" ondragend="uDragEnd(event)">
+      <div class="addr-drag" draggable="true" ondragstart="uDragStart(event,${i})" title="드래그로 순서 변경">≡</div>
+      <div class="addr-row-no">${i+1}</div>
+      <div class="addr-cell${sameAddr?' inh':''}"><input type="text" value="${_escH(u.road)}" oninput="editUField(${i},'road',this.value)" placeholder="도로명"></div>
+      <div class="addr-cell${sameAddr?' inh':''}"><input type="text" value="${_escH(u.jibun)}" oninput="editUField(${i},'jibun',this.value)" placeholder="번지"></div>
+      <div class="addr-cell${sameBld?' inh':''}"><input type="text" value="${_escH(u.building)}" oninput="editUField(${i},'building',this.value)" placeholder="건물명"></div>
+      <div class="addr-cell unit-cell"><input type="text" value="${_escH(u.unit)}" oninput="editUField(${i},'unit',this.value)" placeholder="세부주소"></div>
+      <div class="addr-cell-chk"><input type="checkbox" title="동행필수"${u.escortRequired?' checked':''} onchange="editUField(${i},'escortRequired',this.checked)"></div>
+      <div class="addr-row-acts">
+        <button class="addr-act-btn ins" title="위에 행 삽입" onclick="insertUnitRowAt(${i})">+</button>
+        <button class="addr-act-btn del" title="행 삭제" onclick="removeUnit(${i})">×</button>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('unit-edit-list').innerHTML = html || '<div style="color:#94A3B8;font-size:13px;text-align:center;padding:20px">호수가 없습니다 — 아래 버튼으로 추가하세요</div>';
 }
 
-window.removeUnit = function(idx) {
-  _editUnits.splice(idx, 1);
-  renderUnitEditList();
+// 필드 인라인 수정 (재렌더 없이 클래스만 업데이트)
+window.editUField = function(i, field, value) {
+  _editUnits[i][field] = value;
+  if (!_editNewRows.has(i)) {
+    _editChangedRows.add(i);
+    const row = document.getElementById('unit-row-' + i);
+    if (row) row.classList.add('row-changed');
+  }
+  updateAddrChangeBar();
 };
 
-window.addUnit = function() {
-  const road = document.getElementById('add-road').value.trim();
-  const jibun = document.getElementById('add-jibun').value.trim();
-  const building = document.getElementById('add-building').value.trim();
-  const unit = document.getElementById('add-unit').value.trim();
-  if (!unit) { alert('호수를 입력해 주세요.'); return; }
+// 변경 알림 바 업데이트
+function updateAddrChangeBar() {
+  const n = _editChangedRows.size + _editNewRows.size;
+  const bar = document.getElementById('addr-change-bar');
+  if (!bar) return;
+  bar.style.display = n > 0 ? 'flex' : 'none';
+  const cnt = document.getElementById('addr-change-count');
+  if (cnt) cnt.textContent = n;
+}
 
-  // 앞 행에서 빈 값 자동 채우기
-  const last = _editUnits[_editUnits.length - 1] || {};
-  _editUnits.push({
-    idx: _editUnits.length,
-    road: road || last.road || '',
-    jibun: jibun || last.jibun || '',
-    building: building || last.building || '',
-    unit,
-    visitCode: null, visitedBy: null, visitedAt: null,
-    escortRequired: false
-  });
+// 행 삭제
+window.removeUnit = function(idx) {
+  const label = _editUnits[idx]?.unit || `${idx+1}번 행`;
+  if (!confirm(`"${label}"을 삭제할까요?`)) return;
+  _editUnits.splice(idx, 1);
+  // 인덱스 shift
+  const shiftSet = s => { const ns = new Set(); s.forEach(v => { if (v !== idx) ns.add(v > idx ? v-1 : v); }); return ns; };
+  _editChangedRows = shiftSet(_editChangedRows);
+  _editNewRows = shiftSet(_editNewRows);
   renderUnitEditList();
-  ['add-road','add-jibun','add-building','add-unit'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('unit-edit-list').scrollTop = 99999;
+  updateAddrChangeBar();
+};
+
+// 특정 위치 위에 빈 행 삽입
+window.insertUnitRowAt = function(i) {
+  const ref = _editUnits[i] || _editUnits[i-1] || {};
+  _editUnits.splice(i, 0, { idx: i, road: ref.road||'', jibun: ref.jibun||'', building: ref.building||'', unit: '', visitCode: null, visitedBy: null, visitedAt: null, escortRequired: false });
+  // 인덱스 shift
+  const shiftUp = s => { const ns = new Set(); s.forEach(v => ns.add(v >= i ? v+1 : v)); return ns; };
+  _editChangedRows = shiftUp(_editChangedRows);
+  _editNewRows = shiftUp(_editNewRows);
+  _editNewRows.add(i);
+  renderUnitEditList();
+  updateAddrChangeBar();
+  setTimeout(() => { const row = document.getElementById('unit-row-'+i); row?.querySelector('.unit-cell input')?.focus(); }, 40);
+};
+
+// 맨 아래 새 행 추가
+window.appendUnitRow = function() {
+  const last = _editUnits[_editUnits.length-1] || {};
+  const i = _editUnits.length;
+  _editUnits.push({ idx: i, road: last.road||'', jibun: last.jibun||'', building: last.building||'', unit: '', visitCode: null, visitedBy: null, visitedAt: null, escortRequired: false });
+  _editNewRows.add(i);
+  renderUnitEditList();
+  updateAddrChangeBar();
+  setTimeout(() => { const el = document.getElementById('unit-edit-list'); el.scrollTop = el.scrollHeight; document.getElementById('unit-row-'+i)?.querySelector('.unit-cell input')?.focus(); }, 40);
+};
+
+// 변경 되돌리기
+window.revertUnitChanges = function() {
+  if (!confirm('저장하지 않은 변경 사항을 모두 되돌릴까요?')) return;
+  const t = window._territories.find(t => t.id === _editTargetId);
+  if (t) _editUnits = JSON.parse(JSON.stringify(t.units || []));
+  _editChangedRows = new Set(); _editNewRows = new Set();
+  renderUnitEditList(); updateAddrChangeBar();
+};
+
+// 드래그 & 드롭 (행 순서 변경)
+window.uDragStart = function(e, i) {
+  _uDragSrc = i;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const r = document.getElementById('unit-row-'+i); if (r) r.style.opacity = '0.4'; }, 0);
+};
+window.uDragOver = function(e, i) {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.addr-tbl-row').forEach((r, idx) => {
+    r.style.borderTop = (idx === i && idx !== _uDragSrc) ? '2px solid #3B82F6' : '';
+  });
+};
+window.uDrop = function(e, i) {
+  e.preventDefault();
+  if (_uDragSrc === null || _uDragSrc === i) { uDragEnd(e); return; }
+  const moved = _editUnits.splice(_uDragSrc, 1)[0];
+  const tgt = i > _uDragSrc ? i-1 : i;
+  _editUnits.splice(tgt, 0, moved);
+  _editChangedRows.add(tgt);
+  _uDragSrc = null;
+  renderUnitEditList(); updateAddrChangeBar();
+};
+window.uDragEnd = function() {
+  _uDragSrc = null;
+  document.querySelectorAll('.addr-tbl-row').forEach(r => { r.style.opacity=''; r.style.borderTop=''; });
 };
 
 window.saveUnits = async function() {
   const t = window._territories.find(t => t.id === _editTargetId);
   if (!t) return;
-  // idx 재정렬
   _editUnits = _editUnits.map((u, i) => ({ ...u, idx: i }));
   try {
     await updateDoc(doc(db, 'territories', _editTargetId), {
-      units: _editUnits,
-      totalUnits: _editUnits.length
+      units: _editUnits, totalUnits: _editUnits.length
     });
-    t.units = _editUnits;
-    t.totalUnits = _editUnits.length;
+    t.units = _editUnits; t.totalUnits = _editUnits.length;
+    _editChangedRows = new Set(); _editNewRows = new Set();
+    updateAddrChangeBar();
     closeModal('edit-modal');
-    renderTerritoryTable();
-    updateTerritoryStats();
-    alert(`호수 목록 저장 완료! (총 ${_editUnits.length}세대)`);
+    renderTerritoryTable(); updateTerritoryStats();
+    alert(`저장 완료! (총 ${_editUnits.length}세대)`);
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
+
+// Ctrl+S 저장 / Enter 다음 행 이동
+document.addEventListener('keydown', function(e) {
+  const modal = document.getElementById('edit-modal');
+  if (!modal?.classList.contains('open')) return;
+  if (!document.getElementById('edit-tab-units')?.classList.contains('active')) return;
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault(); saveUnits(); return;
+  }
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type === 'text') {
+    e.preventDefault();
+    const rows = [...document.querySelectorAll('#unit-edit-list .addr-tbl-row')];
+    const row  = e.target.closest('.addr-tbl-row');
+    const ri   = rows.indexOf(row);
+    const cells = [...row.querySelectorAll('.addr-cell input[type=text]')];
+    const ci   = cells.indexOf(e.target);
+    const nextRow = rows[ri + 1];
+    if (nextRow) { const ni = nextRow.querySelectorAll('.addr-cell input[type=text]'); if (ni[ci]) ni[ci].focus(); }
+  }
+});
 
 window.saveBasicInfo = async function() {
   const no = document.getElementById('edit-no').value.trim().replace(/^0+/,'') || '0';
