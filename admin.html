@@ -2228,11 +2228,14 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 <!-- ══ 구역 편집 모달 ══ -->
 <div class="modal-wrap" id="edit-modal">
   <div class="modal edit-modal">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div class="edit-modal-hdr">
       <div class="modal-title" style="margin-bottom:0" id="edit-modal-title">구역 편집</div>
-      <button class="btn btn-sm" onclick="closeModal('edit-modal')">닫기</button>
+      <div class="edit-modal-acts">
+        <button class="btn-expand" id="btn-fs" onclick="toggleEditFullscreen()" title="전체화면">⛶</button>
+        <button class="btn btn-sm" onclick="closeModal('edit-modal')">닫기</button>
+      </div>
     </div>
-    <div class="edit-tabs">
+    <div class="edit-tabs" style="flex-shrink:0">
       <button class="edit-tab active" onclick="switchEditTab('info',this)">기본정보</button>
       <button class="edit-tab" onclick="switchEditTab('units',this)">호수 목록</button>
       <button class="edit-tab" onclick="switchEditTab('excel',this)">엑셀 교체</button>

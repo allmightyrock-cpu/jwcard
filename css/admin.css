@@ -95,8 +95,9 @@
 
   /* ── 모달 ── */
   /* 모달이 길어지면 wrap이 스크롤 컨테이너 역할을 함. align-items:flex-start + 상단 패딩으로 위쪽부터 노출 */
-  .modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;justify-content:center;align-items:flex-start;z-index:200;overflow-y:auto;padding:40px 16px}
+  .modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;justify-content:center;align-items:flex-start;z-index:200;overflow-y:auto;padding:40px 16px;transition:padding .25s}
   .modal-wrap.open{display:flex}
+  .modal-wrap.fs-mode{padding:0!important;align-items:stretch!important;overflow:hidden!important}
   .modal{background:#fff;border-radius:14px;padding:28px;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,0.15);margin:auto 0;max-height:none}
   .modal-title{font-size:16px;font-weight:500;margin-bottom:20px}
   .modal-footer{display:flex;gap:8px;margin-top:20px;position:sticky;bottom:-28px;background:#fff;padding:14px 0 0;margin-bottom:-28px;border-top:1px solid #F1F5F9}
@@ -381,7 +382,17 @@
   .complete-btn:hover{background:#BBF7D0}
 
   /* ── 편집 모달 ── */
-  .edit-modal{max-width:600px;width:95vw}
+  .edit-modal{max-width:600px;width:95vw;transition:max-width .25s ease,max-height .25s ease}
+  .edit-modal.expanded{max-width:960px;width:95vw;max-height:92vh;display:flex;flex-direction:column}
+  .edit-modal.fullscreen{max-width:100vw!important;width:100vw!important;max-height:100vh!important;height:100vh;margin:0!important;border-radius:0!important;display:flex;flex-direction:column}
+  .edit-modal.expanded .edit-tab-content.active,
+  .edit-modal.fullscreen .edit-tab-content.active{flex:1;overflow-y:auto;min-height:0}
+  .edit-modal.expanded .modal-footer,
+  .edit-modal.fullscreen .modal-footer{position:static!important;margin-bottom:0!important;padding-top:12px}
+  .edit-modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-shrink:0}
+  .edit-modal-acts{display:flex;align-items:center;gap:6px}
+  .btn-expand{padding:4px 8px;border-radius:6px;border:1px solid #E2E8F0;background:#F8FAFC;cursor:pointer;font-size:14px;color:#64748B;line-height:1;transition:all .15s}
+  .btn-expand:hover{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
   .edit-tabs{display:flex;border-bottom:1px solid #E2E8F0;margin-bottom:16px}
   .edit-tab{padding:9px 16px;font-size:13px;cursor:pointer;border:none;background:none;font-family:inherit;color:#64748B;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s}
   .edit-tab.active{color:#1B3A6B;border-bottom-color:#1B3A6B;font-weight:500}

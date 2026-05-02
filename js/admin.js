@@ -2243,6 +2243,57 @@ window.switchEditTab = function(tab, el) {
   document.querySelectorAll('.edit-tab-content').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('edit-tab-' + tab).classList.add('active');
+  // 호수 목록 탭 → 자동 확장 / 다른 탭 → 기본 크기로 복원
+  const modal = document.querySelector('#edit-modal .edit-modal');
+  const wrap  = document.getElementById('edit-modal');
+  if (tab === 'units') {
+    if (!modal.classList.contains('fullscreen')) modal.classList.add('expanded');
+  } else {
+    modal.classList.remove('expanded');
+    if (modal.classList.contains('fullscreen')) _exitFullscreen(modal, wrap);
+  }
+};
+
+// 전체화면 토글
+let _editFsActive = false;
+window.toggleEditFullscreen = function() {
+  const modal = document.querySelector('#edit-modal .edit-modal');
+  const wrap  = document.getElementById('edit-modal');
+  const btn   = document.getElementById('btn-fs');
+  if (!_editFsActive) {
+    modal.classList.add('fullscreen');
+    modal.classList.remove('expanded');
+    wrap.classList.add('fs-mode');
+    btn.textContent = '⊡';
+    btn.title = '전체화면 해제';
+    _editFsActive = true;
+  } else {
+    _exitFullscreen(modal, wrap);
+  }
+};
+function _exitFullscreen(modal, wrap) {
+  const btn = document.getElementById('btn-fs');
+  modal.classList.remove('fullscreen');
+  wrap.classList.remove('fs-mode');
+  // 호수 탭이 열려있으면 expanded 유지
+  if (document.getElementById('edit-tab-units')?.classList.contains('active')) {
+    modal.classList.add('expanded');
+  }
+  if (btn) { btn.textContent = '⛶'; btn.title = '전체화면'; }
+  _editFsActive = false;
+}
+
+// 모달 닫을 때 상태 초기화
+const _origCloseModal = window.closeModal;
+window.closeModal = function(id) {
+  if (id === 'edit-modal') {
+    const modal = document.querySelector('#edit-modal .edit-modal');
+    const wrap  = document.getElementById('edit-modal');
+    if (modal) { modal.classList.remove('expanded','fullscreen'); }
+    if (wrap)  { wrap.classList.remove('fs-mode'); }
+    _editFsActive = false;
+  }
+  if (_origCloseModal) _origCloseModal(id);
 };
 
 window.openEditModal = function(id) {
