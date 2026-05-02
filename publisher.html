@@ -370,23 +370,42 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .sheet-handle{width:36px;height:4px;background:#E2E8F0;border-radius:2px;margin:12px auto 12px}
 .sheet-title{font-size:13px;color:#64748B;padding:0 16px 12px;border-bottom:1px solid #F1F5F9}
 .sheet-unit-num{font-weight:500;color:#1E293B;font-size:15px}
-.code-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px}
-.sheet-current{display:none;align-items:center;justify-content:space-between;margin:0 16px 0;padding:8px 12px;background:#F8FAFC;border-radius:10px;border:1px solid #E2E8F0}
+/* 코드 시트 — 현재 선택 표시 */
+.sheet-unit-hdr{padding:0 16px 10px;border-bottom:1px solid #F1F5F9;text-align:center}
+.sheet-unit-num{font-size:20px;font-weight:700;color:#1E293B}
+.sheet-unit-hint{font-size:12px;color:#94A3B8;margin-top:2px}
+.sheet-current{display:none;align-items:center;justify-content:space-between;margin:8px 16px 0;padding:8px 12px;background:#F8FAFC;border-radius:10px;border:1px solid #E2E8F0}
 .sheet-current.visible{display:flex}
 .sheet-cur-label{font-size:12px;color:#64748B}
 .sheet-cur-val{font-size:13px;font-weight:600;flex:1;margin-left:8px}
 .sheet-reset-btn{padding:5px 10px;border-radius:8px;background:#FEE2E2;color:#991B1B;border:none;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap}
-.sheet-divider{display:flex;align-items:center;gap:8px;padding:6px 16px 2px}
-.sheet-div-line{flex:1;height:1px;background:#E2E8F0}
-.sheet-div-label{font-size:10px;color:#94A3B8;font-weight:500;white-space:nowrap}
 .skip-tag{font-size:10px;padding:1px 6px;border-radius:6px;margin-left:6px}
 .skip-jwm{background:#EDE9FE;color:#5B21B6}
 .skip-std{background:#CCFBF1;color:#0F766E}
-.code-btn{padding:16px 14px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all 0.15s;font-family:inherit}
-.code-btn:active{transform:scale(0.97)}
-.code-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.code-label{font-size:18px;font-weight:600;text-align:left}
-.code-desc{font-size:13px;color:#94A3B8;margin-top:3px;text-align:left}
+/* 주요 버튼 2개 */
+.primary-code-btns{padding:10px 16px;display:flex;flex-direction:column;gap:8px}
+.primary-code-btn{width:100%;padding:15px 18px;border-radius:14px;border:none;cursor:pointer;display:flex;align-items:center;gap:14px;font-family:inherit;transition:transform 0.1s}
+.primary-code-btn:active{transform:scale(0.98)}
+.primary-code-btn.absent{background:#F8FAFC;border:1.5px solid #E2E8F0}
+.primary-code-btn.resp{background:#DCFCE7;border:1.5px solid #86EFAC}
+.primary-code-ico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.primary-code-text{flex:1;text-align:left}
+.primary-code-label{font-size:17px;font-weight:700;line-height:1.2}
+.primary-code-label.absent{color:#374151}
+.primary-code-label.resp{color:#166534}
+.primary-code-sub{font-size:12px;color:#94A3B8;margin-top:2px}
+/* 보조 코드 3열 */
+.secondary-codes{padding:2px 16px 10px}
+.sec-code-title{font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;padding-left:2px}
+.sec-code-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.sec-code-btn{padding:9px 4px;border-radius:10px;border:1px solid #E2E8F0;background:#fff;cursor:pointer;text-align:center;font-family:inherit;transition:transform 0.1s}
+.sec-code-btn:active{transform:scale(0.97)}
+.sec-code-ico{display:flex;align-items:center;justify-content:center;height:26px;margin-bottom:2px}
+.sec-code-lbl{font-size:11px;font-weight:600;color:#475569}
+/* 특수 코드 */
+.special-codes{display:flex;gap:6px;padding:0 16px 20px}
+.spec-code-btn{flex:1;padding:7px 4px;border-radius:8px;border:1px solid #F1F5F9;background:#F8FAFC;cursor:pointer;font-size:11px;font-family:inherit;text-align:center;font-weight:500;display:flex;align-items:center;justify-content:center;gap:3px;transition:transform 0.1s}
+.spec-code-btn:active{transform:scale(0.97)}
 
 /* 섹션 상태 시트 */
 .sec-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-radius:20px 20px 0 0;padding:0 0 24px;z-index:101;transition:transform 0.3s;transform:translateX(-50%) translateY(100%)}
@@ -1797,60 +1816,74 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 <div class="sheet-backdrop" id="backdrop" onclick="closeSheets()"></div>
 <div class="code-sheet" id="code-sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-title">방문 결과 선택 &nbsp;·&nbsp; <span class="sheet-unit-num" id="sheet-unit-label">—</span></div>
+  <!-- 호수 헤더 -->
+  <div class="sheet-unit-hdr">
+    <div class="sheet-unit-num" id="sheet-unit-label">—</div>
+    <div class="sheet-unit-hint">방문 결과를 선택하세요</div>
+  </div>
   <!-- 현재 선택 표시 + 취소 -->
   <div class="sheet-current" id="sheet-current-row">
     <span class="sheet-cur-label">현재</span>
     <span class="sheet-cur-val" id="sheet-cur-val">—</span>
     <button class="sheet-reset-btn" onclick="clearCode()">✕ 선택 취소</button>
   </div>
-  <!-- 방문 결과 -->
-  <div class="sheet-divider" style="padding-top:10px">
-    <div class="sheet-div-line"></div>
-    <span class="sheet-div-label">방문 결과</span>
-    <div class="sheet-div-line"></div>
+  <!-- 주요 버튼 2개 -->
+  <div class="primary-code-btns">
+    <button class="primary-code-btn absent" onclick="pickCode('absent')">
+      <div class="primary-code-ico" style="background:#E2E8F0">
+        <svg width="22" height="22" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" stroke="#9CA3AF" stroke-width="1.5" fill="none"/><line x1="4" y1="7" x2="10" y2="7" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="primary-code-text">
+        <div class="primary-code-label absent">아무도 없었어요</div>
+        <div class="primary-code-sub">부재 — 나중에 다시 방문</div>
+      </div>
+    </button>
+    <button class="primary-code-btn resp" onclick="pickCode('resp')">
+      <div class="primary-code-ico" style="background:#22C55E">
+        <svg width="22" height="22" viewBox="0 0 14 14"><polyline points="2,7 5,10 12,3" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="primary-code-text">
+        <div class="primary-code-label resp">대화했어요 ✓</div>
+        <div class="primary-code-sub">응답 — 만나서 대화함</div>
+      </div>
+    </button>
   </div>
-  <div class="code-grid">
-    <div class="code-btn" onclick="pickCode('absent')" style="background:#F8FAFC">
-      <div class="code-icon" style="border:2px solid #CBD5E1"><svg width="22" height="22" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" stroke="#9CA3AF" stroke-width="1.5" fill="none"/><line x1="4" y1="7" x2="10" y2="7" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      <div><div class="code-label">부재</div><div class="code-desc">아무도 없음</div></div>
-    </div>
-    <div class="code-btn" onclick="pickCode('resp')" style="background:#F0FDF4">
-      <div class="code-icon" style="background:#22C55E"><svg width="22" height="22" viewBox="0 0 14 14"><polyline points="2,7 5,10 12,3" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div><div class="code-label" style="color:#166534">응답</div><div class="code-desc">대화 나눔</div></div>
-    </div>
-    <div class="code-btn" onclick="pickCode('revisit')" style="background:#EFF6FF">
-      <div class="code-icon" style="border:2px solid #60A5FA"><svg width="22" height="22" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" stroke="#60A5FA" stroke-width="1.5" fill="none"/><line x1="7" y1="3.5" x2="7" y2="7" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="7" x2="9.5" y2="9" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      <div><div class="code-label" style="color:#1D4ED8">재방문</div><div class="code-desc">다시 오기로</div></div>
-    </div>
-    <div class="code-btn" onclick="pickCode('refuse')" style="background:#FEF2F2">
-      <div class="code-icon" style="background:#EF4444"><svg width="22" height="22" viewBox="0 0 14 14"><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="10.5" y1="3.5" x2="3.5" y2="10.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></div>
-      <div><div class="code-label" style="color:#991B1B">거절</div><div class="code-desc">명확히 거부</div></div>
-    </div>
-    <div class="code-btn" onclick="pickCode('vacant')" style="background:#F8FAFC">
-      <div class="code-icon" style="border:2px solid #CBD5E1"><svg width="22" height="22" viewBox="0 0 14 14"><rect x="1.5" y="4.5" width="11" height="8" rx="1" stroke="#9CA3AF" stroke-width="1.5" fill="none"/><polyline points="1.5,6.5 7,1.5 12.5,6.5" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div><div class="code-label">공실</div><div class="code-desc">비어있는 세대</div></div>
-    </div>
-    <div class="code-btn" onclick="pickCode('escort')" style="background:#FFFBEB">
-      <div class="code-icon" style="border:2px solid #F59E0B;background:#FEF3C7"><span style="font-size:22px">⚠</span></div>
-      <div><div class="code-label" style="color:#92400E">동행필수</div><div class="code-desc">2인 이상 방문</div></div>
+  <!-- 보조 코드 3열 -->
+  <div class="secondary-codes">
+    <div class="sec-code-title">다른 결과</div>
+    <div class="sec-code-grid">
+      <button class="sec-code-btn" style="background:#EFF6FF;border-color:#BFDBFE" onclick="pickCode('revisit')">
+        <div class="sec-code-ico"><svg width="22" height="22" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" stroke="#60A5FA" stroke-width="1.5" fill="none"/><line x1="7" y1="3.5" x2="7" y2="7" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="7" x2="9.5" y2="9" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="sec-code-lbl" style="color:#1D4ED8">재방문</div>
+      </button>
+      <button class="sec-code-btn" style="background:#FEF2F2;border-color:#FECACA" onclick="pickCode('refuse')">
+        <div class="sec-code-ico">
+          <div style="width:22px;height:22px;border-radius:50%;background:#EF4444;display:flex;align-items:center;justify-content:center">
+            <svg width="13" height="13" viewBox="0 0 14 14"><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="10.5" y1="3.5" x2="3.5" y2="10.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div class="sec-code-lbl" style="color:#991B1B">거절</div>
+      </button>
+      <button class="sec-code-btn" onclick="pickCode('vacant')">
+        <div class="sec-code-ico"><svg width="22" height="22" viewBox="0 0 14 14"><rect x="1.5" y="4.5" width="11" height="8" rx="1" stroke="#9CA3AF" stroke-width="1.5" fill="none"/><polyline points="1.5,6.5 7,1.5 12.5,6.5" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="sec-code-lbl">공실</div>
+      </button>
     </div>
   </div>
-  <!-- 방문 제외 -->
-  <div class="sheet-divider">
-    <div class="sheet-div-line"></div>
-    <span class="sheet-div-label">방문 제외</span>
-    <div class="sheet-div-line"></div>
-  </div>
-  <div class="code-grid" style="padding-top:8px;padding-bottom:20px">
-    <div class="code-btn" onclick="pickCode('jwmember')" style="background:#F5F3FF">
-      <div class="code-icon" style="background:#7C3AED"><svg width="22" height="22" viewBox="0 0 14 14"><rect x="1" y="5" width="12" height="8" rx="1" fill="white" opacity="0.9"/><polyline points="1,7 7,2 13,7" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="9.5" r="1.5" fill="#7C3AED"/></svg></div>
-      <div><div class="code-label" style="color:#5B21B6">형제/자매댁</div><div class="code-desc">우리 회중 형제자매</div></div>
-    </div>
-    <div class="code-btn" onclick="pickCode('interest')" style="background:#F0FDFA">
-      <div class="code-icon" style="background:#0D9488"><svg width="22" height="22" viewBox="0 0 14 14"><rect x="2" y="1.5" width="10" height="11" rx="1" stroke="white" stroke-width="1.4" fill="none"/><line x1="4.5" y1="5" x2="9.5" y2="5" stroke="white" stroke-width="1.2" stroke-linecap="round"/><line x1="4.5" y1="7.5" x2="9.5" y2="7.5" stroke="white" stroke-width="1.2" stroke-linecap="round"/><line x1="4.5" y1="10" x2="7.5" y2="10" stroke="white" stroke-width="1.2" stroke-linecap="round"/></svg></div>
-      <div><div class="code-label" style="color:#0F766E">관심자/성서연구</div><div class="code-desc">현재 연구 진행 중</div></div>
-    </div>
+  <!-- 특수 코드 -->
+  <div class="special-codes">
+    <button class="spec-code-btn" style="color:#92400E" onclick="pickCode('escort')">
+      <div style="width:15px;height:15px;border-radius:50%;background:#FEF3C7;border:1.5px solid #F59E0B;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="9" height="9" viewBox="0 0 14 14"><path d="M7 2 L13 12 L1 12 Z" stroke="#92400E" stroke-width="1.5" fill="none" stroke-linejoin="round"/><line x1="7" y1="6" x2="7" y2="9" stroke="#92400E" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="10.5" r="0.6" fill="#92400E"/></svg></div>
+      <span>동행필수</span>
+    </button>
+    <button class="spec-code-btn" style="color:#5B21B6" onclick="pickCode('jwmember')">
+      <div style="width:15px;height:15px;border-radius:50%;background:#7C3AED;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 14 14"><rect x="1" y="5" width="12" height="8" rx="1" fill="white" opacity="0.9"/><polyline points="1,7 7,2 13,7" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="9.5" r="1.5" fill="#7C3AED"/></svg></div>
+      <span>형제/자매댁</span>
+    </button>
+    <button class="spec-code-btn" style="color:#0F766E" onclick="pickCode('interest')">
+      <div style="width:15px;height:15px;border-radius:50%;border:1.5px solid #0D9488;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 14 14"><rect x="2" y="1.5" width="10" height="11" rx="1" stroke="#0D9488" stroke-width="1.4" fill="none"/><line x1="4.5" y1="5" x2="9.5" y2="5" stroke="#0D9488" stroke-width="1.2" stroke-linecap="round"/><line x1="4.5" y1="7.5" x2="9.5" y2="7.5" stroke="#0D9488" stroke-width="1.2" stroke-linecap="round"/><line x1="4.5" y1="10" x2="7.5" y2="10" stroke="#0D9488" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+      <span>관심자</span>
+    </button>
   </div>
 </div>
 
@@ -3364,8 +3397,8 @@ function buildSections(units, visitMap) {
   _sections = [];
   bldOrder.forEach(bldKey => {
     const bld = bldGroups[bldKey];
-    // 층 오름차순 정렬 (같은 층 안에서는 입력 순서 유지)
-    bld.entries.sort((a, b) => a.floorOrder !== b.floorOrder ? a.floorOrder - b.floorOrder : a.i - b.i);
+    // 엑셀 입력 순서 유지 (입구/동선 순서를 그대로 반영)
+    // ※ 입구별로 나뉜 빌라/아파트는 입력 순서가 곧 방문 동선이므로 정렬하지 않음
     _sections.push({
       key:        bldKey,
       bldKey,
@@ -3377,7 +3410,7 @@ function buildSections(units, visitMap) {
       label:      bld.bldLabel,
       units:       bld.entries.map(e => e.u),
       indices:     bld.entries.map(e => e.i),
-      floorLabels: bld.entries.map(e => e.floorLabel), // 인라인 층 구분선용
+      floorLabels: null, // 층 구분선 사용 안 함 (입구 순서 우선)
     });
   });
 
@@ -3426,16 +3459,7 @@ function renderUnitList(visitMap) {
       const isDimmed = status === 'partial' && hereAt !== undefined && globalIdx > hereAt && !code;
       const isEscort = code === 'escort' || u.escortRequired;
 
-      // 층 구분선 (층이 바뀔 때 얇은 인라인 구분선 표시)
-      const curFloorLbl  = sec.floorLabels?.[localIdx] || null;
-      const prevFloorLbl = localIdx > 0 ? (sec.floorLabels?.[localIdx - 1] || null) : null;
-      if (curFloorLbl && (localIdx === 0 || curFloorLbl !== prevFloorLbl)) {
-        html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 16px 3px;pointer-events:none">
-          <div style="flex:1;height:1px;background:#E2E8F0"></div>
-          <span style="font-size:10px;color:#94A3B8;font-weight:600;white-space:nowrap;letter-spacing:0.3px">${curFloorLbl}</span>
-          <div style="flex:1;height:1px;background:#E2E8F0"></div>
-        </div>`;
-      }
+      // 층 구분선: 입구 순서 우선으로 표시 안 함 (엑셀 입력 순서 유지)
 
       // 여기까지 마커
       if (status === 'partial' && hereAt !== undefined && globalIdx === hereAt + 1 && !shownHere) {
