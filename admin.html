@@ -311,6 +311,11 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
               <!-- 배분된 구역 목록 -->
               <div style="font-size:11px;color:#94A3B8;margin-bottom:6px">배분된 구역 &nbsp;·&nbsp; ✕ 터치로 제거</div>
+              <div class="sched-search-wrap" style="margin-bottom:8px">
+                <input class="sched-search-input" id="sched-terr-search" type="text"
+                  placeholder="🔍  번호·이름으로 검색"
+                  oninput="renderSchedTerrChips()" autocomplete="off">
+              </div>
               <div id="sched-terr-chips"></div>
 
               <!-- 카드 배분 영역 -->

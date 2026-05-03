@@ -755,6 +755,8 @@ window.selectSchedDay = function(day) {
   const DAY_NAMES = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
   document.getElementById('sched-day-title').textContent = '📅 ' + DAY_NAMES[day] + ' 배분 현황';
   document.getElementById('sched-day-content').style.display = 'block';
+  const ts = document.getElementById('sched-terr-search');
+  if (ts) ts.value = '';
   // 자동 반납 체크박스 상태 동기화
   const chk = document.getElementById('sched-auto-return-chk');
   if (chk) chk.checked = _schedDayAutoReturn[day] !== false;
@@ -1273,9 +1275,13 @@ function renderSchedTerrChips() {
   const catColor = _buildCatColorMap();
   const wrap = document.getElementById('sched-terr-chips');
   if (!wrap) return;
+  const q = (document.getElementById('sched-terr-search')?.value || '').trim().toLowerCase();
   const filtered = ids.filter(id => {
     const t = _schedAllTerr.find(t => t.id === id);
-    return t && (!_schedCatFilter || (t.category || '') === _schedCatFilter);
+    if (!t) return false;
+    if (_schedCatFilter && (t.category || '') !== _schedCatFilter) return false;
+    if (q && !String(t.no).includes(q) && !(t.name || '').toLowerCase().includes(q)) return false;
+    return true;
   });
   if (!filtered.length) {
     wrap.innerHTML = `<div style="text-align:center;padding:24px 16px;color:#94A3B8;font-size:13px;border:1.5px dashed #E2E8F0;border-radius:10px">${ids.length && _schedCatFilter ? '해당 구역 유형이 없습니다.' : '배분된 구역이 없습니다.<br>아래에서 구역을 추가하세요.'}</div>`;
