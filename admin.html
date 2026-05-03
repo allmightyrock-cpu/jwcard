@@ -1150,12 +1150,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>요소</th><th>기능</th></tr>
                   <tr><td>☰ 리스트 뷰</td><td>기본 목록 형식 — 번호·이름·그룹·상태·세대수 표시</td></tr>
-                  <tr><td>⊞ 카드 뷰<span class="man-new">NEW</span></td><td>미니 카드 그리드 형식 — 회차·날짜·진행률 한눈에 파악</td></tr>
-                  <tr><td>⬇ 전체 백업<span class="man-new">NEW</span></td><td>모든 구역을 엑셀 파일로 묶어 ZIP 다운로드</td></tr>
-                  <tr><td>🔍 검색</td><td>구역번호 또는 구역명 실시간 검색</td></tr>
+                  <tr><td>⊞ 카드 뷰</td><td>미니 카드 그리드 형식 — 회차·날짜·진행률 한눈에 파악</td></tr>
+                  <tr><td>⬇ 전체 백업</td><td>모든 구역을 엑셀 파일로 묶어 ZIP 다운로드</td></tr>
+                  <tr><td>상태 필터</td><td>전체 / 활성만 / 비활성만 / 진행중 / 완료 / 미배정 으로 목록 필터링</td></tr>
+                  <tr><td>정렬</td><td>번호순 / 오래된순 / 최근순 / 회차순 / 진행률순 중 선택</td></tr>
+                  <tr><td>🔍 검색</td><td>구역번호·구역명·회차 실시간 검색</td></tr>
                   <tr><td>유형 탭</td><td>구역그룹별 필터</td></tr>
                   <tr><td>🔔 완료 신청</td><td>전도인이 완료 신청한 구역만 표시</td></tr>
                   <tr><td>⏸ 미완료 신청</td><td>미완료로 마친 구역만 표시</td></tr>
+                  <tr><td>⏰ 장기 미반납<span class="man-new">NEW</span></td><td>배정 후 오랫동안 반납되지 않은 카드 일괄 관리 (아래 참조)</td></tr>
                 </table></div>
               </div>
 
@@ -1229,6 +1232,30 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                   <tr><td>전도인이 완료 신청</td><td>목록 <span class="man-badge green">🔔 완료 신청</span> 뱃지 클릭 → 회차+1, 방문기록 초기화</td></tr>
                   <tr><td>관리자 직접 완료</td><td>구역 카드 팝업 → ✅ 완료 처리</td></tr>
                   <tr><td>미완료 취소</td><td>구역 카드 팝업 → ⏸ 미완료</td></tr>
+                </table></div>
+              </div>
+
+              <div class="man-sec">
+                <div class="man-sec-title">🔙 강제 회수<span class="man-new">NEW</span></div>
+                <p class="man-p">전도인이 완료·미완료 신청을 하지 않은 채 오래 보유 중인 카드를 관리자·봉사감독자·구역의종이 직접 회수합니다.</p>
+                <div class="man-sub">개별 회수 (리스트 뷰)</div>
+                <p class="man-p">리스트 뷰(☰)에서 <strong>전도인이 배정된 진행중 카드</strong> 행의 오른쪽 끝 <strong>⋮</strong> 버튼 왼쪽에 <span style="background:#FEF2F2;color:#DC2626;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">🔙 회수</span> 버튼이 표시됩니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>회수 방식</th><th>언제 사용</th><th>결과</th></tr>
+                  <tr><td>미완료 처리 후 회수</td><td>전도인이 구역을 진행했으나 완료 신청을 하지 않은 경우</td><td>배정 기록 유지, 회차 올리지 않고 반납 (재배정 가능)</td></tr>
+                  <tr><td>배정 취소 (단순 반납)</td><td>카드를 사용하지 않은 경우</td><td>배정·진행률 초기화 (처음부터 다시 배정 가능)</td></tr>
+                </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>🔙 회수 버튼은 <span class="man-badge navy">관리자</span> <span class="man-badge amber">봉사감독자</span> <span class="man-badge blue">구역의종</span> 권한으로 로그인했을 때만 표시됩니다.</div></div>
+
+                <div class="man-sub">⏰ 장기 미반납 패널 (일괄 회수)</div>
+                <p class="man-p">툴바 오른쪽 <strong>⏰</strong> 버튼을 누르면 장기 미반납 패널이 열립니다. 숫자 배지가 미반납 카드 수를 실시간으로 표시합니다.</p>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기능</th><th>설명</th></tr>
+                  <tr><td>기간 필터</td><td>30일 이상 / 60일 이상 / 90일 이상 / 전체 진행중 중 선택</td></tr>
+                  <tr><td>카드 목록</td><td>배정 전도인 이름과 경과 일수 표시</td></tr>
+                  <tr><td>체크박스 선택</td><td>회수할 카드 개별 또는 전체 선택</td></tr>
+                  <tr><td>🔙 선택 일괄 회수</td><td>선택된 카드 전체를 미완료 처리 후 일괄 반납</td></tr>
+                  <tr><td>개별 🔙 회수</td><td>패널 내에서 카드별 개별 회수 (방식 선택 가능)</td></tr>
                 </table></div>
               </div>
 
@@ -1345,14 +1372,23 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
               <!-- 미할당 / 전체 목록 -->
               <div class="man-sec">
-                <div class="man-sec-title">카드 배분 방법 <span class="man-new">NEW</span></div>
-                <p class="man-p">요일을 선택하면 하단 배분 영역에 두 가지 모드가 제공됩니다.</p>
+                <div class="man-sec-title">카드 배분 — 검색 · 필터 · 정렬<span class="man-new">NEW</span></div>
+                <p class="man-p">요일을 선택하면 하단 배분 영역에 두 가지 모드가 제공됩니다. 두 모드 모두 <strong>검색·필터·정렬</strong>을 지원합니다.</p>
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>모드</th><th>내용</th><th>적합한 상황</th></tr>
-                  <tr><td>📋 미할당</td><td>어떤 요일에도 배분되지 않은 카드 목록을 즉시 표시. 입력창으로 번호·이름 필터 가능. 탭 → 현재 요일에 즉시 배분</td><td>주간 배분 작업 시 (기본 모드)</td></tr>
+                  <tr><td>📋 미할당</td><td>어떤 요일에도 배분되지 않은 카드 목록. 탭 → 현재 요일에 즉시 배분</td><td>주간 배분 작업 시 (기본 모드)</td></tr>
                   <tr><td>📇 전체 목록</td><td>모든 카드를 갤러리로 표시. 이미 배분된 카드는 ✓ 표시. 탭 → 배분/해제 토글</td><td>전체 현황을 보며 수정할 때</td></tr>
                 </table></div>
+                <div class="man-sub">검색 · 상태 필터 · 정렬 (두 모드 공통)</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>요소</th><th>기능</th></tr>
+                  <tr><td>🔍 검색 입력창</td><td>구역명 · 번호 · 회차로 실시간 검색</td></tr>
+                  <tr><td>상태 드롭다운</td><td><strong>미완료 구역만</strong> — 완료 신청 구역 제외 (기본값) / <strong>전체 구역 (완료 포함)</strong> — 완료 구역까지 표시</td></tr>
+                  <tr><td>정렬 드롭다운</td><td>번호순 / 오래된순(배정일 기준) / 회차순(높은 회차 우선) / 진행률순(높은 진행률 우선)</td></tr>
+                  <tr><td>구역 유형 칩</td><td>전체 / 주택구역 / 상가구역 등 유형별 필터</td></tr>
+                </table></div>
                 <div class="man-hint success"><span class="man-hint-icon">✅</span><div>📋 미할당 모드에서는 타 요일에 이미 배분된 카드가 목록에서 자동으로 제외됩니다. 중복 배분 걱정 없이 사용하세요.</div></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>요일을 전환하면 검색 입력창이 자동으로 초기화됩니다.</div></div>
               </div>
 
               <!-- 배분된 구역 칩 카드 -->
