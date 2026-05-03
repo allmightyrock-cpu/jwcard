@@ -285,7 +285,7 @@ td code {
       <li><strong>STEP 2</strong> — Naver Cloud Platform Maps API 설정</li>
       <li><strong>STEP 3</strong> — 소스 코드 설정값 변경</li>
       <li><strong>STEP 4</strong> — Cloudflare Pages 배포</li>
-      <li><strong>STEP 5</strong> — 시스템 초기 설정</li>
+      <li><strong>STEP 5</strong> — 시스템 초기 설정 (구역 엑셀 파일 형식 포함)</li>
       <li><strong>부록</strong> — 비용·한도 안내 / 문제 해결</li>
     </ol>
   </div>
@@ -632,9 +632,9 @@ service cloud.firestore {
           <li class="step">
             <span class="step-num">4</span>
             <div class="step-body">
-              <strong>[구역관리]</strong> → <strong>[엑셀 일괄등록]</strong> → <strong>[양식 다운로드]</strong><br>
-              엑셀 양식에 구역 데이터 입력 후 업로드:<br>
-              <small style="color:#64748B">열 순서: 도로명 주소 | 번지 | 건물명 | 세부주소(호수) | 금지(Y) | 메모</small>
+              <strong>[구역관리]</strong> → 우측 상단 <strong>[엑셀 업로드]</strong> 버튼 클릭<br>
+              구역번호·구역이름 입력 후 엑셀 파일 선택 → 미리보기 확인 → <strong>[저장]</strong><br>
+              <small style="color:#64748B">💡 GitHub에서 받은 파일 안의 <code>sample_excel/</code> 폴더에 샘플 파일이 있습니다 — 형식 확인 후 본인 데이터로 작성하세요.</small>
             </div>
           </li>
           <li class="step">
@@ -645,6 +645,85 @@ service cloud.firestore {
           </li>
         </ul>
       </div>
+
+      <!-- 엑셀 파일 형식 안내 -->
+      <div class="section">
+        <div class="section-title">📊 구역 엑셀 파일 형식 안내</div>
+
+        <div class="hint success">
+          <span class="hint-icon">📁</span>
+          <div class="hint-body">
+            <strong>샘플 파일 활용을 권장합니다</strong><br>
+            GitHub에서 다운로드한 파일 안의 <code>sample_excel/</code> 폴더에
+            아파트·단독주택 예시 파일 2개가 있습니다.<br>
+            이 파일을 열어서 형식을 확인한 뒤, 본인 회중 구역 데이터로 교체하여 사용하세요.
+          </div>
+        </div>
+
+        <p style="margin:12px 0 8px;font-weight:700;color:#0F4C2A;font-size:13px">① 파일명 형식</p>
+        <p style="font-size:12.5px;color:#334155;margin-bottom:8px">
+          파일명을 <code>번호_구역이름.xlsx</code> 형식으로 저장하면 업로드 시 구역번호와 이름이 자동으로 인식됩니다.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <tr><th>파일명 예시</th><th>인식 결과</th></tr>
+            <tr><td><code>1_에이스3,4단지.xlsx</code></td><td>구역번호: 1 / 구역이름: 에이스3,4단지</td></tr>
+            <tr><td><code>23_행복마을빌라.xlsx</code></td><td>구역번호: 23 / 구역이름: 행복마을빌라</td></tr>
+            <tr><td><code>101번구역_중앙로.xlsx</code></td><td>구역번호: 101 / 구역이름: 중앙로</td></tr>
+          </table>
+        </div>
+
+        <p style="margin:16px 0 8px;font-weight:700;color:#0F4C2A;font-size:13px">② 열(컬럼) 구성</p>
+        <p style="font-size:12.5px;color:#334155;margin-bottom:8px">
+          첫 번째 행은 반드시 아래 헤더명으로 작성해야 자동으로 인식됩니다.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <tr><th>열 이름</th><th>입력 내용</th><th>필수</th><th>예시</th></tr>
+            <tr><td><strong>도로명</strong></td><td>도로명 주소</td><td style="text-align:center">✅</td><td>행복로</td></tr>
+            <tr><td><strong>번지</strong></td><td>건물 번지 (도로명 번호)</td><td style="text-align:center">✅</td><td>12</td></tr>
+            <tr><td><strong>건물명</strong></td><td>아파트·단지 이름</td><td style="text-align:center">—</td><td>행복아파트 1동</td></tr>
+            <tr><td><strong>세부주소</strong></td><td>호수 (단독주택은 비워둠)</td><td style="text-align:center">—</td><td>101호</td></tr>
+            <tr><td><strong>방문금지(Y)</strong></td><td>방문 거절 세대: <code>Y</code> 입력</td><td style="text-align:center">—</td><td>Y</td></tr>
+            <tr><td><strong>메모</strong></td><td>전달 사항 (앱에서 메모로 표시)</td><td style="text-align:center">—</td><td>이사 예정</td></tr>
+          </table>
+        </div>
+
+        <p style="margin:16px 0 8px;font-weight:700;color:#0F4C2A;font-size:13px">③ 주소 자동 승계 기능</p>
+        <p style="font-size:12.5px;color:#334155;margin-bottom:8px">
+          같은 건물의 여러 세대를 입력할 때, <strong>도로명·번지·건물명이 동일하면 첫 줄에만 적고 나머지 줄은 비워두면</strong> 자동으로 위의 값을 이어받습니다. 데이터 입력이 훨씬 간편해집니다.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <tr>
+              <th>도로명</th><th>번지</th><th>건물명</th><th>세부주소</th><th>방문금지(Y)</th><th>메모</th>
+            </tr>
+            <tr>
+              <td>행복로</td><td>12</td><td>행복아파트 1동</td><td>101호</td><td></td><td></td>
+            </tr>
+            <tr style="background:#F8FAFC">
+              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
+              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
+              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
+              <td>201호</td><td></td><td></td>
+            </tr>
+            <tr>
+              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
+              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
+              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
+              <td>301호</td><td>Y</td><td>방문 거절</td>
+            </tr>
+          </table>
+        </div>
+        <div class="hint info" style="margin-top:8px">
+          <span class="hint-icon">💡</span>
+          <div class="hint-body">
+            단독주택의 경우 <strong>건물명과 세부주소를 비워두고 번지만 입력</strong>하면 됩니다.<br>
+            엑셀 업로드 전 미리보기 화면에서 몇 세대가 인식됐는지 확인할 수 있습니다.
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 

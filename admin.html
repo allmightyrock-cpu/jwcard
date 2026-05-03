@@ -585,6 +585,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             style="padding:9px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;font-family:inherit;color:#94A3B8;border-bottom:2.5px solid transparent;margin-bottom:-2px">
             🗂 기록 관리
           </button>
+          <button id="s13-st-import" onclick="s13SwitchSubtab('import')"
+            style="padding:9px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;font-family:inherit;color:#94A3B8;border-bottom:2.5px solid transparent;margin-bottom:-2px">
+            📥 가져오기
+          </button>
         </div>
 
         <!-- 미리보기 패널 -->
@@ -648,6 +652,64 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
           <!-- 테이블 -->
           <div id="s13m-table"></div>
+        </div>
+
+        <!-- 가져오기 패널 -->
+        <div id="s13-panel-import" style="display:none">
+
+          <!-- 안내 -->
+          <div style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#0369A1;line-height:2">
+            <strong>📋 CSV / Excel 파일로 기존 S-13 기록을 일괄 가져옵니다.</strong><br>
+            파일 형식: <code style="background:#E0F2FE;padding:1px 5px;border-radius:3px">구역번호, 전도인이름, 배정날짜, 완료날짜</code> (한 행 = 배정 1건)<br>
+            • 전도인 여러 명: 공백으로 구분 &nbsp;예) <code style="background:#E0F2FE;padding:1px 4px;border-radius:3px">홍길동 이순신</code><br>
+            • 날짜 형식: <code style="background:#E0F2FE;padding:1px 4px;border-radius:3px">YYYY-MM-DD</code> 또는 <code style="background:#E0F2FE;padding:1px 4px;border-radius:3px">YYYY.MM.DD</code><br>
+            • 완료날짜 비워두면 → 진행 중으로 처리 &nbsp;|&nbsp; 같은 배정날짜 이미 있으면 → 자동 건너뜀
+          </div>
+
+          <!-- 데이터 수정 (파일 선택 위) -->
+          <div style="margin-bottom:16px;padding:12px 16px;background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px">
+            <div style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:6px">🔧 전도인 이름 일괄 수정</div>
+            <div style="font-size:12px;color:#78350F;margin-bottom:10px">공백으로 쪼개진 이름(예: "이전, 기록")을 올바른 이름으로 일괄 변경합니다.</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div style="font-size:12px;color:#92400E;white-space:nowrap">잘못된 이름:</div>
+              <input type="text" id="s13-fix-from" value="이전 기록" placeholder="수정할 이름 (공백 구분)" style="width:120px;padding:5px 8px;border:1px solid #FCD34D;border-radius:6px;font-size:12px">
+              <div style="font-size:12px;color:#92400E">→</div>
+              <input type="text" id="s13-fix-to" placeholder="변경할 이름" style="width:120px;padding:5px 8px;border:1px solid #FCD34D;border-radius:6px;font-size:12px">
+              <button onclick="s13FixNamesUI()" style="padding:5px 14px;background:#92400E;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">수정 실행</button>
+            </div>
+            <div id="s13-fix-result" style="margin-top:8px;font-size:12px;color:#166534;display:none"></div>
+          </div>
+
+          <!-- 버튼 행 -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+            <button class="btn btn-sm" onclick="s13DownloadTemplate()"
+              style="background:#F8FAFC;color:#475569;border-color:#CBD5E1;display:flex;align-items:center;gap:5px">
+              📄 CSV 양식 다운로드
+            </button>
+            <label class="btn btn-navy" style="cursor:pointer;display:flex;align-items:center;gap:5px;margin:0;font-weight:600">
+              📂 파일 선택 (CSV / Excel)
+              <input type="file" id="s13-import-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="s13HandleFileSelect(this)">
+            </label>
+            <span id="s13-import-filename" style="font-size:12px;color:#64748B;font-style:italic"></span>
+          </div>
+
+          <!-- 미리보기 영역 -->
+          <div id="s13-import-preview" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+              <div id="s13-import-summary" style="font-size:13px;font-weight:600;color:#1E293B"></div>
+              <button class="btn btn-navy" onclick="s13DoImport()" id="s13-import-btn"
+                style="display:flex;align-items:center;gap:5px">
+                ✅ Firestore에 저장
+              </button>
+            </div>
+            <div style="overflow-x:auto;border-radius:8px;border:1px solid #E2E8F0">
+              <table id="s13-import-table" style="width:100%;border-collapse:collapse;font-size:12px"></table>
+            </div>
+          </div>
+
+          <!-- 결과 -->
+          <div id="s13-import-result" style="display:none;margin-top:14px"></div>
+
         </div>
       </div>
 
