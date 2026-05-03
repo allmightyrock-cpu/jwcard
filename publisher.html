@@ -29,141 +29,158 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   padding:28px 20px;
   position:relative;
   overflow:hidden;
-  /* 책 페이지 느낌의 사선 텍스처 + 청회색 그라디언트 */
-  background-color:#4A6B8A;
+  background-color:#1B3A6B;
   background-image:
     repeating-linear-gradient(
       -55deg,
       transparent,
-      transparent 3px,
-      rgba(255,255,255,0.035) 3px,
-      rgba(255,255,255,0.035) 4px
+      transparent 4px,
+      rgba(255,255,255,0.022) 4px,
+      rgba(255,255,255,0.022) 5px
     ),
-    linear-gradient(168deg,
-      #2A4570 0%,
-      #3D6490 30%,
-      #5880A2 60%,
-      #8BAABF 85%,
-      #B0C8D8 100%
-    );
+    linear-gradient(160deg, #13294E 0%, #1B3A6B 45%, #2B5299 100%);
 }
-/* 상단·하단 빛 번짐 효과 */
+/* 좌상단 반사광 */
 #login-screen::before{
   content:'';
   position:absolute;
-  bottom:-60px;left:-40px;right:-40px;
-  height:220px;
-  background:radial-gradient(ellipse at center, rgba(255,255,255,0.12) 0%, transparent 70%);
+  top:-60px;left:-60px;
+  width:280px;height:280px;
+  background:radial-gradient(circle, rgba(91,130,185,0.18) 0%, transparent 65%);
   pointer-events:none;
+  z-index:0;
 }
-#login-screen::after{
-  content:'';
+#login-screen::after{ content:none; }
+
+/* ── JW 3D 배경 ── */
+.jw-3d-bg{
   position:absolute;
-  top:-30px;right:-30px;
-  width:200px;height:200px;
-  background:radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%);
+  bottom:40px;
+  left:50%;
+  transform:translateX(-35%) perspective(600px) rotateX(26deg) rotateY(8deg) rotate(3deg);
+  transform-origin:bottom center;
+  user-select:none;
   pointer-events:none;
+  z-index:0;
+  overflow:visible;
+  animation:jw-breathe 7s ease-in-out infinite;
 }
-/* 반투명 유리 카드 */
+@keyframes jw-breathe{
+  0%,100%{ transform:translateX(-35%) perspective(600px) rotateX(26deg) rotateY(8deg) rotate(3deg); }
+  33%    { transform:translateX(-36%) perspective(600px) rotateX(22deg) rotateY(5deg) rotate(2deg); }
+  66%    { transform:translateX(-34%) perspective(600px) rotateX(28deg) rotateY(10deg) rotate(3.5deg); }
+}
+.jw-bg-text{
+  font-family:'Barlow','Arial Black',sans-serif;
+  font-weight:900;
+  font-size:240px;
+  letter-spacing:20px;
+}
+
+/* 로그인 카드 — 흰→투명 그라디언트 */
 .login-card{
-  background:rgba(255,255,255,0.84);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  border-radius:26px;
-  padding:16px 20px 14px;
-  width:calc(100% - 48px);
+  background:linear-gradient(175deg,
+    rgba(255,255,255,0.97) 0%,
+    rgba(255,255,255,0.93) 28%,
+    rgba(255,255,255,0.72) 58%,
+    rgba(255,255,255,0.22) 100%
+  );
+  backdrop-filter:blur(28px);
+  -webkit-backdrop-filter:blur(28px);
+  border-radius:24px;
+  padding:18px 20px 16px;
+  width:calc(100% - 32px);
   max-width:300px;
-  box-shadow:0 12px 48px rgba(20,42,80,0.22), 0 2px 8px rgba(0,0,0,0.08);
-  border:1px solid rgba(255,255,255,0.75);
+  box-shadow:0 24px 64px rgba(0,0,0,0.38), 0 4px 16px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.95);
+  border:1px solid rgba(255,255,255,0.5);
   position:relative;
   z-index:1;
 }
 /* 헤더 영역 */
 .login-header{text-align:center;margin-bottom:12px}
-.login-pin-icon{margin-bottom:6px}
-.login-pin-icon svg{filter:drop-shadow(0 4px 10px rgba(27,58,107,0.25));width:40px;height:48px}
-.login-header h1{font-size:20px;font-weight:700;color:#1B3A6B;letter-spacing:-0.3px;line-height:1.2}
-.login-header p{font-size:11px;color:#6484A4;margin-top:3px;font-weight:500;letter-spacing:0.3px}
-/* 입력 필드 — 언더라인 스타일 */
+.login-pin-icon{margin-bottom:8px}
+.login-pin-icon svg{filter:drop-shadow(0 4px 12px rgba(27,58,107,0.3));width:38px;height:46px}
+.login-header h1{font-size:18px;font-weight:700;color:#1B3A6B;letter-spacing:-0.3px;line-height:1.2}
+.login-header p{font-size:10px;color:#7B9EC8;margin-top:3px;font-weight:500;letter-spacing:0.5px}
+/* 입력 필드 */
 .field-group{margin-bottom:10px;text-align:center}
 .field-group label{
-  display:block;
-  font-size:10px;
-  font-weight:700;
-  color:#7B9EC8;
-  letter-spacing:0.6px;
-  text-transform:uppercase;
-  margin-bottom:4px;
-  text-align:center;
+  display:block;font-size:9px;font-weight:700;
+  color:#5A7A9B;letter-spacing:0.7px;
+  text-transform:uppercase;margin-bottom:5px;
 }
 .field-group input{
-  width:100%;
-  padding:4px 0 6px;
-  border:none;
-  border-bottom:1.5px solid #C8D9E8;
-  background:transparent;
-  font-size:16px;
-  color:#1E293B;
-  font-family:inherit;
-  outline:none;
-  transition:border-color 0.2s;
-  box-sizing:border-box;
-  text-align:center;
+  width:100%;padding:3px 0 6px;
+  border:none;border-bottom:1.5px solid #D4E4F0;
+  background:transparent;font-size:15px;color:#1E293B;
+  font-family:inherit;outline:none;
+  transition:border-color 0.2s;box-sizing:border-box;text-align:center;font-weight:500;
 }
-.field-group input::placeholder{color:#B8CAD8;font-size:15px;text-align:center}
+.field-group input::placeholder{color:#4A6B8A;font-size:13px;opacity:1;}
 .field-group input:focus{border-bottom-color:#2B5299}
-/* 로그인 버튼 — 알약형 */
+/* 로그인(시작) 버튼 — 세련된 3D 네이비 */
 .login-btn{
-  width:100%;
-  padding:11px;
-  background:linear-gradient(135deg,#2B5299 0%,#1B3A6B 100%);
-  color:#fff;
-  border:none;
-  border-radius:50px;
-  font-size:16px;
-  font-weight:700;
-  cursor:pointer;
-  font-family:inherit;
-  letter-spacing:0.5px;
-  box-shadow:0 6px 20px rgba(27,58,107,0.35);
-  transition:transform 0.1s, box-shadow 0.2s;
-  margin-top:4px;
+  width:100%;padding:9px 14px;
+  background:linear-gradient(180deg,#4A7FD4 0%,#2B5299 55%,#1B3A6B 100%);
+  color:#fff;border:none;border-radius:50px;
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.3px;
+  position:relative;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.26),inset 0 -1px 0 rgba(0,0,0,0.16),
+    0 2px 0 #0d1f42,0 4px 14px rgba(27,58,107,0.44),0 8px 24px rgba(0,0,0,0.14);
+  transition:all 0.18s cubic-bezier(0.34,1.2,0.64,1);margin-top:4px;
 }
-.login-btn:active{transform:scale(0.97);box-shadow:0 3px 10px rgba(27,58,107,0.25)}
+.login-btn::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:45%;
+  background:linear-gradient(180deg,rgba(255,255,255,0.16) 0%,transparent 100%);
+  border-radius:50px 50px 0 0;pointer-events:none;
+}
+.login-btn:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.26),inset 0 -1px 0 rgba(0,0,0,0.16),0 3px 0 #0d1f42,0 6px 20px rgba(27,58,107,0.56),0 10px 28px rgba(0,0,0,0.16);}
+.login-btn:active{transform:translateY(2px)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.16),0 0 0 #0d1f42,0 2px 8px rgba(27,58,107,0.32);}
 /* 에러 / 힌트 */
-.login-error{color:#DC2626;font-size:13px;text-align:center;margin-top:10px;display:none;background:rgba(254,226,226,0.9);border-radius:8px;padding:8px 12px}
+.login-error{font-size:11px;color:rgba(252,165,165,0.9);text-align:center;margin-top:8px;display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:6px 10px}
 .login-hint{font-size:12px;color:#7B9EC8;text-align:center;margin-top:10px}
 /* 사용방법 링크 */
 .login-manual-link{
   display:inline-flex;align-items:center;gap:5px;
-  margin-top:10px;font-size:12px;color:#5A7EA8;
+  margin-top:10px;font-size:11px;color:rgba(100,140,180,0.8);
   cursor:pointer;background:none;border:none;font-family:inherit;
   padding:0;text-decoration:none;
 }
-.login-manual-link:hover{color:#1B3A6B}
-/* 인도자 버튼 — 카드 내부 스타일 재조정 */
+.login-manual-link:hover{color:rgba(186,224,255,0.9)}
+/* 인도자 버튼 — 배지 스타일 */
 #leader-mode-btn{
-  background:rgba(239,246,255,0.9)!important;
-  border:1.5px solid rgba(191,219,254,0.8)!important;
+  display:none;width:100%;margin-top:8px;padding:9px 14px;
+  background:rgba(239,246,255,0.14)!important;
+  border:1px solid rgba(147,197,253,0.3)!important;
   border-radius:14px!important;
-  backdrop-filter:blur(8px);
+  color:rgba(186,224,255,0.9)!important;
+  font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  text-align:left;transition:all 0.2s;
 }
-/* 체크인 버튼 재조정 */
+#leader-mode-btn:hover{background:rgba(239,246,255,0.22)!important;border-color:rgba(147,197,253,0.5)!important;}
+/* 체크인 버튼 — 3D 초록 */
 .checkin-btn{
-  width:100%;margin-top:8px;padding:12px;
-  background:rgba(240,253,244,0.9);color:#166534;
-  border:1.5px solid rgba(187,247,208,0.8);
-  border-radius:14px;font-size:14px;font-weight:500;
-  cursor:pointer;font-family:inherit;transition:all 0.2s;display:none;
-  backdrop-filter:blur(8px);
+  width:100%;margin-top:8px;padding:9px 14px;
+  background:linear-gradient(180deg,#12BA82 0%,#059669 55%,#047857 100%);
+  color:#fff;border:none;border-radius:50px;
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+  position:relative;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.28),inset 0 -1px 0 rgba(0,0,0,0.14),
+    0 2px 0 #065f46,0 4px 14px rgba(5,150,105,0.38),0 8px 24px rgba(0,0,0,0.12);
+  transition:all 0.18s cubic-bezier(0.34,1.2,0.64,1);display:none;
 }
-.checkin-btn.done{background:rgba(220,252,231,0.9);color:#166534;border-color:rgba(134,239,172,0.8);cursor:default}
-/* 공지 배너 재조정 */
+.checkin-btn::before{content:'';position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,0.16) 0%,transparent 100%);border-radius:50px 50px 0 0;pointer-events:none;}
+.checkin-btn:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.28),0 3px 0 #065f46,0 6px 20px rgba(5,150,105,0.50),0 10px 28px rgba(0,0,0,0.14);}
+.checkin-btn:active{transform:translateY(2px)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.18),0 0 0 #065f46,0 2px 8px rgba(5,150,105,0.28);}
+.checkin-btn.done{background:linear-gradient(180deg,#34D399 0%,#059669 100%)!important;cursor:default;}
+/* 공지 배너 — 프리미엄 네이비 */
 .pub-notice-banner{
-  background:rgba(255,247,237,0.92)!important;
-  border-color:rgba(253,211,77,0.5)!important;
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
+  background:rgba(27,58,107,0.07)!important;
+  border:1px solid rgba(27,58,107,0.15)!important;
+  border-radius:12px;padding:9px 11px;margin-bottom:11px;
+  display:flex;gap:9px;align-items:flex-start;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
 }
 
 /* ════ PWA 홈 화면 설치 안내 ════ */
@@ -716,7 +733,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   .unit-list { grid-template-columns:1fr 1fr 1fr }
 }
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Barlow:wght@900&display=swap" rel="stylesheet">
 <script src="/config.js"></script>
 <script>
 window._naverMapsLoaded = false;
@@ -795,6 +812,16 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 </div>
 
 <div id="login-screen">
+
+  <!-- JW 3D 배경 -->
+  <svg class="jw-3d-bg" id="jw-bg-svg" viewBox="0 0 480 260" width="480" height="260" overflow="visible">
+    <defs>
+      <style>.jw-bg-text{font-family:'Barlow','Arial Black',sans-serif;font-weight:900;font-size:240px;letter-spacing:20px;}</style>
+    </defs>
+    <g id="jw-bg-depth"></g>
+    <text class="jw-bg-text" x="240" y="232" text-anchor="middle" fill="rgba(255,255,255,0.10)" id="jw-bg-front">JW</text>
+  </svg>
+
   <div class="login-card">
 
     <!-- 헤더: 위치핀 아이콘 + 제목 -->
@@ -813,14 +840,27 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
 
 
-    <div class="pub-notice-banner" id="pub-notice-banner">
-      <div class="pub-notice-banner-header">
-        <span class="pub-notice-banner-icon">📢</span>
-        <span class="pub-notice-banner-title" id="pub-notice-title">공지</span>
-        <button class="pub-notice-banner-close" onclick="document.getElementById('pub-notice-banner').style.display='none'" title="닫기">×</button>
+    <div class="pub-notice-banner" id="pub-notice-banner" style="display:none">
+      <div style="flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(43,82,153,0.1);border:1px solid rgba(43,82,153,0.18);display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <defs><linearGradient id="mg-pub" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#5B8FD6"/><stop offset="100%" stop-color="#1B3A6B"/></linearGradient></defs>
+          <path d="M4 9.5v5h3.5L14 18V6L7.5 9.5H4z" fill="url(#mg-pub)"/>
+          <path d="M16.5 8.8C17.4 9.7 18 10.8 18 12s-.6 2.3-1.5 3.2" stroke="url(#mg-pub)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          <path d="M18.5 6.5C20.1 8.1 21 10 21 12s-.9 3.9-2.5 5.5" stroke="url(#mg-pub)" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.45"/>
+        </svg>
       </div>
-      <div class="pub-notice-banner-body" id="pub-notice-body"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;font-weight:700;color:#1B3A6B;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:3px;display:flex;align-items:center;gap:5px;">
+          <span style="width:5px;height:5px;border-radius:50%;background:#3B82F6;display:inline-block;animation:pulse-dot 2.5s ease-in-out infinite;flex-shrink:0;"></span>
+          <span id="pub-notice-title">공지</span>
+          <button onclick="document.getElementById('pub-notice-banner').style.display='none'" style="margin-left:auto;background:none;border:none;color:#7B9EC8;cursor:pointer;font-size:14px;padding:0;line-height:1;">×</button>
+        </div>
+        <div id="pub-notice-body" style="font-size:11px;color:#4A6B8A;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      </div>
     </div>
+    <style>
+    @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(0.8)}}
+    </style>
 
     <!-- 입력 필드 -->
     <div class="field-group">
@@ -2871,6 +2911,24 @@ window.exitLeaderOnly = function() {
 };
 
 // ════════════════════════════════════════════
+// ══ 인도자 인증 모드 설정 ══
+// leaderAuthMode: 'individual' (개인 PIN) | 'shared' (공용 암호)
+let _leaderAuthMode   = 'individual';
+let _sharedLeaderPin  = '';
+
+async function loadLeaderAuthConfig() {
+  try {
+    const snap = await getDoc(doc(db, 'config', 'auth'));
+    if (snap.exists()) {
+      const d = snap.data();
+      _leaderAuthMode  = d.leaderAuthMode  || 'individual';
+      _sharedLeaderPin = d.sharedLeaderPin || '';
+    }
+  } catch(e) { /* 네트워크 오류 시 기본값(individual) 유지 */ }
+}
+// 앱 시작 시 한 번 로드
+loadLeaderAuthConfig();
+
 // ══ PIN 인증 시스템 ══
 // ════════════════════════════════════════════
 let _pinBuffer    = '';          // 현재 입력 중인 PIN
@@ -2881,12 +2939,23 @@ let _pinNextAction = 'enterCard'; // PIN 인증 후 실행할 액션
 // PIN 화면 표시
 function showPinScreen(mode) {
   _pinBuffer  = '';
-  _pinMode    = mode;
   _pinNewTemp = '';
   document.getElementById('pin-screen').style.display = 'flex';
   document.getElementById('pin-error').textContent = '';
-  updatePinDots();
 
+  // ── 공용 암호 방식: 항상 verify만, set_new 없음
+  if (_leaderAuthMode === 'shared') {
+    _pinMode = 'verify';
+    document.getElementById('pin-icon').textContent = '🔐';
+    document.getElementById('pin-title').textContent = '인도자 암호 입력';
+    document.getElementById('pin-subtitle').textContent = '회중 공용 인도자 암호를 입력하세요';
+    document.getElementById('pin-hint').textContent = '암호를 모르시면 회중 관리자에게 문의하세요';
+    updatePinDots();
+    return;
+  }
+
+  // ── 개인 PIN 방식 (기존 로직)
+  _pinMode = mode;
   const hasPIN = !!(_pubDoc && _pubDoc.pin && _pubDoc.pin.length > 0);
 
   if (mode === 'verify' && !hasPIN) {
@@ -3005,6 +3074,20 @@ window.pinSubmit = async function() {
   }
 
   if (_pinMode === 'verify') {
+    // ── 공용 암호 방식
+    if (_leaderAuthMode === 'shared') {
+      if (!_sharedLeaderPin || _pinBuffer !== _sharedLeaderPin) {
+        errEl.textContent = '암호가 올바르지 않습니다';
+        _pinBuffer = '';
+        updatePinDots();
+        return;
+      }
+      document.getElementById('pin-screen').style.display = 'none';
+      _pinBuffer = ''; _pinMode = '';
+      afterPinSuccess();
+      return;
+    }
+    // ── 개인 PIN 방식
     const storedPin = (_pubDoc.pin && _pubDoc.pin.length > 0) ? _pubDoc.pin : '';
     if (!storedPin || _pinBuffer !== storedPin) {
       errEl.textContent = 'PIN이 올바르지 않습니다';
@@ -5242,6 +5325,35 @@ window.saveAddrEdit = async function() {
       localStorage.setItem(_IOS_KEY, String(Date.now() + 3 * 24 * 3600 * 1000));
     }
   };
+})();
+</script>
+
+<!-- JW 3D 배경 레이어 생성 -->
+<script>
+(function(){
+  const depth = document.getElementById('jw-bg-depth');
+  if(!depth) return;
+  const ns = 'http://www.w3.org/2000/svg';
+  const LAYERS=20, DX=-1.6, DY=2.0, BX=240, BY=232;
+  for(let i=LAYERS;i>=1;i--){
+    const t=document.createElementNS(ns,'text');
+    t.setAttribute('class','jw-bg-text');
+    t.setAttribute('x', BX+DX*i);
+    t.setAttribute('y', BY+DY*i);
+    t.setAttribute('text-anchor','middle');
+    let a = i===1?0.65:i<=3?(0.60-(i-1)*0.05):i<=8?(0.50-(i-3)*0.06):Math.max(0.04,0.20-(i-8)*0.018);
+    t.setAttribute('fill',`rgba(4,10,42,${a.toFixed(2)})`);
+    t.textContent='JW';
+    depth.appendChild(t);
+  }
+  const edge=document.createElementNS(ns,'text');
+  edge.setAttribute('class','jw-bg-text');
+  edge.setAttribute('x', BX+DX*0.5);
+  edge.setAttribute('y', BY+DY*0.5);
+  edge.setAttribute('text-anchor','middle');
+  edge.setAttribute('fill','rgba(80,120,200,0.12)');
+  edge.textContent='JW';
+  depth.appendChild(edge);
 })();
 </script>
 </body>

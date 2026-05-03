@@ -219,8 +219,10 @@ const TC = {
   C:{bg:"#f0ecfd",ac:"#6b4fcf"},D:{bg:"#fdf6e8",ac:"#d97706"},
   E:{bg:"#ecfeff",ac:"#0891b2"},F:{bg:"#fdf2f8",ac:"#be185d"},
 };
-let ADMIN_PW  = null;    // Firestore admin/config.cartAdminPw — 인도자 공용 비밀번호
+let ADMIN_PW  = null;    // Firestore admin/config.cartAdminPw — 개인 PIN 방식 전시대 암호
 let _congregationName = '';  // Firestore admin/config.congregation
+let _leaderAuthMode   = 'individual'; // 'individual' | 'shared'
+let _sharedLeaderPin  = '';           // 공용 암호 방식일 때 사용
 
 // ── 앱 초기 설정 로드 ──
 async function _loadCartConfig() {
@@ -233,6 +235,15 @@ async function _loadCartConfig() {
       _congregationName = d.congregation || '';
     }
   } catch(e) { console.warn('설정 로드 오류:', e.message); }
+  // ── 인도자 인증 방식 로드 ──
+  try {
+    const authSnap = await db.collection('config').doc('auth').get();
+    if (authSnap.exists) {
+      const a = authSnap.data();
+      _leaderAuthMode  = a.leaderAuthMode  || 'individual';
+      _sharedLeaderPin = a.sharedLeaderPin || '';
+    }
+  } catch(e) { console.warn('인증 설정 로드 오류:', e.message); }
   try {
     const locSnap = await db.collection('admin').doc('cartConfig').get();
     if (locSnap.exists) {
@@ -1129,7 +1140,8 @@ function bindLogin(){
 
     if (!_adminMode) {
       // 1단계: 비밀번호 입력 영역 표시
-      if (!ADMIN_PW) {
+      const _activePw = _leaderAuthMode === 'shared' ? _sharedLeaderPin : ADMIN_PW;
+      if (!_activePw) {
         err.textContent = '인도자 비밀번호가 설정되지 않았습니다. 구역카드 관리자에게 문의하세요.'; return;
       }
       _adminMode = true;
@@ -1139,10 +1151,11 @@ function bindLogin(){
       return;
     }
 
-    // 2단계: 공용 비밀번호 검증
+    // 2단계: 인증 방식에 따라 비밀번호 검증
     const pin = (pinEl.value || '').trim();
     if (!pin) { err.textContent = '비밀번호를 입력해 주세요.'; pinEl.focus(); return; }
-    if (pin !== ADMIN_PW) {
+    const _correctPw = _leaderAuthMode === 'shared' ? _sharedLeaderPin : ADMIN_PW;
+    if (pin !== _correctPw) {
       err.textContent = '비밀번호가 올바르지 않습니다.'; pinEl.value = ''; pinEl.focus(); return;
     }
     S.role = 'admin'; S.screen = 'list';

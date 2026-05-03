@@ -28,6 +28,20 @@ async function loadSettingsValues() {
       renderGroupChipsInSettings();
     }
   } catch(e) { console.error('설정 로드 오류:', e); }
+
+  // ── 인도자 인증 방식 로드 ──
+  try {
+    const authDoc = await window._getDoc(window._doc(window._db, 'config', 'auth'));
+    const authData = authDoc.exists() ? authDoc.data() : {};
+    const mode = authData.leaderAuthMode || 'individual';
+    // 항상 라디오 하나를 체크 상태로 (문서 없을 때도 individual 기본 선택)
+    const radioEl = document.querySelector(`input[name="leaderAuthMode"][value="${mode}"]`)
+                 || document.querySelector('input[name="leaderAuthMode"][value="individual"]');
+    if (radioEl) { radioEl.checked = true; }
+    const pinEl = document.getElementById('s-shared-leader-pin');
+    if (pinEl) pinEl.value = authData.sharedLeaderPin || '';
+    onLeaderAuthModeChange(); // UI 상태 동기화
+  } catch(e) { console.error('인증 설정 로드 오류:', e); }
 }
 
 window.saveCongregation = async function() {
@@ -265,6 +279,72 @@ window.saveNaverClientId = async function() {
     window._naverMapsLoaded = false;
     if (typeof window._loadNaverMaps === 'function') window._loadNaverMaps(val);
     showMsg('✅ 저장됐습니다. 지도 기능이 활성화됩니다.', true);
+  } catch(e) { showMsg('저장 오류: ' + e.message, false); }
+};
+
+// ── 인도자 인증 방식 ──────────────────────────────────────────────
+window.onLeaderAuthModeChange = function() {
+  const mode = document.querySelector('input[name="leaderAuthMode"]:checked')?.value || 'individual';
+  const sharedWrap  = document.getElementById('s-shared-pin-wrap');
+  const cartWrap    = document.getElementById('s-cart-pw-wrap');
+  const descEl      = document.getElementById('s-cart-pw-desc');
+  const indLbl      = document.getElementById('s-auth-individual-lbl');
+  const shdLbl      = document.getElementById('s-auth-shared-lbl');
+
+  // 선택된 라벨 강조
+  if (indLbl) indLbl.style.borderColor = mode === 'individual' ? '#1B3A6B' : '#E2E8F0';
+  if (shdLbl) shdLbl.style.borderColor = mode === 'shared'     ? '#1B3A6B' : '#E2E8F0';
+
+  if (mode === 'shared') {
+    if (sharedWrap) sharedWrap.style.display = 'block';
+    if (cartWrap)   cartWrap.style.display   = 'none';   // 공용 암호가 전시대도 커버
+  } else {
+    if (sharedWrap) sharedWrap.style.display = 'none';
+    if (cartWrap)   cartWrap.style.display   = 'block';
+    if (descEl)     descEl.textContent = '개인 PIN 방식 — 전시대봉사 인도자 전용 추가 암호를 설정합니다.';
+  }
+};
+
+window.saveLeaderAuthSettings = async function() {
+  if (!window._db) { alert('로그인 후 이용 가능합니다.'); return; }
+  const msgEl = document.getElementById('s-auth-msg');
+  function showMsg(text, ok) {
+    if (!msgEl) return;
+    msgEl.textContent = text;
+    msgEl.style.color = ok ? '#166534' : '#DC2626';
+    msgEl.style.display = 'block';
+    setTimeout(() => { msgEl.style.display = 'none'; }, 3500);
+  }
+
+  const mode = document.querySelector('input[name="leaderAuthMode"]:checked')?.value || 'individual';
+  let sharedPin = '';
+
+  if (mode === 'shared') {
+    sharedPin = (document.getElementById('s-shared-leader-pin')?.value || '').trim();
+    if (!sharedPin) { showMsg('공용 암호를 입력해 주세요.', false); return; }
+    if (!/^\d+$/.test(sharedPin)) { showMsg('숫자만 입력 가능합니다.', false); return; }
+    if (sharedPin.length < 4)     { showMsg('4자리 이상 입력해 주세요.', false); return; }
+  }
+
+  try {
+    // config/auth — 인도자 인증 방식 (setDoc merge로 신규/업데이트 모두 처리)
+    await window._setDoc(
+      window._doc(window._db, 'config', 'auth'),
+      { leaderAuthMode: mode, sharedLeaderPin: sharedPin },
+      { merge: true }
+    );
+
+    // 개인 방식일 때 전시대봉사 별도 암호 저장
+    if (mode === 'individual') {
+      const cartPw = (document.getElementById('s-cart-admin-pw')?.value || '').trim();
+      if (cartPw) {
+        if (!/^\d+$/.test(cartPw)) { showMsg('전시대봉사 암호: 숫자만 입력 가능합니다.', false); return; }
+        if (cartPw.length < 4)     { showMsg('전시대봉사 암호: 4자리 이상 입력해 주세요.', false); return; }
+        await window._updateDoc(window._doc(window._db, 'admin', 'config'), { cartAdminPw: cartPw });
+      }
+    }
+
+    showMsg('✅ 인도자 인증 설정이 저장되었습니다.', true);
   } catch(e) { showMsg('저장 오류: ' + e.message, false); }
 };
 

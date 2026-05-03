@@ -3979,6 +3979,7 @@ window._collection     = (...a) => collection(...a);
 window._query          = (...a) => query(...a);
 window._where          = (...a) => where(...a);
 window._orderBy        = (...a) => orderBy(...a);
+window._setDoc         = (...a) => setDoc(...a);
 window._serverTimestamp = () => serverTimestamp();
 
 // ════════════════════════════════════════════
