@@ -9,6 +9,8 @@ async function loadSettingsValues() {
       if (cEl) cEl.value = data.congregation || '';
       const caEl = document.getElementById('s-cart-admin-pw');
       if (caEl) caEl.value = data.cartAdminPw || '';
+      const mrEl = document.getElementById('s-map-region');
+      if (mrEl) mrEl.value = data.mapRegion || window._mapRegion || '경기도 동두천시';
       const clEl = document.getElementById('s-cycle-limit');
       if (clEl) clEl.value = data.cycleLimit || 6;
       window._cycleLimit = data.cycleLimit || 6;
@@ -279,6 +281,26 @@ window.saveNaverClientId = async function() {
     window._naverMapsLoaded = false;
     if (typeof window._loadNaverMaps === 'function') window._loadNaverMaps(val);
     showMsg('✅ 저장됐습니다. 지도 기능이 활성화됩니다.', true);
+  } catch(e) { showMsg('저장 오류: ' + e.message, false); }
+};
+
+// ── 지도 지역 설정 ────────────────────────────────────────────────
+window.saveMapRegion = async function() {
+  if (!window._db) { alert('로그인 후 이용 가능합니다.'); return; }
+  const val  = (document.getElementById('s-map-region').value || '').trim();
+  const msgEl = document.getElementById('s-map-region-msg');
+  function showMsg(text, ok) {
+    if (!msgEl) return;
+    msgEl.textContent = text;
+    msgEl.style.color = ok ? '#16A34A' : '#EF4444';
+    msgEl.style.display = 'block';
+    setTimeout(function() { msgEl.style.display = 'none'; }, 3500);
+  }
+  if (!val) { showMsg('지역명을 입력해 주세요. (예: 경기도 동두천시)', false); return; }
+  try {
+    await window._updateDoc(window._doc(window._db, 'admin', 'config'), { mapRegion: val });
+    window._mapRegion = val;
+    showMsg('✅ 저장됐습니다. 지도를 다시 열면 적용됩니다.', true);
   } catch(e) { showMsg('저장 오류: ' + e.message, false); }
 };
 

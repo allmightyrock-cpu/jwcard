@@ -46,8 +46,8 @@ function plotTerritoryMarkers() {
     var road  = (fu.road  || '').trim();
     var jibun = (fu.jibun || '').trim();
     if (!road && !jibun) return;
-    var BASE = ''; // ⚠ 본인 회중 지역으로 변경하면 지도 정확도 향상 (예: '경기도 OO시 ')
-    var q = (road && jibun) ? BASE + road + jibun : road ? BASE + road : BASE + jibun;
+    var BASE = (window._mapRegion || '경기도 동두천시') + ' ';
+    var q = (road && jibun) ? BASE + road + ' ' + jibun : road ? BASE + road : BASE + jibun;
 
     naver.maps.Service.geocode({ query: q }, function(status, response) {
       if (status !== naver.maps.Service.Status.OK) return;
@@ -130,7 +130,7 @@ function _initMiniMap(t) {
     document.getElementById('mini-map-loading-text').textContent = '주소 정보가 없습니다.';
     return;
   }
-  var BASE = ''; // ⚠ 본인 회중 지역으로 변경하면 지도 정확도 향상 (예: '경기도 OO시 ')
+  var BASE = (window._mapRegion || '경기도 동두천시') + ' ';
   var q = (road && jibun) ? BASE + road + ' ' + jibun : road ? BASE + road : BASE + jibun;
 
   naver.maps.Service.geocode({ query: q }, function(status, response) {

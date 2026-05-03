@@ -743,6 +743,22 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             </p>
           </div>
 
+          <!-- 지도 지역 설정 -->
+          <div class="settings-card">
+            <div class="settings-card-title">📍 지도 지역 설정</div>
+            <div class="form-group">
+              <label>주소 검색 지역 <span style="font-weight:400;color:#94A3B8">(시/군/구 단위)</span></label>
+              <input type="text" id="s-map-region" placeholder="예: 경기도 동두천시"
+                style="max-width:280px">
+            </div>
+            <button class="btn btn-navy" onclick="saveMapRegion()">저장</button>
+            <div id="s-map-region-msg" style="margin-top:8px;font-size:13px;display:none"></div>
+            <p style="margin-top:10px;font-size:12px;color:#64748B;line-height:1.6">
+              구역 카드의 도로명 주소를 지도에 표시할 때 앞에 붙는 지역명입니다.<br>
+              예: "행복로 12" → "<strong>경기도 동두천시</strong> 행복로 12" 로 검색됩니다.
+            </p>
+          </div>
+
           <!-- 인도자 인증 방식 -->
           <div class="settings-card" id="s-leader-auth-card">
             <div class="settings-card-title">🔐 인도자 인증 방식</div>

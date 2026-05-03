@@ -232,6 +232,8 @@ async function loadAdminConfig() {
       const _nKey = d.naverClientId || (window.APP_CONFIG && window.APP_CONFIG.naverClientId) || '';
       window._naverClientId = _nKey;
       if (_nKey && typeof window._loadNaverMaps === 'function') window._loadNaverMaps(_nKey);
+      // 지도 지역 (주소 검색 프리픽스)
+      window._mapRegion = d.mapRegion || (window.APP_CONFIG && window.APP_CONFIG.mapRegion) || '경기도 동두천시';
     } else {
       window._territoryGroups = getDefaultGroups();
     }
