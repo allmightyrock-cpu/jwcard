@@ -743,10 +743,8 @@ window.setSchedGalCatFilter = function(cat, el) {
   el.classList.add('active');
   renderSchedGallery();
 };
-window.setSchedGalStatusFilter = function(status, el) {
+window.setSchedGalStatusFilter = function(status) {
   _schedGalStatusFilter = status;
-  document.querySelectorAll('#sched-gal-status-chips .sched-filter-chip').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
   renderSchedGallery();
 };
 
@@ -793,10 +791,8 @@ window.setSchedCatFilter = function(cat, el) {
   renderUnallocatedList();
 };
 
-window.setSchedStatusFilter = function(status, el) {
+window.setSchedStatusFilter = function(status) {
   _schedStatusFilter = status;
-  document.querySelectorAll('#sched-status-chips .sched-filter-chip').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
   renderUnallocatedList();
 };
 

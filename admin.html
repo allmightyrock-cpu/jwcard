@@ -327,10 +327,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div id="sched-panel-search">
                   <div class="sched-filter-bar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
                     <div class="sched-filter-chips" id="sched-cat-chips" style="flex:1"><button class="sched-filter-chip active" onclick="setSchedCatFilter('',this)">전체</button></div>
-                    <div class="sched-filter-chips" id="sched-status-chips" style="flex-shrink:0">
-                      <button class="sched-filter-chip active" onclick="setSchedStatusFilter('incomplete',this)">미완료</button>
-                      <button class="sched-filter-chip" onclick="setSchedStatusFilter('',this)">전체</button>
-                    </div>
+                    <select id="sched-status-select" onchange="setSchedStatusFilter(this.value)" class="sched-sort-select">
+                      <option value="incomplete">미완료 구역만</option>
+                      <option value="">전체 구역 (완료 포함)</option>
+                    </select>
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
                     <input class="sched-search-input" id="sched-search-input"
@@ -350,10 +350,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div id="sched-panel-gallery" style="display:none">
                   <div class="sched-filter-bar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
                     <div class="sched-filter-chips" id="sched-gal-cat-chips" style="flex:1"><button class="sched-filter-chip active" onclick="setSchedGalCatFilter('',this)">전체</button></div>
-                    <div class="sched-filter-chips" id="sched-gal-status-chips" style="flex-shrink:0">
-                      <button class="sched-filter-chip active" onclick="setSchedGalStatusFilter('incomplete',this)">미완료</button>
-                      <button class="sched-filter-chip" onclick="setSchedGalStatusFilter('',this)">전체</button>
-                    </div>
+                    <select id="sched-gal-status-select" onchange="setSchedGalStatusFilter(this.value)" class="sched-sort-select">
+                      <option value="incomplete">미완료 구역만</option>
+                      <option value="">전체 구역 (완료 포함)</option>
+                    </select>
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
                     <input class="sched-search-input" id="sched-gal-search"
