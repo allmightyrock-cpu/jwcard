@@ -238,10 +238,14 @@ async function _loadCartConfig() {
   // ── 인도자 인증 방식 로드 ──
   try {
     const authSnap = await db.collection('config').doc('auth').get();
+    console.log('[AUTH LOAD] config/auth exists:', authSnap.exists, '| raw data:', authSnap.exists ? JSON.stringify(authSnap.data()) : 'N/A');
     if (authSnap.exists) {
       const a = authSnap.data();
       _leaderAuthMode  = a.leaderAuthMode  || 'individual';
       _sharedLeaderPin = String(a.sharedLeaderPin || '');
+      console.log('[AUTH LOAD] leaderAuthMode:', _leaderAuthMode, '| sharedLeaderPin:', _sharedLeaderPin ? '(set, len=' + _sharedLeaderPin.length + ')' : '(empty)');
+    } else {
+      console.warn('[AUTH LOAD] config/auth 문서가 없습니다 → individual 기본값 사용');
     }
   } catch(e) { console.warn('인증 설정 로드 오류:', e.message); }
   try {
@@ -1170,6 +1174,7 @@ function bindLogin(){
     const pin = (pinEl.value || '').trim();
     if (!pin) { err.textContent = '비밀번호를 입력해 주세요.'; pinEl.focus(); return; }
     const _correctPw = _leaderAuthMode === 'shared' ? _sharedLeaderPin : ADMIN_PW;
+    console.log('[AUTH CHECK] mode:', _leaderAuthMode, '| ADMIN_PW len:', ADMIN_PW?.length, '| sharedPin len:', _sharedLeaderPin?.length, '| input len:', pin.length, '| match:', pin === _correctPw);
     if (pin !== _correctPw) {
       err.textContent = '비밀번호가 올바르지 않습니다.'; pinEl.value = ''; pinEl.focus(); return;
     }

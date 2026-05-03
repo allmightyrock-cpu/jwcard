@@ -328,11 +328,16 @@ window.saveLeaderAuthSettings = async function() {
 
   try {
     // config/auth — 인도자 인증 방식 (setDoc merge로 신규/업데이트 모두 처리)
+    const _authPayload = { leaderAuthMode: mode, sharedLeaderPin: sharedPin };
+    console.log('[SETTINGS SAVE] config/auth 저장 시도:', JSON.stringify(_authPayload));
     await window._setDoc(
       window._doc(window._db, 'config', 'auth'),
-      { leaderAuthMode: mode, sharedLeaderPin: sharedPin },
+      _authPayload,
       { merge: true }
     );
+    // 저장 직후 검증 읽기
+    const _verify = await window._getDoc(window._doc(window._db, 'config', 'auth'));
+    console.log('[SETTINGS SAVE] 저장 후 검증:', _verify.exists() ? JSON.stringify(_verify.data()) : '문서없음');
 
     // 개인 방식일 때 전시대봉사 별도 암호 저장
     if (mode === 'individual') {
