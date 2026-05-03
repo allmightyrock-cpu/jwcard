@@ -2850,7 +2850,8 @@ window.enterLeaderOnly = async function() {
     _isSO            = _permission === '봉사감독자';
     _canEditAddress  = !!_pubDoc.canEditAddress;
     if (!_isLeader) { showErr('인도자, 구역의종, 봉사감독자 또는 관리자 권한이 필요합니다.'); return; }
-    // PIN 인증 먼저
+    // PIN 인증 전 최신 인증 방식 로드
+    await loadLeaderAuthConfig();
     document.getElementById('login-screen').style.display = 'none';
     _pinNextAction = 'leaderOnly';
     showPinScreen('verify');
@@ -2904,6 +2905,8 @@ window.handleLogin = async function() {
 
     // 인도자/봉사감독자/관리자 → PIN 인증 먼저
     if (_isLeader) {
+      // PIN 인증 전 최신 인증 방식 로드
+      await loadLeaderAuthConfig();
       document.getElementById('login-screen').style.display = 'none';
       _pinNextAction = 'enterCard';  // ★ 카드로 진입하도록 명시 (이전 leaderOnly 잔여 상태 방지)
       showPinScreen('verify');
