@@ -231,7 +231,7 @@ async function _loadCartConfig() {
     const snap = await db.collection('admin').doc('config').get();
     if (snap.exists) {
       const d = snap.data();
-      ADMIN_PW = d.cartAdminPw || d.password || '';
+      ADMIN_PW = String(d.cartAdminPw || d.password || '');
       _congregationName = d.congregation || '';
     }
   } catch(e) { console.warn('설정 로드 오류:', e.message); }
@@ -241,7 +241,7 @@ async function _loadCartConfig() {
     if (authSnap.exists) {
       const a = authSnap.data();
       _leaderAuthMode  = a.leaderAuthMode  || 'individual';
-      _sharedLeaderPin = a.sharedLeaderPin || '';
+      _sharedLeaderPin = String(a.sharedLeaderPin || '');
     }
   } catch(e) { console.warn('인증 설정 로드 오류:', e.message); }
   try {
@@ -1131,7 +1131,7 @@ function bindLogin(){
     loadCartNotice();
   };
 
-  // 인도자 모드 (이름 + publishers PIN 인증)
+  // 인도자 모드 (이름 + PIN 인증) — 클릭 시마다 Firestore에서 최신 인증 설정 재로드
   document.getElementById('ladmin-btn').onclick = async () => {
     const name = nameEl.value;
     err.textContent = '';
@@ -1139,7 +1139,22 @@ function bindLogin(){
     if (!CONDUCTORS.includes(name)) { err.textContent = '인도자로 등록된 이름이 아닙니다. (🔑 표시 이름만 가능)'; return; }
 
     if (!_adminMode) {
-      // 1단계: 비밀번호 입력 영역 표시
+      // 1단계: 최신 인증 방식 재로드 (admin에서 설정 변경해도 즉시 반영)
+      try {
+        if (db) {
+          const _aSnap = await db.collection('config').doc('auth').get();
+          if (_aSnap.exists) {
+            const _a = _aSnap.data();
+            _leaderAuthMode  = _a.leaderAuthMode  || 'individual';
+            _sharedLeaderPin = String(_a.sharedLeaderPin || '');
+          }
+          const _cSnap = await db.collection('admin').doc('config').get();
+          if (_cSnap.exists) {
+            ADMIN_PW = String(_cSnap.data().cartAdminPw || _cSnap.data().password || '');
+          }
+        }
+      } catch(e) { /* 로드 실패 시 기존 값 그대로 사용 */ }
+
       const _activePw = _leaderAuthMode === 'shared' ? _sharedLeaderPin : ADMIN_PW;
       if (!_activePw) {
         err.textContent = '인도자 비밀번호가 설정되지 않았습니다. 구역카드 관리자에게 문의하세요.'; return;
