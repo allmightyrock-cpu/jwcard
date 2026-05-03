@@ -2479,6 +2479,8 @@ window.cancelCheckIn = async function() {
 // ── 오늘의 봉사 참여 신청 ──
 window.checkInToMeeting = async function() {
   const name = (document.getElementById('name-input')?.value || '').trim();
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.style.display = 'none';
   if (!name) { showErr('이름을 입력해 주세요.'); return; }
   // 승인 여부 먼저 확인
   try {
