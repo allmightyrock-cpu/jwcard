@@ -1231,9 +1231,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>권한(일반/인도자/봉사감독자)과 무관하게 개인별로 부여합니다. 역할이 일반 전도인이어도 ON으로 설정 가능합니다.</div></div>
               </div>
               <div class="man-sec">
-                <div class="man-sec-title">PIN 관리</div>
+                <div class="man-sec-title">PIN 관리 (개인 PIN 방식)</div>
                 <p class="man-p">인도자 이상은 최초 로그인 시 본인이 직접 4자리 이상 PIN을 설정합니다. PIN은 관리자도 확인할 수 없습니다.</p>
                 <p class="man-p"><strong>PIN 분실 시:</strong> 전도인 편집 → <strong>PIN 초기화</strong> → 다음 로그인 시 본인이 재설정.</p>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>인증 방식이 <strong>공용 암호 방식</strong>으로 설정된 경우 개인 PIN 등록 단계는 건너뜁니다. 설정 탭 → 🔐 인도자 인증 방식에서 변경 가능합니다.</div></div>
               </div>
               <div class="man-sec">
                 <div class="man-sec-title">전도인 추가 / 삭제</div>
@@ -1557,15 +1558,26 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>회중명을 변경하면 저장 즉시 브라우저 탭 제목 및 화면 내 모든 표시가 업데이트됩니다. 별도로 파일을 수정할 필요가 없습니다.</div></div>
               </div>
               <div class="man-sec">
-                <div class="man-sec-title">전시대봉사 — 인도자 공용 비밀번호 설정 <span class="man-new">NEW</span></div>
-                <p class="man-p">cart.html(전시대봉사 앱)에서 <strong>인도자 모드</strong>로 입장할 때 사용하는 <strong>공용 비밀번호</strong>를 설정합니다. 숫자 4자리 이상을 권장합니다.</p>
+                <div class="man-sec-title">🔐 인도자 인증 방식 설정 <span class="man-new">NEW</span></div>
+                <p class="man-p">구역카드(publisher.html)·전시대봉사(cart.html) 앱의 <strong>인도자 인증 방식</strong>을 회중 상황에 맞게 선택합니다.<br>설정 탭 → <strong>🔐 인도자 인증 방식</strong> 카드에서 변경 후 <strong>설정 저장</strong>.</p>
                 <div class="man-table-wrap"><table class="man-table">
-                  <tr><th>역할</th><th>입장 방법</th><th>권한</th></tr>
-                  <tr><td>봉사자</td><td>이름 선택 후 <strong>입장하기</strong> — 비밀번호 없음</td><td>일정 조회, 참여 신청·취소</td></tr>
-                  <tr><td><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자</td><td>이름 선택 → <strong>인도자 모드로 입장</strong> → <strong>공용 비밀번호</strong> 입력</td><td>일정 생성·편집·팀 배정 관리</td></tr>
+                  <tr><th>방식</th><th>인증 방법</th><th>적합한 상황</th></tr>
+                  <tr>
+                    <td><strong>개인 PIN</strong></td>
+                    <td>인도자 각자가 최초 로그인 시 4자리 이상 PIN 직접 등록</td>
+                    <td>인도자마다 독립 비밀번호 유지 · 보안 중시</td>
+                  </tr>
+                  <tr>
+                    <td><strong>공용 암호</strong></td>
+                    <td>관리자가 설정한 하나의 암호를 모든 인도자가 공유</td>
+                    <td>인도자가 자주 바뀌거나 암호 관리를 단순화하고 싶을 때</td>
+                  </tr>
                 </table></div>
-                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>인도자 비밀번호가 설정되지 않으면 인도자 모드 입장 버튼 클릭 시 "관리자에게 문의하세요" 안내가 표시됩니다. 반드시 사전에 설정해 두세요.</div></div>
-                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>이 비밀번호는 Firestore에 저장되며 cart.html 로드 시 자동으로 적용됩니다. 인도자 역할(<svg width="9" height="11" viewBox="0 0 80 90" fill="none" style="vertical-align:middle"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg>)로 등록된 전도인만 인도자 모드 입장이 가능합니다.</div></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>
+                  <strong>공용 암호 방식</strong> 선택 시 — 구역카드·전시대봉사 앱 모두 동일한 공용 암호 하나만 사용합니다. 개인 PIN 등록 단계가 생략됩니다.<br>
+                  <strong>개인 PIN 방식</strong> 선택 시 — 전시대봉사 앱 전용 <strong>인도자 암호</strong>를 별도로 추가 설정할 수 있습니다.
+                </div></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>공용 암호 방식에서 암호를 변경하면 모든 인도자에게 새 암호를 즉시 공유해야 합니다. 변경 전 인도자들과 사전 조율을 권장합니다.</div></div>
               </div>
               <div class="man-sec">
                 <div class="man-sec-title">🔧 데이터 정비 <span class="man-new">NEW</span></div>
@@ -1772,8 +1784,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <ul class="man-steps">
                   <li>관리자 → <strong>전도인관리</strong> → 각 전도인의 <svg width="11" height="13" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin:0 1px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 버튼으로 역할 설정<br>
                     <span class="man-badge purple"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#5B21B6"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#5B21B6"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#5B21B6"/></svg> 인원</span> 봉사자 &nbsp;|&nbsp; <span class="man-badge navy"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자</span> 인도자</li>
-                  <li>관리자 → <strong>설정</strong> → <strong>전시대봉사 — 인도자 공용 비밀번호</strong> 설정 (숫자 4자리 이상)</li>
-                  <li>전도인에게 <code>cart.html</code> URL 공유, 인도자에게 공용 비밀번호 별도 전달</li>
+                  <li>관리자 → <strong>설정</strong> → <strong>🔐 인도자 인증 방식</strong> 선택 후 저장<br>
+                    <span style="font-size:11px;color:#64748B">• 개인 PIN: 인도자 각자가 첫 로그인 시 직접 등록 &nbsp;|&nbsp; 공용 암호: 관리자가 암호 설정 후 인도자에게 공유</span></li>
+                  <li>전도인에게 <code>cart.html</code> URL 공유. 공용 암호 방식인 경우 인도자에게 암호 별도 전달</li>
                 </ul>
               </div>
 
@@ -1782,9 +1795,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>역할</th><th>입장 방법</th><th>권한</th></tr>
                   <tr><td>봉사자</td><td>이름 선택 → <strong>입장하기</strong> (비밀번호 없음)</td><td>일정 조회, 참여 신청·취소</td></tr>
-                  <tr><td><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자</td><td>이름 선택 → <strong>인도자 모드로 입장</strong> → <strong>인도자 공용 비밀번호</strong> 입력</td><td>일정 생성·편집·팀 배정·요일 관리</td></tr>
+                  <tr><td><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;margin-right:2px"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 인도자</td><td>이름 선택 → <strong>인도자 모드로 입장</strong> → 비밀번호 입력<br><span style="font-size:11px;color:#64748B">개인 PIN 방식: 본인 PIN &nbsp;|&nbsp; 공용 암호 방식: 공용 암호</span></td><td>일정 생성·편집·팀 배정·요일 관리</td></tr>
                 </table></div>
-                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>publisher.html(전도인 앱)에서 이름을 확인한 전도인은 cart.html 접속 시 봉사자로 자동 로그인됩니다. (인도자 모드는 공용 비밀번호가 필요하므로 자동 입장 없음)</div></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>publisher.html(전도인 앱)에서 이름을 확인한 전도인은 cart.html 접속 시 봉사자로 자동 로그인됩니다. (인도자 모드는 비밀번호가 필요하므로 자동 입장 없음)</div></div>
                 <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>인도자 역할(<svg width="9" height="11" viewBox="0 0 80 90" fill="none" style="vertical-align:middle"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg>)로 등록된 이름만 인도자 모드 입장이 가능합니다. 역할 미설정 시 "인도자로 등록된 이름이 아닙니다" 오류가 표시됩니다.</div></div>
               </div>
 

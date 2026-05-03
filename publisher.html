@@ -1175,8 +1175,21 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         <div class="help-item">
           <div class="help-icon" style="background:#F0FDF4">🔒</div>
           <div class="help-text">
-            <strong>인도자·관리자는 PIN 필요</strong>
-            <span>인도자·봉사감독자·관리자 권한은 처음 로그인 시 본인이 직접 4자리 이상 PIN을 설정합니다. PIN은 관리자도 알 수 없습니다.</span>
+            <strong>인도자·관리자는 비밀번호 필요</strong>
+            <span>인도자·봉사감독자·관리자 권한은 이름 입력 후 비밀번호를 입력해야 합니다. 회중 설정에 따라 아래 두 방식 중 하나가 적용됩니다.</span>
+          </div>
+        </div>
+        <div style="background:#F8FAFC;border-radius:10px;padding:12px 14px;font-size:12px;color:#475569;line-height:1.9;margin-bottom:4px;border:1px solid #E2E8F0">
+          <div style="font-weight:600;color:#1B3A6B;margin-bottom:6px">🔐 인도자 인증 방식 (관리자 설정)</div>
+          <div style="margin-bottom:6px">
+            <span style="display:inline-block;background:#EFF6FF;color:#1B3A6B;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;margin-right:6px">개인 PIN 방식</span>
+            처음 로그인 시 본인이 직접 4자리 이상 PIN을 설정합니다.<br>
+            <span style="font-size:11px;color:#94A3B8;padding-left:4px">PIN은 관리자도 알 수 없습니다. 분실 시 관리자에게 초기화 요청.</span>
+          </div>
+          <div>
+            <span style="display:inline-block;background:#F0FDF4;color:#166534;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;margin-right:6px">공용 암호 방식</span>
+            관리자가 정한 하나의 암호를 모든 인도자가 공유합니다.<br>
+            <span style="font-size:11px;color:#94A3B8;padding-left:4px">구역카드·전시대봉사 앱에 동일한 암호가 적용됩니다.</span>
           </div>
         </div>
         <div class="help-item">
@@ -1434,8 +1447,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         <div class="help-item">
           <div class="help-icon" style="background:#F8FAFC">❓</div>
           <div class="help-text">
-            <strong>PIN을 잊어버렸어요</strong>
-            <span>시스템 관리자에게 PIN 초기화를 요청하세요. 초기화 후 다음 로그인 시 새 PIN을 설정합니다.</span>
+            <strong>비밀번호를 잊어버렸어요</strong>
+            <span><strong>개인 PIN 방식</strong>: 관리자에게 PIN 초기화를 요청하세요. 초기화 후 다음 로그인 시 새 PIN을 설정합니다.<br><strong>공용 암호 방식</strong>: 관리자에게 새 암호를 문의하세요.</span>
           </div>
         </div>
         <div class="help-item">
