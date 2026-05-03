@@ -2369,6 +2369,8 @@ window.btnMainClick = function() {
 // 구역번호 수동 입력 → 즉시 시작 전환
 window.onNoInput = function(val) {
   const n = (val || '').trim();
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.style.display = 'none';
   if (n.length > 0) {
     setButtonState('start', n);
   } else {
@@ -2403,6 +2405,8 @@ function stopPubMeetingListener() {
 // ── 이름 입력 → 뱃지 토글 + DB 역할 확인 ──
 window.onNameInput = async function(val) {
   const name  = (val || '').trim();
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.style.display = 'none';
   const zone  = document.getElementById('badge-zone');
   const lBadge = document.getElementById('badge-leader');
   const cBadge = document.getElementById('badge-cart');
