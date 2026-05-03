@@ -3035,6 +3035,10 @@ window.resumeNewCard = function() {
   enterCard();
 })();
 
+// ── 인도자 세션 키 (IIFE보다 먼저 선언해야 TDZ 에러 없음) ──
+const _LD_SESSION_KEY   = 'jwcard_leader_session';
+const _LD_SESSION_HOURS = 4;
+
 // 자동 로그인 (새로고침 시 바로 카드로 복귀)
 (function() {
   // ── 인도자 세션 자동 복원 ──
@@ -3333,9 +3337,6 @@ window.pinSubmit = async function() {
 };
 
 // ── 인도자 세션 저장/복원 ──
-const _LD_SESSION_KEY   = 'jwcard_leader_session';
-const _LD_SESSION_HOURS = 4;
-
 function _saveLeaderSession() {
   try {
     localStorage.setItem(_LD_SESSION_KEY, JSON.stringify({
