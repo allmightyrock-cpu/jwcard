@@ -2469,45 +2469,52 @@ window.closeModal = function(id) {
 };
 
 window.openEditModal = function(id) {
-  _editTargetId = id;
-  const t = window._territories.find(t => t.id === id);
-  if (!t) return;
+  console.log('[EDIT] openEditModal called. id:', id, '| territories count:', (window._territories||[]).length);
+  try {
+    _editTargetId = id;
+    const t = window._territories.find(t => t.id === id);
+    console.log('[EDIT] territory found:', !!t, t ? t.name : 'N/A');
+    if (!t) return;
 
-  document.getElementById('edit-modal-title').textContent = `편집 — ${t.name}`;
-  document.getElementById('edit-no').value = t.no || '';
-  document.getElementById('edit-name').value = t.name || '';
-  // 유형 select 세팅 (동적 그룹)
-  const _catEl = document.getElementById('edit-category');
-  if (_catEl) {
-    const _groups = window._territoryGroups || [];
-    const _catVal = t.category || _groups[0] || '';
-    // options가 아직 없으면 renderCategorySelects 먼저
-    if (_catEl.options.length <= 1) renderCategorySelects();
-    _catEl.value = _catVal;
-    if (!_catEl.value && _catEl.options.length) _catEl.selectedIndex = 0;
+    document.getElementById('edit-modal-title').textContent = `편집 — ${t.name}`;
+    document.getElementById('edit-no').value = t.no || '';
+    document.getElementById('edit-name').value = t.name || '';
+    // 유형 select 세팅 (동적 그룹)
+    const _catEl = document.getElementById('edit-category');
+    if (_catEl) {
+      const _groups = window._territoryGroups || [];
+      const _catVal = t.category || _groups[0] || '';
+      // options가 아직 없으면 renderCategorySelects 먼저
+      if (_catEl.options.length <= 1) renderCategorySelects();
+      _catEl.value = _catVal;
+      if (!_catEl.value && _catEl.options.length) _catEl.selectedIndex = 0;
+    }
+
+    // 호수 목록 로드
+    _editUnits = JSON.parse(JSON.stringify(t.units || []));
+    _editChangedRows = new Set();
+    _editNewRows = new Set();
+    renderUnitEditList();
+    updateAddrChangeBar();
+
+    // 엑셀 교체 초기화
+    _replaceExcelData = null;
+    document.getElementById('replace-upload-label').textContent = '클릭하여 새 엑셀 파일 선택';
+    document.getElementById('replace-preview-wrap').style.display = 'none';
+    document.getElementById('replace-btn').disabled = true;
+    document.getElementById('replace-file-input').value = '';
+
+    // 첫 탭 활성화
+    document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.edit-tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector('.edit-tab').classList.add('active');
+    document.getElementById('edit-tab-info').classList.add('active');
+
+    document.getElementById('edit-modal').classList.add('open');
+    console.log('[EDIT] edit-modal opened successfully');
+  } catch(e) {
+    console.error('[EDIT] openEditModal error:', e);
   }
-
-  // 호수 목록 로드
-  _editUnits = JSON.parse(JSON.stringify(t.units || []));
-  _editChangedRows = new Set();
-  _editNewRows = new Set();
-  renderUnitEditList();
-  updateAddrChangeBar();
-
-  // 엑셀 교체 초기화
-  _replaceExcelData = null;
-  document.getElementById('replace-upload-label').textContent = '클릭하여 새 엑셀 파일 선택';
-  document.getElementById('replace-preview-wrap').style.display = 'none';
-  document.getElementById('replace-btn').disabled = true;
-  document.getElementById('replace-file-input').value = '';
-
-  // 첫 탭 활성화
-  document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.edit-tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelector('.edit-tab').classList.add('active');
-  document.getElementById('edit-tab-info').classList.add('active');
-
-  document.getElementById('edit-modal').classList.add('open');
 };
 
 function renderUnitEditList() {
@@ -3222,6 +3229,7 @@ window.openAssignModalFromCard = function() {
 
 window.openEditModalFromCard = function() {
   const id = window._tcTargetId;
+  console.log('[EDIT] openEditModalFromCard called. id:', id);
   if (!id) return;
   window._returnToCardId = id;  // 닫힐 때 자동 복귀
   closeModal('terr-card-modal');
