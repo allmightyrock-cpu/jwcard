@@ -2275,7 +2275,7 @@ const db = getFirestore(app);
     if (!banner) return;
     if (titleEl) titleEl.textContent = n.title || '공지';
     if (bodyEl)  bodyEl.textContent  = n.body  || '';
-    banner.style.display = 'block';
+    banner.style.display = 'flex';
   } catch(e) { /* 공지 로드 실패는 조용히 무시 */ }
 })();
 
