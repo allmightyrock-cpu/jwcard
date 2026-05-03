@@ -498,6 +498,24 @@
   .sched-search-input:focus{border-color:#1B3A6B}
   .sched-sort-select{padding:8px 10px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:12px;font-family:inherit;outline:none;background:#fff;cursor:pointer;transition:border 0.15s;color:#475569;flex-shrink:0;height:40px}
   .sched-sort-select:focus,.sched-sort-select:hover{border-color:#1B3A6B}
+  /* ── 강제 회수 ── */
+  .tl-retrieve-btn{font-size:11px;padding:4px 8px;border:1.5px solid #FCA5A5;background:#FEF2F2;border-radius:6px;cursor:pointer;color:#DC2626;font-family:inherit;font-weight:600;white-space:nowrap;transition:all 0.15s;flex-shrink:0}
+  .tl-retrieve-btn:hover{background:#DC2626;color:#fff;border-color:#DC2626}
+  .fr-radio-label{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;cursor:pointer;transition:border 0.15s}
+  .fr-radio-label:has(input:checked){border-color:#1B3A6B;background:#EFF6FF}
+  .fr-radio-label input{margin-top:3px;flex-shrink:0;accent-color:#1B3A6B}
+  .fr-radio-body{display:flex;flex-direction:column;gap:3px}
+  .fr-radio-body strong{font-size:13px;color:#1E293B}
+  .fr-radio-body span{font-size:11px;color:#64748B;line-height:1.5}
+  /* ── 장기 미반납 패널 ── */
+  .overdue-item{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #FEF9C3;transition:background 0.1s}
+  .overdue-item:last-child{border-bottom:none}
+  .overdue-item.overdue-sel{background:#FFFBEB}
+  .overdue-chk{width:15px;height:15px;accent-color:#D97706;cursor:pointer;flex-shrink:0}
+  .overdue-no{font-size:12px;font-weight:700;color:#92400E;white-space:nowrap;min-width:36px}
+  .overdue-body{flex:1;min-width:0}
+  .overdue-name{font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .overdue-meta{font-size:11px;color:#94A3B8;margin-top:1px}
   .sched-search-results{background:#fff;border:1.5px solid #E2E8F0;border-radius:10px;max-height:220px;overflow-y:auto;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.08)}
   .sched-search-item{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;border-bottom:1px solid #F1F5F9}
   .sched-search-item:last-child{border-bottom:none}

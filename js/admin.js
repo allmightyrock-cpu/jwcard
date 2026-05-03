@@ -2178,6 +2178,139 @@ window.filterCycle = function(cyc, el) {
   renderTerritoryTable();
 };
 
+// ── 강제 회수 ──
+let _frTerrId = null;
+
+window.openForceReturnModal = function(id) {
+  const t = window._territories.find(t => t.id === id);
+  if (!t) return;
+  _frTerrId = id;
+  const pubs = (t.assignedPublishers || []).join(', ') || '—';
+  document.getElementById('fr-terr-info').innerHTML =
+    `<span style="font-size:16px">${t.no}번</span> ${t.name}<br><small style="font-weight:400;color:#78350F">배정: ${pubs}</small>`;
+  document.querySelector('[name="fr-type"][value="incomplete"]').checked = true;
+  document.getElementById('force-return-modal').classList.add('open');
+};
+
+window.confirmForceReturn = async function() {
+  const t = window._territories.find(t => t.id === _frTerrId);
+  if (!t) return;
+  const type = document.querySelector('[name="fr-type"]:checked')?.value || 'incomplete';
+  const updateData = {
+    status: '미배정',
+    assignedPublishers: [],
+    completionStatus: null,
+    forceRetrievedAt: serverTimestamp(),
+    forceRetrievedBy: window._adminPermission || '관리자'
+  };
+  if (type === 'cancel') {
+    updateData.completionRate = 0;
+    updateData.visitMap = {};
+  }
+  try {
+    await updateDoc(doc(db, 'territories', _frTerrId), updateData);
+    Object.assign(t, { status: '미배정', assignedPublishers: [], completionStatus: null });
+    if (type === 'cancel') { t.completionRate = 0; t.visitMap = {}; }
+    closeModal('force-return-modal');
+    renderTerritoryTable();
+    updateTerritoryStats();
+    renderOverdueList();
+  } catch(e) { alert('회수 중 오류: ' + e.message); }
+};
+
+// ── 장기 미반납 패널 ──
+let _overdueSelected = new Set();
+
+window.toggleOverduePanel = function() {
+  const panel = document.getElementById('overdue-panel');
+  const btn = document.getElementById('btn-overdue');
+  const visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : 'block';
+  btn.classList.toggle('active', !visible);
+  if (!visible) renderOverdueList();
+};
+
+window.renderOverdueList = function() {
+  const days = parseInt(document.getElementById('overdue-threshold')?.value || '30');
+  const now = Date.now();
+  const threshold = days * 24 * 60 * 60 * 1000;
+  const overdue = (window._territories || []).filter(t => {
+    if (!(t.assignedPublishers?.length > 0)) return false;
+    if (days === 0) return true;
+    if (!t.lastAssignedDate) return true;
+    const ms = t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+    return (now - ms) >= threshold;
+  });
+  // 배지 업데이트
+  const badge = document.getElementById('overdue-badge');
+  if (badge) badge.textContent = overdue.length;
+  // 패널이 숨겨진 경우 리스트만 배지 업데이트
+  const listEl = document.getElementById('overdue-list');
+  const countEl = document.getElementById('overdue-count');
+  if (!listEl) return;
+  if (countEl) countEl.textContent = overdue.length ? `총 ${overdue.length}개` : '없음';
+  _overdueSelected = new Set([..._overdueSelected].filter(id => overdue.some(t => t.id === id)));
+  if (!overdue.length) {
+    listEl.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px">장기 미반납 구역이 없습니다 🎉</div>';
+    return;
+  }
+  listEl.innerHTML = overdue.map(t => {
+    const pubs = (t.assignedPublishers || []).join(', ');
+    let dayStr = '—';
+    if (t.lastAssignedDate) {
+      const ms = t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+      dayStr = Math.floor((now - ms) / (24*60*60*1000)) + '일 경과';
+    }
+    const chk = _overdueSelected.has(t.id);
+    return `<div class="overdue-item${chk?' overdue-sel':''}" id="oi-${t.id}">
+      <input type="checkbox" class="overdue-chk" ${chk?'checked':''} onchange="toggleOverdueSelect('${t.id}',this)">
+      <span class="overdue-no">${t.no}번</span>
+      <div class="overdue-body">
+        <div class="overdue-name">${t.name}</div>
+        <div class="overdue-meta">${pubs} · <span style="color:#DC2626">${dayStr}</span></div>
+      </div>
+      <button class="tl-retrieve-btn" onclick="openForceReturnModal('${t.id}')">🔙 회수</button>
+    </div>`;
+  }).join('');
+};
+
+window.toggleOverdueSelect = function(id, el) {
+  if (el.checked) _overdueSelected.add(id);
+  else _overdueSelected.delete(id);
+  const item = document.getElementById('oi-' + id);
+  if (item) item.classList.toggle('overdue-sel', el.checked);
+};
+
+window.selectAllOverdue = function() {
+  document.querySelectorAll('.overdue-chk').forEach(chk => {
+    const id = chk.closest('[id^="oi-"]')?.id?.replace('oi-','');
+    if (id) { _overdueSelected.add(id); chk.checked = true; }
+    chk.closest('.overdue-item')?.classList.add('overdue-sel');
+  });
+};
+
+window.bulkForceReturn = async function() {
+  if (!_overdueSelected.size) { alert('선택된 구역이 없습니다.'); return; }
+  if (!confirm(`선택한 ${_overdueSelected.size}개 구역을 일괄 회수합니다.\n(미완료 처리 후 배정 해제)\n계속하시겠습니까?`)) return;
+  const ids = [..._overdueSelected];
+  for (const id of ids) {
+    const t = window._territories.find(t => t.id === id);
+    if (!t) continue;
+    try {
+      await updateDoc(doc(db, 'territories', id), {
+        status: '미배정', assignedPublishers: [], completionStatus: null,
+        forceRetrievedAt: serverTimestamp(), forceRetrievedBy: window._adminPermission || '관리자'
+      });
+      Object.assign(t, { status: '미배정', assignedPublishers: [], completionStatus: null });
+    } catch(e) { console.error('회수 오류', id, e); }
+  }
+  _overdueSelected.clear();
+  renderTerritoryTable();
+  updateTerritoryStats();
+  renderOverdueList();
+  alert(`✅ ${ids.length}개 구역을 회수했습니다.`);
+};
+
 // 완료 처리
 window.completeTerritory = async function(id, name) {
   if (!confirm(`"${name}" 구역을 완료 처리하시겠습니까?
@@ -2640,6 +2773,7 @@ async function loadTerritories() {
     window._territories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderTerritoryTable();
     updateTerritoryStats();
+    renderOverdueList();
   } catch(e) {
     // 인덱스 없을 경우 기본 조회
     try {
@@ -2647,6 +2781,7 @@ async function loadTerritories() {
       window._territories = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
       renderTerritoryTable();
       updateTerritoryStats();
+      renderOverdueList();
     } catch(e2) {
       document.getElementById('territory-table-wrap').innerHTML =
         '<div class="loading" style="color:#EF4444">데이터를 불러오는 중 오류가 발생했습니다.</div>';
@@ -2783,6 +2918,7 @@ function _renderTerrListNew(list, now) {
   <div class="tl-groups">${grpChips}</div>
   <div class="tl-right">
     <span class="tl-units">${t.totalUnits||'—'}</span>
+    ${(t.assignedPublishers?.length > 0) && ['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'') ? `<button class="tl-retrieve-btn" onclick="event.stopPropagation();openForceReturnModal('${t.id}')" title="강제 회수">🔙 회수</button>` : ''}
     <button class="tl-dot-btn" onclick="openTerritoryCard('${t.id}')">⋮</button>
   </div>
 </li>`;

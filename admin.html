@@ -173,6 +173,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 oninput="renderTerritoryTable()">
             </div>
             <div class="terr-toolbar-right">
+              <button class="terr-cmpl-btn" id="btn-overdue" onclick="toggleOverduePanel()" title="장기 미반납 구역 보기" style="position:relative">
+                ⏰ <span class="badge" id="overdue-badge">0</span>
+              </button>
               <button class="terr-view-btn active" id="btn-view-list" onclick="setTerrView('list')" title="리스트 뷰">☰</button>
               <button class="terr-view-btn" id="btn-view-card" onclick="setTerrView('card')" title="카드 뷰">⊞</button>
               <button class="terr-view-btn" onclick="downloadAllTerritoriesExcel()" title="전체 엑셀 백업 (ZIP)">⬇</button>
@@ -185,6 +188,24 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 ⏸ <span class="badge" id="incomplete-req-count">0</span>
               </button>
             </div>
+          </div>
+
+          <!-- 장기 미반납 패널 -->
+          <div id="overdue-panel" style="display:none;margin-bottom:14px;border:1.5px solid #FCD34D;border-radius:12px;overflow:hidden">
+            <div style="background:#FFFBEB;padding:12px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #FDE68A">
+              <span style="font-size:13px;font-weight:700;color:#92400E">⏰ 장기 미반납</span>
+              <select id="overdue-threshold" onchange="renderOverdueList()" style="padding:5px 8px;border:1.5px solid #FCD34D;border-radius:7px;font-size:12px;font-family:inherit;background:#fff;color:#92400E;cursor:pointer;outline:none">
+                <option value="30">30일 이상</option>
+                <option value="60">60일 이상</option>
+                <option value="90">90일 이상</option>
+                <option value="0">전체 진행중</option>
+              </select>
+              <span id="overdue-count" style="font-size:12px;color:#B45309;font-weight:600"></span>
+              <div style="flex:1"></div>
+              <button onclick="selectAllOverdue()" style="font-size:12px;padding:5px 10px;border:1.5px solid #D97706;background:#fff;border-radius:7px;cursor:pointer;color:#92400E;font-family:inherit">전체 선택</button>
+              <button onclick="bulkForceReturn()" style="font-size:12px;padding:5px 12px;border:none;background:#DC2626;border-radius:7px;cursor:pointer;color:#fff;font-family:inherit;font-weight:600">🔙 선택 일괄 회수</button>
+            </div>
+            <div id="overdue-list" style="max-height:300px;overflow-y:auto;background:#fff"></div>
           </div>
 
           <!-- 유형 탭 (개수 포함) -->
@@ -2604,6 +2625,35 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <div class="modal-footer">
       <button class="btn btn-navy" onclick="confirmAssign()">배정 확정</button>
       <button class="btn" onclick="closeModal('assign-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 강제 회수 확인 모달 ══ -->
+<div class="modal-wrap" id="force-return-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">📥 구역 카드 강제 회수</div>
+    <div id="fr-terr-info" style="margin:12px 0;padding:10px 14px;background:#FEF3C7;border-radius:8px;border:1px solid #FCD34D;font-size:14px;font-weight:600;color:#92400E"></div>
+    <p style="font-size:13px;color:#475569;margin-bottom:14px">회수 방식을 선택하세요:</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <label class="fr-radio-label">
+        <input type="radio" name="fr-type" value="incomplete" checked>
+        <div class="fr-radio-body">
+          <strong>미완료 처리 후 회수</strong>
+          <span>전도인이 진행했으나 완료 신청을 하지 않은 경우.<br>배정 기록을 유지하고 회차는 올리지 않습니다.</span>
+        </div>
+      </label>
+      <label class="fr-radio-label">
+        <input type="radio" name="fr-type" value="cancel">
+        <div class="fr-radio-body">
+          <strong>배정 취소 (단순 반납)</strong>
+          <span>카드를 사용하지 않은 경우.<br>배정 기록이 초기화됩니다.</span>
+        </div>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('force-return-modal')">취소</button>
+      <button class="btn btn-warn" onclick="confirmForceReturn()">🔙 회수 확인</button>
     </div>
   </div>
 </div>
