@@ -34,9 +34,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
     repeating-linear-gradient(
       -55deg,
       transparent,
-      transparent 4px,
-      rgba(255,255,255,0.022) 4px,
-      rgba(255,255,255,0.022) 5px
+      transparent 5px,
+      rgba(255,255,255,0.055) 5px,
+      rgba(255,255,255,0.055) 7px
     ),
     linear-gradient(160deg, #13294E 0%, #1B3A6B 45%, #2B5299 100%);
 }
@@ -51,6 +51,21 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   z-index:0;
 }
 #login-screen::after{ content:none; }
+
+/* ── 고해상도(모바일 레티나) — 사선패턴 강화 ── */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  #login-screen{
+    background-image:
+      repeating-linear-gradient(
+        -55deg,
+        transparent,
+        transparent 5px,
+        rgba(255,255,255,0.09) 5px,
+        rgba(255,255,255,0.09) 8px
+      ),
+      linear-gradient(160deg, #13294E 0%, #1B3A6B 45%, #2B5299 100%);
+  }
+}
 
 /* ── JW 3D 배경 ── */
 .jw-3d-bg{
