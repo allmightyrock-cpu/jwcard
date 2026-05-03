@@ -496,6 +496,8 @@
   .sched-search-wrap{position:relative;margin-bottom:8px}
   .sched-search-input{width:100%;padding:10px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border 0.2s}
   .sched-search-input:focus{border-color:#1B3A6B}
+  .sched-sort-select{padding:8px 10px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:12px;font-family:inherit;outline:none;background:#fff;cursor:pointer;transition:border 0.15s;color:#475569;flex-shrink:0;height:40px}
+  .sched-sort-select:focus,.sched-sort-select:hover{border-color:#1B3A6B}
   .sched-search-results{background:#fff;border:1.5px solid #E2E8F0;border-radius:10px;max-height:220px;overflow-y:auto;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.08)}
   .sched-search-item{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;border-bottom:1px solid #F1F5F9}
   .sched-search-item:last-child{border-bottom:none}

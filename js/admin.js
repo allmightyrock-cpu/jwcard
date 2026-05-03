@@ -755,8 +755,11 @@ window.selectSchedDay = function(day) {
   const DAY_NAMES = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
   document.getElementById('sched-day-title').textContent = '📅 ' + DAY_NAMES[day] + ' 배분 현황';
   document.getElementById('sched-day-content').style.display = 'block';
-  const ts = document.getElementById('sched-terr-search');
-  if (ts) ts.value = '';
+  // 카드 배분 검색창 초기화
+  const _si = document.getElementById('sched-search-input');
+  const _gi = document.getElementById('sched-gal-search');
+  if (_si) _si.value = '';
+  if (_gi) _gi.value = '';
   // 자동 반납 체크박스 상태 동기화
   const chk = document.getElementById('sched-auto-return-chk');
   if (chk) chk.checked = _schedDayAutoReturn[day] !== false;
@@ -1275,12 +1278,10 @@ function renderSchedTerrChips() {
   const catColor = _buildCatColorMap();
   const wrap = document.getElementById('sched-terr-chips');
   if (!wrap) return;
-  const q = (document.getElementById('sched-terr-search')?.value || '').trim().toLowerCase();
   const filtered = ids.filter(id => {
     const t = _schedAllTerr.find(t => t.id === id);
     if (!t) return false;
     if (_schedCatFilter && (t.category || '') !== _schedCatFilter) return false;
-    if (q && !String(t.no).includes(q) && !(t.name || '').toLowerCase().includes(q)) return false;
     return true;
   });
   if (!filtered.length) {
@@ -1310,12 +1311,18 @@ function renderSchedGallery() {
   const catColor = _buildCatColorMap();
   const existing = new Set(_schedData[_schedDay] || []);
   const otherAllocated = _getAllAllocatedSet(_schedDay); // 타 요일에 배분된 ID
+  const gq = (document.getElementById('sched-gal-search')?.value || '').trim().toLowerCase();
+  const gsort = document.getElementById('sched-gal-sort')?.value || 'no';
   const filtered = _schedAllTerr.filter(t => {
     // 타 요일에 이미 배분된 카드는 제외 (현재 요일 카드는 ✓ 표시로 유지)
     if (otherAllocated.has(t.id)) return false;
     if (_schedGalCatFilter && (t.category||'') !== _schedGalCatFilter) return false;
     // 완료 구역: 현재 요일 배분된 카드는 유지, 나머지는 필터 적용
     if (!existing.has(t.id) && _schedGalStatusFilter === 'incomplete' && t.completionStatus === 'complete') return false;
+    if (gq) {
+      const cycleStr = String(t.cycle || 1);
+      if (!String(t.no).includes(gq) && !(t.name||'').toLowerCase().includes(gq) && !cycleStr.includes(gq)) return false;
+    }
     return true;
   });
   const el = document.getElementById('sched-gallery-grid');
@@ -1329,8 +1336,24 @@ function renderSchedGallery() {
     return;
   }
 
-  // 배정된 카드 맨 앞으로 정렬
-  filtered.sort((a,b) => (existing.has(b.id)?1:0) - (existing.has(a.id)?1:0));
+  // 배정된 카드 맨 앞으로, 그 안에서 선택한 정렬 적용
+  const getMs = t => {
+    if (!t.lastAssignedDate) return 0;
+    return t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+  };
+  const cmp = (a, b) => {
+    if (gsort === 'no')       return (parseInt(a.no)||0)-(parseInt(b.no)||0);
+    if (gsort === 'old')      return getMs(a)-getMs(b);
+    if (gsort === 'cycle')    return (b.cycle||1)-(a.cycle||1) || (parseInt(a.no)||0)-(parseInt(b.no)||0);
+    if (gsort === 'progress') return (b.completionRate||0)-(a.completionRate||0);
+    return 0;
+  };
+  filtered.sort((a,b) => {
+    const aAssigned = existing.has(a.id) ? 0 : 1;
+    const bAssigned = existing.has(b.id) ? 0 : 1;
+    if (aAssigned !== bAssigned) return aAssigned - bAssigned; // 배분된 카드 먼저
+    return cmp(a, b);
+  });
 
   // 스크롤 컨테이너 생성
   const container = document.createElement('div');
@@ -1405,6 +1428,7 @@ function renderUnallocatedList() {
   const resultsEl = document.getElementById('sched-search-results');
   if (!resultsEl) return;
   const q = (document.getElementById('sched-search-input')?.value || '').trim().toLowerCase();
+  const sort = document.getElementById('sched-search-sort')?.value || 'no';
   const existing = new Set(_schedData[_schedDay] || []);
   const allAllocated = _getAllAllocatedSet(-1); // 모든 요일 배분 집합 (예외 없음)
   const catColor = _buildCatColorMap();
@@ -1412,9 +1436,20 @@ function renderUnallocatedList() {
     if (allAllocated.has(t.id)) return false;   // 어떤 요일에든 배분된 카드 제외
     if (_schedStatusFilter === 'incomplete' && t.completionStatus === 'complete') return false;
     if (_schedCatFilter && (t.category||'') !== _schedCatFilter) return false;
-    if (q) return String(t.no).includes(q) || (t.name||'').toLowerCase().includes(q) || (t.category||'').includes(q);
+    if (q) {
+      const cycleStr = String(t.cycle || 1);
+      return String(t.no).includes(q) || (t.name||'').toLowerCase().includes(q) || cycleStr.includes(q);
+    }
     return true;
   });
+  const getMs = t => {
+    if (!t.lastAssignedDate) return 0;
+    return t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+  };
+  if (sort === 'no')       filtered.sort((a,b) => (parseInt(a.no)||0)-(parseInt(b.no)||0));
+  else if (sort === 'old') filtered.sort((a,b) => getMs(a)-getMs(b));
+  else if (sort === 'cycle') filtered.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
+  else if (sort === 'progress') filtered.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
   if (!filtered.length) {
     const msg = q ? '검색 결과가 없습니다' : '미할당 구역이 없습니다';
     resultsEl.innerHTML = `<div style="padding:14px;text-align:center;color:#94A3B8;font-size:13px">${msg}</div>`;

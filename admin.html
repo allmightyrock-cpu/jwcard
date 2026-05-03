@@ -311,11 +311,6 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
               <!-- 배분된 구역 목록 -->
               <div style="font-size:11px;color:#94A3B8;margin-bottom:6px">배분된 구역 &nbsp;·&nbsp; ✕ 터치로 제거</div>
-              <div class="sched-search-wrap" style="margin-bottom:8px">
-                <input class="sched-search-input" id="sched-terr-search" type="text"
-                  placeholder="🔍  번호·이름으로 검색"
-                  oninput="renderSchedTerrChips()" autocomplete="off">
-              </div>
               <div id="sched-terr-chips"></div>
 
               <!-- 카드 배분 영역 -->
@@ -337,10 +332,16 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                       <button class="sched-filter-chip" onclick="setSchedStatusFilter('',this)">전체</button>
                     </div>
                   </div>
-                  <div class="sched-search-wrap">
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
                     <input class="sched-search-input" id="sched-search-input"
-                      placeholder="번호 · 이름으로 필터..."
-                      oninput="searchSchedTerr()" autocomplete="off">
+                      placeholder="🔍  구역명 · 번호 · 회차 검색"
+                      oninput="searchSchedTerr()" autocomplete="off" style="flex:1;margin:0">
+                    <select id="sched-search-sort" onchange="searchSchedTerr()" class="sched-sort-select">
+                      <option value="no">번호순</option>
+                      <option value="old">오래된순</option>
+                      <option value="cycle">회차순</option>
+                      <option value="progress">진행률순</option>
+                    </select>
                   </div>
                   <div id="sched-search-results" class="sched-search-results"></div>
                 </div>
@@ -353,6 +354,17 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                       <button class="sched-filter-chip active" onclick="setSchedGalStatusFilter('incomplete',this)">미완료</button>
                       <button class="sched-filter-chip" onclick="setSchedGalStatusFilter('',this)">전체</button>
                     </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                    <input class="sched-search-input" id="sched-gal-search"
+                      placeholder="🔍  구역명 · 번호 · 회차 검색"
+                      oninput="renderSchedGallery()" autocomplete="off" style="flex:1;margin:0">
+                    <select id="sched-gal-sort" onchange="renderSchedGallery()" class="sched-sort-select">
+                      <option value="no">번호순</option>
+                      <option value="old">오래된순</option>
+                      <option value="cycle">회차순</option>
+                      <option value="progress">진행률순</option>
+                    </select>
                   </div>
                   <div style="font-size:11px;color:#94A3B8;margin-bottom:8px">탭 → 이 요일에 배분 / 다시 탭 → 제거 &nbsp;|&nbsp; ✓ = 이미 배분됨</div>
                   <div id="sched-gallery-grid"></div>
