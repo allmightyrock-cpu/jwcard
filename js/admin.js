@@ -2835,6 +2835,13 @@ function _fmtDT(ts) {
   const h=d.getHours(), ampm=h<12?'오전':'오후', h12=h===0?12:h>12?h-12:h;
   return `${yy}-${mm}-${dd} ${ampm} ${h12}시`;
 }
+// 날짜만 반환 (YYYY-MM-DD) — Timestamp 또는 문자열 모두 처리
+function _toDateStr(v) {
+  if (!v) return '—';
+  if (typeof v === 'string') return v.slice(0, 10);
+  if (v.toDate) return v.toDate().toISOString().slice(0, 10);
+  return String(v).slice(0, 10);
+}
 
 // ── 뷰 전환 ──
 window.setTerrView = function(view) {
@@ -3087,7 +3094,7 @@ window.openTerritoryCard = function(id) {
       return `<tr>
         <td style="padding:5px 8px">${h.cycle}회차</td>
         <td style="padding:5px 8px">${vmLabel}</td>
-        <td style="padding:5px 8px">${(h.assignedAt||'—').slice(0,10)}&nbsp;→&nbsp;${h.completedAt||'—'}</td>
+        <td style="padding:5px 8px">${_toDateStr(h.assignedAt)}&nbsp;→&nbsp;${_toDateStr(h.completedAt)}</td>
         <td style="padding:5px 8px">${(h.publishers||[]).join(', ')||'—'}</td>
       </tr>`;
     }).join('');
