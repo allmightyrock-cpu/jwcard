@@ -4,7 +4,7 @@
 //   예) 'jwcard-v10' → 'jwcard-v11'
 //   버전이 바뀌면 모든 모바일 PWA에 업데이트 배너가 뜹니다.
 //
-const CACHE = 'jwcard-v14'; // ← 배포마다 숫자 +1  (최근 업데이트: 2026-05-06)
+const CACHE = 'jwcard-v15'; // ← 배포마다 숫자 +1  (최근 업데이트: 2026-05-06)
 
 // 오프라인 대비용으로만 캐시 (실제 서빙은 Network First)
 const STATIC = [
@@ -35,13 +35,15 @@ self.addEventListener('message', e => {
 });
 
 // 설치: 정적 파일 캐시 (오프라인 폴백용)
+// ★ skipWaiting을 여기서 호출하지 않음 — 사용자가 '지금 업데이트' 버튼을 눌러야만 활성화
+//   (install에서 즉시 skipWaiting하면 reg.waiting이 null이 되어 배너가 뜨지 않음)
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c =>
       Promise.allSettled(STATIC.map(url => c.add(url).catch(() => null)))
     )
   );
-  self.skipWaiting();
+  // self.skipWaiting() ← 제거: SKIP_WAITING 메시지로만 활성화
 });
 
 // 활성화: 구버전 캐시 전부 삭제

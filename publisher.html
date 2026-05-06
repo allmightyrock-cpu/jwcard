@@ -986,12 +986,22 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   </div>
 </div>
 
-<!-- 업데이트 알림 배너 -->
-<div id="update-banner" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;z-index:9999;background:#1B3A6B;color:#fff;padding:10px 14px;font-size:13px;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
-  <span>🔄 새 버전이 있습니다</span>
+<!-- 업데이트 알림 모달 (배너보다 눈에 잘 띄는 중앙 팝업) -->
+<div id="update-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border-radius:20px;max-width:340px;width:100%;padding:28px 24px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
+    <div style="font-size:42px;margin-bottom:12px">🔄</div>
+    <div style="font-size:18px;font-weight:800;color:#0F172A;margin-bottom:8px">새 버전이 있습니다</div>
+    <div style="font-size:13px;color:#64748B;margin-bottom:24px;line-height:1.6">앱을 최신 버전으로 업데이트해 주세요.<br>업데이트 후 자동으로 새로고침됩니다.</div>
+    <button onclick="doAppUpdate()" style="width:100%;padding:14px;background:#1B3A6B;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">지금 업데이트</button>
+    <button onclick="document.getElementById('update-modal').style.display='none'" style="width:100%;padding:10px;background:transparent;color:#94A3B8;border:none;font-size:13px;cursor:pointer;font-family:inherit">나중에 하기</button>
+  </div>
+</div>
+<!-- 업데이트 알림 상단 배너 (모달 닫은 후 계속 표시) -->
+<div id="update-banner" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;z-index:9998;background:#1B3A6B;color:#fff;padding:10px 14px;font-size:13px;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+  <span>🔄 새 버전 대기 중</span>
   <div style="display:flex;gap:8px;flex-shrink:0">
     <button onclick="doAppUpdate()" style="background:#fff;color:#1B3A6B;border:none;padding:5px 14px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit">지금 업데이트</button>
-    <button onclick="document.getElementById('update-banner').style.display='none'" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">나중에</button>
+    <button onclick="document.getElementById('update-banner').style.display='none'" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">✕</button>
   </div>
 </div>
 
@@ -5998,11 +6008,18 @@ window.navOpenSheetApp = async function(app) {
   }
 
   function _showUpdateBanner() {
+    // 모달 팝업 (눈에 잘 띄게)
+    const m = document.getElementById('update-modal');
+    if (m) m.style.display = 'flex';
+    // 상단 배너도 표시 (모달 닫아도 계속 남음)
     const b = document.getElementById('update-banner');
     if (b) b.style.display = 'flex';
   }
 
   window.doAppUpdate = function() {
+    // 모달/배너 닫기
+    const m = document.getElementById('update-modal');
+    if (m) m.style.display = 'none';
     navigator.serviceWorker.ready.then(reg => {
       if (reg.waiting) {
         // 대기 중인 SW에게 즉시 활성화 요청
