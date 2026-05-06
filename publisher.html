@@ -2350,7 +2350,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         <span style="font-weight:600;color:#64748B">호수가 기록되지 않은 세대입니다.</span><br>
         관리자/인도자에게 수정을 요청할 수 있어요.
       </div>
-      <button onclick="requestUnitFix(window._activeUnitIdx)" style="flex-shrink:0;background:#1E293B;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">수정 요청 ✉</button>
+      <button id="sheet-fix-btn" onclick="showUnitFixRequest()" style="flex-shrink:0;background:#1E293B;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">수정 요청 ✉</button>
     </div>
   </div>
 </div>
@@ -4112,9 +4112,25 @@ window.openCodeSheet = function(idx) {
   const _sheetLbl = _fmtUnitLabel(_cleanUnitVal(u?.unit));
   const _noUnit = !_sheetLbl;
   document.getElementById('sheet-unit-label').textContent = _sheetLbl || '호수 미기록';
-  // 호수 미기록 세대면 수정 요청 영역 표시
+  // 호수 미기록 세대면 수정 요청 영역 표시 + 메시지 미리 빌드
   const fixReq = document.getElementById('sheet-fix-request');
   if (fixReq) fixReq.style.display = _noUnit ? 'block' : 'none';
+  if (_noUnit && u) {
+    const _road  = (u.road     || '').trim();
+    const _jibun = (u.jibun    || '').trim();
+    const _bldg  = (u.building || '').trim();
+    const _addrParts = [_road && _jibun ? _road + ' ' + _jibun : _road || _jibun, _bldg].filter(Boolean);
+    const _addr = _addrParts.join(' · ') || (_territory && _territory.name) || '';
+    const _terrNo   = (_territory && _territory.no  ) ? String(_territory.no)   : '';
+    const _terrName = (_territory && _territory.name) ? String(_territory.name) : '';
+    window._unitFixMsg = '[구역카드 수정 요청]\n구역: ' + _terrNo + '번 ' + _terrName
+      + '\n주소: ' + _addr
+      + '\n내용: 호수(방문 세대 번호) 미기록'
+      + '\n요청자: ' + (_pubName || '전도인')
+      + '\n\n정확한 호수를 확인 후 관리자 앱에서 수정해 주세요.';
+  } else {
+    window._unitFixMsg = '';
+  }
   // 현재 코드 표시
   const existing = (_territory.visitMap||{})[idx];
   const curRow = document.getElementById('sheet-current-row');
@@ -4469,57 +4485,56 @@ function _fmtUnitLabel(s) {
 }
 
 // ── 호수 미기록 수정 요청 ────────────────────────────────────────────────────
-window.requestUnitFix = async function(idx) {
-  const units = (_territory && _territory.units) || [];
-  const u = units[idx];
-  if (!u) return;
+// openCodeSheet에서 미리 빌드된 window._unitFixMsg를 모달로 표시
+// (navigator.share / clipboard 폴백 체인 제거 — 모달이 가장 확실)
+window.showUnitFixRequest = function() {
+  const msg = window._unitFixMsg || '';
+  if (!msg) return;
 
-  const terrNo   = (_territory.no   || '').toString();
-  const terrName = (_territory.name || '').toString();
-  const road     = (u.road     || '').trim();
-  const jibun    = (u.jibun    || '').trim();
-  const bldg     = (u.building || '').trim();
-  const requester = _pubName || '전도인';
-
-  // 주소 조합
-  const addrParts = [road && jibun ? road + ' ' + jibun : road || jibun, bldg].filter(Boolean);
-  const addr = addrParts.join(' · ') || terrName;
-
-  // 몇 번째 호인지 (같은 건물 내 순서)
-  const secKey = `${u.road}__${u.jibun}__${u.building}`;
-  const sameBuilding = units.filter(x => `${x.road}__${x.jibun}__${x.building}` === secKey);
-  const posInBldg = sameBuilding.indexOf(u) + 1;
-  const posText = posInBldg > 0 ? `(건물 내 ${posInBldg}번째 세대)` : '';
-
-  const msg =
-`[구역카드 수정 요청]
-구역: ${terrNo}번 ${terrName}
-주소: ${addr}
-내용: 호수(방문 세대 번호) 미기록 ${posText}
-요청자: ${requester}
-
-정확한 호수를 확인 후 관리자 앱에서 수정해 주세요.`;
-
-  // Web Share API (네이티브 공유 시트 — 카카오톡·문자 등 선택 가능)
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: '호수 수정 요청', text: msg });
-      return;
-    } catch(e) {
-      if (e.name === 'AbortError') return; // 사용자가 취소
-      // share 실패 시 클립보드로 폴백
-    }
+  // 모달 생성 (이미 있으면 재사용)
+  let el = document.getElementById('unit-fix-modal');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'unit-fix-modal';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 0 env(safe-area-inset-bottom,0px)';
+    el.innerHTML =
+      '<div style="background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 26px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto">'
+      + '<div style="font-size:15px;font-weight:800;color:#1E293B;margin-bottom:4px">📋 수정 요청</div>'
+      + '<div style="font-size:12px;color:#94A3B8;margin-bottom:12px">아래 내용을 복사해 카카오톡·문자로 인도자/관리자에게 보내주세요.</div>'
+      + '<textarea id="unit-fix-text" readonly style="width:100%;height:150px;border:1px solid #E2E8F0;border-radius:10px;padding:11px 12px;font-size:12px;line-height:1.7;color:#334155;resize:none;background:#F8FAFC;font-family:inherit"></textarea>'
+      + '<div style="display:flex;gap:8px;margin-top:12px">'
+      + '<button id="unit-fix-share-btn" style="flex:1;padding:12px 0;background:#1B3A6B;color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">공유하기 ↗</button>'
+      + '<button onclick="document.getElementById(\'unit-fix-modal\').remove()" style="padding:12px 16px;background:#F1F5F9;color:#64748B;border:none;border-radius:11px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">닫기</button>'
+      + '</div></div>';
+    el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+    document.body.appendChild(el);
   }
 
-  // 클립보드 폴백
-  try {
-    await navigator.clipboard.writeText(msg);
-    _showToast('수정 요청 내용이 클립보드에 복사되었어요.\n카카오톡·문자로 붙여넣어 보내주세요.');
-  } catch(e) {
-    // 클립보드도 실패하면 모달로 내용 표시
-    _showUnitFixModal(msg);
+  // 메시지 채우기
+  document.getElementById('unit-fix-text').value = msg;
+
+  // 공유 버튼 — navigator.share 지원 시 공유 시트, 아니면 클립보드 복사
+  const shareBtn = document.getElementById('unit-fix-share-btn');
+  if (shareBtn) {
+    shareBtn.onclick = async function() {
+      if (navigator.share) {
+        try { await navigator.share({ title: '호수 수정 요청', text: msg }); return; }
+        catch(e) { if (e.name === 'AbortError') return; }
+      }
+      // 클립보드
+      try {
+        await navigator.clipboard.writeText(msg);
+        shareBtn.textContent = '✓ 복사됨';
+        setTimeout(() => { shareBtn.textContent = '공유하기 ↗'; }, 2000);
+      } catch(e) {
+        shareBtn.textContent = '직접 복사해 주세요';
+      }
+    };
   }
-}
+};
+
+// 하위 호환용 — 기존 온클릭 참조 방어
+window.requestUnitFix = function() { window.showUnitFixRequest(); };
 
 function _showUnitFixModal(msg) {
   let el = document.getElementById('unit-fix-modal');
