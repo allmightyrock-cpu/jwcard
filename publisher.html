@@ -835,7 +835,16 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 /* ════════════════════════════════════════════════
    길 안내 모드 (NAV MODE)
    ════════════════════════════════════════════════ */
-#nav-mode-panel{display:none;padding:0 0 90px}
+#nav-mode-panel{display:none;padding:0 0 80px}
+
+/* nav mode 하단 고정 바 */
+#nav-footer-bar{display:none;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid #F1F5F9;padding:10px 14px 14px;align-items:center;justify-content:space-between;gap:10px;z-index:200;box-shadow:0 -2px 16px rgba(0,0,0,.08)}
+#card-screen.nav-mode ~ #nav-footer-bar,
+body.nav-mode-active #nav-footer-bar{display:flex}
+.nav-footer-back{display:flex;align-items:center;gap:6px;padding:10px 16px;background:#F1F5F9;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;color:#1E293B;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s}
+.nav-footer-back:active{background:#E2E8F0}
+.nav-footer-progress{font-size:12px;color:#94A3B8;font-weight:500;text-align:right;line-height:1.4}
+.nav-footer-progress strong{display:block;font-size:15px;font-weight:800;color:#1E293B}
 #card-screen.nav-mode .map-area,
 #card-screen.nav-mode .addr-bar,
 #card-screen.nav-mode #addr-edit-bar,
@@ -1424,6 +1433,21 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   <!-- ══ /바텀시트 ══ -->
 
 </div>
+
+<!-- ══ Nav mode 하단 고정 바 ══ -->
+<div id="nav-footer-bar">
+  <button class="nav-footer-back" onclick="toggleNavMode()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+    구역카드로
+  </button>
+  <div class="nav-footer-progress">
+    <strong id="nav-footer-done">0/0</strong>
+    세대 완료
+  </div>
+</div>
+<!-- ══ /Nav mode 하단 고정 바 ══ -->
 
 
 <!-- ══ 사용 설명서 드로어 ══ -->
@@ -5352,22 +5376,34 @@ window.navSetMode = function(walk) {
   document.getElementById('nav-mode-car').classList.toggle('nav-mode-sel', !walk);
 };
 
+// ── 하단 바 진행률 갱신 ──────────────────────────────────────
+function _updateNavFooter() {
+  var units = (_territory && _territory.units) || [];
+  var vm    = (_territory && _territory.visitMap) || {};
+  var done  = Object.values(vm).filter(function(v){ return v && v.code; }).length;
+  var el    = document.getElementById('nav-footer-done');
+  if (el) el.textContent = done + '/' + units.length;
+}
+
 // ── 길 안내 모드 ON/OFF ───────────────────────────────────────
 window.toggleNavMode = function() {
   _navMode = !_navMode;
-  var cardEl = document.getElementById('card-screen');
-  var btnEl  = document.getElementById('nav-toggle-btn');
+  var cardEl  = document.getElementById('card-screen');
+  var btnEl   = document.getElementById('nav-toggle-btn');
+  var footerEl = document.getElementById('nav-footer-bar');
   if (_navMode) {
     cardEl.classList.add('nav-mode');
-    btnEl.textContent = '📋 목록 보기';
+    if (footerEl) footerEl.style.display = 'flex';
+    btnEl.textContent = '📋 구역카드';
     btnEl.style.background = 'rgba(56,189,248,0.25)';
     if (_navIdx < 0) _navIdx = _navFindNext(0);
     renderNavPanel();
-    // 현재 세대 좌표 미리 캐싱
+    _updateNavFooter();
     _navPrefetchCoords(_navIdx);
     window.scrollTo(0, 0);
   } else {
     cardEl.classList.remove('nav-mode');
+    if (footerEl) footerEl.style.display = 'none';
     btnEl.textContent = '🧭 길 안내';
     btnEl.style.background = 'rgba(255,255,255,0.15)';
   }
@@ -5395,6 +5431,7 @@ function renderNavPanel() {
   _renderNavNextCard();
   _renderNavMemo();
   renderNavList();
+  _updateNavFooter();
 }
 
 function _renderNavNextCard() {
@@ -5655,8 +5692,10 @@ window.navOpenSheetApp = async function(app) {
   var _origExit = window.exitCard;
   window.exitCard = function() {
     _navMode = false; _navIdx = -1; _navCoordCache = {};
-    var cardEl = document.getElementById('card-screen');
-    if (cardEl) cardEl.classList.remove('nav-mode');
+    var cardEl   = document.getElementById('card-screen');
+    var footerEl = document.getElementById('nav-footer-bar');
+    if (cardEl)   cardEl.classList.remove('nav-mode');
+    if (footerEl) footerEl.style.display = 'none';
     if (_origExit) _origExit.apply(this, arguments);
   };
 })();
