@@ -1050,6 +1050,22 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
 
 
+    <!-- ── 버전 업데이트 알림 카드 (version.json 체크 결과) ── -->
+    <div id="version-update-card" style="display:none;background:linear-gradient(135deg,#1B3A6B 0%,#2B5299 100%);border-radius:16px;padding:18px 18px 16px;margin-bottom:16px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:22px">🔄</span>
+        <div>
+          <div style="font-size:14px;font-weight:800;color:#fff;line-height:1.2">새 버전이 있습니다</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:2px" id="version-update-note">앱을 업데이트하면 새 기능을 바로 사용할 수 있어요.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="_doVersionUpdate()" style="flex:1;background:#fff;color:#1B3A6B;border:none;padding:10px 0;border-radius:10px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:-.2px">지금 업데이트</button>
+        <button onclick="document.getElementById('version-update-card').style.display='none'" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);border:none;padding:10px 14px;border-radius:10px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">나중에</button>
+      </div>
+    </div>
+
     <div class="pub-notice-banner" id="pub-notice-banner" style="display:none">
       <div style="flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(43,82,153,0.1);border:1px solid rgba(43,82,153,0.18);display:flex;align-items:center;justify-content:center;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -6207,6 +6223,50 @@ window.navOpenSheetApp = async function(app) {
     _deferredPrompt = null;
   });
 
+  // ══ 버전 파일 체크 — SW와 완전 독립적, 로그인 화면에서 즉시 실행 ══
+  // version.json을 항상 서버에서 fresh fetch → 저장된 버전과 비교
+  // → 다르면 로그인 카드에 업데이트 안내 카드 표시
+  (async function _checkAppVersion() {
+    try {
+      const res = await fetch('/version.json?_=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const newV = String(data.v || '').trim();
+      if (!newV) return;
+      const storedV = localStorage.getItem('jwcard_ver');
+      if (storedV && storedV !== newV) {
+        // 버전이 바뀜 → 업데이트 카드 표시
+        const card = document.getElementById('version-update-card');
+        if (card) card.style.display = 'block';
+        // 필요하면 note 텍스트 업데이트
+        const noteEl = document.getElementById('version-update-note');
+        if (noteEl && data.note) noteEl.textContent = data.note;
+      }
+      // 현재 버전 저장 (업데이트 후 재방문 시 알림 안 뜸)
+      localStorage.setItem('jwcard_ver', newV);
+    } catch(e) { /* 오프라인 등 — 무시 */ }
+  })();
+
+  window._doVersionUpdate = async function() {
+    // 1. SW 대기 중이면 skip waiting 요청
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg.waiting) {
+          window._swUpdatePending = true;
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          return; // controllerchange → reload
+        }
+      } catch(e) {}
+    }
+    // 2. 캐시 전체 삭제 후 강제 리로드
+    if ('caches' in window) {
+      const keys = await caches.keys().catch(() => []);
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    location.reload(true);
+  };
+
   // Service Worker 등록 + 업데이트 감지
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -6259,15 +6319,8 @@ window.navOpenSheetApp = async function(app) {
     // 모달/배너 닫기
     const m = document.getElementById('update-modal');
     if (m) m.style.display = 'none';
-    navigator.serviceWorker.ready.then(reg => {
-      if (reg.waiting) {
-        // 대기 중인 SW에게 즉시 활성화 요청
-        window._swUpdatePending = true;
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      } else {
-        window.location.reload();
-      }
-    });
+    // version-update-card도 공통 업데이트 함수 사용
+    window._doVersionUpdate();
   };
 })();
 

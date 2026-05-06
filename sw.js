@@ -4,7 +4,7 @@
 //   예) 'jwcard-v10' → 'jwcard-v11'
 //   버전이 바뀌면 모든 모바일 PWA에 업데이트 배너가 뜹니다.
 //
-const CACHE = 'jwcard-v16'; // ← 배포마다 숫자 +1  (최근 업데이트: 2026-05-06)
+const CACHE = 'jwcard-v17'; // ← 배포마다 숫자 +1  (최근 업데이트: 2026-05-06)
 
 // 오프라인 대비용으로만 캐시 (실제 서빙은 Network First)
 const STATIC = [
@@ -27,6 +27,7 @@ const NETWORK_FIRST_PATTERNS = [
   'config.js',        // ★ 설정 파일 — 항상 최신 필요
   'js/settings.js',   // ★ 설정 JS  — 항상 최신 필요
   'js/s13.js',        // ★ S13 JS   — 항상 최신 필요
+  'version.json',     // ★ 버전 파일 — 항상 최신 필요
 ];
 
 // 페이지에서 SKIP_WAITING 메시지 수신 → 즉시 활성화
