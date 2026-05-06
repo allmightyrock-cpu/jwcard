@@ -463,7 +463,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .unit-row.dimmed{opacity:0.4}
 .unit-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px}
 .unit-num{font-size:22px;font-weight:500;flex:1;color:#1E293B}
-.unit-no-label{font-size:12px;font-weight:500;color:#CBD5E1;background:#F8FAFC;border:1px dashed #E2E8F0;border-radius:6px;padding:3px 10px;letter-spacing:.3px}
+.unit-no-label{font-size:12px;font-weight:500;color:#94A3B8;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:6px;padding:3px 10px;letter-spacing:.3px;cursor:pointer;transition:background .15s,color .15s}
+.unit-no-label:active{background:#EFF6FF;color:#3B82F6;border-color:#93C5FD}
 .escort-tag{font-size:10px;background:#FEF3C7;color:#92400E;padding:1px 6px;border-radius:6px;margin-left:6px}
 .unit-more{padding:6px 10px;color:#CBD5E1;font-size:14px;letter-spacing:2px}
 
@@ -1717,6 +1718,13 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <div class="help-text">
             <strong>구역카드로 돌아가기</strong>
             <span>화면 하단 고정 바의 <strong>[← 구역카드로]</strong> 버튼을 탭하면 언제든 원래 구역카드 화면으로 돌아올 수 있습니다.</span>
+          </div>
+        </div>
+        <div class="help-item">
+          <div class="help-icon" style="background:#FEF3C7">✉️</div>
+          <div class="help-text">
+            <strong>호수 미기록 수정 요청</strong>
+            <span>세대 목록에서 <strong>「호수 미기록 ✉」</strong> 배지를 탭하면 인도자/관리자에게 보낼 수정 요청 메시지가 자동 작성됩니다. 카카오톡·문자 등 원하는 앱으로 전송하세요.</span>
           </div>
         </div>
         <div style="background:#EFF6FF;border-radius:10px;padding:12px 14px;font-size:12px;color:#1E40AF;line-height:1.9;margin-top:4px;border:1px solid #BFDBFE">
@@ -4020,7 +4028,7 @@ function renderUnitList(visitMap) {
           const lbl = _fmtUnitLabel(_cleanUnitVal(u.unit));
           return lbl
             ? lbl + (isEscort?'<span class="escort-tag">⚠ 동행필수</span>':'') + skipTag
-            : '<span class="unit-no-label">호수 미기록</span>' + (isEscort?'<span class="escort-tag">⚠ 동행필수</span>':'') + skipTag;
+            : '<span class="unit-no-label" onclick="event.stopPropagation();requestUnitFix('+globalIdx+')">호수 미기록 ✉</span>' + (isEscort?'<span class="escort-tag">⚠ 동행필수</span>':'') + skipTag;
         })()}</div>
         <div class="unit-more">···</div>
       </div>`;
@@ -4428,6 +4436,92 @@ function _fmtUnitLabel(s) {
   if (/^\d+$/.test(s)) return s + '호';
   if (s.endsWith('호')) return s;
   return s;
+}
+
+// ── 호수 미기록 수정 요청 ────────────────────────────────────────────────────
+async function requestUnitFix(idx) {
+  const units = (_territory && _territory.units) || [];
+  const u = units[idx];
+  if (!u) return;
+
+  const terrNo   = (_territory.no   || '').toString();
+  const terrName = (_territory.name || '').toString();
+  const road     = (u.road     || '').trim();
+  const jibun    = (u.jibun    || '').trim();
+  const bldg     = (u.building || '').trim();
+  const requester = _pubName || '전도인';
+
+  // 주소 조합
+  const addrParts = [road && jibun ? road + ' ' + jibun : road || jibun, bldg].filter(Boolean);
+  const addr = addrParts.join(' · ') || terrName;
+
+  // 몇 번째 호인지 (같은 건물 내 순서)
+  const secKey = `${u.road}__${u.jibun}__${u.building}`;
+  const sameBuilding = units.filter(x => `${x.road}__${x.jibun}__${x.building}` === secKey);
+  const posInBldg = sameBuilding.indexOf(u) + 1;
+  const posText = posInBldg > 0 ? `(건물 내 ${posInBldg}번째 세대)` : '';
+
+  const msg =
+`[구역카드 수정 요청]
+구역: ${terrNo}번 ${terrName}
+주소: ${addr}
+내용: 호수(방문 세대 번호) 미기록 ${posText}
+요청자: ${requester}
+
+정확한 호수를 확인 후 관리자 앱에서 수정해 주세요.`;
+
+  // Web Share API (네이티브 공유 시트 — 카카오톡·문자 등 선택 가능)
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: '호수 수정 요청', text: msg });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return; // 사용자가 취소
+      // share 실패 시 클립보드로 폴백
+    }
+  }
+
+  // 클립보드 폴백
+  try {
+    await navigator.clipboard.writeText(msg);
+    _showToast('수정 요청 내용이 클립보드에 복사되었어요.\n카카오톡·문자로 붙여넣어 보내주세요.');
+  } catch(e) {
+    // 클립보드도 실패하면 모달로 내용 표시
+    _showUnitFixModal(msg);
+  }
+}
+
+function _showUnitFixModal(msg) {
+  let el = document.getElementById('unit-fix-modal');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'unit-fix-modal';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 0 env(safe-area-inset-bottom)';
+    el.innerHTML = `
+      <div style="background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 28px;width:100%;max-width:480px;max-height:70vh;overflow-y:auto">
+        <div style="font-size:15px;font-weight:700;color:#1E293B;margin-bottom:12px">📋 수정 요청 내용 복사</div>
+        <textarea id="unit-fix-text" readonly style="width:100%;height:160px;border:1px solid #E2E8F0;border-radius:10px;padding:12px;font-size:13px;line-height:1.6;color:#334155;resize:none;background:#F8FAFC"></textarea>
+        <p style="font-size:12px;color:#94A3B8;margin-top:8px">위 내용을 선택·복사해서 카카오톡이나 문자로 인도자/관리자에게 보내주세요.</p>
+        <button onclick="document.getElementById('unit-fix-modal').remove()" style="margin-top:16px;width:100%;padding:13px;background:#1E293B;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">닫기</button>
+      </div>`;
+    el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+    document.body.appendChild(el);
+  }
+  document.getElementById('unit-fix-text').value = msg;
+}
+
+function _showToast(msg) {
+  let t = document.getElementById('_toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_toast';
+    t.style.cssText = 'position:fixed;bottom:calc(env(safe-area-inset-bottom)+80px);left:50%;transform:translateX(-50%);background:rgba(30,41,59,.92);color:#fff;font-size:13px;line-height:1.5;padding:11px 18px;border-radius:12px;max-width:300px;text-align:center;z-index:99999;pointer-events:none;transition:opacity .3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
 // ════════════════════════════════════════════
