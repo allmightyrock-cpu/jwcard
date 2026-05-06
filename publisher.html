@@ -4016,7 +4016,8 @@ function renderUnitList(visitMap) {
       html += `<div class="unit-row${isDimmed?' dimmed':''}${isSkip?' dimmed':''}" onclick="openCodeSheet(${globalIdx})">
         <div class="unit-icon">${iconSVG(code)}</div>
         <div class="unit-num">${(()=>{
-          const lbl = _fmtUnitLabel(_cleanUnitVal(u.unit)) || _cleanUnitVal(u.jibun);
+          // u.jibun은 번지수 → 섹션 헤더에 이미 표시됨. 호수 fallback 사용 안 함
+          const lbl = _fmtUnitLabel(_cleanUnitVal(u.unit));
           return lbl
             ? lbl + (isEscort?'<span class="escort-tag">⚠ 동행필수</span>':'') + skipTag
             : '<span class="unit-no-label">호수 미기록</span>' + (isEscort?'<span class="escort-tag">⚠ 동행필수</span>':'') + skipTag;
@@ -4073,7 +4074,8 @@ const CODE_LABELS = {
 window.openCodeSheet = function(idx) {
   _activeUnitIdx = idx;
   const u = (_territory.units||[])[idx];
-  const _sheetLbl = _fmtUnitLabel(_cleanUnitVal(u?.unit)) || _cleanUnitVal(u?.jibun);
+  // u.jibun은 번지수이므로 시트 라벨 fallback 사용 안 함
+  const _sheetLbl = _fmtUnitLabel(_cleanUnitVal(u?.unit));
   document.getElementById('sheet-unit-label').textContent = _sheetLbl || '호수 미기록';
   // 현재 코드 표시
   const existing = (_territory.visitMap||{})[idx];
