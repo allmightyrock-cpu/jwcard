@@ -2350,7 +2350,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         <span style="font-weight:600;color:#64748B">호수가 기록되지 않은 세대입니다.</span><br>
         관리자/인도자에게 수정을 요청할 수 있어요.
       </div>
-      <button onclick="requestUnitFix(_activeUnitIdx)" style="flex-shrink:0;background:#1E293B;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">수정 요청 ✉</button>
+      <button onclick="requestUnitFix(window._activeUnitIdx)" style="flex-shrink:0;background:#1E293B;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">수정 요청 ✉</button>
     </div>
   </div>
 </div>
@@ -4106,6 +4106,7 @@ const CODE_LABELS = {
 };
 window.openCodeSheet = function(idx) {
   _activeUnitIdx = idx;
+  window._activeUnitIdx = idx; // onclick 인라인 접근용
   const u = (_territory.units||[])[idx];
   // u.jibun은 번지수이므로 시트 라벨 fallback 사용 안 함
   const _sheetLbl = _fmtUnitLabel(_cleanUnitVal(u?.unit));
@@ -4468,7 +4469,7 @@ function _fmtUnitLabel(s) {
 }
 
 // ── 호수 미기록 수정 요청 ────────────────────────────────────────────────────
-async function requestUnitFix(idx) {
+window.requestUnitFix = async function(idx) {
   const units = (_territory && _territory.units) || [];
   const u = units[idx];
   if (!u) return;
