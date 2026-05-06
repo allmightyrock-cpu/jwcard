@@ -892,6 +892,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .nav-item-num.ni-current{background:#DBEAFE;color:#2563EB}
 .nav-item-num.ni-todo   {background:#F1F5F9;color:#94A3B8}
 .nav-item-info{flex:1;min-width:0}
+.nav-item-jibun{font-size:18px;font-weight:800;color:#1E293B;line-height:1.1}
+.nav-item-road{font-size:11px;color:#94A3B8;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-item-unit{font-size:12px;color:#475569;margin-top:1px;font-weight:500}
+/* 하위호환 */
 .nav-item-addr{font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav-item-sub{font-size:11px;color:#94A3B8;margin-top:1px}
 .nav-item-status{font-size:11px;font-weight:600;flex-shrink:0;color:#CBD5E1}
@@ -5287,7 +5291,7 @@ function _navAddrInfo(idx) {
   var u      = units[idx] || {};
   // 호수(apt)는 unit/detail 사용 — jibun은 번지수이므로 주소에 포함
   var unitLbl  = u.unit || u.detail || '';
-  // 도로명 + 번지 조합 (지도 API와 동일한 방식)
+  // 지오코딩용 완전 주소 (도로명+번지 조합)
   var addrMain = (road && jibun) ? road + ' ' + jibun
                : road             ? road
                : jibun            ? jibun
@@ -5295,7 +5299,13 @@ function _navAddrInfo(idx) {
   var addrFull = (region + addrMain + (bldg ? ' ' + bldg : '')).trim();
   var name     = (addrMain + (bldg ? ' ' + bldg : '')).trim();
   var secKey   = (sec && sec.key) || ('idx_' + idx);
-  return { addrMain: addrMain, addrFull: addrFull, name: name, unitLbl: unitLbl, secKey: secKey };
+  // 표시용: 번지수를 크게 앞에, 도로명을 작게
+  var dispNum  = jibun || addrMain;   // 번지수 (굵게 크게)
+  var dispRoad = jibun ? road : '';   // 도로명 (작게, 번지 있을 때만)
+  return { addrMain: addrMain, addrFull: addrFull, name: name,
+           unitLbl: unitLbl, secKey: secKey,
+           road: road, jibun: jibun, bldg: bldg,
+           dispNum: dispNum, dispRoad: dispRoad };
 }
 
 // ── 상단 카드 앱 버튼 (현재 _navIdx 대상) ─────────────────────
@@ -5417,8 +5427,11 @@ function _renderNavNextCard() {
     + '<span style="margin-left:auto;font-size:11px;color:rgba(255,255,255,.5)">' + done + '/' + total + ' 완료</span>'
     + '</div>'
     + '<div class="nav-card-body">'
-    + '<div class="nav-addr-main">' + _escHtml(addrMain) + '</div>'
-    + '<div class="nav-addr-sub">' + _escHtml(addrFull) + '</div>'
+    + '<div class="nav-addr-main">'
+    + (jibun ? _escHtml(jibun) : _escHtml(addrMain))
+    + (bldg  ? '<span style="font-size:13px;font-weight:500;color:#64748B;margin-left:6px">' + _escHtml(bldg) + '</span>' : '')
+    + '</div>'
+    + '<div class="nav-addr-sub">' + _escHtml(road || addrFull) + (jibun ? '' : '') + '</div>'
     + (chips ? '<div class="nav-chips">' + chips + '</div>' : '')
 
     // 도보 / 자동차 토글
@@ -5492,10 +5505,17 @@ function renderNavList() {
     var stLbl   = code ? (CODE_LABELS[code] || code) : (isCur ? '▶ 현재' : '');
     var stCls   = 'nav-item-status' + (code ? ' nis-done' : isCur ? ' nis-current' : '');
 
+    // 번지수 크게 앞에, 도로명 작게 뒤에 (기존 구역카드 목록과 동일 방식)
+    var jibunDisp = jibun || addrMain;         // 번지수 (없으면 addrMain 전체)
+    var roadDisp  = jibun ? road : '';          // 도로명 (번지수 있을 때만 별도 표시)
+    var bldgDisp  = bldg  ? bldg : '';
+
     html += '<div class="' + itemCls + '" onclick="navJumpTo(' + i + ')">'
       + '<div class="' + numCls + '">' + numTxt + '</div>'
       + '<div class="nav-item-info">'
-      + '<div class="nav-item-addr">' + _escHtml(label) + (unitLbl ? ' · ' + _escHtml(unitLbl) : '') + '</div>'
+      + '<div class="nav-item-jibun">' + _escHtml(jibunDisp) + (bldgDisp ? '<span style="font-size:12px;font-weight:500;color:#64748B;margin-left:5px">' + _escHtml(bldgDisp) + '</span>' : '') + '</div>'
+      + (roadDisp ? '<div class="nav-item-road">' + _escHtml(roadDisp) + '</div>' : '')
+      + (unitLbl  ? '<div class="nav-item-unit">' + _escHtml(unitLbl) + '</div>' : '')
       + '</div>'
       + '<div class="' + stCls + '">' + stLbl + '</div>'
       + '<button class="nav-item-go" onclick="event.stopPropagation();navOpenSheet(' + i + ')" title="길 안내">🗺️</button>'
@@ -5528,8 +5548,26 @@ var _navSheetIdx = -1;
 window.navOpenSheet = function(idx) {
   _navSheetIdx = idx;
   var info = _navAddrInfo(idx);
-  document.getElementById('nav-sheet-main').textContent = info.addrMain + (info.unitLbl ? ' · ' + info.unitLbl : '');
-  document.getElementById('nav-sheet-sub').textContent  = info.addrFull;
+  // 번지수 크게 + 건물명 / 도로명 작게
+  var mainEl = document.getElementById('nav-sheet-main');
+  var subEl  = document.getElementById('nav-sheet-sub');
+  mainEl.textContent = '';
+  var numSpan = document.createElement('span');
+  numSpan.textContent = info.dispNum;
+  mainEl.appendChild(numSpan);
+  if (info.bldg) {
+    var bldgSpan = document.createElement('span');
+    bldgSpan.style.cssText = 'font-size:13px;font-weight:500;color:#64748B;margin-left:7px';
+    bldgSpan.textContent = info.bldg;
+    mainEl.appendChild(bldgSpan);
+  }
+  if (info.unitLbl) {
+    var unitSpan = document.createElement('span');
+    unitSpan.style.cssText = 'font-size:13px;font-weight:500;color:#2563EB;margin-left:5px';
+    unitSpan.textContent = info.unitLbl;
+    mainEl.appendChild(unitSpan);
+  }
+  subEl.textContent = info.dispRoad ? info.dispRoad : info.addrFull;
   // 도보/자동차 토글 상태 반영
   document.getElementById('nav-sheet-walk').classList.toggle('sel', _navWalk);
   document.getElementById('nav-sheet-car').classList.toggle('sel', !_navWalk);
