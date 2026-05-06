@@ -757,6 +757,19 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               구역 카드의 도로명 주소를 지도에 표시할 때 앞에 붙는 지역명입니다.<br>
               예: "행복로 12" → "<strong>경기도 동두천시</strong> 행복로 12" 로 검색됩니다.
             </p>
+
+            <div style="border-top:1px solid #F1F5F9;margin-top:14px;padding-top:14px">
+              <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">📍 구역 좌표 재계산</div>
+              <p style="font-size:12px;color:#64748B;margin:0 0 10px;line-height:1.6">
+                지도에 핀이 표시되지 않는 구역의 좌표를 새로 검색하여 저장합니다.<br>
+                지역 설정을 변경했거나 주소가 수정된 경우 실행하세요.
+              </p>
+              <button id="s-geocode-btn" class="btn" onclick="window._geocodeResetAll && window._geocodeResetAll()"
+                style="font-size:12px;padding:6px 14px;border:1.5px solid #CBD5E1;background:#F8FAFC;color:#374151;border-radius:8px;cursor:pointer">
+                🔄 전체 좌표 재계산
+              </button>
+              <div id="s-geocode-msg" style="margin-top:8px;font-size:12px;color:#2563EB;display:none"></div>
+            </div>
           </div>
 
           <!-- 인도자 인증 방식 -->
