@@ -5285,8 +5285,13 @@ function _navAddrInfo(idx) {
   var bldg   = (sec && sec.building) || '';
   var units  = (_territory && _territory.units) || [];
   var u      = units[idx] || {};
-  var unitLbl = u.unit || u.jibun || '';
-  var addrMain = road || jibun || (_territory && _territory.name) || '';
+  // 호수(apt)는 unit/detail 사용 — jibun은 번지수이므로 주소에 포함
+  var unitLbl  = u.unit || u.detail || '';
+  // 도로명 + 번지 조합 (지도 API와 동일한 방식)
+  var addrMain = (road && jibun) ? road + ' ' + jibun
+               : road             ? road
+               : jibun            ? jibun
+               :                    (_territory && _territory.name) || '';
   var addrFull = (region + addrMain + (bldg ? ' ' + bldg : '')).trim();
   var name     = (addrMain + (bldg ? ' ' + bldg : '')).trim();
   var secKey   = (sec && sec.key) || ('idx_' + idx);
@@ -5383,9 +5388,13 @@ function _renderNavNextCard() {
   var road     = (sec && sec.road)     || '';
   var jibun    = (sec && sec.jibun)    || '';
   var bldg     = (sec && sec.building) || '';
-  var addrMain = road || jibun || (_territory.name || '');
-  var addrFull = region + addrMain + (bldg ? ' ' + bldg : '');
-  var unitLabel  = u.unit || u.jibun || '';
+  // 도로명 + 번지 모두 포함한 완전한 주소
+  var addrMain = (road && jibun) ? road + ' ' + jibun
+               : road             ? road
+               : jibun            ? jibun
+               :                    (_territory.name || '');
+  var addrFull = (region + addrMain + (bldg ? ' ' + bldg : '')).trim();
+  var unitLabel  = u.unit || u.detail || '';  // 호수; jibun은 주소에 이미 포함
   var floorLabel = (sec && sec.floorLabel) || '';
   var isEscort   = u.escortRequired;
   var secKey     = (sec && sec.key) || ('idx_' + _navIdx);
@@ -5463,11 +5472,17 @@ function renderNavList() {
   var html  = '';
 
   units.forEach(function(u, i) {
-    var sec      = _navSectionOf(i);
-    var addrMain = (sec && (sec.road || sec.jibun)) || (_territory.name || '');
-    var bldg     = (sec && sec.building) || '';
-    var label    = addrMain + (bldg ? ' ' + bldg : '');
-    var unitLbl  = u.unit || u.jibun || '';
+    var sec   = _navSectionOf(i);
+    var road  = (sec && sec.road)     || '';
+    var jibun = (sec && sec.jibun)    || '';
+    var bldg  = (sec && sec.building) || '';
+    // 도로명 + 번지 완전 주소로 표시
+    var addrMain = (road && jibun) ? road + ' ' + jibun
+                 : road             ? road
+                 : jibun            ? jibun
+                 :                    (_territory.name || '');
+    var label   = addrMain + (bldg ? ' ' + bldg : '');
+    var unitLbl = u.unit || u.detail || '';  // 호수; jibun은 주소에 이미 포함
     var code     = vm[i] && vm[i].code;
     var isCur    = (i === _navIdx);
 
