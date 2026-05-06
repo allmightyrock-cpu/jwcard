@@ -4,7 +4,7 @@
 //   예) 'jwcard-v10' → 'jwcard-v11'
 //   버전이 바뀌면 모든 모바일 PWA에 업데이트 배너가 뜹니다.
 //
-const CACHE = 'jwcard-v17'; // ← 배포마다 숫자 +1  (최근 업데이트: 2026-05-06)
+const CACHE = 'jwcard-v18'; // ← 배포마다 숫자 +1  (최근 업데이트: 2026-05-06)
 
 // 오프라인 대비용으로만 캐시 (실제 서빙은 Network First)
 const STATIC = [
