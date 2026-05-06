@@ -5346,11 +5346,6 @@ window.navJumpTo = function(idx) {
   document.getElementById('nav-next-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
-// HTML 이스케이프 유틸
-function _escHtml(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 // exitCard 시 nav 모드 초기화
 (function() {
   var _origExit = window.exitCard;
