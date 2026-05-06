@@ -3764,9 +3764,7 @@ function enterCard() {
     const t  = _territory;
     const by = t.deactivatedBy || '—';
     const rs = t.deactivatedReason || '사유 없음';
-    const dt = t.deactivatedAt
-      ? (t.deactivatedAt.toDate ? t.deactivatedAt.toDate().toLocaleDateString('ko-KR') : String(t.deactivatedAt).slice(0,10))
-      : '—';
+    const dt = _fmtDate(t.deactivatedAt) || '—';
     document.getElementById('inactive-meta').innerHTML =
       '비활성화 처리자: <strong>' + by + '</strong><br>처리 일자: <strong>' + dt + '</strong><br>사유: ' + rs;
     if (_isSO) document.getElementById('so-activate-btn').style.display = 'block';
@@ -3825,16 +3823,7 @@ function buildCard() {
   const _allPubs = t.assignedPublishers || [];
   const _mainPubs = _allPubs.slice(0, 2);
   _secondaryAssignedPubs = _allPubs.slice(2); // 3번째~6번째
-  let _assignDateStr = '';
-  if (t.lastAssignedDate) {
-    const _d = t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate() : new Date(t.lastAssignedDate);
-    if (!isNaN(_d.getTime())) {
-      const yy = _d.getFullYear();
-      const mm = String(_d.getMonth()+1).padStart(2,'0');
-      const dd = String(_d.getDate()).padStart(2,'0');
-      _assignDateStr = `[${yy}.${mm}.${dd}]`;
-    }
-  }
+  const _assignDateStr = t.lastAssignedDate ? `[${_fmtDate(t.lastAssignedDate)}]` : '';
   const _pubLabel = _mainPubs.join(', ') || '미배정';
   document.getElementById('c-sub').textContent = _assignDateStr
     ? `배정: ${_pubLabel}  ${_assignDateStr}`
@@ -3845,9 +3834,7 @@ function buildCard() {
   const history = t.cycleHistory || [];
   if (history.length > 0) {
     const last = history[history.length - 1];
-    const dateStr = last.completedAt
-      ? String(last.completedAt).replace(/-/g, '.').slice(0, 10)
-      : '';
+    const dateStr = _fmtDate(last.completedAt);
     const pubStr = (last.publishers || []).length > 0
       ? (last.publishers.join(', '))
       : '';
@@ -4399,6 +4386,24 @@ function showCompletionBanner() {
 }
 
 // ── 호수 표시 레이블 — 순수 숫자만 "호" 추가 ──
+// ── Firestore Timestamp / Date / String → YYYY.MM.DD ─────────
+// s13.js의 s13ParseDate + s13Fmt와 동일 로직
+function _parseTs(v) {
+  if (!v) return null;
+  if (v instanceof Date)           return isNaN(v) ? null : v;
+  if (v.toDate)                    return v.toDate();           // Firestore Timestamp
+  if (v.seconds)                   return new Date(v.seconds * 1000); // serialized TS
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
+}
+function _fmtDate(v) {
+  const d = _parseTs(v);
+  if (!d) return '';
+  return d.getFullYear() + '.'
+    + String(d.getMonth() + 1).padStart(2, '0') + '.'
+    + String(d.getDate()).padStart(2, '0');
+}
+
 function _fmtUnitLabel(s) {
   s = String(s || '').trim();
   if (!s) return s;
@@ -5169,8 +5174,7 @@ function renderLdManageList() {
   const list = [..._ldAllTerritories].sort((a,b)=>parseInt(a.no||0)-parseInt(b.no||0));
   wrap.innerHTML = list.map(t => {
     const isInact = t.active===false;
-    const dt = t.deactivatedAt
-      ? (t.deactivatedAt.toDate ? t.deactivatedAt.toDate().toLocaleDateString('ko-KR') : String(t.deactivatedAt).slice(0,10)) : '';
+    const dt = _fmtDate(t.deactivatedAt);
     return `<div style="border:1px solid ${isInact?'#FECACA':'#E2E8F0'};border-radius:10px;padding:12px 14px;margin-bottom:8px;background:${isInact?'#FEF2F2':'#fff'}">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <strong style="color:#1B3A6B;min-width:30px">${t.no}번</strong>
