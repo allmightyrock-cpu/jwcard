@@ -831,6 +831,72 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   /* 호수 목록: 3열 (iPad Pro 가로 등) */
   .unit-list { grid-template-columns:1fr 1fr 1fr }
 }
+
+/* ════════════════════════════════════════════════
+   길 안내 모드 (NAV MODE)
+   ════════════════════════════════════════════════ */
+#nav-mode-panel{display:none;padding:0 0 90px}
+#card-screen.nav-mode .map-area,
+#card-screen.nav-mode .addr-bar,
+#card-screen.nav-mode #addr-edit-bar,
+#card-screen.nav-mode .progress-area,
+#card-screen.nav-mode #help-bar,
+#card-screen.nav-mode .unit-list,
+#card-screen.nav-mode .bottom-bar{display:none!important}
+#card-screen.nav-mode #nav-mode-panel{display:block}
+
+/* 다음 방문 카드 */
+.nav-next-card{margin:14px 14px 0;background:#fff;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
+.nav-card-header{background:linear-gradient(135deg,#1E3A5F,#2563EB);padding:12px 16px;display:flex;align-items:center;gap:8px}
+.nav-dot{width:8px;height:8px;background:#38BDF8;border-radius:50%;animation:navBlink 1.4s ease-in-out infinite;flex-shrink:0}
+@keyframes navBlink{0%,100%{opacity:1}50%{opacity:.2}}
+.nav-card-body{padding:16px}
+.nav-addr-main{font-size:19px;font-weight:800;color:#0F172A;line-height:1.2;margin-bottom:3px}
+.nav-addr-sub{font-size:12px;color:#64748B;margin-bottom:12px}
+.nav-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.nav-chip{background:#F1F5F9;border-radius:8px;padding:4px 10px;font-size:12px;color:#475569;font-weight:500}
+.nav-chip-warn{background:#FEF9C3;color:#92400E}
+
+/* 길 안내 앱 버튼 */
+.nav-app-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.nav-app-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 6px;border-radius:14px;text-decoration:none;font-family:inherit;font-size:12px;font-weight:700;text-align:center;cursor:pointer;transition:transform .1s;-webkit-tap-highlight-color:transparent}
+.nav-app-btn:active{transform:scale(.95)}
+.nav-tmap {background:#E8F0FF;color:#1D4ED8}
+.nav-naver{background:#E6F7EE;color:#15803D}
+.nav-kakao{background:#FEF9C3;color:#92400E}
+.nav-app-icon{font-size:22px;margin-bottom:1px}
+.nav-app-hint{font-size:10px;font-weight:400;opacity:.7}
+
+/* 방문 완료 / 건너뛰기 */
+.nav-done-btn{width:100%;padding:14px;background:linear-gradient(135deg,#16A34A,#15803D);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(22,163,74,.25)}
+.nav-skip-btn{width:100%;padding:9px;background:transparent;color:#94A3B8;border:none;font-size:12px;font-family:inherit;cursor:pointer;margin-top:4px;text-decoration:underline}
+
+/* 완료 상태 카드 */
+.nav-all-done{text-align:center;padding:36px 16px}
+.nav-all-done-icon{width:80px;height:80px;background:rgba(56,189,248,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.nav-all-done h3{font-size:18px;font-weight:800;color:#0F172A;margin-bottom:6px}
+.nav-all-done p{font-size:13px;color:#64748B}
+
+/* 구역 메모 */
+.nav-memo-card{margin:10px 14px 0;background:#FFFBEB;border-radius:14px;border-left:4px solid #F59E0B;padding:12px 14px;font-size:12px;color:#78350F;line-height:1.6;display:none}
+.nav-memo-card strong{display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+
+/* 전체 목록 */
+.nav-list-section{margin:14px 14px 0}
+.nav-list-title{font-size:12px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-left:2px}
+.nav-list-item{background:#fff;border-radius:12px;padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);cursor:pointer;transition:opacity .2s}
+.nav-list-item.nav-item-done{opacity:.5}
+.nav-list-item.nav-item-current{border:2px solid #2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.nav-item-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.nav-item-num.ni-done   {background:#DCFCE7;color:#16A34A}
+.nav-item-num.ni-current{background:#DBEAFE;color:#2563EB}
+.nav-item-num.ni-todo   {background:#F1F5F9;color:#94A3B8}
+.nav-item-info{flex:1;min-width:0}
+.nav-item-addr{font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-item-sub{font-size:11px;color:#94A3B8;margin-top:1px}
+.nav-item-status{font-size:11px;font-weight:600;flex-shrink:0;color:#CBD5E1}
+.nav-item-status.nis-done   {color:#16A34A}
+.nav-item-status.nis-current{color:#2563EB}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Barlow:wght@900&display=swap" rel="stylesheet">
 <script src="/config.js"></script>
@@ -1193,7 +1259,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <span class="card-num" id="c-no">—</span>
       <span class="card-type">호별 방문</span>
       <span class="card-cycle" id="c-cycle">1회차</span>
-      <button onclick="exitCard()" style="margin-left:auto;background:rgba(255,255,255,0.15);border:none;color:rgba(255,255,255,0.7);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit">나가기</button>
+      <button id="nav-toggle-btn" onclick="toggleNavMode()" style="margin-left:auto;background:rgba(255,255,255,0.15);border:none;color:rgba(255,255,255,0.85);font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600">🧭 길 안내</button>
+      <button onclick="exitCard()" style="background:rgba(255,255,255,0.15);border:none;color:rgba(255,255,255,0.7);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:6px">나가기</button>
     </div>
     <div class="card-name" id="c-name">—</div>
     <div class="card-sub" id="c-sub">—</div>
@@ -1268,6 +1335,21 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <span class="bot-desc" id="btn-complete-desc">전체 방문 완료 시 활성화</span>
     </button>
   </div>
+
+  <!-- ══ 길 안내 모드 패널 (NAV MODE) ══ -->
+  <div id="nav-mode-panel">
+    <!-- 다음 방문 카드 (JS가 렌더링) -->
+    <div class="nav-next-card" id="nav-next-card"></div>
+    <!-- 구역 메모 -->
+    <div class="nav-memo-card" id="nav-memo-card"><strong>📝 구역 메모</strong></div>
+    <!-- 전체 목록 -->
+    <div class="nav-list-section">
+      <div class="nav-list-title">전체 방문 목록</div>
+      <div id="nav-unit-list"></div>
+    </div>
+  </div>
+  <!-- ══ /NAV MODE ══ -->
+
 </div>
 
 
@@ -3800,6 +3882,8 @@ function renderUnitList(visitMap) {
 
   document.getElementById('unit-list').innerHTML = html;
   updateBottomBar(_territory.units||[], _territory.visitMap||{});
+  // 길 안내 모드 목록 동기화
+  if (_navMode) renderNavPanel();
 }
 
 function iconSVG(code) {
@@ -3874,6 +3958,7 @@ window.clearCode = async function() {
     closeSheets();
     renderUnitList(visitMap);
     updateProgress(_territory.units||[], visitMap);
+    if (_navMode) renderNavPanel();
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
 
@@ -3891,6 +3976,8 @@ window.pickCode = async function(code) {
     closeSheets();
     renderUnitList(visitMap);
     updateProgress(_territory.units||[], visitMap);
+    // 길 안내 모드: 코드 저장 후 다음 미방문 세대로 자동 이동
+    if (_navMode) { _navIdx = _navFindNext(_navIdx + 1); renderNavPanel(); }
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
 
@@ -5076,6 +5163,205 @@ window.saveAddrEdit = async function() {
     alert('저장되었습니다.');
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
+
+/* ════════════════════════════════════════════════
+   길 안내 모드 (NAV MODE)
+   ════════════════════════════════════════════════ */
+var _navMode = false;
+var _navIdx  = -1;
+
+// 다음 미방문 세대 인덱스 탐색
+function _navFindNext(from) {
+  var units = (_territory && _territory.units) || [];
+  var vm    = (_territory && _territory.visitMap) || {};
+  for (var i = (from || 0); i < units.length; i++) {
+    if (!vm[i] || !vm[i].code) return i;
+  }
+  return -1; // 전부 방문 완료
+}
+
+// 유닛 인덱스 → 섹션 정보
+function _navSectionOf(idx) {
+  for (var s of (_sections || [])) {
+    if (s.indices && s.indices.includes(idx)) return s;
+  }
+  return null;
+}
+
+// 길 안내 모드 ON/OFF 토글
+window.toggleNavMode = function() {
+  _navMode = !_navMode;
+  var cardEl = document.getElementById('card-screen');
+  var btnEl  = document.getElementById('nav-toggle-btn');
+  if (_navMode) {
+    cardEl.classList.add('nav-mode');
+    btnEl.textContent = '📋 목록 보기';
+    btnEl.style.background = 'rgba(56,189,248,0.25)';
+    // 처음 진입 시 첫 미방문 세대로
+    if (_navIdx < 0) _navIdx = _navFindNext(0);
+    renderNavPanel();
+    window.scrollTo(0, 0);
+  } else {
+    cardEl.classList.remove('nav-mode');
+    btnEl.textContent = '🧭 길 안내';
+    btnEl.style.background = 'rgba(255,255,255,0.15)';
+  }
+};
+
+// 패널 전체 렌더링
+function renderNavPanel() {
+  if (!_navMode || !_territory) return;
+  _renderNavNextCard();
+  _renderNavMemo();
+  renderNavList();
+}
+
+function _renderNavNextCard() {
+  var el    = document.getElementById('nav-next-card');
+  var units = (_territory && _territory.units) || [];
+  var vm    = (_territory && _territory.visitMap) || {};
+  var total = units.length;
+  var done  = Object.values(vm).filter(function(v){ return v && v.code; }).length;
+
+  if (_navIdx < 0 || _navIdx >= units.length) {
+    // 모두 완료
+    el.className = 'nav-next-card';
+    el.innerHTML =
+      '<div class="nav-all-done">'
+      + '<div class="nav-all-done-icon">'
+      + '<svg width="42" height="42" viewBox="0 0 54 54" fill="none">'
+      + '<circle cx="27" cy="27" r="25" stroke="#38BDF8" stroke-width="3"/>'
+      + '<polyline points="14,28 23,37 40,18" stroke="#38BDF8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '</svg></div>'
+      + '<h3>모든 세대 방문 완료</h3>'
+      + '<p>' + done + '세대 완료 · ' + (total - done) + '세대 미방문</p>'
+      + '</div>';
+    return;
+  }
+
+  var u   = units[_navIdx];
+  var sec = _navSectionOf(_navIdx);
+  var region   = (window._mapRegion || '경기도 동두천시') + ' ';
+  var road     = (sec && sec.road)     || '';
+  var jibun    = (sec && sec.jibun)    || '';
+  var bldg     = (sec && sec.building) || '';
+  var addrMain = road || jibun || (_territory.name || '');
+  var addrDetail = region + addrMain + (bldg ? ' ' + bldg : '');
+  var unitLabel  = u.unit || u.jibun || '';
+  var floorLabel = (sec && sec.floorLabel) || '';
+  var isEscort   = u.escortRequired;
+
+  var chips = '';
+  if (unitLabel)  chips += '<span class="nav-chip">🏠 ' + unitLabel + '</span>';
+  if (floorLabel) chips += '<span class="nav-chip">' + floorLabel + '</span>';
+  if (isEscort)   chips += '<span class="nav-chip nav-chip-warn">⚠ 동행 필수</span>';
+
+  var enc = encodeURIComponent(addrDetail);
+
+  el.className = 'nav-next-card';
+  el.innerHTML =
+    '<div class="nav-card-header">'
+    + '<div class="nav-dot"></div>'
+    + '<span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:1px">다음 방문</span>'
+    + '<span style="margin-left:auto;font-size:11px;color:rgba(255,255,255,.5)">' + done + '/' + total + ' 완료</span>'
+    + '</div>'
+    + '<div class="nav-card-body">'
+    + '<div class="nav-addr-main">' + _escHtml(addrMain) + '</div>'
+    + '<div class="nav-addr-sub">' + _escHtml(addrDetail) + '</div>'
+    + (chips ? '<div class="nav-chips">' + chips + '</div>' : '')
+    + '<div class="nav-app-row">'
+    + '<a class="nav-app-btn nav-tmap"  href="tmap://route?goalname=' + enc + '">'
+    + '  <span class="nav-app-icon">🗺️</span>T맵<span class="nav-app-hint">도보 안내</span></a>'
+    + '<a class="nav-app-btn nav-naver" href="nmap://search?query=' + enc + '&appname=jwcard">'
+    + '  <span class="nav-app-icon">📍</span>네이버지도<span class="nav-app-hint">도보 안내</span></a>'
+    + '<a class="nav-app-btn nav-kakao" href="kakaomap://search?q=' + enc + '">'
+    + '  <span class="nav-app-icon">🟡</span>카카오맵<span class="nav-app-hint">도보 안내</span></a>'
+    + '</div>'
+    + '<button class="nav-done-btn" onclick="navVisit()">✅ 방문 완료</button>'
+    + '<button class="nav-skip-btn" onclick="navSkip()">이 집 건너뛰기</button>'
+    + '</div>';
+}
+
+function _renderNavMemo() {
+  var el     = document.getElementById('nav-memo-card');
+  var notice = (_territory && _territory.territoryNotice) || '';
+  if (notice) {
+    el.innerHTML = '<strong>📝 구역 메모</strong>' + _escHtml(notice);
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// 전체 목록 렌더링
+function renderNavList() {
+  var units = (_territory && _territory.units) || [];
+  var vm    = (_territory && _territory.visitMap) || {};
+  var html  = '';
+
+  units.forEach(function(u, i) {
+    var sec       = _navSectionOf(i);
+    var addrMain  = (sec && (sec.road || sec.jibun)) || (_territory.name || '');
+    var bldg      = (sec && sec.building) || '';
+    var label     = addrMain + (bldg ? ' ' + bldg : '');
+    var unitLbl   = u.unit || u.jibun || '';
+    var code      = vm[i] && vm[i].code;
+    var isCurrent = (i === _navIdx);
+
+    var itemCls = 'nav-list-item' + (code ? ' nav-item-done' : '') + (isCurrent ? ' nav-item-current' : '');
+    var numCls  = 'nav-item-num ' + (code ? 'ni-done' : isCurrent ? 'ni-current' : 'ni-todo');
+    var numTxt  = code === 'resp' ? '✓' : (code ? '○' : String(i + 1));
+    var stLbl   = code ? (CODE_LABELS[code] || code) : (isCurrent ? '▶ 현재' : '');
+    var stCls   = 'nav-item-status' + (code ? ' nis-done' : isCurrent ? ' nis-current' : '');
+
+    html += '<div class="' + itemCls + '" onclick="navJumpTo(' + i + ')">'
+      + '<div class="' + numCls + '">' + numTxt + '</div>'
+      + '<div class="nav-item-info">'
+      + '<div class="nav-item-addr">' + _escHtml(label) + (unitLbl ? ' · ' + _escHtml(unitLbl) : '') + '</div>'
+      + '</div>'
+      + '<div class="' + stCls + '">' + stLbl + '</div>'
+      + '</div>';
+  });
+
+  document.getElementById('nav-unit-list').innerHTML = html;
+}
+
+// 방문 완료 → 기존 코드 시트 열기
+window.navVisit = function() {
+  if (_navIdx < 0) return;
+  openCodeSheet(_navIdx);
+};
+
+// 건너뛰기 → 다음 미방문으로
+window.navSkip = function() {
+  _navIdx = _navFindNext(_navIdx + 1);
+  renderNavPanel();
+  document.getElementById('nav-next-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+// 목록 탭으로 특정 세대 이동
+window.navJumpTo = function(idx) {
+  _navIdx = idx;
+  renderNavPanel();
+  document.getElementById('nav-next-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+// HTML 이스케이프 유틸
+function _escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// exitCard 시 nav 모드 초기화
+(function() {
+  var _origExit = window.exitCard;
+  window.exitCard = function() {
+    _navMode = false;
+    _navIdx  = -1;
+    var cardEl = document.getElementById('card-screen');
+    if (cardEl) cardEl.classList.remove('nav-mode');
+    if (_origExit) _origExit.apply(this, arguments);
+  };
+})();
 
 </script>
 
