@@ -463,6 +463,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .unit-row.dimmed{opacity:0.4}
 .unit-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px}
 .unit-num{font-size:22px;font-weight:500;flex:1;color:#1E293B}
+.unit-no-label{font-size:12px;font-weight:500;color:#CBD5E1;background:#F8FAFC;border:1px dashed #E2E8F0;border-radius:6px;padding:3px 10px;letter-spacing:.3px}
 .escort-tag{font-size:10px;background:#FEF3C7;color:#92400E;padding:1px 6px;border-radius:6px;margin-left:6px}
 .unit-more{padding:6px 10px;color:#CBD5E1;font-size:14px;letter-spacing:2px}
 
@@ -4014,7 +4015,12 @@ function renderUnitList(visitMap) {
                     : code==='interest' ? '<span class="skip-tag skip-std">관심자</span>' : '';
       html += `<div class="unit-row${isDimmed?' dimmed':''}${isSkip?' dimmed':''}" onclick="openCodeSheet(${globalIdx})">
         <div class="unit-icon">${iconSVG(code)}</div>
-        <div class="unit-num">${u.unit || u.jibun || '—'}${isEscort?'<span class="escort-tag">⚠ 동행필수</span>':''}${skipTag}</div>
+        <div class="unit-num">${(()=>{
+          const lbl = _fmtUnitLabel(_cleanUnitVal(u.unit)) || _cleanUnitVal(u.jibun);
+          return lbl
+            ? lbl + (isEscort?'<span class="escort-tag">⚠ 동행필수</span>':'') + skipTag
+            : '<span class="unit-no-label">호수 미기록</span>' + (isEscort?'<span class="escort-tag">⚠ 동행필수</span>':'') + skipTag;
+        })()}</div>
         <div class="unit-more">···</div>
       </div>`;
     });
@@ -4067,7 +4073,8 @@ const CODE_LABELS = {
 window.openCodeSheet = function(idx) {
   _activeUnitIdx = idx;
   const u = (_territory.units||[])[idx];
-  document.getElementById('sheet-unit-label').textContent = _fmtUnitLabel(u?.unit || u?.jibun || String(idx));
+  const _sheetLbl = _fmtUnitLabel(_cleanUnitVal(u?.unit)) || _cleanUnitVal(u?.jibun);
+  document.getElementById('sheet-unit-label').textContent = _sheetLbl || '호수 미기록';
   // 현재 코드 표시
   const existing = (_territory.visitMap||{})[idx];
   const curRow = document.getElementById('sheet-current-row');
@@ -4404,9 +4411,18 @@ function _fmtDate(v) {
     + String(d.getDate()).padStart(2, '0');
 }
 
+// ### = 엑셀 열 폭 초과 플레이스홀더, 공백, - 등 무효값 제거
+function _cleanUnitVal(v) {
+  const s = String(v || '').trim();
+  if (!s) return '';
+  if (/^[#\-–—·.]+$/.test(s)) return '';   // ###, ---, ···  등
+  if (/^null$/i.test(s) || /^undefined$/i.test(s)) return '';
+  return s;
+}
+
 function _fmtUnitLabel(s) {
-  s = String(s || '').trim();
-  if (!s) return s;
+  s = _cleanUnitVal(s);
+  if (!s) return '';
   if (/^\d+$/.test(s)) return s + '호';
   if (s.endsWith('호')) return s;
   return s;
