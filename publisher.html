@@ -6211,23 +6211,32 @@ window.navOpenSheetApp = async function(app) {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').then(reg => {
-        // 이미 대기 중인 새 SW가 있으면 즉시 알림
-        if (reg.waiting) { _showUpdateBanner(); }
+        // ★ 앱 열 때마다 즉시 서버에서 sw.js 변경 여부 강제 확인
+        //   (브라우저 24시간 throttle 우회 — 이게 없으면 하루에 한 번만 체크)
+        reg.update();
 
-        // 새 SW 설치 시작 감지
-        reg.addEventListener('updatefound', () => {
-          const newSW = reg.installing;
-          if (!newSW) return;
-          newSW.addEventListener('statechange', () => {
-            // installed = 새 SW 준비 완료 & 기존 controller 있음 = 업데이트
-            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+        // statechange 감지 공통 함수
+        function _watchInstalling(sw) {
+          if (!sw) return;
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'installed' && navigator.serviceWorker.controller) {
               _showUpdateBanner();
             }
           });
+        }
+
+        // 이미 대기 중인 새 SW가 있으면 즉시 알림
+        if (reg.waiting) { _showUpdateBanner(); }
+        // 이미 설치 중이면 감지 (race condition 방어)
+        if (reg.installing) { _watchInstalling(reg.installing); }
+
+        // 새 SW 설치 시작 감지
+        reg.addEventListener('updatefound', () => {
+          _watchInstalling(reg.installing);
         });
 
-        // 10분마다 서버에서 sw.js 변경 여부 확인
-        setInterval(() => reg.update(), 10 * 60 * 1000);
+        // 앱이 열려 있는 동안 5분마다 추가 체크 (백그라운드 재확인)
+        setInterval(() => reg.update(), 5 * 60 * 1000);
       }).catch(err => console.warn('SW registration failed:', err));
 
       // controller 교체(새 SW 활성화) → 배너가 이미 표시된 상태에서 업데이트 버튼 누른 경우 reload
