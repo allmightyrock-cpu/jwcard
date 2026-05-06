@@ -5167,20 +5167,22 @@ window.saveAddrEdit = async function() {
 /* ════════════════════════════════════════════════
    길 안내 모드 (NAV MODE)
    ════════════════════════════════════════════════ */
-var _navMode = false;
-var _navIdx  = -1;
+var _navMode      = false;
+var _navIdx       = -1;
+var _navWalk      = true;          // true=도보, false=자동차
+var _navCoordCache = {};           // secKey → {lat, lng}
 
-// 다음 미방문 세대 인덱스 탐색
+// ── 다음 미방문 세대 인덱스 ───────────────────────────────────
 function _navFindNext(from) {
   var units = (_territory && _territory.units) || [];
   var vm    = (_territory && _territory.visitMap) || {};
   for (var i = (from || 0); i < units.length; i++) {
     if (!vm[i] || !vm[i].code) return i;
   }
-  return -1; // 전부 방문 완료
+  return -1;
 }
 
-// 유닛 인덱스 → 섹션 정보
+// ── 유닛 인덱스 → 섹션 ────────────────────────────────────────
 function _navSectionOf(idx) {
   for (var s of (_sections || [])) {
     if (s.indices && s.indices.includes(idx)) return s;
@@ -5188,7 +5190,84 @@ function _navSectionOf(idx) {
   return null;
 }
 
-// 길 안내 모드 ON/OFF 토글
+// ── 섹션 주소 → 좌표 (캐시 우선, 없으면 지오코딩) ─────────────
+function _navGetCoords(secKey, addr) {
+  return new Promise(function(resolve) {
+    if (_navCoordCache[secKey]) { resolve(_navCoordCache[secKey]); return; }
+    if (!window.naver || !naver.maps || !naver.maps.Service) { resolve(null); return; }
+    naver.maps.Service.geocode({ query: addr }, function(status, response) {
+      if (status === naver.maps.Service.Status.OK
+          && response.v2 && response.v2.meta.totalCount > 0) {
+        var item = response.v2.addresses[0];
+        var coords = { lat: parseFloat(item.y), lng: parseFloat(item.x) };
+        _navCoordCache[secKey] = coords;
+        resolve(coords);
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
+// ── 딥링크 생성 ───────────────────────────────────────────────
+function _navBuildLinks(coords, name, addr) {
+  var enc  = encodeURIComponent(name || addr);
+  var encA = encodeURIComponent(addr);
+  if (coords) {
+    var lat = coords.lat, lng = coords.lng;
+    var mode = _navWalk ? 'walk' : 'car';
+    var tmapOpt = _navWalk ? '&reqCoordType=WGS84GEO&resCoordType=WGS84GEO&searchOption=2' : '';
+    return {
+      tmap  : 'tmap://route?goalname=' + enc + '&goalx=' + lng + '&goaly=' + lat + tmapOpt,
+      naver : 'nmap://route/' + mode + '?dlat=' + lat + '&dlng=' + lng + '&dname=' + enc + '&appname=jwcard',
+      kakao : 'kakaomap://route?ep=' + lat + ',' + lng + '&by=' + (_navWalk ? 'FOOT' : 'CAR'),
+      ready : true
+    };
+  }
+  // 좌표 없을 때 주소 검색 폴백
+  return {
+    tmap  : 'tmap://search?name=' + encA,
+    naver : 'nmap://search?query=' + encA + '&appname=jwcard',
+    kakao : 'kakaomap://search?q=' + encA,
+    ready : false
+  };
+}
+
+// ── 앱 열기 (버튼 탭 시 호출) ─────────────────────────────────
+window.navOpenApp = async function(app) {
+  var sec = _navSectionOf(_navIdx);
+  var region = (window._mapRegion || '경기도 동두천시') + ' ';
+  var road   = (sec && sec.road)     || '';
+  var jibun  = (sec && sec.jibun)    || '';
+  var bldg   = (sec && sec.building) || '';
+  var addr   = region + (road || jibun) + (bldg ? ' ' + bldg : '');
+  var name   = (road || jibun || (_territory && _territory.name) || '') + (bldg ? ' ' + bldg : '');
+  var secKey = (sec && sec.key) || ('idx_' + _navIdx);
+
+  // 버튼을 로딩 상태로
+  var btnEl = document.getElementById('nav-app-' + app);
+  if (btnEl) { btnEl.style.opacity = '0.5'; btnEl.style.pointerEvents = 'none'; }
+
+  var coords = await _navGetCoords(secKey, addr.trim());
+
+  if (btnEl) { btnEl.style.opacity = ''; btnEl.style.pointerEvents = ''; }
+
+  var links = _navBuildLinks(coords, name.trim(), addr.trim());
+  if (!links.ready) {
+    // 좌표 획득 실패 → 사용자에게 알림 후 검색 폴백
+    if (!confirm('좌표를 찾지 못했습니다. 주소 검색으로 열까요?')) return;
+  }
+  window.location.href = links[app];
+};
+
+// ── 도보/자동차 토글 ──────────────────────────────────────────
+window.navSetMode = function(walk) {
+  _navWalk = walk;
+  document.getElementById('nav-mode-walk').classList.toggle('nav-mode-sel', walk);
+  document.getElementById('nav-mode-car').classList.toggle('nav-mode-sel', !walk);
+};
+
+// ── 길 안내 모드 ON/OFF ───────────────────────────────────────
 window.toggleNavMode = function() {
   _navMode = !_navMode;
   var cardEl = document.getElementById('card-screen');
@@ -5197,9 +5276,10 @@ window.toggleNavMode = function() {
     cardEl.classList.add('nav-mode');
     btnEl.textContent = '📋 목록 보기';
     btnEl.style.background = 'rgba(56,189,248,0.25)';
-    // 처음 진입 시 첫 미방문 세대로
     if (_navIdx < 0) _navIdx = _navFindNext(0);
     renderNavPanel();
+    // 현재 세대 좌표 미리 캐싱
+    _navPrefetchCoords(_navIdx);
     window.scrollTo(0, 0);
   } else {
     cardEl.classList.remove('nav-mode');
@@ -5208,7 +5288,23 @@ window.toggleNavMode = function() {
   }
 };
 
-// 패널 전체 렌더링
+// 현재 + 다음 세대 좌표 미리 가져오기
+function _navPrefetchCoords(idx) {
+  [idx, _navFindNext(idx + 1)].forEach(function(i) {
+    if (i < 0) return;
+    var sec    = _navSectionOf(i);
+    var secKey = (sec && sec.key) || ('idx_' + i);
+    if (_navCoordCache[secKey]) return;
+    var region = (window._mapRegion || '경기도 동두천시') + ' ';
+    var road   = (sec && sec.road)     || '';
+    var jibun  = (sec && sec.jibun)    || '';
+    var bldg   = (sec && sec.building) || '';
+    var addr   = (region + (road || jibun) + (bldg ? ' ' + bldg : '')).trim();
+    if (addr) _navGetCoords(secKey, addr);
+  });
+}
+
+// ── 패널 렌더링 ───────────────────────────────────────────────
 function renderNavPanel() {
   if (!_navMode || !_territory) return;
   _renderNavNextCard();
@@ -5224,12 +5320,9 @@ function _renderNavNextCard() {
   var done  = Object.values(vm).filter(function(v){ return v && v.code; }).length;
 
   if (_navIdx < 0 || _navIdx >= units.length) {
-    // 모두 완료
-    el.className = 'nav-next-card';
     el.innerHTML =
       '<div class="nav-all-done">'
-      + '<div class="nav-all-done-icon">'
-      + '<svg width="42" height="42" viewBox="0 0 54 54" fill="none">'
+      + '<div class="nav-all-done-icon"><svg width="42" height="42" viewBox="0 0 54 54" fill="none">'
       + '<circle cx="27" cy="27" r="25" stroke="#38BDF8" stroke-width="3"/>'
       + '<polyline points="14,28 23,37 40,18" stroke="#38BDF8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
       + '</svg></div>'
@@ -5246,40 +5339,65 @@ function _renderNavNextCard() {
   var jibun    = (sec && sec.jibun)    || '';
   var bldg     = (sec && sec.building) || '';
   var addrMain = road || jibun || (_territory.name || '');
-  var addrDetail = region + addrMain + (bldg ? ' ' + bldg : '');
+  var addrFull = region + addrMain + (bldg ? ' ' + bldg : '');
   var unitLabel  = u.unit || u.jibun || '';
   var floorLabel = (sec && sec.floorLabel) || '';
   var isEscort   = u.escortRequired;
+  var secKey     = (sec && sec.key) || ('idx_' + _navIdx);
+  var hasCached  = !!_navCoordCache[secKey];
 
   var chips = '';
-  if (unitLabel)  chips += '<span class="nav-chip">🏠 ' + unitLabel + '</span>';
-  if (floorLabel) chips += '<span class="nav-chip">' + floorLabel + '</span>';
+  if (unitLabel)  chips += '<span class="nav-chip">🏠 ' + _escHtml(unitLabel) + '</span>';
+  if (floorLabel) chips += '<span class="nav-chip">' + _escHtml(floorLabel) + '</span>';
   if (isEscort)   chips += '<span class="nav-chip nav-chip-warn">⚠ 동행 필수</span>';
 
-  var enc = encodeURIComponent(addrDetail);
+  var coordBadge = hasCached
+    ? '<span style="font-size:10px;color:#38BDF8;margin-left:6px">📡 좌표 준비됨</span>'
+    : '<span style="font-size:10px;color:rgba(255,255,255,.4);margin-left:6px">📡 좌표 로딩 중…</span>';
 
-  el.className = 'nav-next-card';
   el.innerHTML =
     '<div class="nav-card-header">'
     + '<div class="nav-dot"></div>'
     + '<span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:1px">다음 방문</span>'
+    + coordBadge
     + '<span style="margin-left:auto;font-size:11px;color:rgba(255,255,255,.5)">' + done + '/' + total + ' 완료</span>'
     + '</div>'
     + '<div class="nav-card-body">'
     + '<div class="nav-addr-main">' + _escHtml(addrMain) + '</div>'
-    + '<div class="nav-addr-sub">' + _escHtml(addrDetail) + '</div>'
+    + '<div class="nav-addr-sub">' + _escHtml(addrFull) + '</div>'
     + (chips ? '<div class="nav-chips">' + chips + '</div>' : '')
-    + '<div class="nav-app-row">'
-    + '<a class="nav-app-btn nav-tmap"  href="tmap://route?goalname=' + enc + '">'
-    + '  <span class="nav-app-icon">🗺️</span>T맵<span class="nav-app-hint">도보 안내</span></a>'
-    + '<a class="nav-app-btn nav-naver" href="nmap://search?query=' + enc + '&appname=jwcard">'
-    + '  <span class="nav-app-icon">📍</span>네이버지도<span class="nav-app-hint">도보 안내</span></a>'
-    + '<a class="nav-app-btn nav-kakao" href="kakaomap://search?q=' + enc + '">'
-    + '  <span class="nav-app-icon">🟡</span>카카오맵<span class="nav-app-hint">도보 안내</span></a>'
+
+    // 도보 / 자동차 토글
+    + '<div class="nav-mode-toggle">'
+    + '<button id="nav-mode-walk" class="nav-mode-btn' + (_navWalk ? ' nav-mode-sel' : '') + '" onclick="navSetMode(true)">🚶 도보</button>'
+    + '<button id="nav-mode-car"  class="nav-mode-btn' + (!_navWalk ? ' nav-mode-sel' : '') + '" onclick="navSetMode(false)">🚗 자동차</button>'
     + '</div>'
+
+    // 길 안내 앱 버튼 (좌표 → 루트, 없으면 검색 폴백)
+    + '<div class="nav-app-row">'
+    + '<button id="nav-app-tmap"  class="nav-app-btn nav-tmap"  onclick="navOpenApp(\'tmap\')">'
+    + '<span class="nav-app-icon">🗺️</span>T맵'
+    + '<span class="nav-app-hint">' + (_navWalk?'도보':'자동차') + ' 안내</span></button>'
+    + '<button id="nav-app-naver" class="nav-app-btn nav-naver" onclick="navOpenApp(\'naver\')">'
+    + '<span class="nav-app-icon">📍</span>네이버지도'
+    + '<span class="nav-app-hint">' + (_navWalk?'도보':'자동차') + ' 안내</span></button>'
+    + '<button id="nav-app-kakao" class="nav-app-btn nav-kakao" onclick="navOpenApp(\'kakao\')">'
+    + '<span class="nav-app-icon">🟡</span>카카오맵'
+    + '<span class="nav-app-hint">' + (_navWalk?'도보':'자동차') + ' 안내</span></button>'
+    + '</div>'
+
     + '<button class="nav-done-btn" onclick="navVisit()">✅ 방문 완료</button>'
     + '<button class="nav-skip-btn" onclick="navSkip()">이 집 건너뛰기</button>'
     + '</div>';
+
+  // 좌표 아직 없으면 비동기 획득 후 배지 갱신
+  if (!hasCached) {
+    _navGetCoords(secKey, addrFull.trim()).then(function(coords) {
+      if (!_navMode) return;
+      var badge = document.querySelector('.nav-card-header span[style*="color:rgba(255,255,255,.4)"]');
+      if (badge) badge.outerHTML = '<span style="font-size:10px;color:#38BDF8;margin-left:6px">📡 좌표 준비됨</span>';
+    });
+  }
 }
 
 function _renderNavMemo() {
@@ -5293,26 +5411,26 @@ function _renderNavMemo() {
   }
 }
 
-// 전체 목록 렌더링
+// ── 전체 목록 렌더링 ──────────────────────────────────────────
 function renderNavList() {
   var units = (_territory && _territory.units) || [];
   var vm    = (_territory && _territory.visitMap) || {};
   var html  = '';
 
   units.forEach(function(u, i) {
-    var sec       = _navSectionOf(i);
-    var addrMain  = (sec && (sec.road || sec.jibun)) || (_territory.name || '');
-    var bldg      = (sec && sec.building) || '';
-    var label     = addrMain + (bldg ? ' ' + bldg : '');
-    var unitLbl   = u.unit || u.jibun || '';
-    var code      = vm[i] && vm[i].code;
-    var isCurrent = (i === _navIdx);
+    var sec      = _navSectionOf(i);
+    var addrMain = (sec && (sec.road || sec.jibun)) || (_territory.name || '');
+    var bldg     = (sec && sec.building) || '';
+    var label    = addrMain + (bldg ? ' ' + bldg : '');
+    var unitLbl  = u.unit || u.jibun || '';
+    var code     = vm[i] && vm[i].code;
+    var isCur    = (i === _navIdx);
 
-    var itemCls = 'nav-list-item' + (code ? ' nav-item-done' : '') + (isCurrent ? ' nav-item-current' : '');
-    var numCls  = 'nav-item-num ' + (code ? 'ni-done' : isCurrent ? 'ni-current' : 'ni-todo');
+    var itemCls = 'nav-list-item' + (code ? ' nav-item-done' : '') + (isCur ? ' nav-item-current' : '');
+    var numCls  = 'nav-item-num ' + (code ? 'ni-done' : isCur ? 'ni-current' : 'ni-todo');
     var numTxt  = code === 'resp' ? '✓' : (code ? '○' : String(i + 1));
-    var stLbl   = code ? (CODE_LABELS[code] || code) : (isCurrent ? '▶ 현재' : '');
-    var stCls   = 'nav-item-status' + (code ? ' nis-done' : isCurrent ? ' nis-current' : '');
+    var stLbl   = code ? (CODE_LABELS[code] || code) : (isCur ? '▶ 현재' : '');
+    var stCls   = 'nav-item-status' + (code ? ' nis-done' : isCur ? ' nis-current' : '');
 
     html += '<div class="' + itemCls + '" onclick="navJumpTo(' + i + ')">'
       + '<div class="' + numCls + '">' + numTxt + '</div>'
@@ -5326,32 +5444,28 @@ function renderNavList() {
   document.getElementById('nav-unit-list').innerHTML = html;
 }
 
-// 방문 완료 → 기존 코드 시트 열기
-window.navVisit = function() {
-  if (_navIdx < 0) return;
-  openCodeSheet(_navIdx);
-};
+// ── 액션 함수들 ───────────────────────────────────────────────
+window.navVisit = function() { if (_navIdx >= 0) openCodeSheet(_navIdx); };
 
-// 건너뛰기 → 다음 미방문으로
 window.navSkip = function() {
   _navIdx = _navFindNext(_navIdx + 1);
   renderNavPanel();
-  document.getElementById('nav-next-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  _navPrefetchCoords(_navIdx);
+  document.getElementById('nav-next-card').scrollIntoView({ behavior:'smooth', block:'start' });
 };
 
-// 목록 탭으로 특정 세대 이동
 window.navJumpTo = function(idx) {
   _navIdx = idx;
   renderNavPanel();
-  document.getElementById('nav-next-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  _navPrefetchCoords(idx);
+  document.getElementById('nav-next-card').scrollIntoView({ behavior:'smooth', block:'start' });
 };
 
 // exitCard 시 nav 모드 초기화
 (function() {
   var _origExit = window.exitCard;
   window.exitCard = function() {
-    _navMode = false;
-    _navIdx  = -1;
+    _navMode = false; _navIdx = -1; _navCoordCache = {};
     var cardEl = document.getElementById('card-screen');
     if (cardEl) cardEl.classList.remove('nav-mode');
     if (_origExit) _origExit.apply(this, arguments);
