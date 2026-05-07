@@ -281,9 +281,9 @@ async function _loadCartConfig() {
     localStorage.removeItem('cw_conductors');
   } catch(e) { console.warn('전도인 목록 로드 오류:', e.message); }
 
-  // cw_members/cw_conductors 는 위에서 삭제됐으므로 건너뜀
-  // cw_locations 만 적용 — Firebase 기본값 위에 로컬 저장 값 덮어쓰기
-  applyCustomLists();
+  // locations는 Firebase(admin/cartConfig.locations)에서 직접 로드됨 → localStorage 불필요
+  // 혹시 구버전 localStorage에 cw_locations가 남아있으면 제거
+  localStorage.removeItem("cw_locations");
 
   // ── 자동 로그인: publisher.html에서 이름 확인된 전도인은 봉사자로 자동 입장 ──
   // (인도자 모드는 PIN이 필요하므로 자동 입장 없음)
@@ -357,14 +357,12 @@ function getCustomList(key){
   catch(e){ return [...(def[key]||[])]; }
 }
 function applyCustomLists(){
+  // locations는 Firebase에서 관리 → 여기서 처리 안 함
   try{
     const m=localStorage.getItem("cw_members");
     const c=localStorage.getItem("cw_conductors");
-    const l=localStorage.getItem("cw_locations");
     if(m) MEMBERS.splice(0,MEMBERS.length,...JSON.parse(m));
     if(c) CONDUCTORS.splice(0,CONDUCTORS.length,...JSON.parse(c));
-    // 빈 배열은 무시 — Firebase 기본값 유지 (이전 세션에서 전부 삭제됐어도 덮어쓰지 않음)
-    if(l){ const ll=JSON.parse(l); if(ll.length>0) LOCATIONS.splice(0,LOCATIONS.length,...ll); }
   }catch(e){}
 }
 function getApplicants(id){
@@ -959,7 +957,8 @@ function settingsModalHTML(){
   if(!S.settingsModal) return "";
   const tab=S.settingsTab;
   const isSchTab=tab==="schedules";
-  const lists={members:getCustomList("members"),conductors:getCustomList("conductors"),locations:getCustomList("locations")};
+  // locations는 Firebase에서 직접 로드된 LOCATIONS 사용 (localStorage 불필요)
+  const lists={members:getCustomList("members"),conductors:getCustomList("conductors"),locations:[...LOCATIONS]};
   const labels={members:"봉사자 명단",conductors:"인도자 명단",locations:"장소 목록",schedules:"봉사 요일"};
   const tabOrder=["members","conductors","locations","schedules"];
   const cur=isSchTab?[]:lists[tab];
@@ -1307,7 +1306,17 @@ function bind(){
     if(e.key==="Enter"){const v=e.target.value.trim();if(!v)return;saveListItem(S.settingsTab,v);e.target.value="";}
   });
   document.querySelectorAll(".st-del").forEach(b=>b.addEventListener("click",()=>deleteListItem(S.settingsTab,parseInt(b.dataset.idx))));
-  document.getElementById("st-reset")?.addEventListener("click",()=>{if(!confirm("기본값으로 초기화할까요?"))return;localStorage.removeItem("cw_"+S.settingsTab);applyCustomLists();render();toast("초기화되었습니다");});
+  document.getElementById("st-reset")?.addEventListener("click",()=>{
+    if(!confirm("기본값으로 초기화할까요?"))return;
+    if(S.settingsTab==="locations"){
+      // 장소 목록은 Firebase에서 전부 삭제
+      LOCATIONS.splice(0,LOCATIONS.length);
+      saveLocations("초기화되었습니다");
+    } else {
+      localStorage.removeItem("cw_"+S.settingsTab);
+      applyCustomLists();render();toast("초기화되었습니다");
+    }
+  });
   // schedules tab
   document.getElementById("st-sch-add")?.addEventListener("click",addScheduleType);
   document.querySelectorAll(".st-sch-del").forEach(b=>b.addEventListener("click",()=>deleteScheduleType(parseInt(b.dataset.idx))));
@@ -1655,13 +1664,37 @@ async function saveScheduleTypes(msg){
   render();
   if(msg) toast(msg);
 }
+// 장소 목록을 Firebase에 저장 (봉사 요일과 동일한 방식)
+async function saveLocations(msg){
+  if(db){
+    try{
+      await db.collection("admin").doc("cartConfig").set({locations:LOCATIONS},{merge:true});
+    }catch(e){console.warn("장소 저장 오류:",e.message);toast("저장 오류: "+e.message);return;}
+  }
+  localStorage.removeItem("cw_locations"); // 구버전 localStorage 데이터 제거
+  render();
+  if(msg) toast(msg);
+}
 function saveListItem(tab,val){
+  // 장소 목록은 Firebase에 저장 (localStorage가 아님)
+  if(tab==="locations"){
+    if(LOCATIONS.includes(val)){toast("이미 있는 항목입니다");return;}
+    LOCATIONS.push(val);
+    saveLocations("✅ 추가되었습니다");
+    return;
+  }
   const cur=getCustomList(tab);
   if(cur.includes(val)){toast("이미 있는 항목입니다");return;}
   cur.push(val);localStorage.setItem("cw_"+tab,JSON.stringify(cur));
   applyCustomLists();render();toast("✅ 추가되었습니다");
 }
 function deleteListItem(tab,idx){
+  // 장소 목록은 Firebase에서 삭제
+  if(tab==="locations"){
+    LOCATIONS.splice(idx,1);
+    saveLocations("삭제되었습니다");
+    return;
+  }
   const cur=getCustomList(tab);cur.splice(idx,1);
   localStorage.setItem("cw_"+tab,JSON.stringify(cur));
   applyCustomLists();render();toast("삭제되었습니다");
