@@ -281,6 +281,10 @@ async function _loadCartConfig() {
     localStorage.removeItem('cw_conductors');
   } catch(e) { console.warn('전도인 목록 로드 오류:', e.message); }
 
+  // cw_members/cw_conductors 는 위에서 삭제됐으므로 건너뜀
+  // cw_locations 만 적용 — Firebase 기본값 위에 로컬 저장 값 덮어쓰기
+  applyCustomLists();
+
   // ── 자동 로그인: publisher.html에서 이름 확인된 전도인은 봉사자로 자동 입장 ──
   // (인도자 모드는 PIN이 필요하므로 자동 입장 없음)
   const _savedPubName = localStorage.getItem('jwcard_name');
@@ -359,7 +363,8 @@ function applyCustomLists(){
     const l=localStorage.getItem("cw_locations");
     if(m) MEMBERS.splice(0,MEMBERS.length,...JSON.parse(m));
     if(c) CONDUCTORS.splice(0,CONDUCTORS.length,...JSON.parse(c));
-    if(l) LOCATIONS.splice(0,LOCATIONS.length,...JSON.parse(l));
+    // 빈 배열은 무시 — Firebase 기본값 유지 (이전 세션에서 전부 삭제됐어도 덮어쓰지 않음)
+    if(l){ const ll=JSON.parse(l); if(ll.length>0) LOCATIONS.splice(0,LOCATIONS.length,...ll); }
   }catch(e){}
 }
 function getApplicants(id){

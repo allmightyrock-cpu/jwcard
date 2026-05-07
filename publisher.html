@@ -3836,6 +3836,11 @@ function enterCard() {
   }
   // iOS/iPadOS 미설치 사용자에게 설치 안내 팝업
   if (typeof checkIOSPwaBanner === 'function') checkIOSPwaBanner();
+
+  // 길 안내 모드 중 지도앱으로 나갔다가 돌아온 경우 상태 복원
+  setTimeout(function() {
+    if (typeof _navRestoreState === 'function') _navRestoreState();
+  }, 400);
 }
 
 function buildCard() {
@@ -4125,16 +4130,15 @@ window.openCodeSheet = function(idx) {
     const _jibun = (u.jibun    || '').trim();
     const _bldg  = (u.building || '').trim();
     const _addrParts = [_road && _jibun ? _road + ' ' + _jibun : _road || _jibun, _bldg].filter(Boolean);
-    const _addr = _addrParts.join(' · ') || (_territory && _territory.name) || '';
-    const _terrNo   = (_territory && _territory.no  ) ? String(_territory.no)   : '';
-    const _terrName = (_territory && _territory.name) ? String(_territory.name) : '';
-    window._unitFixMsg = '[구역카드 수정 요청]\n구역: ' + _terrNo + '번 ' + _terrName
-      + '\n주소: ' + _addr
-      + '\n내용: 호수(방문 세대 번호) 미기록'
-      + '\n요청자: ' + (_pubName || '전도인')
-      + '\n\n정확한 호수를 확인 후 관리자 앱에서 수정해 주세요.';
+    // 메시지 조합에 필요한 기본 정보만 저장 — 수정 내용은 모달에서 입력
+    window._unitFixInfo = {
+      terrNo:   (_territory && _territory.no  ) ? String(_territory.no)   : '',
+      terrName: (_territory && _territory.name) ? String(_territory.name) : '',
+      addr:     _addrParts.join(' · ') || (_territory && _territory.name) || '',
+      requester: _pubName || '전도인'
+    };
   } else {
-    window._unitFixMsg = '';
+    window._unitFixInfo = null;
   }
   // 현재 코드 표시
   const existing = (_territory.visitMap||{})[idx];
@@ -4185,7 +4189,7 @@ window.pickCode = async function(code) {
     renderUnitList(visitMap);
     updateProgress(_territory.units||[], visitMap);
     // 길 안내 모드: 코드 저장 후 다음 미방문 세대로 자동 이동
-    if (_navMode) { _navIdx = _navFindNext(_navIdx + 1); renderNavPanel(); }
+    if (_navMode) { _navIdx = _navFindNext(_navIdx + 1); renderNavPanel(); _navSaveState(); }
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
 
@@ -4490,75 +4494,96 @@ function _fmtUnitLabel(s) {
 }
 
 // ── 호수 미기록 수정 요청 ────────────────────────────────────────────────────
-// openCodeSheet에서 미리 빌드된 window._unitFixMsg를 모달로 표시
-// (navigator.share / clipboard 폴백 체인 제거 — 모달이 가장 확실)
+// openCodeSheet에서 window._unitFixInfo(기본 정보)를 저장
+// 전도인이 modal에서 수정 내용을 직접 입력 → 최종 메시지 조합 후 공유
 window.showUnitFixRequest = function() {
-  const msg = window._unitFixMsg || '';
-  if (!msg) return;
+  const info = window._unitFixInfo;
+  if (!info) return;
 
-  // 모달 생성 (이미 있으면 재사용)
-  let el = document.getElementById('unit-fix-modal');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'unit-fix-modal';
-    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 0 env(safe-area-inset-bottom,0px)';
-    el.innerHTML =
-      '<div style="background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 26px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto">'
-      + '<div style="font-size:15px;font-weight:800;color:#1E293B;margin-bottom:4px">📋 수정 요청</div>'
-      + '<div style="font-size:12px;color:#94A3B8;margin-bottom:12px">아래 내용을 복사해 카카오톡·문자로 인도자/관리자에게 보내주세요.</div>'
-      + '<textarea id="unit-fix-text" readonly style="width:100%;height:150px;border:1px solid #E2E8F0;border-radius:10px;padding:11px 12px;font-size:12px;line-height:1.7;color:#334155;resize:none;background:#F8FAFC;font-family:inherit"></textarea>'
-      + '<div style="display:flex;gap:8px;margin-top:12px">'
-      + '<button id="unit-fix-share-btn" style="flex:1;padding:12px 0;background:#1B3A6B;color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">공유하기 ↗</button>'
-      + '<button onclick="document.getElementById(\'unit-fix-modal\').remove()" style="padding:12px 16px;background:#F1F5F9;color:#64748B;border:none;border-radius:11px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">닫기</button>'
-      + '</div></div>';
-    el.addEventListener('click', e => { if (e.target === el) el.remove(); });
-    document.body.appendChild(el);
+  // 항상 새로 생성 (이전 입력값 초기화)
+  const old = document.getElementById('unit-fix-modal');
+  if (old) old.remove();
+
+  const el = document.createElement('div');
+  el.id = 'unit-fix-modal';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 0 env(safe-area-inset-bottom,0px)';
+  el.innerHTML =
+    '<div style="background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 28px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto">'
+    // 제목
+    + '<div style="font-size:15px;font-weight:800;color:#1E293B;margin-bottom:2px">📋 호수 수정 요청</div>'
+    + '<div style="font-size:12px;color:#94A3B8;margin-bottom:16px">수정 내용을 입력 후 공유해 주세요.</div>'
+    // ── 입력 영역
+    + '<div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">새로 알게 된 내용 <span style="color:#EF4444">*</span></div>'
+    + '<textarea id="unit-fix-input" placeholder="예) 101호 / 김씨 문패 / 공실 확인됨 / 호수 불명확" '
+    + 'style="width:100%;height:80px;border:1.5px solid #CBD5E1;border-radius:10px;padding:11px 12px;'
+    + 'font-size:13px;line-height:1.6;color:#1E293B;resize:none;background:#fff;font-family:inherit;'
+    + 'box-sizing:border-box;outline:none" oninput="_unitFixRefreshPreview()"></textarea>'
+    // ── 미리보기
+    + '<div style="font-size:12px;font-weight:700;color:#475569;margin:14px 0 6px">전송 메시지 미리보기</div>'
+    + '<textarea id="unit-fix-preview" readonly '
+    + 'style="width:100%;height:130px;border:1px solid #E2E8F0;border-radius:10px;padding:11px 12px;'
+    + 'font-size:12px;line-height:1.7;color:#475569;resize:none;background:#F8FAFC;font-family:inherit;'
+    + 'box-sizing:border-box"></textarea>'
+    // ── 버튼
+    + '<div style="display:flex;gap:8px;margin-top:14px">'
+    + '<button id="unit-fix-share-btn" style="flex:1;padding:13px 0;background:#1B3A6B;color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">공유하기 ↗</button>'
+    + '<button onclick="document.getElementById(\'unit-fix-modal\').remove()" style="padding:13px 16px;background:#F1F5F9;color:#64748B;border:none;border-radius:11px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">닫기</button>'
+    + '</div></div>';
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  document.body.appendChild(el);
+
+  // 미리보기 초기값
+  _unitFixRefreshPreview();
+
+  // 공유 버튼
+  document.getElementById('unit-fix-share-btn').onclick = async function() {
+    const msg = _unitFixBuildMsg();
+    if (!msg.trim()) {
+      document.getElementById('unit-fix-input').focus();
+      document.getElementById('unit-fix-input').style.borderColor = '#EF4444';
+      return;
+    }
+    if (navigator.share) {
+      try { await navigator.share({ title: '호수 수정 요청', text: msg }); return; }
+      catch(e) { if (e.name === 'AbortError') return; }
+    }
+    try {
+      await navigator.clipboard.writeText(msg);
+      const btn = document.getElementById('unit-fix-share-btn');
+      if (btn) { btn.textContent = '✓ 복사됨'; setTimeout(() => { btn.textContent = '공유하기 ↗'; }, 2000); }
+    } catch(e) {
+      const btn = document.getElementById('unit-fix-share-btn');
+      if (btn) btn.textContent = '직접 복사해 주세요';
+    }
+  };
+};
+
+// 입력 내용으로 최종 메시지 조합
+function _unitFixBuildMsg() {
+  const info = window._unitFixInfo || {};
+  const detail = (document.getElementById('unit-fix-input') || {}).value || '';
+  const lines = ['[호수 수정 요청]'];
+  if (info.terrNo || info.terrName) {
+    lines.push('구역: ' + [info.terrNo, info.terrName].filter(Boolean).join(' '));
   }
+  if (info.addr) lines.push('주소: ' + info.addr);
+  if (detail.trim()) lines.push('수정 내용: ' + detail.trim());
+  lines.push('요청자: ' + (info.requester || '전도인'));
+  return lines.join('\n');
+}
 
-  // 메시지 채우기
-  document.getElementById('unit-fix-text').value = msg;
-
-  // 공유 버튼 — navigator.share 지원 시 공유 시트, 아니면 클립보드 복사
-  const shareBtn = document.getElementById('unit-fix-share-btn');
-  if (shareBtn) {
-    shareBtn.onclick = async function() {
-      if (navigator.share) {
-        try { await navigator.share({ title: '호수 수정 요청', text: msg }); return; }
-        catch(e) { if (e.name === 'AbortError') return; }
-      }
-      // 클립보드
-      try {
-        await navigator.clipboard.writeText(msg);
-        shareBtn.textContent = '✓ 복사됨';
-        setTimeout(() => { shareBtn.textContent = '공유하기 ↗'; }, 2000);
-      } catch(e) {
-        shareBtn.textContent = '직접 복사해 주세요';
-      }
-    };
+// 입력 값 바뀔 때마다 미리보기 갱신
+window._unitFixRefreshPreview = function() {
+  const prev = document.getElementById('unit-fix-preview');
+  const inp  = document.getElementById('unit-fix-input');
+  if (prev) prev.value = _unitFixBuildMsg();
+  if (inp && inp.style.borderColor === 'rgb(239, 68, 68)' && inp.value.trim()) {
+    inp.style.borderColor = '#CBD5E1';
   }
 };
 
-// 하위 호환용 — 기존 온클릭 참조 방어
+// 하위 호환용
 window.requestUnitFix = function() { window.showUnitFixRequest(); };
-
-function _showUnitFixModal(msg) {
-  let el = document.getElementById('unit-fix-modal');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'unit-fix-modal';
-    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 0 env(safe-area-inset-bottom)';
-    el.innerHTML = `
-      <div style="background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 28px;width:100%;max-width:480px;max-height:70vh;overflow-y:auto">
-        <div style="font-size:15px;font-weight:700;color:#1E293B;margin-bottom:12px">📋 수정 요청 내용 복사</div>
-        <textarea id="unit-fix-text" readonly style="width:100%;height:160px;border:1px solid #E2E8F0;border-radius:10px;padding:12px;font-size:13px;line-height:1.6;color:#334155;resize:none;background:#F8FAFC"></textarea>
-        <p style="font-size:12px;color:#94A3B8;margin-top:8px">위 내용을 선택·복사해서 카카오톡이나 문자로 인도자/관리자에게 보내주세요.</p>
-        <button onclick="document.getElementById('unit-fix-modal').remove()" style="margin-top:16px;width:100%;padding:13px;background:#1E293B;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">닫기</button>
-      </div>`;
-    el.addEventListener('click', e => { if (e.target === el) el.remove(); });
-    document.body.appendChild(el);
-  }
-  document.getElementById('unit-fix-text').value = msg;
-}
 
 function _showToast(msg) {
   let t = document.getElementById('_toast');
@@ -5588,8 +5613,21 @@ window.navOpenApp = async function(app) {
   if (btnEl) { btnEl.style.opacity = ''; btnEl.style.pointerEvents = ''; }
   var links  = _navBuildLinks(coords, info.name, info.addrFull, _navWalk);
   if (!links.ready && !confirm('좌표를 찾지 못했습니다. 주소 검색으로 열까요?')) return;
-  window.location.href = links[app];
+  _openDeepLink(links[app]);
 };
+
+// ── 딥링크 오픈 (iOS PWA 페이지 탐색 방지) ────────────────────
+// window.location.href = 'tmap://...' 방식은 iOS PWA에서 페이지 상태를
+// 소멸시킬 수 있음. 숨겨진 <a> 클릭을 사용하면 커스텀 스킴은 OS가
+// 가로채고 현재 페이지는 그대로 유지됨.
+function _openDeepLink(url) {
+  var a = document.createElement('a');
+  a.href = url;
+  a.style.cssText = 'position:fixed;left:-9999px;width:0;height:0;opacity:0';
+  document.body.appendChild(a);
+  try { a.click(); } catch(e) {}
+  setTimeout(function() { if (a.parentNode) a.parentNode.removeChild(a); }, 1000);
+}
 
 // ── 도보/자동차 토글 ──────────────────────────────────────────
 window.navSetMode = function(walk) {
@@ -5606,6 +5644,54 @@ function _updateNavFooter() {
   var el    = document.getElementById('nav-footer-done');
   if (el) el.textContent = done + '/' + units.length;
 }
+
+// ── nav 상태 sessionStorage 저장/복원 ────────────────────────
+// 지도앱에서 돌아왔을 때 혹은 iOS가 PWA를 재시작했을 때도 복원
+function _navSaveState() {
+  if (_navMode && _territoryId) {
+    sessionStorage.setItem('jwcard_nav', JSON.stringify({
+      id: _territoryId, idx: _navIdx, walk: _navWalk
+    }));
+  } else {
+    sessionStorage.removeItem('jwcard_nav');
+  }
+}
+function _navRestoreState() {
+  try {
+    var s = JSON.parse(sessionStorage.getItem('jwcard_nav') || 'null');
+    if (!s || s.id !== _territoryId) { sessionStorage.removeItem('jwcard_nav'); return; }
+    _navIdx  = (typeof s.idx === 'number') ? s.idx : 0;
+    _navWalk = (s.walk !== false);
+    if (!_navMode) {
+      _navMode = true;
+      var cardEl   = document.getElementById('card-screen');
+      var btnEl    = document.getElementById('nav-toggle-btn');
+      var footerEl = document.getElementById('nav-footer-bar');
+      if (cardEl)   cardEl.classList.add('nav-mode');
+      if (footerEl) footerEl.style.display = 'flex';
+      if (btnEl)    { btnEl.textContent = '📋 구역카드'; btnEl.style.background = 'rgba(56,189,248,0.25)'; }
+      renderNavPanel();
+      _updateNavFooter();
+    }
+  } catch(e) { sessionStorage.removeItem('jwcard_nav'); }
+}
+
+// 앱이 백그라운드→포그라운드 복귀 시 footer bar 강제 재표시
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState !== 'visible' || !_navMode) return;
+  var footerEl = document.getElementById('nav-footer-bar');
+  var cardEl   = document.getElementById('card-screen');
+  if (footerEl) footerEl.style.display = 'flex';
+  if (cardEl && !cardEl.classList.contains('nav-mode')) cardEl.classList.add('nav-mode');
+});
+// iOS 백/포워드 캐시 복원 시에도 동일 처리
+window.addEventListener('pageshow', function(e) {
+  if (!_navMode) return;
+  var footerEl = document.getElementById('nav-footer-bar');
+  var cardEl   = document.getElementById('card-screen');
+  if (footerEl) footerEl.style.display = 'flex';
+  if (cardEl)   cardEl.classList.add('nav-mode');
+});
 
 // ── 길 안내 모드 ON/OFF ───────────────────────────────────────
 window.toggleNavMode = function() {
@@ -5629,6 +5715,7 @@ window.toggleNavMode = function() {
     btnEl.textContent = '🧭 길 안내';
     btnEl.style.background = 'rgba(255,255,255,0.15)';
   }
+  _navSaveState();
 };
 
 // 현재 + 다음 세대 좌표 미리 가져오기
@@ -5820,6 +5907,7 @@ window.navSkip = function() {
   _navIdx = _navFindNext(_navIdx + 1);
   renderNavPanel();
   _navPrefetchCoords(_navIdx);
+  _navSaveState();
   document.getElementById('nav-next-card').scrollIntoView({ behavior:'smooth', block:'start' });
 };
 
@@ -5827,6 +5915,7 @@ window.navJumpTo = function(idx) {
   _navIdx = idx;
   renderNavPanel();
   _navPrefetchCoords(idx);
+  _navSaveState();
   // 목록 탭 → 즉시 길 안내 앱 선택 시트 열기
   navOpenSheet(idx);
 };
@@ -5892,6 +5981,7 @@ window.navSheetSetMode = function(walk) {
   var cBtn = document.getElementById('nav-mode-car');
   if (wBtn) wBtn.classList.toggle('nav-mode-sel', walk);
   if (cBtn) cBtn.classList.toggle('nav-mode-sel', !walk);
+  _navSaveState();
 };
 
 // 바텀시트에서 앱 열기
@@ -5906,7 +5996,7 @@ window.navOpenSheetApp = async function(app) {
   var links = _navBuildLinks(coords, info.name, info.addrFull, _navWalk);
   if (!links.ready && !confirm('좌표를 찾지 못했습니다. 주소 검색으로 열까요?')) return;
   closeNavSheet();
-  window.location.href = links[app];
+  _openDeepLink(links[app]);
 };
 
 // exitCard 시 nav 모드 초기화
@@ -5914,6 +6004,7 @@ window.navOpenSheetApp = async function(app) {
   var _origExit = window.exitCard;
   window.exitCard = function() {
     _navMode = false; _navIdx = -1; _navCoordCache = {};
+    sessionStorage.removeItem('jwcard_nav');
     var cardEl   = document.getElementById('card-screen');
     var footerEl = document.getElementById('nav-footer-bar');
     if (cardEl)   cardEl.classList.remove('nav-mode');
