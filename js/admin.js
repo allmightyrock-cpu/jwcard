@@ -1105,25 +1105,33 @@ function _calcAutoDist() {
       const cats = [...new Set(sorted.map(t => t.category || '기타'))];
       const queues = cats.map(c => sorted.filter(t => (t.category || '기타') === c));
       toDistribute = [];
-      let hasMore = true;
-      while (hasMore && toDistribute.length < totalNeeded) {
-        hasMore = false;
-        for (const q of queues) {
-          if (q.length && toDistribute.length < totalNeeded) {
-            toDistribute.push(q.shift());
-            hasMore = true;
+      // 각 요일에 독립적으로 카테고리 인터리빙 적용 → 모든 요일에 유형이 고르게 배분됨
+      for (const d of targetDays) {
+        const dayCards = [];
+        let hasMore = true;
+        while (hasMore && dayCards.length < perDay) {
+          hasMore = false;
+          for (const q of queues) {
+            if (q.length && dayCards.length < perDay) {
+              dayCards.push(q.shift());
+              hasMore = true;
+            }
           }
         }
+        dayCards.forEach(t => result[d].push(t.id));
+        toDistribute.push(...dayCards);
       }
     } else {
       toDistribute = sorted.slice(0, totalNeeded);
     }
   }
 
-  // 라운드-로빈으로 요일별 배분
-  toDistribute.forEach((t, i) => {
-    result[targetDays[i % targetDays.length]].push(t.id);
-  });
+  // 라운드-로빈으로 요일별 배분 (catDist 미사용 시에만 — catDist는 위에서 직접 result에 반영)
+  if (!(opts.mode !== 'byno' && opts.catDist)) {
+    toDistribute.forEach((t, i) => {
+      result[targetDays[i % targetDays.length]].push(t.id);
+    });
+  }
 
   // 카테고리 통계 (미리보기용)
   const catStats = {};
