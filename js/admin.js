@@ -180,9 +180,9 @@ function _applyRoleUI() {
   const navSet = document.getElementById('nav-settings');
   if (navPub) navPub.style.display = isFullAdmin ? '' : 'none';
   if (navSet) navSet.style.display = isFullAdmin ? '' : 'none';
-  // 구역지도·방문내역·메모관리·S-13: 관리자·봉사감독자만 접근
+  // 구역지도·방문내역·메모관리: 관리자·봉사감독자만 접근 (S-13은 구역의종도 접근 가능)
   const isTerrOnly = (perm === '구역의종');
-  ['nav-map','nav-visit','nav-memo','nav-s13'].forEach(id => {
+  ['nav-map','nav-visit','nav-memo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isTerrOnly ? 'none' : '';
   });
