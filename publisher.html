@@ -5210,6 +5210,7 @@ window.toggleUnallocatedList = function() {
     inputWrap.style.display = 'block';
     chips.style.display = 'flex';
     _ldUnallocCatFilter = '';
+    _ldUnallocShowAll = false;
     _renderUnallocCatChips();
     searchUnallocatedForToday();   // 빈 쿼리로 즉시 전체 표시
     if (toggleBtn) toggleBtn.innerHTML = `▲ 목록 닫기 <span id="ld-unalloc-count" style="background:#1D4ED8;color:#fff;border-radius:8px;padding:1px 6px;margin-left:3px;font-size:10px">${_getUnallocatedPool().length}</span>`;
@@ -5223,7 +5224,9 @@ window.toggleUnallocatedList = function() {
 };
 
 // ── 미할당 카드 현장 추가 검색 ──
-window.searchUnallocatedForToday = function() {
+let _ldUnallocShowAll = false;
+window.searchUnallocatedForToday = function(showAll) {
+  if (showAll !== undefined) _ldUnallocShowAll = showAll;
   const q = (document.getElementById('ld-unalloc-input')?.value || '').trim().toLowerCase();
   const resultsEl = document.getElementById('ld-unalloc-results');
   if (!resultsEl) return;
@@ -5242,9 +5245,14 @@ window.searchUnallocatedForToday = function() {
     resultsEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px">' +
       (q || _ldUnallocCatFilter ? '검색 결과가 없습니다' : '미배정 카드가 없습니다') + '</div>';
   } else {
-    const SHOW_LIMIT = 60;
-    const shown = filtered.slice(0, SHOW_LIMIT);
-    let html = `<div style="padding:6px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:11px;color:#64748B">총 ${filtered.length}개 중 ${shown.length}개 표시 · 카드 탭하면 즉시 추가됨</div>`;
+    const hasFilter = q || _ldUnallocCatFilter;
+    const SHOW_LIMIT = 200;
+    const useLimit = !hasFilter && !_ldUnallocShowAll && filtered.length > SHOW_LIMIT;
+    const shown = useLimit ? filtered.slice(0, SHOW_LIMIT) : filtered;
+    const infoText = shown.length === filtered.length
+      ? `총 ${filtered.length}개 · 카드 탭하면 즉시 추가됨`
+      : `총 ${filtered.length}개 중 ${shown.length}개 표시 · 카드 탭하면 즉시 추가됨`;
+    let html = `<div style="padding:6px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:11px;color:#64748B">${infoText}</div>`;
     html += shown.map(t => {
       const bg = CAT_BG2[t.category] || '#F1F5F9';
       const cl = CAT_CL2[t.category] || '#475569';
@@ -5261,6 +5269,13 @@ window.searchUnallocatedForToday = function() {
           : '<span style="font-size:11px;background:#2563EB;color:#fff;padding:2px 8px;border-radius:5px;flex-shrink:0">+ 추가</span>'}
       </div>`;
     }).join('');
+    if (useLimit) {
+      html += `<div style="padding:10px;text-align:center;border-top:1px solid #E2E8F0">
+        <button onclick="searchUnallocatedForToday(true)" style="font-size:12px;color:#2563EB;background:none;border:1px solid #BFDBFE;border-radius:6px;padding:5px 14px;cursor:pointer;font-family:inherit">
+          나머지 ${filtered.length - SHOW_LIMIT}개 더 보기 ▼
+        </button>
+      </div>`;
+    }
     resultsEl.innerHTML = html;
   }
   resultsEl.style.display = 'block';
