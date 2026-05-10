@@ -1950,8 +1950,12 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 style="flex:1;min-width:0;box-sizing:border-box;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
                 oninput="searchUnallocatedForToday()" autocomplete="off">
               <select id="ld-unalloc-cat-sel" onchange="setLdUnallocCat(this.value)"
-                style="flex-shrink:0;padding:8px 6px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff;max-width:110px">
+                style="flex-shrink:0;padding:8px 6px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff;max-width:90px">
                 <option value="">전체 유형</option>
+              </select>
+              <select id="ld-unalloc-cycle-sel" onchange="setLdUnallocCycle(this.value)"
+                style="flex-shrink:0;padding:8px 6px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff;max-width:90px">
+                <option value="">전체 회차</option>
               </select>
             </div>
           </div>
@@ -5162,8 +5166,9 @@ window.returnTodayTerr = async function(id) {
   } catch(e) { alert('반납 오류: ' + e.message); }
 };
 
-// ── 미할당 카드 현장 추가: 카테고리 필터 상태 ──
-let _ldUnallocCatFilter = '';
+// ── 미할당 카드 현장 추가: 카테고리·회차 필터 상태 ──
+let _ldUnallocCatFilter   = '';
+let _ldUnallocCycleFilter = 0; // 0=전체
 
 // ── 미배정 카드 풀 (현재 필터/조건 만족하는 전체 후보) ──
 function _getUnallocatedPool() {
@@ -5201,7 +5206,27 @@ function _renderLdUnallocCatSelect() {
 
 window.setLdUnallocCat = function(cat) {
   _ldUnallocCatFilter = cat;
-  _renderUnallocCatChips();
+  _renderLdUnallocCatSelect();
+  searchUnallocatedForToday();
+};
+
+// ── 미할당 패널 회차 드롭다운 갱신 ──
+function _renderLdUnallocCycleSelect() {
+  const sel = document.getElementById('ld-unalloc-cycle-sel');
+  if (!sel) return;
+  const cur = parseInt(sel.value) || 0;
+  const pool = _getUnallocatedPool();
+  const cycles = Array.from(new Set(pool.map(t => parseInt(t.cycle) || 1))).sort((a,b) => a-b);
+  sel.innerHTML = '<option value="">전체 회차</option>' +
+    cycles.map(c => {
+      const cnt = pool.filter(t => (parseInt(t.cycle)||1) === c).length;
+      return `<option value="${c}">${c}회차 ${cnt}</option>`;
+    }).join('');
+  if (cur && cycles.includes(cur)) sel.value = String(cur);
+}
+
+window.setLdUnallocCycle = function(val) {
+  _ldUnallocCycleFilter = parseInt(val) || 0;
   searchUnallocatedForToday();
 };
 
@@ -5213,9 +5238,11 @@ window.toggleUnallocatedList = function() {
   const opening = inputWrap.style.display === 'none';
   if (opening) {
     inputWrap.style.display = 'block';
-    _ldUnallocCatFilter = '';
+    _ldUnallocCatFilter   = '';
+    _ldUnallocCycleFilter = 0;
     _ldUnallocShowAll = false;
     _renderLdUnallocCatSelect();
+    _renderLdUnallocCycleSelect();
     searchUnallocatedForToday();
     if (toggleBtn) toggleBtn.innerHTML = `▲ 목록 닫기 <span id="ld-unalloc-count" style="background:#1D4ED8;color:#fff;border-radius:8px;padding:1px 6px;margin-left:3px;font-size:10px">${_getUnallocatedPool().length}</span>`;
     setTimeout(() => document.getElementById('ld-unalloc-input')?.focus(), 50);
@@ -5239,6 +5266,7 @@ window.searchUnallocatedForToday = function(showAll) {
   const pool = _getUnallocatedPool();
   const filtered = pool.filter(t => {
     if (_ldUnallocCatFilter && (t.category||'') !== _ldUnallocCatFilter) return false;
+    if (_ldUnallocCycleFilter && (parseInt(t.cycle)||1) !== _ldUnallocCycleFilter) return false;
     if (!q) return true;
     return String(t.no||'').includes(q) || (t.name||'').toLowerCase().includes(q) || (t.category||'').includes(q);
   });
@@ -5246,9 +5274,9 @@ window.searchUnallocatedForToday = function(showAll) {
   filtered.sort((a,b) => parseInt(a.no||0) - parseInt(b.no||0));
   if (!filtered.length) {
     resultsEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px">' +
-      (q || _ldUnallocCatFilter ? '검색 결과가 없습니다' : '미배정 카드가 없습니다') + '</div>';
+      (q || _ldUnallocCatFilter || _ldUnallocCycleFilter ? '검색 결과가 없습니다' : '미배정 카드가 없습니다') + '</div>';
   } else {
-    const hasFilter = q || _ldUnallocCatFilter;
+    const hasFilter = q || _ldUnallocCatFilter || _ldUnallocCycleFilter;
     const SHOW_LIMIT = 200;
     const useLimit = !hasFilter && !_ldUnallocShowAll && filtered.length > SHOW_LIMIT;
     const shown = useLimit ? filtered.slice(0, SHOW_LIMIT) : filtered;
@@ -5301,7 +5329,8 @@ window.addUnallocatedToToday = async function(id) {
     renderLdTerritoryList();
     // 카운트·칩·검색 목록 새로고침
     _refreshUnallocatedCount();
-    _renderUnallocCatChips();
+    _renderLdUnallocCatSelect();
+    _renderLdUnallocCycleSelect();
     searchUnallocatedForToday();
     // 인풋 포커스 유지
     document.getElementById('ld-unalloc-input')?.focus();
