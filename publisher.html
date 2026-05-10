@@ -1967,12 +1967,6 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           </select>
           <select id="ld-cycle" onchange="renderLdTerritoryList()" style="padding:6px 9px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff">
             <option value="">전체 회차</option>
-            <option value="1">1회차</option>
-            <option value="2">2회차</option>
-            <option value="3">3회차</option>
-            <option value="4">4회차</option>
-            <option value="5">5회차</option>
-            <option value="6">6회차</option>
           </select>
           <select id="ld-status" onchange="renderLdTerritoryList()">
             <option value="unassigned">미배정만</option>
@@ -4668,6 +4662,7 @@ async function _loadLdData() {
         ['주택구역','상가구역','격지 구역','동행필수 구역','아파트 구역','인터폰','편지 구역','개인 구역'];
     }
     _renderLdCatSelect();
+    _renderLdCycleSelect();
   } catch(e) { console.error('패널 데이터 로드 오류', e); }
 }
 
@@ -4679,6 +4674,19 @@ function _renderLdCatSelect() {
   sel.innerHTML = '<option value="">전체 유형</option>' +
     _ldGroups.map(g => `<option value="${g}">${g}</option>`).join('');
   if (_ldGroups.includes(cur)) sel.value = cur;
+}
+
+// ── ld-cycle 동적 렌더 (실제 데이터 기반) ──
+function _renderLdCycleSelect() {
+  const sel = document.getElementById('ld-cycle');
+  if (!sel) return;
+  const cur = sel.value;
+  const cycles = [...new Set(
+    (_ldAllTerritories || []).map(t => parseInt(t.cycle) || 1)
+  )].sort((a, b) => a - b);
+  sel.innerHTML = '<option value="">전체 회차</option>' +
+    cycles.map(c => `<option value="${c}">${c}회차</option>`).join('');
+  if (cycles.map(String).includes(cur)) sel.value = cur;
 }
 
 window.renderLdTerritoryList = function() {
