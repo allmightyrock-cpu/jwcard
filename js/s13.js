@@ -248,7 +248,8 @@ window.printS13 = function() {
       var bgB = ri % 2 === 0 ? '#F3F5FF' : '#ECF0FF';
 
       if (!r) {
-        return '<tr class="tr-a" style="background:' + bgA + '">'
+        return '<tbody class="row-pair">'
+          + '<tr class="tr-a" style="background:' + bgA + '">'
           + '<td class="c-no" rowspan="2"></td><td class="c-last" rowspan="2"></td>'
           + '<td class="c-pub g1" colspan="2"></td><td class="c-pub g2" colspan="2"></td>'
           + '<td class="c-pub g3" colspan="2"></td><td class="c-pub g4" colspan="2"></td>'
@@ -258,28 +259,33 @@ window.printS13 = function() {
           + '<td class="c-dt g2"></td><td class="c-dt"></td>'
           + '<td class="c-dt g3"></td><td class="c-dt"></td>'
           + '<td class="c-dt g4"></td><td class="c-dt"></td>'
-          + '</tr>';
+          + '</tr>'
+          + '</tbody>';
       }
 
       var slots = [0,1,2,3].map(function(i) {
         var a = r.assignments[i] || {};
         var go = !!(a.publishers && !a.completedDate);
-        return { pub: a.publishers || '', adate: s13FmtShort(a.assignedDate), cdate: go ? '진행중' : s13FmtShort(a.completedDate), go: go };
+        // 인쇄용: 전도인 이름 최대 2명으로 제한
+        var pubNames = (a.publishers || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+        var pub = pubNames.slice(0, 2).join(', ');
+        return { pub: pub, adate: s13FmtShort(a.assignedDate), cdate: go ? '진행중' : s13FmtShort(a.completedDate), go: go };
       });
 
-      return '<tr class="tr-a" style="background:' + bgA + '">'
+      var rowA = '<tr class="tr-a" style="background:' + bgA + '">'
         + '<td class="c-no" rowspan="2">' + r.no + '</td>'
         + '<td class="c-last" rowspan="2">' + s13FmtShort(r.lastCompleted) + '</td>'
         + slots.map(function(s, si) {
             return '<td class="c-pub g' + (si+1) + (s.go ? ' c-ongoing' : '') + '" colspan="2">' + s.pub + '</td>';
           }).join('')
-        + '</tr>'
-        + '<tr class="tr-b" style="background:' + bgB + '">'
+        + '</tr>';
+      var rowB = '<tr class="tr-b" style="background:' + bgB + '">'
         + slots.map(function(s, si) {
             return '<td class="c-dt g' + (si+1) + '">' + s.adate + '</td>'
                  + '<td class="c-dt' + (s.go ? ' c-ongoing' : '') + '">' + s.cdate + '</td>';
           }).join('')
         + '</tr>';
+      return '<tbody class="row-pair">' + rowA + rowB + '</tbody>';
     }).join('');
 
     return '<div' + (pi > 0 ? ' class="pb"' : '') + '>'
@@ -306,7 +312,7 @@ window.printS13 = function() {
       + '<th class="h-d g4">배정 날짜</th><th class="h-d">완료 날짜</th>'
       + '</tr>'
       + '</thead>'
-      + '<tbody>' + dataRows + '</tbody>'
+      + dataRows
       + '</table>'
       + '<div class="footnote">* 새로운 시트를 사용 할 때 이 열을 사용하여 각 구역을 마지막으로 완료한 날짜를 기록하십시오.</div>'
       + '<div class="doc-footer">'
@@ -339,12 +345,13 @@ window.printS13 = function() {
     '.s13t tbody td { border:0.5pt solid #B0B8C0; padding:1pt 2pt; vertical-align:middle; }',
     '.c-no   { text-align:center; font-size:9pt; font-weight:700; color:#000; border-left:2pt solid #000 !important; }',
     '.c-last { text-align:center; font-size:8pt; color:#000; border-left:2pt solid #000 !important; }',
-    '.c-pub  { font-size:8.5pt; padding:2pt 4pt; text-align:center; }',
-    '.c-dt   { text-align:center; font-size:7.5pt; color:#1A1A1A; }',
+    '.c-pub  { font-size:8.5pt; padding:2pt 4pt; text-align:center; white-space:nowrap; overflow:hidden; }',
+    '.c-dt   { text-align:center; font-size:7.5pt; color:#1A1A1A; white-space:nowrap; overflow:hidden; }',
     '.c-ongoing { color:#92400E; font-weight:700; }',
     '.tr-a { height:16pt; }',
     '.tr-b { height:14pt; }',
-    '.s13t tbody tr:last-child td { border-bottom:2pt solid #000 !important; }',
+    '.row-pair { page-break-inside:avoid; }',
+    '.s13t tbody.row-pair:last-of-type tr.tr-b td { border-bottom:2pt solid #000 !important; }',
     '.s13t tbody td:last-child    { border-right:2pt solid #000 !important; }',
     '.footnote { font-size:7pt; color:#333; margin-top:1.5mm; line-height:1.3; }',
     '.doc-footer { display:flex; justify-content:space-between; align-items:center; margin-top:2mm; font-size:8pt; color:#444; }',
