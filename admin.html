@@ -478,10 +478,18 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <div id="tab-map" class="tab-content">
         <div id="map-container">
           <div id="admin-naver-map"></div>
-          <div class="map-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#94A3B8"></div>미배정</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#2563EB"></div>진행중</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#16A34A"></div>완료</div>
+          <div class="map-legend" style="flex-direction:column;gap:6px;align-items:flex-start">
+            <!-- 회차별 색상 (동적 생성) -->
+            <div id="map-cycle-legend" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"></div>
+            <!-- 상태 기호 안내 -->
+            <div style="display:flex;gap:10px;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,0.2)">
+              <span style="font-size:10px;color:rgba(255,255,255,0.75)">상태:</span>
+              <span style="font-size:10px;color:rgba(255,255,255,0.9)">✓ 완료</span>
+              <span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:rgba(255,255,255,0.9)">
+                <span style="width:5px;height:5px;background:rgba(255,255,255,0.85);border-radius:50%;display:inline-block"></span>진행중
+              </span>
+              <span style="font-size:10px;color:rgba(255,255,255,0.9)">— 미배정</span>
+            </div>
           </div>
         </div>
       </div>
