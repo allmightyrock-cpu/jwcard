@@ -5246,7 +5246,8 @@ window.searchUnallocatedForToday = function(showAll) {
       || (t.name||'').toLowerCase().includes(q)
       || (t.category||'').includes(q)
       || cycleStr === q
-      || (q.endsWith('회차') && cycleStr === q.replace('회차','').trim());
+      || (q.endsWith('회차') && cycleStr === q.replace('회차','').trim())
+      || (q.endsWith('차') && !q.endsWith('회차') && cycleStr === q.replace('차','').trim());
   });
   // 번호 오름차순 정렬
   filtered.sort((a,b) => parseInt(a.no||0) - parseInt(b.no||0));
