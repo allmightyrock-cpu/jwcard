@@ -624,8 +624,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .so-deact-input{width:100%;padding:9px 12px;border:1px solid #FECACA;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff;box-sizing:border-box}
 .so-deact-btn{width:100%;margin-top:8px;padding:10px;background:#FEE2E2;color:#991B1B;border:1.5px solid #FECACA;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
 .so-act-btn{width:100%;margin-top:8px;padding:10px;background:#DCFCE7;color:#166534;border:1.5px solid #BBF7D0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-.ld-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.ld-filter select{padding:6px 9px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff}
+.ld-filter{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.ld-filter select{flex:1;min-width:72px;padding:6px 4px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff}
 .ld-chip-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
 .ld-chip{padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;border:1px solid #E2E8F0;background:#fff;color:#64748B;font-family:inherit;transition:all 0.15s;white-space:nowrap}
 .ld-chip.on{background:#1B3A6B;color:#fff;border-color:#1B3A6B}
@@ -1944,34 +1944,38 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               ▼ 목록 보기 <span id="ld-unalloc-count" style="background:#1D4ED8;color:#fff;border-radius:8px;padding:1px 6px;margin-left:3px;font-size:10px">0</span>
             </button>
           </div>
-          <!-- 카테고리 필터 칩 (목록 펼쳐졌을 때만 표시) -->
-          <div id="ld-unalloc-cat-chips" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:8px"></div>
-          <div id="ld-unalloc-input-wrap" style="display:none;position:relative;margin-bottom:6px">
-            <input id="ld-unalloc-input" type="text" placeholder="구역 번호 · 이름 · 유형 검색..."
-              style="width:100%;box-sizing:border-box;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
-              oninput="searchUnallocatedForToday()" autocomplete="off">
+          <div id="ld-unalloc-input-wrap" style="display:none;margin-bottom:6px">
+            <div style="display:flex;gap:6px;margin-bottom:0">
+              <input id="ld-unalloc-input" type="text" placeholder="구역 번호 · 이름 검색..."
+                style="flex:1;min-width:0;box-sizing:border-box;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+                oninput="searchUnallocatedForToday()" autocomplete="off">
+              <select id="ld-unalloc-cat-sel" onchange="setLdUnallocCat(this.value)"
+                style="flex-shrink:0;padding:8px 6px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff;max-width:110px">
+                <option value="">전체 유형</option>
+              </select>
+            </div>
           </div>
           <div id="ld-unalloc-results" style="display:none;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;max-height:340px;overflow-y:auto;background:#fff;margin-bottom:4px"></div>
         </div>
 
         <div class="ld-filter">
+          <select id="ld-status" onchange="renderLdTerritoryList()">
+            <option value="unassigned">미배정만</option>
+            <option value="">전체 상태</option>
+            <option value="진행중">미완료만</option>
+          </select>
+          <select id="ld-cat" onchange="renderLdTerritoryList()">
+            <option value="">전체 유형</option>
+          </select>
+          <select id="ld-cycle" onchange="renderLdTerritoryList()">
+            <option value="">전체 회차</option>
+          </select>
           <select id="ld-sort" onchange="renderLdTerritoryList()">
             <option value="sched_first">예정 우선</option>
             <option value="old">오래된 순</option>
             <option value="recent_next">최근 완료 다음</option>
             <option value="units_asc">세대 적은 순</option>
             <option value="rate_asc">진행률 낮은 순</option>
-          </select>
-          <select id="ld-cat" onchange="renderLdTerritoryList()">
-            <option value="">전체 유형</option>
-          </select>
-          <select id="ld-cycle" onchange="renderLdTerritoryList()" style="padding:6px 9px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff">
-            <option value="">전체 회차</option>
-          </select>
-          <select id="ld-status" onchange="renderLdTerritoryList()">
-            <option value="unassigned">미배정만</option>
-            <option value="">전체 상태</option>
-            <option value="진행중">미완료만</option>
           </select>
         </div>
         <div class="ld-chip-row">
@@ -5002,7 +5006,7 @@ function renderTodaySection() {
     listEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px;background:#F8FAFC;border-radius:8px;border:1.5px dashed #E2E8F0">아래 <strong style="color:#1B3A6B">▼ 목록 보기</strong>를 눌러 미배정 구역을 추가하세요</div>';
     document.getElementById('ld-today-assign-box').style.display = 'none';
     _refreshUnallocatedCount();
-    _renderUnallocCatChips();
+    _renderLdUnallocCatSelect();
     return;
   }
 
@@ -5050,9 +5054,9 @@ function renderTodaySection() {
 
   sec.style.display = 'block';
 
-  // 미배정 카드 카운트 + 카테고리 칩 갱신 (이미 펼쳐져 있을 경우)
+  // 미배정 카드 카운트 + 유형 필터 갱신 (이미 펼쳐져 있을 경우)
   _refreshUnallocatedCount();
-  _renderUnallocCatChips();
+  _renderLdUnallocCatSelect();
 }
 
 window.selectTodayTerr = function(id) {
@@ -5179,26 +5183,20 @@ function _refreshUnallocatedCount() {
 }
 window._refreshUnallocatedCount = _refreshUnallocatedCount;
 
-// ── 카테고리 칩 렌더 ──
-function _renderUnallocCatChips() {
-  const wrap = document.getElementById('ld-unalloc-cat-chips');
-  if (!wrap) return;
+// ── 미할당 패널 유형 드롭다운 갱신 ──
+function _renderLdUnallocCatSelect() {
+  const sel = document.getElementById('ld-unalloc-cat-sel');
+  if (!sel) return;
+  const cur = sel.value;
   const pool = _getUnallocatedPool();
-  // 데이터에 등장한 카테고리만 칩으로 표시
   const cats = Array.from(new Set(pool.map(t => t.category || '').filter(Boolean))).sort();
-  const mkChip = (val, label, count) => {
-    const active = _ldUnallocCatFilter === val;
-    return `<button type="button" onclick="setLdUnallocCat('${val.replace(/'/g,"\\'")}')"
-      style="font-size:11px;padding:3px 9px;border:1px solid ${active?'#1D4ED8':'#E2E8F0'};background:${active?'#1D4ED8':'#fff'};color:${active?'#fff':'#475569'};border-radius:12px;cursor:pointer;font-family:inherit;font-weight:600">
-      ${label}<span style="opacity:0.75;margin-left:3px">${count}</span>
-    </button>`;
-  };
-  let html = mkChip('', '전체', pool.length);
-  cats.forEach(c => {
-    const cnt = pool.filter(t => (t.category||'') === c).length;
-    html += mkChip(c, c, cnt);
-  });
-  wrap.innerHTML = html;
+  sel.innerHTML = '<option value="">전체 유형</option>' +
+    cats.map(c => {
+      const cnt = pool.filter(t => (t.category||'') === c).length;
+      return `<option value="${c}">${c} ${cnt}</option>`;
+    }).join('');
+  if (cats.includes(cur)) sel.value = cur;
+  else if (!cur) sel.value = '';
 }
 
 window.setLdUnallocCat = function(cat) {
@@ -5211,21 +5209,18 @@ window.setLdUnallocCat = function(cat) {
 window.toggleUnallocatedList = function() {
   const inputWrap = document.getElementById('ld-unalloc-input-wrap');
   const results   = document.getElementById('ld-unalloc-results');
-  const chips     = document.getElementById('ld-unalloc-cat-chips');
   const toggleBtn = document.getElementById('ld-unalloc-toggle');
   const opening = inputWrap.style.display === 'none';
   if (opening) {
     inputWrap.style.display = 'block';
-    chips.style.display = 'flex';
     _ldUnallocCatFilter = '';
     _ldUnallocShowAll = false;
-    _renderUnallocCatChips();
-    searchUnallocatedForToday();   // 빈 쿼리로 즉시 전체 표시
+    _renderLdUnallocCatSelect();
+    searchUnallocatedForToday();
     if (toggleBtn) toggleBtn.innerHTML = `▲ 목록 닫기 <span id="ld-unalloc-count" style="background:#1D4ED8;color:#fff;border-radius:8px;padding:1px 6px;margin-left:3px;font-size:10px">${_getUnallocatedPool().length}</span>`;
     setTimeout(() => document.getElementById('ld-unalloc-input')?.focus(), 50);
   } else {
     inputWrap.style.display = 'none';
-    chips.style.display = 'none';
     results.style.display = 'none';
     if (toggleBtn) toggleBtn.innerHTML = `▼ 목록 보기 <span id="ld-unalloc-count" style="background:#1D4ED8;color:#fff;border-radius:8px;padding:1px 6px;margin-left:3px;font-size:10px">${_getUnallocatedPool().length}</span>`;
   }
