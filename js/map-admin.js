@@ -1,8 +1,9 @@
 // ══ 구역지도 ══
 var _adminMap = null;
 var _adminMapReady = false;
-var _adminMarkers = [];
+var _adminMarkers = []; // [{marker, cycle}]
 var _adminInfoWindow = null;
+var _activeCycleFilter = null; // null=전체, 숫자=해당 회차만
 
 // ── 회차별 색상 팔레트 (8색 순환, 색상환 균등 배치) ─────────────────────────
 var _CYCLE_PALETTE = [
@@ -87,7 +88,7 @@ function _placeAdminMarker(t, lat, lng) {
     }, 50);
   });
 
-  _adminMarkers.push(marker);
+  _adminMarkers.push({ marker: marker, cycle: parseInt(t.cycle) || 1 });
 }
 
 // ── 그룹 마커 생성 (겹친 구역 N개) ──────────────────────────────────────────
@@ -123,7 +124,7 @@ function _placeAdminGroupMarker(group) {
     }, 50);
   });
 
-  _adminMarkers.push(marker);
+  _adminMarkers.push({ marker: marker, cycle: parseInt(group[0].cycle) || 1 });
 }
 
 // ── 단일 구역 InfoWindow HTML ──────────────────────────────────────────────
@@ -178,33 +179,73 @@ function _buildGroupIW(group) {
     + '</div>';
 }
 
-// ── 회차 범례 업데이트 ────────────────────────────────────────────────────────
+// ── 회차 범례 업데이트 (클릭 필터 포함) ─────────────────────────────────────
 function _updateCycleLegend(territories) {
   var el = document.getElementById('map-cycle-legend');
   if (!el) return;
 
-  // 실제 존재하는 회차 수집 (오름차순)
   var cycleSet = {};
   territories.forEach(function(t) {
     var c = parseInt(t.cycle) || 1;
     cycleSet[c] = true;
   });
   var cycles = Object.keys(cycleSet).map(Number).sort(function(a,b){return a-b;});
+  if (!cycles.length) { el.style.display = 'none'; return; }
 
-  var html = cycles.map(function(c) {
-    return '<span style="display:inline-flex;align-items:center;gap:4px">'
-      + '<span style="width:11px;height:11px;border-radius:3px;background:' + _cycleColor(c) + ';display:inline-block;flex-shrink:0"></span>'
-      + '<span style="font-size:11px;color:#374151">' + c + '회차</span>'
+  var allActive = (_activeCycleFilter === null);
+
+  // 전체 버튼
+  var allBtn = '<span id="map-cycle-all-btn" onclick="_setCycleFilter(null)" '
+    + 'style="display:inline-flex;align-items:center;font-size:11px;cursor:pointer;'
+    + 'padding:2px 6px;border-radius:4px;user-select:none;transition:all .15s;'
+    + 'background:' + (allActive ? '#EFF6FF' : 'transparent') + ';'
+    + 'color:' + (allActive ? '#1B3A6B' : '#94A3B8') + ';'
+    + 'font-weight:' + (allActive ? '700' : '400') + '">'
+    + '전체</span>';
+
+  var chips = cycles.map(function(c) {
+    var isSel = (_activeCycleFilter === c);
+    var isVis = allActive || isSel;
+    return '<span data-cycle="' + c + '" onclick="_setCycleFilter(' + c + ')" '
+      + 'style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;'
+      + 'padding:2px 6px;border-radius:4px;user-select:none;transition:all .15s;'
+      + 'background:' + (isSel ? _cycleColor(c) + '18' : 'transparent') + ';'
+      + 'outline:' + (isSel ? '2px solid ' + _cycleColor(c) : 'none') + ';'
+      + 'outline-offset:0;'
+      + 'opacity:' + (isVis ? '1' : '0.32') + '">'
+      + '<span style="width:10px;height:10px;border-radius:3px;background:' + _cycleColor(c)
+      + ';display:inline-block;flex-shrink:0"></span>'
+      + '<span style="font-size:11px;color:#374151;font-weight:' + (isSel ? '700' : '400') + '">'
+      + c + '회차</span>'
       + '</span>';
   }).join('');
 
-  el.innerHTML = html;
-  el.style.display = cycles.length ? 'flex' : 'none';
+  el.innerHTML = allBtn
+    + '<span style="color:#D1D5DB;margin:0 1px;align-self:stretch;display:flex;align-items:center">|</span>'
+    + chips;
+  el.style.display = 'flex';
+}
+
+// ── 회차 필터 적용 (마커 show/hide) ─────────────────────────────────────────
+function _applyCycleFilter() {
+  _adminMarkers.forEach(function(item) {
+    var visible = (_activeCycleFilter === null || item.cycle === _activeCycleFilter);
+    item.marker.setMap(visible ? _adminMap : null);
+  });
+}
+
+// ── 회차 필터 토글 (범례 칩 클릭 시 호출) ────────────────────────────────────
+function _setCycleFilter(cycle) {
+  // 같은 회차 재클릭 또는 null → 전체 보기
+  _activeCycleFilter = (cycle === null || _activeCycleFilter === cycle) ? null : cycle;
+  _applyCycleFilter();
+  // 범례 UI만 갱신 (territories 데이터는 그대로)
+  _updateCycleLegend(window._territories || []);
 }
 
 // ── 마커 전체 그리기 ─────────────────────────────────────────────────────────
 function plotTerritoryMarkers() {
-  _adminMarkers.forEach(function(m) { m.setMap(null); });
+  _adminMarkers.forEach(function(item) { item.marker.setMap(null); });
   _adminMarkers = [];
 
   var territories = window._territories || [];
@@ -227,8 +268,9 @@ function plotTerritoryMarkers() {
   // 좌표 없는 구역 → 지오코딩 후 개별 배치
   if (noCoords.length) _geocodeSequential(noCoords, 0);
 
-  // 범례 갱신
+  // 범례 갱신 + 현재 필터 유지 적용
   _updateCycleLegend(territories);
+  _applyCycleFilter();
 }
 
 // ── 지도 초기화 ───────────────────────────────────────────────────────────────
@@ -299,6 +341,10 @@ function _geocodeSequential(list, idx) {
       var lng  = parseFloat(item.x);
       _placeAdminMarker(t, lat, lng);
       _saveTerritoryCoords(t.id, lat, lng);
+      // 필터 활성 시 새 마커에도 즉시 적용
+      if (_activeCycleFilter !== null && (parseInt(t.cycle) || 1) !== _activeCycleFilter) {
+        _adminMarkers[_adminMarkers.length - 1].marker.setMap(null);
+      }
     }
     setTimeout(function() { _geocodeSequential(list, idx + 1); }, 100);
   });
