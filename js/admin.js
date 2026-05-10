@@ -2784,6 +2784,8 @@ async function loadTerritories() {
     renderTerritoryTable();
     updateTerritoryStats();
     renderOverdueList();
+    // 지도 탭이 먼저 열려 있던 경우 마커·범례 갱신
+    if (typeof plotTerritoryMarkers === 'function' && window._adminMapReady) plotTerritoryMarkers();
   } catch(e) {
     // 인덱스 없을 경우 기본 조회
     try {
@@ -2792,6 +2794,7 @@ async function loadTerritories() {
       renderTerritoryTable();
       updateTerritoryStats();
       renderOverdueList();
+      if (typeof plotTerritoryMarkers === 'function' && window._adminMapReady) plotTerritoryMarkers();
     } catch(e2) {
       document.getElementById('territory-table-wrap').innerHTML =
         '<div class="loading" style="color:#EF4444">데이터를 불러오는 중 오류가 발생했습니다.</div>';

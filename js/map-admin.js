@@ -249,7 +249,10 @@ function plotTerritoryMarkers() {
   _adminMarkers = [];
 
   var territories = window._territories || [];
-  if (!territories.length) return;
+  if (!territories.length) {
+    _updateCycleLegend([]); // 빈 상태로 범례 초기화
+    return;
+  }
 
   // 저장 좌표 보유/미보유 분리
   var withCoords = territories.filter(function(t) { return t.lat && t.lng; });
