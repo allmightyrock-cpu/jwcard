@@ -252,13 +252,29 @@ function getDefaultGroups() {
 }
 
 // ── 관리자 Presence 실시간 감시 ──
+const _PRESENCE_TIMEOUT_MS = 300 * 60 * 1000; // 300분 비활동 시 자동 만료
+
 function startAdminPresenceWatch() {
   onSnapshot(collection(db, 'presence'), (snap) => {
     const today = new Date().toISOString().slice(0, 10);
-    const all = snap.docs.map(d => d.data());
+    const now   = Date.now();
+    const all   = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
 
-    // 현재 활성
-    const activeNow = all.filter(d => d.active === true);
+    // 300분 초과 active:true → Firestore 자동 비활성화
+    all.filter(d => {
+      if (d.active !== true) return false;
+      if (!d.lastSeen) return true; // lastSeen 없으면 즉시 만료
+      return (now - d.lastSeen.toMillis()) > _PRESENCE_TIMEOUT_MS;
+    }).forEach(d => {
+      updateDoc(doc(db, 'presence', d._docId), { active: false }).catch(() => {});
+    });
+
+    // 표시: 300분 이내 active:true 만 "활동중"으로 처리
+    const activeNow = all.filter(d =>
+      d.active === true &&
+      d.lastSeen &&
+      (now - d.lastSeen.toMillis()) <= _PRESENCE_TIMEOUT_MS
+    );
     // 오늘 활동 (비활성 포함, 오늘 날짜)
     const todayAll = all.filter(d => d.date === today && d.active !== true);
 
@@ -266,6 +282,18 @@ function startAdminPresenceWatch() {
     renderAdminTodayList(todayAll);
   });
 }
+
+// ── 활동중 전체 수동 초기화 ──
+window.clearAllPresence = async function() {
+  if (!confirm('🗑 지금 활동중으로 표시된 전도인 기록을 모두 초기화하시겠습니까?\n실제 사용 중인 전도인도 포함됩니다.')) return;
+  try {
+    const snap = await getDocs(collection(db, 'presence'));
+    const targets = snap.docs.filter(d => d.data().active === true);
+    await Promise.all(targets.map(d =>
+      updateDoc(doc(db, 'presence', d.id), { active: false })
+    ));
+  } catch(e) { alert('초기화 중 오류: ' + e.message); }
+};
 
 function renderAdminActiveNow(list) {
   const el = document.getElementById('admin-active-now');

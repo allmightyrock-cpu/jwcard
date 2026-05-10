@@ -3691,6 +3691,11 @@ async function writePresence() {
   if (!_pubName || !_territoryId) return;
   const today = new Date().toISOString().slice(0, 10);
   try {
+    // 날짜가 다른 오래된 presence → active:false로 먼저 정리
+    const prev = await getDoc(doc(db, 'presence', _pubName));
+    if (prev.exists() && prev.data().active === true && prev.data().date !== today) {
+      await updateDoc(doc(db, 'presence', _pubName), { active: false });
+    }
     await setDoc(doc(db, 'presence', _pubName), {
       name: _pubName,
       territoryId: _territoryId,
