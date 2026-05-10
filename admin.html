@@ -1793,17 +1793,25 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             </div>
             <div class="man-ch-body collapsed">
               <div class="man-sec">
-                <div class="man-sec-title">기능별 권한 요약</div>
+                <div class="man-sec-title">기능별 권한 요약 <span class="man-new">NEW</span></div>
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>기능</th><th>일반</th><th>인도자</th><th>구역의종</th><th>봉사감독자</th><th>관리자</th></tr>
                   <tr><td>구역카드 사용</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
                   <tr><td>주소 편집 (허용 시)</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
-                  <tr><td>구역 배정 패널</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>구역 배정 패널 (publisher)</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>강제 회수 (🔙 회수 버튼)</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
                   <tr><td>구역 비활성화/활성화</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>조회만</td></tr>
                   <tr><td>admin.html 로그인</td><td>❌</td><td>❌</td><td>✅ <small>(개인 PIN)</small></td><td>✅ <small>(개인 PIN)</small></td><td>✅ <small>(개인 PIN 또는 비밀번호)</small></td></tr>
                   <tr><td>전도인관리 · 설정 탭</td><td>❌</td><td>❌</td><td>❌ <small>(메뉴 숨김)</small></td><td>❌ <small>(메뉴 숨김)</small></td><td>✅</td></tr>
-                  <tr><td>구역관리 · 봉사일정</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>구역관리 · 봉사일정 탭</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                  <tr><td>구역지도 · 방문내역 · 메모 탭</td><td>❌</td><td>❌</td><td>❌ <small>(메뉴 숨김)</small></td><td>✅</td><td>✅</td></tr>
+                  <tr><td>≡ S-13 기록 탭</td><td>❌</td><td>❌</td><td>✅ <small>(순회감독자 방문 대비)</small></td><td>✅</td><td>✅</td></tr>
+                  <tr><td>메뉴얼 탭</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
                 </table></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>
+                  <strong>구역의종</strong>은 순회감독자 방문 대비·S-13 출력 업무를 위해 S-13 탭 접근 권한이 부여됩니다. 구역지도·방문내역·메모는 열람 필요성이 낮아 메뉴에서 숨겨집니다.<br>
+                  <strong>봉사감독자</strong>는 전도인관리·설정을 제외한 모든 탭에 접근합니다.
+                </div></div>
               </div>
               <div class="man-sec">
                 <div class="man-sec-title">회차 개념</div>
