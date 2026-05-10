@@ -1589,7 +1589,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                   <tr><th>기능</th><th>설명</th></tr>
                   <tr><td><strong style="color:#DC2626">반납</strong> 버튼</td><td>예정 구역 우측에 위치. 탭하면 해당 구역이 미할당 풀로 즉시 복귀. 현장에서 사용하지 않을 구역 수동 반납 시 사용</td></tr>
                   <tr><td>🌙 자정에 자동 반납</td><td>체크(기본값)하면 자정 후 앱 접속 시 해당 요일 카드 전체가 자동 반납. 해제하면 다음 주도 그대로 유지</td></tr>
-                  <tr><td>➕ 미할당 카드 현장 추가</td><td><strong>▼ 목록 보기</strong> 탭 → 아직 어느 요일에도 배분되지 않은 카드를 검색·추가. 카테고리 필터 칩으로 빠르게 범위 좁히기 가능</td></tr>
+                  <tr><td>➕ 미할당 카드 현장 추가 <span class="man-new">NEW</span></td><td><strong>▼ 목록 보기</strong> 탭 → 아직 어느 요일에도 배분되지 않은 카드를 검색·추가.<br>검색창에서 <strong>번호 · 이름 · 회차</strong>를 한 번에 검색. <strong>2차 / 2회차</strong> 형식 모두 지원.<br>유형 드롭다운으로 아파트·주택 등 범위를 좁힐 수 있음</td></tr>
                 </table></div>
                 <div class="man-hint warn"><span class="man-hint-icon">⚠</span><div>타 요일에 이미 배분된 카드는 현장 추가 목록에 표시되지 않습니다. 미할당 카드만 검색됩니다.</div></div>
               </div>
@@ -1599,7 +1599,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>구분</th><th>항목</th></tr>
                   <tr><td>정렬</td><td>예정 우선 / 오래된 순 / 최근 완료 다음 / 세대 적은 순 / 진행률 낮은 순</td></tr>
-                  <tr><td>필터</td><td>유형(주택구역·상가구역 등) / 상태(미배정만·전체·미완료만) / 회차(1~6회차)</td></tr>
+                  <tr><td>필터</td><td>유형(주택구역·상가구역 등) / 상태(미배정만·전체·미완료만) / 회차 (실제 데이터 기반 동적 생성 — 존재하는 회차만 표시) <span class="man-new">NEW</span></td></tr>
                   <tr><td>칩 필터</td><td>
                     <strong>📅 오늘 예정만</strong> — 오늘 배분된 구역만 표시 (기본 켜짐)<br>
                     <strong style="color:#991B1B">⚠ 동행필수 없는 구역만</strong> — 혼자 방문 가능한 구역만<br>
@@ -1634,14 +1634,33 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             </div>
             <div class="man-ch-body collapsed">
               <div class="man-sec">
-                <div class="man-sec-title">구역지도</div>
-                <p class="man-p">네이버 지도 위에 등록된 모든 구역을 마커로 표시합니다. 마커 클릭 시 회차·상태·배정 전도인·진행률 팝업이 표시됩니다. <strong>구역 편집</strong> 버튼으로 바로 편집 모달을 열 수 있습니다.</p>
+                <div class="man-sec-title">구역지도 <span class="man-new">NEW</span></div>
+                <p class="man-p">네이버 지도 위에 등록된 모든 구역을 마커로 표시합니다. 마커 클릭 시 회차·상태·배정 전도인·진행률 팝업이 표시되고, <strong>구역 편집</strong> 버튼으로 바로 편집 모달을 열 수 있습니다.</p>
+
+                <div class="man-sub">마커 색상 — 회차별 구분</div>
+                <p class="man-p">마커 색상은 <strong>진행 회차</strong>를 나타냅니다. 같은 색상이면 같은 회차입니다.</p>
                 <div class="man-table-wrap"><table class="man-table">
-                  <tr><th>마커 색상</th><th>의미</th></tr>
-                  <tr><td>🔵 파랑</td><td>진행중</td></tr>
-                  <tr><td>🟢 초록</td><td>완료</td></tr>
-                  <tr><td>⚫ 회색</td><td>미배정</td></tr>
+                  <tr><th>색상</th><th>회차</th><th>색상</th><th>회차</th></tr>
+                  <tr><td><span style="display:inline-block;width:12px;height:12px;background:#DC2626;border-radius:3px;vertical-align:middle;margin-right:4px"></span>빨강</td><td>1회차</td><td><span style="display:inline-block;width:12px;height:12px;background:#0D9488;border-radius:3px;vertical-align:middle;margin-right:4px"></span>청록</td><td>5회차</td></tr>
+                  <tr><td><span style="display:inline-block;width:12px;height:12px;background:#EA580C;border-radius:3px;vertical-align:middle;margin-right:4px"></span>주황</td><td>2회차</td><td><span style="display:inline-block;width:12px;height:12px;background:#2563EB;border-radius:3px;vertical-align:middle;margin-right:4px"></span>파랑</td><td>6회차</td></tr>
+                  <tr><td><span style="display:inline-block;width:12px;height:12px;background:#CA8A04;border-radius:3px;vertical-align:middle;margin-right:4px"></span>황금</td><td>3회차</td><td><span style="display:inline-block;width:12px;height:12px;background:#7C3AED;border-radius:3px;vertical-align:middle;margin-right:4px"></span>보라</td><td>7회차</td></tr>
+                  <tr><td><span style="display:inline-block;width:12px;height:12px;background:#16A34A;border-radius:3px;vertical-align:middle;margin-right:4px"></span>초록</td><td>4회차</td><td><span style="display:inline-block;width:12px;height:12px;background:#DB2777;border-radius:3px;vertical-align:middle;margin-right:4px"></span>분홍</td><td>8회차</td></tr>
                 </table></div>
+
+                <div class="man-sub">마커 위 상태 기호</div>
+                <div class="man-table-wrap"><table class="man-table">
+                  <tr><th>기호</th><th>의미</th></tr>
+                  <tr><td><strong>✓</strong></td><td>완료 (완료 신청 접수됨)</td></tr>
+                  <tr><td><strong>●</strong> (작은 원)</td><td>진행중 (배정 후 방문 기록 있음)</td></tr>
+                  <tr><td>기호 없음</td><td>미배정</td></tr>
+                </table></div>
+
+                <div class="man-sub">겹침 마커 (아파트 단지 등)</div>
+                <p class="man-p">같은 위치(~20m 이내)에 여러 구역이 있으면 <strong>구역번호 ×N</strong> 형태의 그룹 마커로 표시됩니다. 탭하면 목록 팝업이 열리며, 각 구역의 편집 버튼으로 바로 이동할 수 있습니다.</p>
+
+                <div class="man-sub">범례 · 회차별 필터</div>
+                <p class="man-p">지도 우측 상단 범례에서 <strong>회차 칩을 탭</strong>하면 해당 회차 구역만 지도에 표시됩니다. 같은 칩을 다시 탭하거나 <strong>[전체]</strong>를 탭하면 전체 구역이 다시 표시됩니다.</p>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>범례에는 실제 데이터에 존재하는 회차만 표시됩니다. 예를 들어 1~4회차만 있는 경우 5회차 이상은 범례에 나타나지 않습니다.</div></div>
               </div>
               <div class="man-sec">
                 <div class="man-sec-title">방문내역</div>
