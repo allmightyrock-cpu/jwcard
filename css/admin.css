@@ -452,7 +452,8 @@
 
   #map-container{width:100%;height:calc(100vh - 120px);position:relative}
   #admin-naver-map{width:100%;height:100%}
-  .map-legend{position:absolute;top:12px;right:12px;background:#fff;border-radius:10px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.12);z-index:10;font-size:12px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+  .map-legend{position:absolute;top:12px;right:12px;max-width:calc(100vw - 24px);background:#fff;border-radius:10px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.12);z-index:10;font-size:12px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+  #map-cycle-legend{flex-wrap:wrap;max-width:calc(100vw - 52px)}
   .legend-item{display:flex;align-items:center;gap:6px;margin-bottom:4px}
   .legend-item:last-child{margin-bottom:0}
   .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
