@@ -2793,6 +2793,34 @@ window.saveBasicInfo = async function() {
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
 
+// ── 구 시스템 날짜+회차 데이터 import (콘솔 전용) ──
+// 사용: dateImport({ "1": { cycle:7, lastAssignedDate:"2026-04-05" }, ... })
+window.dateImport = async function(data) {
+  if (!data || typeof data !== 'object') { console.error('올바른 데이터 형식이 아닙니다.'); return; }
+  const entries = Object.entries(data);
+  if (!entries.length) { console.error('데이터가 비어 있습니다.'); return; }
+  console.log(`📥 ${entries.length}개 구역 날짜+회차 적용 시작...`);
+  let ok = 0, notFound = 0, fail = 0;
+  for (const [no, info] of entries) {
+    const t = window._territories.find(t => String(t.no) === String(no));
+    if (!t) { notFound++; continue; }
+    try {
+      const dateTs = info.lastAssignedDate
+        ? new Date(info.lastAssignedDate + 'T00:00:00+09:00')  // KST
+        : null;
+      const updates = { cycle: parseInt(info.cycle) || 1 };
+      if (dateTs && !isNaN(dateTs)) updates.lastAssignedDate = dateTs;
+      await updateDoc(doc(db, 'territories', t.id), updates);
+      t.cycle = updates.cycle;
+      if (dateTs) t.lastAssignedDate = dateTs;
+      ok++;
+    } catch(e) { console.error(`❌ 구역 ${no}번 실패:`, e.message); fail++; }
+  }
+  renderTerritoryTable();
+  updateTerritoryStats();
+  console.log(`\n✅ 완료! 적용: ${ok}개 / 미발견: ${notFound}개 / 실패: ${fail}개`);
+};
+
 // ── 구 시스템 회차 데이터 import (콘솔 전용) ──
 // 사용: cycleImport({ "1": 7, "2": 6, "3": 7, ... })  — 구역번호: 회차
 window.cycleImport = async function(data) {
