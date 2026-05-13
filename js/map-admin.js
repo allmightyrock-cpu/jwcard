@@ -278,7 +278,14 @@ function plotTerritoryMarkers() {
 
 // ── 지도 초기화 ───────────────────────────────────────────────────────────────
 function initAdminMap() {
-  if (_adminMapReady) { plotTerritoryMarkers(); return; }
+  if (_adminMapReady) {
+    // 탭 재진입 시 컨테이너 크기 재계산 → 누락 타일 로드
+    setTimeout(function() {
+      if (_adminMap) naver.maps.Event.trigger(_adminMap, 'resize');
+    }, 80);
+    plotTerritoryMarkers();
+    return;
+  }
   if (!window.naver || !naver.maps) return;
   _adminMap = new naver.maps.Map('admin-naver-map', {
     center: new naver.maps.LatLng(37.8950, 127.0550),
@@ -298,6 +305,10 @@ function initAdminMap() {
     _adminInfoWindow.close();
   });
   _adminMapReady = true;
+  // 초기화 직후에도 레이아웃 완료 후 resize → 전체 타일 로드 보장
+  setTimeout(function() {
+    if (_adminMap) naver.maps.Event.trigger(_adminMap, 'resize');
+  }, 150);
   plotTerritoryMarkers();
 }
 
