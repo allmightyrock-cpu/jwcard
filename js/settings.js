@@ -31,6 +31,15 @@ async function loadSettingsValues() {
     }
   } catch(e) { console.error('설정 로드 오류:', e); }
 
+  // ── 일괄 회차 설정 — 유형 select 채우기 ──
+  try {
+    const catSel = document.getElementById('s-bulk-cycle-cat');
+    if (catSel && window._territoryGroups) {
+      catSel.innerHTML = '<option value="">전체</option>' +
+        window._territoryGroups.map(g => `<option value="${g}">${g}</option>`).join('');
+    }
+  } catch(e) {}
+
   // ── 인도자 인증 방식 로드 ──
   try {
     const authDoc = await window._getDoc(window._doc(window._db, 'config', 'auth'));

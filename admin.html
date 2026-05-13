@@ -848,6 +848,31 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div id="s-auth-msg" style="margin-top:8px;font-size:13px;display:none"></div>
           </div>
 
+          <!-- 일괄 회차 설정 -->
+          <div class="settings-card">
+            <div class="settings-card-title">회차 일괄 설정</div>
+            <p style="font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.6">
+              모든 구역(또는 선택 유형)의 회차를 한 번에 변경합니다.<br>
+              구 시스템과 회차가 맞지 않을 때 사용하세요.
+            </p>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:13px;color:#475569">설정할 회차</span>
+                <input type="number" id="s-bulk-cycle-val" min="1" max="30" value="7"
+                       style="width:64px;padding:8px;border:1px solid #CBD5E1;border-radius:8px;font-size:15px;text-align:center;font-family:inherit">
+                <span style="font-size:13px;color:#475569">회차</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:13px;color:#475569">유형</span>
+                <select id="s-bulk-cycle-cat"
+                        style="padding:8px 10px;border:1px solid #CBD5E1;border-radius:8px;font-size:13px;font-family:inherit">
+                  <option value="">전체</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-warn" onclick="bulkSetCycle()">⚙ 일괄 회차 변경</button>
+          </div>
+
           <!-- 회차제한 -->
           <div class="settings-card">
             <div class="settings-card-title">회차제한</div>
@@ -2518,6 +2543,14 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <div class="form-row">
         <label>유형</label>
         <select id="edit-category"><option>로딩 중...</option></select>
+      </div>
+      <div class="form-row">
+        <label>현재 회차</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="number" id="edit-cycle" min="1" max="30" placeholder="1"
+                 style="width:72px;padding:8px;border:1px solid #CBD5E1;border-radius:8px;font-size:15px;text-align:center;font-family:inherit">
+          <span style="font-size:12px;color:#94A3B8">회차 (현재 진행 중인 회차 번호)</span>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-navy" onclick="saveBasicInfo()">기본정보 저장</button>

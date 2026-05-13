@@ -2583,6 +2583,7 @@ window.openEditModal = function(id) {
   document.getElementById('edit-modal-title').textContent = `편집 — ${t.name}`;
   document.getElementById('edit-no').value = t.no || '';
   document.getElementById('edit-name').value = t.name || '';
+  document.getElementById('edit-cycle').value = t.cycle || 1;
   // 유형 select 세팅 (동적 그룹)
   const _catEl = document.getElementById('edit-category');
   if (_catEl) {
@@ -2779,15 +2780,64 @@ window.saveBasicInfo = async function() {
   const no = document.getElementById('edit-no').value.trim().replace(/^0+/,'') || '0';
   const name = document.getElementById('edit-name').value.trim();
   const category = document.getElementById('edit-category').value;
+  const cycle = Math.max(1, parseInt(document.getElementById('edit-cycle').value) || 1);
   if (!no || !name) { alert('번호와 이름을 입력해 주세요.'); return; }
   try {
-    await updateDoc(doc(db, 'territories', _editTargetId), { no, name, category });
+    await updateDoc(doc(db, 'territories', _editTargetId), { no, name, category, cycle });
     const t = window._territories.find(t => t.id === _editTargetId);
-    if (t) { t.no = no; t.name = name; t.category = category; }
+    if (t) { t.no = no; t.name = name; t.category = category; t.cycle = cycle; }
     closeModal('edit-modal');
     renderTerritoryTable();
     alert('기본정보 저장 완료!');
   } catch(e) { alert('저장 오류: ' + e.message); }
+};
+
+// ── 구 시스템 회차 데이터 import (콘솔 전용) ──
+// 사용: cycleImport({ "1": 7, "2": 6, "3": 7, ... })  — 구역번호: 회차
+window.cycleImport = async function(data) {
+  if (!data || typeof data !== 'object') { console.error('올바른 데이터 형식이 아닙니다.'); return; }
+  const entries = Object.entries(data);
+  if (!entries.length) { console.error('데이터가 비어 있습니다.'); return; }
+  console.log(`📥 ${entries.length}개 구역 회차 데이터 적용 시작...`);
+  let ok = 0, notFound = 0, fail = 0;
+  for (const [no, cycle] of entries) {
+    const t = window._territories.find(t => String(t.no) === String(no));
+    if (!t) { console.warn(`  ⚠ 구역 ${no}번 없음`); notFound++; continue; }
+    try {
+      await updateDoc(doc(db, 'territories', t.id), { cycle: parseInt(cycle) || 1 });
+      t.cycle = parseInt(cycle) || 1;
+      ok++;
+    } catch(e) { console.error(`  ❌ 구역 ${no}번 실패:`, e.message); fail++; }
+  }
+  renderTerritoryTable();
+  updateTerritoryStats();
+  console.log(`\n✅ 완료! 적용: ${ok}개 / 미발견: ${notFound}개 / 실패: ${fail}개`);
+};
+
+// ── 회차 일괄 설정 ──
+window.bulkSetCycle = async function() {
+  const cycleVal = Math.max(1, parseInt(document.getElementById('s-bulk-cycle-val')?.value) || 1);
+  const catFilter = document.getElementById('s-bulk-cycle-cat')?.value || '';
+  const targets = window._territories.filter(t =>
+    t.active !== false && (!catFilter || (t.category || '') === catFilter)
+  );
+  if (!targets.length) { alert('대상 구역이 없습니다.'); return; }
+  const catLabel = catFilter ? `[${catFilter}] 유형 ` : '전체 ';
+  if (!confirm(
+    `${catLabel}구역 ${targets.length}개의 회차를 ${cycleVal}회차로 변경합니다.\n계속하시겠습니까?`
+  )) return;
+
+  let ok = 0, fail = 0;
+  for (const t of targets) {
+    try {
+      await updateDoc(doc(db, 'territories', t.id), { cycle: cycleVal });
+      t.cycle = cycleVal;
+      ok++;
+    } catch(e) { fail++; }
+  }
+  renderTerritoryTable();
+  updateTerritoryStats();
+  alert(`✅ 완료! ${ok}개 변경 / ${fail}개 실패`);
 };
 
 // 엑셀 교체
