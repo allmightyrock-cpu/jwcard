@@ -172,6 +172,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <option value="cycle">회차순</option>
                 <option value="progress">진행률순</option>
               </select>
+              <button id="terr-sort-dir" onclick="toggleTerrSortDir()" title="정렬 방향 전환"
+                style="padding:6px 8px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;line-height:1;color:#475569;flex-shrink:0">▲</button>
               <input class="terr-search-input" type="text" id="terr-search"
                 placeholder="🔍  구역명, 번호, 회차 검색"
                 oninput="renderTerritoryTable()">
@@ -371,6 +373,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                       <option value="cycle">회차순</option>
                       <option value="progress">진행률순</option>
                     </select>
+                    <button id="sched-search-sort-dir" onclick="toggleSchedSortDir()" title="정렬 방향 전환"
+                      style="padding:5px 7px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;cursor:pointer;font-size:12px;line-height:1;color:#475569;flex-shrink:0">▲</button>
                   </div>
                   <div id="sched-search-results" class="sched-search-results"></div>
                 </div>
@@ -394,6 +398,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                       <option value="cycle">회차순</option>
                       <option value="progress">진행률순</option>
                     </select>
+                    <button id="sched-gal-sort-dir" onclick="toggleSchedGalSortDir()" title="정렬 방향 전환"
+                      style="padding:5px 7px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;cursor:pointer;font-size:12px;line-height:1;color:#475569;flex-shrink:0">▲</button>
                   </div>
                   <div style="font-size:11px;color:#94A3B8;margin-bottom:8px">탭 → 이 요일에 배분 / 다시 탭 → 제거 &nbsp;|&nbsp; ✓ = 이미 배분됨</div>
                   <div id="sched-gallery-grid"></div>

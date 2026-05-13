@@ -1457,7 +1457,7 @@ function renderSchedGallery() {
     const aAssigned = existing.has(a.id) ? 0 : 1;
     const bAssigned = existing.has(b.id) ? 0 : 1;
     if (aAssigned !== bAssigned) return aAssigned - bAssigned; // 배분된 카드 먼저
-    return cmp(a, b);
+    return window._schedGalSortDesc ? cmp(b, a) : cmp(a, b);
   });
 
   // 스크롤 컨테이너 생성
@@ -1555,6 +1555,7 @@ function renderUnallocatedList() {
   else if (sort === 'old') filtered.sort((a,b) => getMs(a)-getMs(b));
   else if (sort === 'cycle') filtered.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
   else if (sort === 'progress') filtered.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
+  if (window._schedSortDesc) filtered.reverse();
   if (!filtered.length) {
     const msg = q ? '검색 결과가 없습니다' : '미할당 구역이 없습니다';
     resultsEl.innerHTML = `<div style="padding:14px;text-align:center;color:#94A3B8;font-size:13px">${msg}</div>`;
@@ -2975,9 +2976,32 @@ window.filterCompletionStatus = function(status, el) {
   window.renderTerritoryTable();
 };
 
+window._terrSortDesc    = false;
+window._schedSortDesc   = false;
+window._schedGalSortDesc = false;
+
 window.setTerrSort = function(v) {
   window._currentSort = v || 'no';
   window.renderTerritoryTable();
+};
+
+window.toggleTerrSortDir = function() {
+  window._terrSortDesc = !window._terrSortDesc;
+  const btn = document.getElementById('terr-sort-dir');
+  if (btn) btn.textContent = window._terrSortDesc ? '▼' : '▲';
+  window.renderTerritoryTable();
+};
+window.toggleSchedSortDir = function() {
+  window._schedSortDesc = !window._schedSortDesc;
+  const btn = document.getElementById('sched-search-sort-dir');
+  if (btn) btn.textContent = window._schedSortDesc ? '▼' : '▲';
+  searchSchedTerr();
+};
+window.toggleSchedGalSortDir = function() {
+  window._schedGalSortDesc = !window._schedGalSortDesc;
+  const btn = document.getElementById('sched-gal-sort-dir');
+  if (btn) btn.textContent = window._schedGalSortDesc ? '▼' : '▲';
+  renderSchedGallery();
 };
 
 // ── 날짜 포맷 헬퍼 ──
@@ -3148,6 +3172,7 @@ window.renderTerritoryTable = function() {
   else if (sort==='recent') list.sort((a,b) => getMs(b)-getMs(a));
   else if (sort==='cycle')  list.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
   else if (sort==='progress') list.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
+  if (window._terrSortDesc) list.reverse();
 
   const wrap = document.getElementById('territory-table-wrap');
   if (!wrap) return;
