@@ -18,6 +18,10 @@ window._loadNaverMaps = function(key) {
   var s = document.createElement('script');
   s.type = 'text/javascript';
   s.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=' + encodeURIComponent(key) + '&submodules=geocoder';
+  // ★ SDK 로드 완료 시 지도 탭이 열려 있으면 자동 재초기화 → 범례 누락 방지
+  s.onload = function() {
+    if (typeof initAdminMap === 'function') initAdminMap();
+  };
   s.onerror = function() {
     window._naverMapsLoaded = false;
     console.error('[Naver Maps] 로드 실패 — Client ID를 확인해 주세요.');
