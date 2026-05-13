@@ -877,6 +877,16 @@ function _terrMatchesFilter(t) {
 // ════════════════════════════════════════════
 const _ADP_EXCLUDE_CATS = new Set(['편지구역','개인구역','편지','개인','편지 구역','개인 구역']);
 
+// 아파트 단지 중복 제한용: 이름에서 단지 기본명 추출
+// 예) "에이스3단지" → "에이스", "롯데캐슬2차" → "롯데캐슬", "자이 1블록" → "자이"
+function _extractAptKey(name) {
+  if (!name) return '';
+  const cleaned = name
+    .replace(/\s*[\d,~\-]+\s*(단지|블록|차|동|호)?.*$/, '')
+    .trim();
+  return cleaned || name.trim();
+}
+
 // ── 되돌리기 버튼 상태 ──
 function _setUndoBtn(enabled) {
   const btn = document.getElementById('sched-undo-btn');
@@ -1013,6 +1023,7 @@ function _getAdpOpts() {
     priOldest:     document.getElementById('adp-pri-oldest')?.checked,
     priLowrate:    document.getElementById('adp-pri-lowrate')?.checked,
     catDist:       document.getElementById('adp-cat-dist')?.checked,
+    aptUniq:       document.getElementById('adp-apt-uniq')?.checked,
     resetExisting: document.querySelector('[name="adp-existing"]:checked')?.value === 'reset',
   };
 }
@@ -1159,6 +1170,66 @@ function _calcAutoDist() {
     toDistribute.forEach((t, i) => {
       result[targetDays[i % targetDays.length]].push(t.id);
     });
+  }
+
+  // ── 아파트 단지 중복 제한: 같은 단지를 하루에 1장만 배분 ──
+  if (opts.aptUniq) {
+    const terrMap = {};
+    _schedAllTerr.forEach(t => { terrMap[t.id] = t; });
+    // 제거된 ID를 다른 요일로 재배치하기 위해 제거 목록 수집
+    const displaced = [];
+    for (const d of targetDays) {
+      const seen = new Set();
+      // 비대상 요일에 이미 있는 단지 키는 이 요일에서도 제외
+      for (let od = 0; od <= 6; od++) {
+        if (targetDays.includes(od) && od !== d) continue; // 대상 요일은 스킵 (요일별 독립 처리)
+        if (targetDays.includes(od)) continue;
+        (_schedData[od] || []).forEach(id => {
+          const t = terrMap[id];
+          if (!t) return;
+          const k = _extractAptKey(t.name || '');
+          if (k) seen.add(k);
+        });
+      }
+      const kept = [];
+      for (const id of result[d]) {
+        const t = terrMap[id];
+        if (!t) { kept.push(id); continue; }
+        const k = _extractAptKey(t.name || '');
+        // 키가 짧거나 숫자 접미사가 없으면 단지 구분 무의미 → 제한 없이 통과
+        const isApt = k && k !== (t.name || '').trim();
+        if (!isApt) { kept.push(id); continue; }
+        if (seen.has(k)) {
+          displaced.push({ id, d });
+        } else {
+          seen.add(k);
+          kept.push(id);
+        }
+      }
+      result[d] = kept;
+    }
+    // 제거된 카드를 다른 요일(같은 단지 없는 첫 번째 요일)에 재배치
+    for (const { id } of displaced) {
+      const t = terrMap[id];
+      const k = t ? _extractAptKey(t.name || '') : '';
+      let placed = false;
+      for (const d of targetDays) {
+        const usedKeys = result[d].map(rid => {
+          const rt = terrMap[rid];
+          return rt ? _extractAptKey(rt.name || '') : '';
+        });
+        if (!usedKeys.includes(k)) {
+          result[d].push(id);
+          placed = true;
+          break;
+        }
+      }
+      // 모든 요일에 이미 같은 단지가 있으면 첫 번째 대상 요일에 그냥 추가
+      if (!placed) result[targetDays[0]].push(id);
+    }
+    // toDistribute 재동기화 (통계용)
+    const newIds = new Set(targetDays.flatMap(d => result[d]));
+    toDistribute = toDistribute.filter(t => newIds.has(t.id));
   }
 
   // 카테고리 통계 (미리보기용)
