@@ -18,9 +18,14 @@ window._loadNaverMaps = function(key) {
   var s = document.createElement('script');
   s.type = 'text/javascript';
   s.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=' + encodeURIComponent(key) + '&submodules=geocoder';
-  // ★ SDK 로드 완료 시 지도 탭이 열려 있으면 자동 재초기화 → 범례 누락 방지
+  // ★ SDK 로드 완료 시 지도 탭이 실제로 열려 있을 때만 초기화
+  //   (탭이 닫혀 있으면 0×0 컨테이너에 지도가 생성돼 범례가 영구 hidden되는 버그 방지)
+  //   탭이 닫혀 있는 경우: 사용자가 지도 탭 클릭 시 switchTab → initAdminMap() 정상 호출됨
   s.onload = function() {
-    if (typeof initAdminMap === 'function') initAdminMap();
+    var mapTab = document.getElementById('tab-map');
+    if (mapTab && mapTab.classList.contains('active')) {
+      if (typeof initAdminMap === 'function') initAdminMap();
+    }
   };
   s.onerror = function() {
     window._naverMapsLoaded = false;
