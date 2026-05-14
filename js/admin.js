@@ -2646,33 +2646,46 @@ function renderUnitEditList() {
   const html = _editUnits.map((u, i) => {
     const changed = _editChangedRows.has(i);
     const isNew   = _editNewRows.has(i);
-    // 구분선 타입
+
+    // ── 구분선 타입 ──────────────────────────────────────────────────────────
     if (u.type === 'divider') {
+      const noteVal = _escH(u.note || '');
+      const hasNote = !!(u.note && u.note.trim());
       return `
     <div class="addr-tbl-row addr-divider-row${isNew?' row-new':changed?' row-changed':''}" id="unit-row-${i}"
-         ondragover="uDragOver(event,${i})" ondrop="uDrop(event,${i})" ondragend="uDragEnd(event)"
-         style="background:#FFFBEB;border-left:3px solid #F59E0B">
-      <div class="addr-drag" draggable="true" ondragstart="uDragStart(event,${i})" title="드래그로 순서 변경">≡</div>
-      <div class="addr-row-no">${i+1}</div>
-      <div style="flex:1;padding:0 6px;display:flex;align-items:center;gap:8px;grid-column:span 5">
-        <span style="color:#F59E0B;font-size:13px;flex-shrink:0">⎯⎯</span>
+         style="display:block;background:#FFFBEB;border-left:3px solid #F59E0B;padding:0">
+      <!-- 구분선 헤더 행 -->
+      <div style="display:flex;align-items:center;padding:0 6px;min-height:34px">
+        <div class="addr-drag" title="드래그로 순서 변경">≡</div>
+        <div class="addr-row-no">${i+1}</div>
+        <span style="color:#F59E0B;font-size:12px;margin:0 6px;flex-shrink:0">⎯⎯</span>
         <input type="text" value="${_escH(u.label||'')}" oninput="editUField(${i},'label',this.value)"
-               placeholder="구분선 텍스트 입력 (예: 1·2라인 진입, 3·4라인 진입...)"
-               style="flex:1;border:none;background:none;color:#92400E;font-size:12px;font-weight:600;outline:none;font-family:inherit;min-width:0">
-        <span style="color:#F59E0B;font-size:13px;flex-shrink:0">⎯⎯</span>
+               placeholder="구분선 제목 (예: 1·2라인 진입)"
+               style="flex:1;border:none;background:none;color:#92400E;font-size:12px;font-weight:700;outline:none;font-family:inherit;min-width:0">
+        <button class="addr-act-btn" title="지시문 ${hasNote?'숨기기':'입력'}" onclick="toggleDividerNote(${i})"
+                style="flex-shrink:0;color:#F59E0B;font-size:11px;border:1px solid #FDE68A;background:${hasNote?'#FEF3C7':'transparent'};border-radius:4px;width:auto;padding:2px 6px">
+          ${hasNote?'📝 지시문':'+ 지시문'}
+        </button>
+        <button class="addr-act-btn del" title="구분선 삭제" onclick="removeUnit(${i})" style="flex-shrink:0">×</button>
       </div>
-      <div class="addr-row-acts">
-        <button class="addr-act-btn del" title="구분선 삭제" onclick="removeUnit(${i})">×</button>
+      <!-- 지시문 textarea (note) -->
+      <div id="divider-note-${i}" style="padding:0 6px 6px 56px;display:${hasNote?'block':'none'}">
+        <textarea oninput="editUField(${i},'note',this.value)"
+                  placeholder="지시사항이나 참고사항을 입력하세요&#10;예: ※ 공동현관 비밀번호 1234, 관리자 동행 필요"
+                  style="width:100%;box-sizing:border-box;border:1px solid #FDE68A;border-radius:6px;background:#FFFFF5;color:#78350F;font-size:12px;font-family:inherit;padding:6px 8px;resize:vertical;min-height:54px;outline:none;line-height:1.5"
+                  onfocus="this.style.borderColor='#F59E0B'"
+                  onblur="this.style.borderColor='#FDE68A'">${noteVal}</textarea>
       </div>
     </div>`;
     }
-    const prev    = _editUnits[i-1];
+
+    // ── 일반 주소 행 ─────────────────────────────────────────────────────────
+    const prev     = _editUnits[i-1];
     const sameAddr = prev && prev.type !== 'divider' && prev.road === u.road && prev.jibun === u.jibun;
     const sameBld  = sameAddr && prev.building === u.building;
     return `
-    <div class="addr-tbl-row${isNew?' row-new':changed?' row-changed':''}" id="unit-row-${i}"
-         ondragover="uDragOver(event,${i})" ondrop="uDrop(event,${i})" ondragend="uDragEnd(event)">
-      <div class="addr-drag" draggable="true" ondragstart="uDragStart(event,${i})" title="드래그로 순서 변경">≡</div>
+    <div class="addr-tbl-row${isNew?' row-new':changed?' row-changed':''}" id="unit-row-${i}">
+      <div class="addr-drag" title="드래그로 순서 변경">≡</div>
       <div class="addr-row-no">${i+1}</div>
       <div class="addr-cell${sameAddr?' inh':''}"><input type="text" value="${_escH(u.road)}" oninput="editUField(${i},'road',this.value)" placeholder="도로명"></div>
       <div class="addr-cell${sameAddr?' inh':''}"><input type="text" value="${_escH(u.jibun)}" oninput="editUField(${i},'jibun',this.value)" placeholder="번지"></div>
@@ -2688,6 +2701,8 @@ function renderUnitEditList() {
     </div>`;
   }).join('');
   document.getElementById('unit-edit-list').innerHTML = html || '<div style="color:#94A3B8;font-size:13px;text-align:center;padding:20px">호수가 없습니다 — 아래 버튼으로 추가하세요</div>';
+  // Sortable 재초기화 (DOM 교체 후 필수)
+  setTimeout(initUnitSortable, 0);
 }
 
 // 필드 인라인 수정 (재렌더 없이 클래스만 업데이트)
@@ -2738,6 +2753,15 @@ window.insertUnitRowAt = function(i) {
   setTimeout(() => { const row = document.getElementById('unit-row-'+i); row?.querySelector('.unit-cell input')?.focus(); }, 40);
 };
 
+// 구분선 지시문 textarea 토글
+window.toggleDividerNote = function(i) {
+  const wrap = document.getElementById('divider-note-' + i);
+  if (!wrap) return;
+  const isVisible = wrap.style.display !== 'none';
+  wrap.style.display = isVisible ? 'none' : 'block';
+  if (!isVisible) setTimeout(() => wrap.querySelector('textarea')?.focus(), 50);
+};
+
 // 특정 위치 위에 구분선 삽입
 window.insertDividerAt = function(i) {
   _editUnits.splice(i, 0, { type: 'divider', label: '' });
@@ -2780,32 +2804,36 @@ window.revertUnitChanges = function() {
   renderUnitEditList(); updateAddrChangeBar();
 };
 
-// 드래그 & 드롭 (행 순서 변경)
-window.uDragStart = function(e, i) {
-  _uDragSrc = i;
-  e.dataTransfer.effectAllowed = 'move';
-  setTimeout(() => { const r = document.getElementById('unit-row-'+i); if (r) r.style.opacity = '0.4'; }, 0);
-};
-window.uDragOver = function(e, i) {
-  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-  document.querySelectorAll('.addr-tbl-row').forEach((r, idx) => {
-    r.style.borderTop = (idx === i && idx !== _uDragSrc) ? '2px solid #3B82F6' : '';
+// ── Sortable.js 기반 순서 변경 ──────────────────────────────────────────────
+let _unitSortable = null;
+
+function initUnitSortable() {
+  const el = document.getElementById('unit-edit-list');
+  if (!el || typeof Sortable === 'undefined') return;
+  if (_unitSortable) { _unitSortable.destroy(); _unitSortable = null; }
+  _unitSortable = Sortable.create(el, {
+    handle: '.addr-drag',
+    animation: 150,
+    ghostClass: 'row-dragging',
+    chosenClass: 'row-chosen',
+    dragClass: 'row-drag-ghost',
+    onEnd: function(evt) {
+      const from = evt.oldIndex;
+      const to   = evt.newIndex;
+      if (from === to) return;
+      const moved = _editUnits.splice(from, 1)[0];
+      _editUnits.splice(to, 0, moved);
+      // 변경 범위 전체를 changed로 마크
+      const lo = Math.min(from, to), hi = Math.max(from, to);
+      for (let i = lo; i <= hi; i++) _editChangedRows.add(i);
+      renderUnitEditList();
+      updateAddrChangeBar();
+    }
   });
-};
-window.uDrop = function(e, i) {
-  e.preventDefault();
-  if (_uDragSrc === null || _uDragSrc === i) { uDragEnd(e); return; }
-  const moved = _editUnits.splice(_uDragSrc, 1)[0];
-  const tgt = i > _uDragSrc ? i-1 : i;
-  _editUnits.splice(tgt, 0, moved);
-  _editChangedRows.add(tgt);
-  _uDragSrc = null;
-  renderUnitEditList(); updateAddrChangeBar();
-};
-window.uDragEnd = function() {
-  _uDragSrc = null;
-  document.querySelectorAll('.addr-tbl-row').forEach(r => { r.style.opacity=''; r.style.borderTop=''; });
-};
+}
+
+// 하위 호환 (HTML에서 ondrag* 속성이 남아 있을 경우 무시)
+window.uDragStart = window.uDragOver = window.uDrop = window.uDragEnd = function(){};
 
 window.saveUnits = async function() {
   const t = window._territories.find(t => t.id === _editTargetId);

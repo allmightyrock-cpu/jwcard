@@ -451,9 +451,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .sb-none{background:#F1F5F9;color:#94A3B8}
 .sec-btn-icon{font-size:18px;color:#94A3B8;border:none;background:none;cursor:pointer;padding:4px 6px;border-radius:4px;line-height:1;font-family:inherit}
 /* 커스텀 구분선 */
-.unit-divider{display:flex;align-items:center;gap:8px;padding:6px 16px;background:#FFFBEB;border-top:1px solid #FDE68A;border-bottom:1px solid #FDE68A}
+.unit-divider{background:#FFFBEB;border-top:1px solid #FDE68A;border-bottom:1px solid #FDE68A}
+.unit-divider-bar{display:flex;align-items:center;gap:8px;padding:6px 16px}
 .unit-divider-line{flex:1;height:1px;background:#FDE68A}
 .unit-divider-label{font-size:11px;color:#92400E;font-weight:600;white-space:nowrap}
+.unit-divider-note{font-size:11px;color:#78350F;padding:4px 16px 6px;line-height:1.5;white-space:pre-wrap;background:#FFFFF5;border-top:1px solid #FEF3C7}
 
 /* 여기까지 마커 */
 .here-marker{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#EFF6FF;border-top:1px solid #BFDBFE;border-bottom:1px solid #BFDBFE}
@@ -4027,10 +4029,14 @@ function renderUnitList(visitMap) {
 
       // 커스텀 구분선
       if (u.type === 'divider') {
+        const noteHtml = (u.note && u.note.trim())
+          ? `<div class="unit-divider-note">${_escHtml(u.note.trim())}</div>` : '';
         html += `<div class="unit-divider">
-          <div class="unit-divider-line"></div>
-          <span class="unit-divider-label">🔻 ${u.label || '구분'}</span>
-          <div class="unit-divider-line"></div>
+          <div class="unit-divider-bar">
+            <div class="unit-divider-line"></div>
+            <span class="unit-divider-label">🔻 ${u.label || '구분'}</span>
+            <div class="unit-divider-line"></div>
+          </div>${noteHtml}
         </div>`;
         return;
       }
