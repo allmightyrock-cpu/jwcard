@@ -2464,6 +2464,7 @@ window.completeTerritory = async function(id, name) {
       cycle:              newCycle,
       status:             '미배정',
       completionRate:     0,
+      completionStatus:   null,
       assignedPublishers: [],
       visitMap:           {},           // 다음 회차를 위해 초기화
       lastCompletedDate:  serverTimestamp(),
@@ -2473,6 +2474,7 @@ window.completeTerritory = async function(id, name) {
     t.cycle = newCycle;
     t.status = '미배정';
     t.completionRate = 0;
+    t.completionStatus = null;
     t.assignedPublishers = [];
     t.visitMap = {};
     t.cycleHistory = [...(t.cycleHistory || []), historyEntry];
@@ -2489,9 +2491,10 @@ window.incompleteTerritory = async function(id) {
   if (!t) return;
   const newStatus = (t.assignedPublishers && t.assignedPublishers.length > 0) ? '진행중' : '미배정';
   try {
-    await updateDoc(doc(db, 'territories', id), { status: newStatus, completionRate: 0 });
+    await updateDoc(doc(db, 'territories', id), { status: newStatus, completionRate: 0, completionStatus: null });
     t.status = newStatus;
     t.completionRate = 0;
+    t.completionStatus = null;
     renderTerritoryTable();
     updateTerritoryStats();
   } catch(e) { alert('처리 중 오류: ' + e.message); }
@@ -2878,29 +2881,55 @@ window.handleReplaceFile = function(input) {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      if (data.length < 2) { alert('데이터가 없습니다.'); return; }
-      const rawRows = data.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
-      let lastRoad='', lastJibun='', lastBuilding='';
+      const all2D = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!all2D.length) { alert('데이터가 없습니다.'); return; }
+
+      // 정식 파서 사용 (메타+헤더 자동 감지, 모든 열 지원)
+      const { meta, headerRow } = _parseSheetMeta(all2D);
+      const hRow = (headerRow >= 0) ? headerRow : 0;
+      const dataStart = hRow + 1;
+      const headerCells = (all2D[hRow] || []).map(c => String(c || '').trim());
+      const findCol = (patterns) => {
+        for (let i = 0; i < headerCells.length; i++) {
+          if (patterns.some(p => p.test(headerCells[i]))) return i;
+        }
+        return -1;
+      };
+      const colMap = {
+        road:     findCol([/도로명/]),
+        jibun:    findCol([/번지/]),
+        building: findCol([/건물명|단지/]),
+        unit:     findCol([/세부주소|호수|호$/]),
+        ban:      findCol([/금지|방문금지|거절/]),
+        memo:     findCol([/메모|비고/])
+      };
+      if (colMap.road === -1 && colMap.unit === -1) {
+        colMap.road = 0; colMap.jibun = 1; colMap.building = 2;
+        colMap.unit = 3; colMap.ban = 4; colMap.memo = 5;
+      }
+      const rawRows = all2D.slice(dataStart).filter(r => r.some(c => String(c || '').trim() !== ''));
+      let lastRoad = '', lastJibun = '', lastBuilding = '';
       const rows = rawRows.map(r => {
-        const rawRoad = String(r[0]||'').trim();
-        const rawJibun = String(r[1]||'').trim();
-        const rawBuilding = String(r[2]||'').trim();
+        const g = (idx) => (idx >= 0 && idx < r.length) ? String(r[idx] || '').trim() : '';
+        const rawRoad = g(colMap.road), rawJibun = g(colMap.jibun), rawBuilding = g(colMap.building);
         const road = rawRoad || lastRoad;
         const jibun = rawJibun || lastJibun;
-        // 도로명 또는 번지가 바뀌면 이전 건물명 승계 금지
         const addrChanged = rawRoad !== '' || rawJibun !== '';
         const building = rawBuilding || (addrChanged ? '' : lastBuilding);
-        const unit = String(r[3]||'').trim();
-        lastRoad=road; lastJibun=jibun; lastBuilding=building;
-        return [road, jibun, building, unit];
-      }).filter(r => r[1] !== '' || r[3] !== '');
+        const unit = g(colMap.unit);
+        const banRaw = g(colMap.ban).toUpperCase();
+        const ban = (banRaw === 'Y' || banRaw === 'YES' || banRaw === '1' || banRaw === 'TRUE' || banRaw === 'O' || banRaw === '금지' || banRaw === '거절');
+        const memo = g(colMap.memo);
+        lastRoad = road; lastJibun = jibun; lastBuilding = building;
+        return [road, jibun, building, unit, ban, memo];
+      }).filter(r => r[1] !== '' || r[3] !== '');  // 번지 OR 호수 하나만 있어도 유효
 
       _replaceExcelData = rows;
       document.getElementById('replace-upload-label').textContent = `${file.name} (${rows.length}세대)`;
-      document.getElementById('replace-count').textContent = `총 ${rows.length}세대 감지됨`;
+      const banCnt = rows.filter(r => r[4]).length;
+      document.getElementById('replace-count').textContent = `총 ${rows.length}세대 감지됨` + (banCnt ? ` · 방문금지 ${banCnt}건` : '');
 
-      const preview = rows.slice(0,5).map(r => `<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+      const preview = rows.slice(0,5).map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
       document.getElementById('replace-preview').innerHTML = `<table><tr><th>도로명</th><th>번지</th><th>건물명</th><th>호수</th></tr>${preview}</table>`;
       document.getElementById('replace-preview-wrap').style.display = 'block';
       document.getElementById('replace-btn').disabled = false;
@@ -2912,24 +2941,59 @@ window.handleReplaceFile = function(input) {
 window.replaceWithExcel = async function() {
   if (!_replaceExcelData) return;
   const t = window._territories.find(t => t.id === _editTargetId);
-  if (!confirm(`기존 ${t.totalUnits||0}세대를 새 데이터 ${_replaceExcelData.length}세대로 교체합니다.\n방문 기록은 유지됩니다. 계속하시겠습니까?`)) return;
+  if (!confirm(`기존 ${t.totalUnits||0}세대를 새 데이터 ${_replaceExcelData.length}세대로 교체합니다.\n방문 기록은 최대한 유지됩니다. 계속하시겠습니까?`)) return;
 
+  const nowIso = new Date().toISOString();
+
+  // 새 units 배열 생성
   const newUnits = _replaceExcelData.map((r, i) => ({
     idx: i, road: r[0], jibun: r[1], building: r[2], unit: r[3],
     visitCode: null, visitedBy: null, visitedAt: null, escortRequired: false
   }));
 
+  // visitMap 인덱스 재매핑: 기존 방문기록을 새 인덱스로 옮기기
+  // 매핑 키: road||jibun||building||unit (정확 일치)
+  const oldUnits = t.units || [];
+  const oldVisitMap = t.visitMap || {};
+  const newVisitMap = {};
+
+  // 새 units의 key→newIdx 맵
+  const newKeyMap = {};
+  newUnits.forEach((u, ni) => {
+    const key = `${u.road}||${u.jibun}||${u.building}||${u.unit}`;
+    if (!(key in newKeyMap)) newKeyMap[key] = ni;
+  });
+
+  // 기존 visitMap 재매핑
+  Object.entries(oldVisitMap).forEach(([oldIdx, visit]) => {
+    const ou = oldUnits[parseInt(oldIdx)];
+    if (!ou || !visit) return;
+    const key = `${ou.road}||${ou.jibun}||${ou.building}||${ou.unit}`;
+    const ni = newKeyMap[key];
+    if (ni !== undefined) newVisitMap[String(ni)] = visit;
+  });
+
+  // 방문금지(ban=Y) 세대는 새 visitMap에 자동 체크
+  _replaceExcelData.forEach((r, i) => {
+    if (r[4] && !newVisitMap[String(i)]) {
+      newVisitMap[String(i)] = { code: 'refuse', by: '', at: nowIso };
+    }
+  });
+
+  const preserved = Object.keys(newVisitMap).length;
+  const total = Object.keys(oldVisitMap).length;
+
   try {
     document.getElementById('replace-btn').textContent = '교체 중...';
     document.getElementById('replace-btn').disabled = true;
     await updateDoc(doc(db, 'territories', _editTargetId), {
-      units: newUnits, totalUnits: newUnits.length
+      units: newUnits, totalUnits: newUnits.length, visitMap: newVisitMap
     });
-    if (t) { t.units = newUnits; t.totalUnits = newUnits.length; }
+    if (t) { t.units = newUnits; t.totalUnits = newUnits.length; t.visitMap = newVisitMap; }
     closeModal('edit-modal');
     renderTerritoryTable();
     updateTerritoryStats();
-    alert(`✅ 교체 완료! 총 ${newUnits.length}세대로 업데이트됐습니다.`);
+    alert(`✅ 교체 완료! 총 ${newUnits.length}세대\n방문기록 유지: ${preserved}/${total}건`);
     document.getElementById('replace-btn').textContent = '엑셀로 전체 교체';
   } catch(e) {
     alert('교체 오류: ' + e.message);

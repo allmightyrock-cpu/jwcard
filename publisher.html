@@ -5464,10 +5464,13 @@ function _makeUnitDiv(u) {
     </div>
     <div class="aep-field-row">
       <div class="aep-field"><label>건물명</label><input type="text" class="au-building" value="${_escHtml(u.building)}"></div>
-      <div class="aep-field" style="max-width:100px"><label>세부주소</label><input type="text" class="au-detail" value="${_escHtml(u.detail)}"></div>
+      <div class="aep-field" style="max-width:100px"><label>호수</label><input type="text" class="au-unit" value="${_escHtml(u.unit)}"></div>
+    </div>
+    <div class="aep-field-row">
+      <div class="aep-field"><label>세부주소</label><input type="text" class="au-detail" value="${_escHtml(u.detail)}"></div>
+      <div class="aep-field" style="max-width:100px"><label>메모</label><input type="text" class="au-memo" value="${_escHtml(u.memo)}"></div>
     </div>
     <div class="aep-field-row" style="align-items:flex-end">
-      <div class="aep-field"><label>메모</label><input type="text" class="au-memo" value="${_escHtml(u.memo)}"></div>
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#64748B;white-space:nowrap;padding-bottom:6px">
         <input type="checkbox" class="au-ban" ${u.ban?'checked':''}> 금지
       </label>
@@ -5524,6 +5527,7 @@ window.saveAddrEdit = async function() {
     road:     row.querySelector('.au-road').value.trim(),
     jibun:    row.querySelector('.au-jibun').value.trim(),
     building: row.querySelector('.au-building').value.trim(),
+    unit:     row.querySelector('.au-unit').value.trim(),
     detail:   row.querySelector('.au-detail').value.trim(),
     memo:     row.querySelector('.au-memo').value.trim(),
     ban:      row.querySelector('.au-ban').checked,
