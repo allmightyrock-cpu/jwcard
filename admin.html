@@ -1299,7 +1299,6 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                   <tr><td>정렬</td><td>번호순 / 오래된순 / 최근순 / 회차순 / 진행률순 중 선택</td></tr>
                   <tr><td>🔍 검색</td><td>구역번호·구역명·회차 실시간 검색</td></tr>
                   <tr><td>유형 탭</td><td>구역그룹별 필터</td></tr>
-                  <tr><td>🔔 완료 신청</td><td>전도인이 완료 신청한 구역만 표시</td></tr>
                   <tr><td>⏸ 미완료 신청</td><td>미완료로 마친 구역만 표시</td></tr>
                   <tr><td>⏰ 장기 미반납<span class="man-new">NEW</span></td><td>배정 후 오랫동안 반납되지 않은 카드 일괄 관리 (아래 참조)</td></tr>
                 </table></div>
@@ -1330,7 +1329,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>버튼</th><th>기능</th></tr>
                   <tr><td>👤 배정</td><td>전도인 배정 모달 열기</td></tr>
-                  <tr><td>✅ 완료 처리</td><td>현재 회차 완료 → 회차+1</td></tr>
+                  <tr><td>✅ 완료 처리</td><td>현재 회차 완료 → 회차+1. 이미 완료·반납된 구역(미배정 상태)은 버튼이 <strong>비활성화</strong>됨 — Shift+클릭으로 재처리 가능</td></tr>
                   <tr><td>⏸ 미완료</td><td>완료 상태를 진행중으로 되돌림</td></tr>
                   <tr><td>👁 미리보기</td><td>전도인 구역카드 화면을 새 창으로 미리보기</td></tr>
                   <tr><td>✏️ 편집</td><td>편집 모달 열기 (기본정보/호수목록/엑셀교체)</td></tr>
@@ -1372,10 +1371,11 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-sec-title">완료 / 미완료 처리</div>
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>상황</th><th>처리 방법</th></tr>
-                  <tr><td>전도인이 완료 신청</td><td>목록 <span class="man-badge green">🔔 완료 신청</span> 뱃지 클릭 → 회차+1, 방문기록 초기화</td></tr>
-                  <tr><td>관리자 직접 완료</td><td>구역 카드 팝업 → ✅ 완료 처리</td></tr>
+                  <tr><td>전도인이 완료</td><td>전도인 앱에서 <strong>[구역 완료]</strong> 버튼 탭 → <strong>즉시 완료 처리</strong> (회차+1, 방문기록 초기화). 별도 관리자 승인 불필요</td></tr>
+                  <tr><td>관리자 직접 완료</td><td>구역 카드 팝업 → ✅ 완료 처리 (이미 완료된 구역은 버튼 비활성화)</td></tr>
                   <tr><td>미완료 취소</td><td>구역 카드 팝업 → ⏸ 미완료</td></tr>
                 </table></div>
+                <div class="man-hint success"><span class="man-hint-icon">✅</span><div>전도인이 [구역 완료]를 누르는 즉시 S-13 이력 기록, 회차 증가, 방문기록 초기화가 자동으로 처리됩니다. 관리자·봉사감독자의 별도 승인 단계가 없습니다.</div></div>
               </div>
 
               <div class="man-sec">
@@ -1423,7 +1423,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>권한</th><th>주요 기능</th><th>개인 PIN</th><th>admin.html 접근</th></tr>
                   <tr><td><span class="man-badge gray">일반</span></td><td>이름으로 로그인, 배정된 구역카드 사용</td><td>불필요</td><td>❌</td></tr>
-                  <tr><td><span class="man-badge blue">인도자</span></td><td>구역 배정 패널, 오늘 봉사 출석 관리</td><td>필수</td><td>❌</td></tr>
+                  <tr><td><span class="man-badge blue">인도자</span></td><td>구역 배정 패널, 오늘 봉사 출석 관리</td><td>배정 패널(📋) 진입 시</td><td>❌</td></tr>
                   <tr><td><span class="man-badge amber">봉사감독자</span></td><td>인도자 기능 + 구역 활성/비활성화 + 관리 대시보드(일부)</td><td>필수</td><td>✅ <small>(전도인관리·설정 제외)</small></td></tr>
                   <tr><td><span class="man-badge navy">관리자</span></td><td>시스템 전체 관리 (모든 탭)</td><td>필수</td><td>✅ <small>(전체)</small></td></tr>
                 </table></div>
@@ -1490,7 +1490,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                   <tr><td style="text-align:center">③</td><td><span class="man-badge blue">인도자</span></td><td>사용 후 남은 카드를 반납 (또는 자정에 자동 반납)</td></tr>
                   <tr><td style="text-align:center">④</td><td><span class="man-badge navy">관리자</span></td><td>반납된 카드가 미할당 풀로 돌아옴 → 다시 배분</td></tr>
                 </table></div>
-                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>완료 처리된 구역(<strong>completionStatus = 완료</strong>)은 배분 대상에서 자동 제외됩니다.</div></div>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>완료 처리된 구역(미배정 상태로 전환된 구역)은 배분 대상에서 자동 제외됩니다.</div></div>
               </div>
 
               <!-- 주간 현황판 -->
@@ -1621,7 +1621,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               <!-- 인도자 화면 기능 -->
               <div class="man-sec">
                 <div class="man-sec-title">인도자 패널 — 구조 <span class="man-new">NEW</span></div>
-                <p class="man-p">인도자·봉사감독자가 publisher.html에서 PIN 로그인하면 화면 우측 하단에 <strong>📋 플로팅 버튼</strong>이 표시됩니다. 탭하면 전체화면 인도자 패널이 열리며 3개 탭으로 구성됩니다.</p>
+                <p class="man-p">인도자·봉사감독자는 publisher.html에 <strong>이름으로 로그인</strong>합니다(PIN 불필요). 로그인 후 화면 우측 하단에 <strong>📋 플로팅 버튼</strong>이 표시됩니다. 버튼을 탭하면 <strong>PIN 인증</strong> 후 전체화면 인도자 패널이 열리며 3개 탭으로 구성됩니다.</p>
+                <div class="man-hint info"><span class="man-hint-icon">ℹ</span><div>구역카드 열람·방문 기록 등 일반 전도인 기능은 PIN 없이 자유롭게 사용할 수 있습니다. PIN은 배정 패널에 진입할 때만 요구됩니다.</div></div>
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>탭</th><th>기능</th><th>접근 권한</th></tr>
                   <tr><td>📋 구역 배정</td><td>오늘 예정 구역 · 구역 검색/필터 · 전도인 배정</td><td><span class="man-badge blue">인도자</span> <span class="man-badge amber">봉사감독자</span></td></tr>
@@ -1866,8 +1867,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <p class="man-p"><strong>회차</strong>는 단순 1회 방문이 아니라 호별방문(+ 설정에 따라 부재방문)을 모두 완료한 하나의 사이클입니다.</p>
                 <div class="man-table-wrap"><table class="man-table">
                   <tr><th>상황</th><th>동작</th></tr>
-                  <tr><td>전도인 완료 신청</td><td>부재방문 설정 시 다음 단계로 진행. 마지막 단계면 관리자 처리 대기 상태로 전환.</td></tr>
-                  <tr><td>관리자 완료 처리</td><td>회차 +1, 방문기록 초기화, 다음 호별방문 시작</td></tr>
+                  <tr><td>전도인 완료 신청</td><td>부재방문 설정 시 다음 단계로 진행. 마지막 단계면 <strong>즉시 완료 처리</strong> — 회차+1, 방문기록 초기화. 별도 관리자 승인 없음.</td></tr>
+                  <tr><td>관리자 직접 완료 처리</td><td>구역 카드 팝업 → ✅ 완료 처리. 이미 완료된 구역(미배정 상태)은 버튼 비활성화</td></tr>
                   <tr><td>회차제한 도달</td><td>완료 처리 시 구역 자동 비활성화</td></tr>
                 </table></div>
               </div>
