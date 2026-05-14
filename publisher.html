@@ -438,18 +438,22 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .unit-list{background:#fff}
 
 /* 섹션 헤더 */
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#F8FAFC;border-bottom:1px solid #F1F5F9;border-top:1px solid #F1F5F9;position:sticky;top:0;z-index:10}
-.sec-left{display:flex;align-items:center;gap:8px}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:5px 16px;background:#F8FAFC;border-bottom:1px solid #F1F5F9;border-top:2px solid #E2E8F0;position:sticky;top:0;z-index:10}
+.sec-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .sec-label{font-size:12px;font-weight:500;color:#64748B}
 .sec-count{font-size:11px;color:#94A3B8}
-.sec-jibun{font-size:20px;font-weight:700;color:#1B3A6B;line-height:1}
-.sec-road{font-size:10px;color:#94A3B8;font-weight:400}
-.sec-building{font-size:16px;font-weight:500;color:#64748B}
+.sec-jibun{font-size:11px;color:#94A3B8;font-weight:400}
+.sec-road{font-size:10px;color:#CBD5E1}
+.sec-building{font-size:13px;font-weight:600;color:#374151}
 .sec-badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:500;border:none;cursor:pointer;font-family:inherit}
 .sb-done{background:#DCFCE7;color:#166534}
 .sb-partial{background:#FEF3C7;color:#92400E}
 .sb-none{background:#F1F5F9;color:#94A3B8}
-.sec-btn{font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid #E2E8F0;background:#fff;color:#64748B;cursor:pointer;font-family:inherit}
+.sec-btn-icon{font-size:18px;color:#94A3B8;border:none;background:none;cursor:pointer;padding:4px 6px;border-radius:4px;line-height:1;font-family:inherit}
+/* 커스텀 구분선 */
+.unit-divider{display:flex;align-items:center;gap:8px;padding:6px 16px;background:#FFFBEB;border-top:1px solid #FDE68A;border-bottom:1px solid #FDE68A}
+.unit-divider-line{flex:1;height:1px;background:#FDE68A}
+.unit-divider-label{font-size:11px;color:#92400E;font-weight:600;white-space:nowrap}
 
 /* 여기까지 마커 */
 .here-marker{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#EFF6FF;border-top:1px solid #BFDBFE;border-bottom:1px solid #BFDBFE}
@@ -3944,6 +3948,12 @@ function buildSections(units, visitMap) {
   const bldOrder  = [];
 
   units.forEach((u, i) => {
+    // 구분선: 이전 그룹에 붙임 (새 섹션 생성 안 함)
+    if (u.type === 'divider') {
+      const lastKey = bldOrder[bldOrder.length - 1];
+      if (lastKey) bldGroups[lastKey].entries.push({ u, i, floorOrder: 0, floorLabel: null, isDivider: true });
+      return;
+    }
     const bldKey = `${u.road}__${u.jibun}__${u.building}`;
     if (!bldGroups[bldKey]) {
       const addrPart = [u.road, u.jibun].filter(Boolean).join(' ');
@@ -3994,31 +4004,37 @@ function renderUnitList(visitMap) {
   _sections.forEach((sec, si) => {
     const status = sectionStatus[sec.key]?.status || 'none';
     const hereAt = sectionStatus[sec.key]?.hereAt;
-    const doneCnt = sec.indices.filter(i => visitMap[i]?.code).length;
+    // 구분선은 세대 수에서 제외
+    const realIndices = sec.indices.filter((_,li) => sec.units[li]?.type !== 'divider');
+    const doneCnt = realIndices.filter(i => visitMap[i]?.code).length;
     const badgeClass = status==='done'?'sb-done':status==='partial'?'sb-partial':'sb-none';
     const badgeText = status==='done'?'✓ 완료':status==='partial'?'⏸ 여기까지':'—';
 
     html += `<div class="sec-hdr">
-      <div class="sec-left" style="flex-direction:column;align-items:flex-start;gap:3px">
-        <!-- 1행: 번지(크게) + 도로명(작게) + 층 뱃지 + 카운트 -->
-        <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
-          ${sec.jibun ? `<span class="sec-jibun">${sec.jibun}</span>` : ''}
-          ${sec.road  ? `<span class="sec-road">${sec.road}</span>` : ''}
-          ${sec.floorLabel ? `<span style="font-size:11px;background:#1B3A6B;color:#fff;padding:1px 7px;border-radius:8px;font-weight:500;margin-left:2px">${sec.floorLabel}</span>` : ''}
-          <span class="sec-count" style="margin-left:2px">${doneCnt}/${sec.units.length}</span>
-        </div>
-        <!-- 2행: 건물명 -->
-        ${sec.building ? `<div class="sec-building">${sec.building}</div>` : ''}
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
+      <div class="sec-left">
+        ${(sec.building||sec.jibun) ? `<span class="sec-building">${sec.building||sec.jibun}</span>` : ''}
+        ${sec.road ? `<span class="sec-road">${sec.road}</span>` : ''}
+        ${sec.floorLabel ? `<span style="font-size:10px;background:#1B3A6B;color:#fff;padding:1px 6px;border-radius:6px;font-weight:500">${sec.floorLabel}</span>` : ''}
+        <span class="sec-count">${doneCnt}/${realIndices.length}</span>
         <span class="sec-badge ${badgeClass}">${badgeText}</span>
-        <button class="sec-btn" onclick="openSecSheet('${sec.key}','${sec.label}')">상태 변경</button>
       </div>
+      <button class="sec-btn-icon" onclick="openSecSheet('${sec.key}','${sec.label}')" title="섹션 상태 변경">⋮</button>
     </div>`;
 
     let shownHere = false;
     sec.units.forEach((u, localIdx) => {
       const globalIdx = sec.indices[localIdx];
+
+      // 커스텀 구분선
+      if (u.type === 'divider') {
+        html += `<div class="unit-divider">
+          <div class="unit-divider-line"></div>
+          <span class="unit-divider-label">🔻 ${u.label || '구분'}</span>
+          <div class="unit-divider-line"></div>
+        </div>`;
+        return;
+      }
+
       const visit = visitMap[globalIdx];
       const code = visit?.code || null;
       const isDimmed = status === 'partial' && hereAt !== undefined && globalIdx > hereAt && !code;

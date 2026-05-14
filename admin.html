@@ -2628,10 +2628,17 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <!-- 테이블 바디 -->
       <div class="unit-edit-list" id="unit-edit-list"></div>
       <!-- 행 추가 버튼 -->
-      <button class="addr-add-btn" onclick="appendUnitRow()">
-        <span style="font-size:15px;font-weight:800;line-height:1">+</span>
-        <span>새 행 추가</span>
-      </button>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="addr-add-btn" onclick="appendUnitRow()" style="flex:1">
+          <span style="font-size:15px;font-weight:800;line-height:1">+</span>
+          <span>새 행 추가</span>
+        </button>
+        <button class="addr-add-btn" onclick="appendDividerRow()"
+                style="flex:0 0 auto;background:#FFFBEB;color:#92400E;border-color:#FDE68A">
+          <span style="font-size:13px;line-height:1">─</span>
+          <span>구분선 추가</span>
+        </button>
+      </div>
       <div class="modal-footer" style="margin-top:12px">
         <button class="btn btn-navy" onclick="saveUnits()">💾 저장</button>
         <button class="btn" onclick="closeModal('edit-modal')">취소</button>

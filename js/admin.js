@@ -2644,11 +2644,31 @@ window.openEditModal = function(id) {
 
 function renderUnitEditList() {
   const html = _editUnits.map((u, i) => {
+    const changed = _editChangedRows.has(i);
+    const isNew   = _editNewRows.has(i);
+    // 구분선 타입
+    if (u.type === 'divider') {
+      return `
+    <div class="addr-tbl-row addr-divider-row${isNew?' row-new':changed?' row-changed':''}" id="unit-row-${i}"
+         ondragover="uDragOver(event,${i})" ondrop="uDrop(event,${i})" ondragend="uDragEnd(event)"
+         style="background:#FFFBEB;border-left:3px solid #F59E0B">
+      <div class="addr-drag" draggable="true" ondragstart="uDragStart(event,${i})" title="드래그로 순서 변경">≡</div>
+      <div class="addr-row-no">${i+1}</div>
+      <div style="flex:1;padding:0 6px;display:flex;align-items:center;gap:8px;grid-column:span 5">
+        <span style="color:#F59E0B;font-size:13px;flex-shrink:0">⎯⎯</span>
+        <input type="text" value="${_escH(u.label||'')}" oninput="editUField(${i},'label',this.value)"
+               placeholder="구분선 텍스트 입력 (예: 1·2라인 진입, 3·4라인 진입...)"
+               style="flex:1;border:none;background:none;color:#92400E;font-size:12px;font-weight:600;outline:none;font-family:inherit;min-width:0">
+        <span style="color:#F59E0B;font-size:13px;flex-shrink:0">⎯⎯</span>
+      </div>
+      <div class="addr-row-acts">
+        <button class="addr-act-btn del" title="구분선 삭제" onclick="removeUnit(${i})">×</button>
+      </div>
+    </div>`;
+    }
     const prev    = _editUnits[i-1];
-    const sameAddr = prev && prev.road === u.road && prev.jibun === u.jibun;
+    const sameAddr = prev && prev.type !== 'divider' && prev.road === u.road && prev.jibun === u.jibun;
     const sameBld  = sameAddr && prev.building === u.building;
-    const changed  = _editChangedRows.has(i);
-    const isNew    = _editNewRows.has(i);
     return `
     <div class="addr-tbl-row${isNew?' row-new':changed?' row-changed':''}" id="unit-row-${i}"
          ondragover="uDragOver(event,${i})" ondrop="uDrop(event,${i})" ondragend="uDragEnd(event)">
@@ -2661,6 +2681,8 @@ function renderUnitEditList() {
       <div class="addr-cell-chk"><input type="checkbox" title="동행필수"${u.escortRequired?' checked':''} onchange="editUField(${i},'escortRequired',this.checked)"></div>
       <div class="addr-row-acts">
         <button class="addr-act-btn ins" title="위에 행 삽입" onclick="insertUnitRowAt(${i})">+</button>
+        <button class="addr-act-btn" title="위에 구분선 삽입" onclick="insertDividerAt(${i})"
+                style="background:#FFFBEB;color:#92400E;border-color:#FDE68A">─</button>
         <button class="addr-act-btn del" title="행 삭제" onclick="removeUnit(${i})">×</button>
       </div>
     </div>`;
@@ -2716,6 +2738,28 @@ window.insertUnitRowAt = function(i) {
   setTimeout(() => { const row = document.getElementById('unit-row-'+i); row?.querySelector('.unit-cell input')?.focus(); }, 40);
 };
 
+// 특정 위치 위에 구분선 삽입
+window.insertDividerAt = function(i) {
+  _editUnits.splice(i, 0, { type: 'divider', label: '' });
+  const shiftUp = s => { const ns = new Set(); s.forEach(v => ns.add(v >= i ? v+1 : v)); return ns; };
+  _editChangedRows = shiftUp(_editChangedRows);
+  _editNewRows = shiftUp(_editNewRows);
+  _editNewRows.add(i);
+  renderUnitEditList();
+  updateAddrChangeBar();
+  setTimeout(() => { document.getElementById('unit-row-'+i)?.querySelector('input')?.focus(); }, 40);
+};
+
+// 맨 아래 구분선 추가
+window.appendDividerRow = function() {
+  const i = _editUnits.length;
+  _editUnits.push({ type: 'divider', label: '' });
+  _editNewRows.add(i);
+  renderUnitEditList();
+  updateAddrChangeBar();
+  setTimeout(() => { const el = document.getElementById('unit-edit-list'); el.scrollTop = el.scrollHeight; document.getElementById('unit-row-'+i)?.querySelector('input')?.focus(); }, 40);
+};
+
 // 맨 아래 새 행 추가
 window.appendUnitRow = function() {
   const last = _editUnits[_editUnits.length-1] || {};
@@ -2767,11 +2811,12 @@ window.saveUnits = async function() {
   const t = window._territories.find(t => t.id === _editTargetId);
   if (!t) return;
   _editUnits = _editUnits.map((u, i) => ({ ...u, idx: i }));
+  const realUnits = _editUnits.filter(u => u.type !== 'divider').length;
   try {
     await updateDoc(doc(db, 'territories', _editTargetId), {
-      units: _editUnits, totalUnits: _editUnits.length
+      units: _editUnits, totalUnits: realUnits
     });
-    t.units = _editUnits; t.totalUnits = _editUnits.length;
+    t.units = _editUnits; t.totalUnits = realUnits;
     _editChangedRows = new Set(); _editNewRows = new Set();
     updateAddrChangeBar();
     closeModal('edit-modal');
