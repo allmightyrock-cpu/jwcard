@@ -317,7 +317,14 @@
   .tl-group-tag:hover:not(.active){border-color:#94A3B8;background:#F8FAFC}
 
   @media(max-width:768px){
-    .terr-toolbar{gap:6px}
+    /* 구역 툴바 — 모바일 2단 레이아웃 */
+    .terr-toolbar{flex-direction:column;align-items:stretch;gap:6px}
+    .terr-toolbar-left{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%}
+    .terr-toolbar-left select{flex:1;min-width:0}
+    .terr-toolbar-left .terr-search-input{order:-1;flex:0 0 100%;min-width:0;width:100%}
+    .terr-toolbar-right{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;width:100%}
+    /* 카드 헤더 버튼 2열 그리드 */
+    .card-header > div .btn{flex:1 1 calc(50% - 6px);min-width:0;font-size:12px;padding:8px 6px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .tl-card-grid{grid-template-columns:1fr}
     .tl-name{font-size:13px}
     .tl-groups{display:none}
