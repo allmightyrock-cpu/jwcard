@@ -225,6 +225,9 @@
   .terr-toolbar select:focus,.terr-toolbar select:hover{border-color:#1B3A6B}
   .terr-toolbar .terr-search-input{flex:1;min-width:140px;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:border 0.2s;height:36px;box-sizing:border-box}
   .terr-toolbar .terr-search-input:focus{border-color:#1B3A6B}
+  .terr-month-filter-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0}
+  .terr-month-filter-wrap input:focus{border-color:#1B3A6B!important;outline:none}
+  .terr-month-label{font-size:12px;color:#64748B;white-space:nowrap}
   .terr-view-btn{width:34px;height:34px;border:1.5px solid #E2E8F0;border-radius:7px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:#64748B;transition:all 0.15s;padding:0}
   .terr-view-btn:hover{border-color:#1B3A6B;color:#1B3A6B}
   .terr-view-btn.active{background:#1B3A6B;border-color:#1B3A6B;color:#fff}
@@ -322,6 +325,7 @@
     .terr-toolbar-left{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%}
     .terr-toolbar-left select{flex:1;min-width:0}
     .terr-toolbar-left .terr-search-input{order:-1;flex:0 0 100%;min-width:0;width:100%}
+    .terr-month-filter-wrap{order:1;flex:0 0 100%}
     .terr-toolbar-right{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;width:100%}
     /* 카드 헤더 버튼 2열 그리드 */
     .card-header > div .btn{flex:1 1 calc(50% - 6px);min-width:0;font-size:12px;padding:8px 6px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

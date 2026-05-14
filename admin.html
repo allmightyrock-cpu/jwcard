@@ -177,6 +177,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               <input class="terr-search-input" type="text" id="terr-search"
                 placeholder="🔍  구역명, 번호, 회차 검색"
                 oninput="renderTerritoryTable()">
+              <div class="terr-month-filter-wrap" title="마지막 배정일 기준 N개월 이상 된 구역만 표시">
+                <span class="terr-month-label">🗓</span>
+                <input type="number" id="terr-month-filter" min="0" max="60" placeholder="개월"
+                  style="width:54px;padding:7px 6px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;text-align:center;font-family:inherit;outline:none;height:36px"
+                  oninput="renderTerritoryTable()">
+                <span class="terr-month-label">개월↑</span>
+                <button onclick="document.getElementById('terr-month-filter').value='';renderTerritoryTable()"
+                  id="terr-month-clear" style="display:none;padding:4px 7px;border:1px solid #FECACA;border-radius:6px;background:#FFF5F5;color:#EF4444;font-size:11px;cursor:pointer;font-family:inherit">✕</button>
+              </div>
             </div>
             <div class="terr-toolbar-right">
               <button class="terr-cmpl-btn" id="btn-overdue" onclick="toggleOverduePanel()" title="장기 미반납 구역 보기" style="position:relative">
@@ -3006,6 +3015,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         <label class="adp-label"><input type="checkbox" id="adp-pri-unassigned" checked> 미배정 카드 우선</label>
         <label class="adp-label"><input type="checkbox" id="adp-pri-oldest" checked> 오래된 순 (마지막 배정일 기준)</label>
         <label class="adp-label"><input type="checkbox" id="adp-pri-lowrate"> 진행률 낮은 순</label>
+        <label class="adp-label" style="margin-top:6px;align-items:center;gap:6px">
+          <input type="checkbox" id="adp-month-only-chk" onchange="document.getElementById('adp-month-only-wrap').style.display=this.checked?'flex':'none'">
+          <span>최소 경과 개월 수</span>
+        </label>
+        <div id="adp-month-only-wrap" style="display:none;align-items:center;gap:6px;margin-left:24px;margin-top:4px">
+          <input type="number" id="adp-month-only-val" min="1" max="60" value="3"
+            style="width:56px;padding:6px 8px;border:1.5px solid #E2E8F0;border-radius:7px;font-size:14px;text-align:center;font-family:inherit;outline:none">
+          <span style="font-size:13px;color:#475569">개월 이상 된 구역만 배분 대상</span>
+        </div>
       </div>
 
       <hr class="adp-divider adp-smart-only">

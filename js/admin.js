@@ -1022,6 +1022,9 @@ function _getAdpOpts() {
     priUnassigned: document.getElementById('adp-pri-unassigned')?.checked,
     priOldest:     document.getElementById('adp-pri-oldest')?.checked,
     priLowrate:    document.getElementById('adp-pri-lowrate')?.checked,
+    monthOnly:     document.getElementById('adp-month-only-chk')?.checked
+                     ? Math.max(1, parseInt(document.getElementById('adp-month-only-val')?.value) || 3)
+                     : 0,
     catDist:       document.getElementById('adp-cat-dist')?.checked,
     aptUniq:       document.getElementById('adp-apt-uniq')?.checked,
     resetExisting: document.querySelector('[name="adp-existing"]:checked')?.value === 'reset',
@@ -1110,16 +1113,29 @@ function _calcAutoDist() {
   }
   targetDays.forEach(d => result[d].forEach(id => allocatedSet.add(id)));
 
+  // 개월 수 기준 cutoff (opts.monthOnly > 0 이면 그 이상 된 구역만)
+  const _monthCutoff = opts.monthOnly > 0
+    ? Date.now() - opts.monthOnly * 30.44 * 24 * 60 * 60 * 1000
+    : 0;
+  const _getDateMs = d => d ? (d.toDate ? d.toDate().getTime() : new Date(d).getTime()) : 0;
+
   // 미할당 풀: 완료 제외, 제외 카테고리 제외, 개인구역 제외, 이미 배분된 것 제외
   const pool = _schedAllTerr.filter(t => {
     if (allocatedSet.has(t.id)) return false;
     if (t.completionStatus === 'complete') return false;
     if (_ADP_EXCLUDE_CATS.has(t.category || '')) return false;
     if (t.personalAssignee) return false;
+    // 개월 수 필터: lastAssignedDate 가 cutoff 이전인 것만
+    if (_monthCutoff > 0 && _getDateMs(t.lastAssignedDate) > _monthCutoff) return false;
     return true;
   });
 
-  if (!pool.length) return { ok: false, reason: '배분 가능한 미할당 카드가 없습니다.' };
+  if (!pool.length) return {
+    ok: false,
+    reason: opts.monthOnly > 0
+      ? `${opts.monthOnly}개월 이상 된 배분 가능 카드가 없습니다.`
+      : '배분 가능한 미할당 카드가 없습니다.'
+  };
 
   // 요일당 배분 수 계산
   const perDay = opts.countAuto
@@ -3219,6 +3235,11 @@ window.renderTerritoryTable = function() {
   const rawKw  = (document.getElementById('terr-search')?.value || '').trim();
   const statusF= window._currentStatusFilter || 'all';
   const now    = Date.now();
+  const monthFilterVal = parseInt(document.getElementById('terr-month-filter')?.value) || 0;
+  const monthCutoff = monthFilterVal > 0 ? now - monthFilterVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
+  // 개월 필터 clear 버튼 표시/숨김
+  const mClearBtn = document.getElementById('terr-month-clear');
+  if (mClearBtn) mClearBtn.style.display = monthFilterVal > 0 ? 'inline-block' : 'none';
 
   const allT = window._territories || [];
   const cReq = allT.filter(t => t.completionStatus === 'complete').length;
@@ -3251,6 +3272,13 @@ window.renderTerritoryTable = function() {
     if (kwRest) {
       const noS = String(t.no||'').toLowerCase(), nmS = (t.name||'').toLowerCase();
       if (!noS.includes(kwRest) && !nmS.includes(kwRest)) return false;
+    }
+    // 개월 필터: lastAssignedDate 가 cutoff 이전인 것만
+    if (monthCutoff > 0) {
+      const ms = t.lastAssignedDate
+        ? (t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime())
+        : 0;
+      if (ms > monthCutoff) return false;
     }
     return true;
   });
