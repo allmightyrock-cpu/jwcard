@@ -3759,15 +3759,9 @@ function startTerritoryListener() {
     // UI 갱신
     renderUnitList(_territory.visitMap);
     updateProgress(_territory.units || [], _territory.visitMap);
-    // 완료 신청 배너 동기화
+    // 완료 배너: 구버전 구역(completionStatus='complete') 대응
     const banner = document.getElementById('completion-banner');
-    if (banner) {
-      if (_territory.completionStatus === 'complete') {
-        showCompletionBanner();
-      } else {
-        banner.classList.remove('visible');
-      }
-    }
+    if (banner) banner.classList.remove('visible');
   });
 }
 
@@ -3908,10 +3902,6 @@ function buildCard() {
   buildSections(units, visitMap);
   updateProgress(units, visitMap);
 
-  // 완료 신청 상태 복원 (재접속 시)
-  if (t.completionStatus === 'complete') {
-    showCompletionBanner();
-  }
 }
 
 // 층 번호 추출 함수
@@ -4346,19 +4336,7 @@ function updateBottomBar(units, visitMap) {
     descInc.textContent = '여기까지 표시 시 활성화';
   }
 
-  // ── 구역완료 버튼 — 전도인 판단으로 항상 활성 ──
-  if (_territory.completionStatus === 'complete') {
-    // 이미 신청된 상태
-    btnCom.disabled = false;
-    btnCom.classList.remove('active');
-    btnCom.classList.add('submitted');
-    btnCom.onclick = cancelComplete;
-    document.getElementById('btn-complete-label').textContent = '신청 취소하기';
-    descCom.textContent = '관리자 처리 전까지 가능';
-    return;
-  }
-
-  // 신청 전 — 항상 활성화, 현황 정보만 표시
+  // ── 구역완료 버튼 — 항상 활성 ──
   btnCom.classList.remove('submitted');
   btnCom.classList.add('active');
   btnCom.disabled = false;
@@ -4392,34 +4370,77 @@ window.submitIncomplete = async function() {
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
 
-// 구역 완료 제출
+// 구역 완료 — 즉시 처리 (회차 기록 + 반납)
 window.submitComplete = async function() {
-  const units = _territory.units || [];
+  const units    = _territory.units    || [];
   const visitMap = _territory.visitMap || {};
-  const done = Object.values(visitMap).filter(v => v?.code).length;
-  const escortCount = Object.values(visitMap).filter(v => v?.code === 'escort').length;
-  const revisitCnt = Object.values(visitMap).filter(v => v?.code === 'revisit').length;
-  const unvisited  = units.length - done;
+  const done         = Object.values(visitMap).filter(v => v?.code).length;
+  const escortCount  = Object.values(visitMap).filter(v => v?.code === 'escort').length;
+  const revisitCnt   = Object.values(visitMap).filter(v => v?.code === 'revisit').length;
+  const unvisited    = units.length - done;
   const lines = [`총 ${units.length}세대 중 ${done}세대 방문 완료`];
   if (unvisited > 0)   lines.push(`· 미방문 ${unvisited}세대 있음`);
   if (revisitCnt > 0)  lines.push(`· 재방문 예정 ${revisitCnt}세대 있음`);
   if (escortCount > 0) lines.push(`· 동행필수 ${escortCount}세대 포함`);
   lines.push('');
-  lines.push('구역 완료로 신청하시겠습니까?');
+  lines.push('구역을 완료 처리하고 반납하시겠습니까?');
   if (!confirm(lines.join('\n'))) return;
+
+  const newCycle = (_territory.cycle || 1) + 1;
+
+  // 배정일 추출 (S-13 기록용)
+  let assignedAtStr = '';
+  if (_territory.lastAssignedDate) {
+    try {
+      const ad = _territory.lastAssignedDate.toDate
+        ? _territory.lastAssignedDate.toDate()
+        : new Date(_territory.lastAssignedDate);
+      if (!isNaN(ad)) assignedAtStr =
+        ad.getFullYear() + '-' + String(ad.getMonth()+1).padStart(2,'0') + '-' + String(ad.getDate()).padStart(2,'0');
+    } catch(e) {}
+  }
+  if (!assignedAtStr && _territory.personalAssignedDate) assignedAtStr = _territory.personalAssignedDate;
+
+  // 방문한 전도인 목록 (S-13 기록용)
+  const assigned = (_territory.assignedPublishers && _territory.assignedPublishers.length > 0)
+    ? _territory.assignedPublishers
+    : (_territory.personalAssignee ? [_territory.personalAssignee] : [_pubName]);
+  const visitedPubs = [...new Set(Object.values(visitMap).map(v => v?.by).filter(Boolean))];
+  const publishers  = [...new Set([...assigned, ...visitedPubs])];
+
+  // visitMode: admin/config에서 로드 (실패 시 기본값 '호별')
+  let visitMode = '호별';
+  try {
+    const cfgSnap = await getDoc(doc(db, 'admin', 'config'));
+    if (cfgSnap.exists()) visitMode = cfgSnap.data().visitMode || '호별';
+  } catch(e) {}
+
+  const historyEntry = {
+    cycle:       _territory.cycle || 1,
+    completedAt: new Date().toISOString().slice(0, 10),
+    publishers:  publishers,
+    visitMode:   visitMode,
+    assignedAt:  assignedAtStr,
+    unitVisits:  visitMap
+  };
+
   try {
     _ignoreNextSnap = true;
     await updateDoc(doc(db, 'territories', _territoryId), {
-      completionStatus: 'complete',
-      completedAt: serverTimestamp(),
-      completedBy: _pubName
+      cycle:              newCycle,
+      status:             '미배정',
+      completionRate:     0,
+      completionStatus:   null,
+      completedAt:        serverTimestamp(),
+      completedBy:        _pubName,
+      assignedPublishers: [],
+      visitMap:           {},
+      lastCompletedDate:  serverTimestamp(),
+      lastAssignedDate:   serverTimestamp(),
+      cycleHistory:       [...(_territory.cycleHistory || []), historyEntry]
     });
-    _territory.completionStatus = 'complete';
-    _territory.completedBy = _pubName;
-    // 배너 표시
-    showCompletionBanner();
-    // 버튼 상태 전환 (exitCard 호출 안 함)
-    updateBottomBar(units, visitMap);
+    alert('수고하셨습니다! 구역이 완료 처리되었습니다 🙏');
+    exitCard();
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
 
