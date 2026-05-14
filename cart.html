@@ -413,6 +413,8 @@ function getUsedMembers(excludeKey){
 function render(){
   const app=document.getElementById("app");
   if(S.screen==="login"){ app.innerHTML=loginHTML(); bindLogin(); return; }
+  // 폼 화면이면 render 직전 DOM → S.form 동기화 (모달 열린 중이면 syncForm 내부에서 무시)
+  syncForm();
   app.innerHTML=headerHTML()+tabsHTML()+
     "<main>"+(S.loading?"<div class=\"loading\"><div class=\"spinner\"></div> 불러오는 중...</div>":mainHTML())+"</main>"+
     editModalHTML()+settingsModalHTML()+applyModalHTML();
@@ -1253,6 +1255,12 @@ function bind(){
   // 폼
   document.getElementById("ftype")?.addEventListener("change",()=>{syncForm();applyTypeDefaults();render();});
   ["fsap","fsh","fsm","feap","feh","fem"].forEach(id=>document.getElementById(id)?.addEventListener("change",()=>{syncForm();render();}));
+  // 인도자·장소·카트 드롭다운 — change 시 즉시 S.form 반영 (render 없이 값만 저장)
+  document.getElementById("fcond")?.addEventListener("change",()=>syncForm());
+  TEAMS.forEach(k=>{
+    document.getElementById("floc"+k)?.addEventListener("change",()=>syncForm());
+    document.getElementById("fcart"+k)?.addEventListener("change",()=>syncForm());
+  });
   document.querySelectorAll(".nt-btn").forEach(b=>b.addEventListener("click",()=>{syncForm();S.form.numTeams=parseInt(b.dataset.v);render();}));
   // 분 선택 버튼
   document.querySelectorAll(".min-btn").forEach(b=>b.addEventListener("click",()=>{
@@ -1402,25 +1410,11 @@ function openModal(k,ri,ci){
 }
 function closeModal(){
   document.getElementById("movl")?.classList.remove("open");
-  S.modal=false;
-  // 폼 화면이면 DOM 값 저장 후 재렌더
-  if(S.screen==='create'||S.screen==='edit'){
-    const g=id=>{const el=document.getElementById(id);return el?el.value:null;};
-    const sv=(key,id,ae=false)=>{const v=g(id);if(v===null)return;if(!ae&&v==='')return;if(S.form)S.form[key]=v;};
-    sv('type','ftype',true);sv('month','fmonth');sv('day','fday');sv('weekday','fwkd',true);
-    sv('startAmPm','fsap',true);sv('startHour','fsh');sv('startMin','fsm');
-    sv('endAmPm','feap',true);sv('endHour','feh');sv('endMin','fem');
-    sv('conductor','fcond',true);
-    TEAMS.forEach(k=>{
-      if(!S.form||!S.form.teams[k]) return;
-      const loc=g('floc'+k);if(loc!==null) S.form.teams[k].location=loc;
-      const cart=g('fcart'+k);if(cart!==null) S.form.teams[k].cartPerson=cart;
-    });
-  }
+  S.modal=false;   // modal=false 후 syncForm 가능 → render() 내부에서 자동 호출됨
   render();
 }
 function openEditModal(k,ri,ci,name){S.editTarget={k,ri:parseInt(ri),ci:parseInt(ci),name};S.editModal=true;render();}
-function closeEditModal(){S.editModal=false;S.editTarget=null;render();}
+function closeEditModal(){syncForm();S.editModal=false;S.editTarget=null;render();}
 
 function pickMember(name){
   const parts=(S.modalTarget||"").split(":");
