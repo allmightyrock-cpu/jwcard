@@ -3194,16 +3194,6 @@ window.handleLogin = async function() {
     localStorage.setItem('jwcard_no', noInput);
     localStorage.setItem('jwcard_terr_id', _territoryId);
 
-    // 인도자/봉사감독자/관리자 → PIN 인증 먼저
-    if (_isLeader) {
-      // PIN 인증 전 최신 인증 방식 로드
-      await loadLeaderAuthConfig();
-      document.getElementById('login-screen').style.display = 'none';
-      _pinNextAction = 'enterCard';  // ★ 카드로 진입하도록 명시 (이전 leaderOnly 잔여 상태 방지)
-      showPinScreen('verify');
-      return;
-    }
-
     // 동의 여부 확인
     if (!_pubDoc.consentGiven) {
       document.getElementById('login-screen').style.display = 'none';
@@ -3261,11 +3251,6 @@ window.clearSavedName = function() {
 // ── 이어서 하기 / 다른 구역 ──
 window.resumeCard = function() {
   document.getElementById('resume-screen').style.display = 'none';
-  if (_isLeader) {
-    // 인도자 이상은 이어서 하기에도 PIN 재확인
-    showPinScreen('verify');
-    return;
-  }
   enterCard();
 };
 
@@ -3528,9 +3513,10 @@ window.pinBack = function() {
   _pinBuffer = '';
   _pinMode = '';
   document.getElementById('pin-screen').style.display = 'none';
-  // 어느 화면으로 돌아갈지
-  if (document.getElementById('resume-screen').style.display === 'flex') {
-    // 이미 숨겨진 상태 — 로그인으로
+  // 배정 패널 진입 PIN → 카드 화면으로 복귀
+  if (_pinNextAction === 'openDrawer') {
+    document.getElementById('card-screen').style.display = 'block';
+    return;
   }
   document.getElementById('login-screen').style.display = 'flex';
 };
@@ -3634,10 +3620,15 @@ function _clearLeaderSession() {
 
 // PIN 인증/설정 완료 후 다음 동작
 function afterPinSuccess() {
-  if (_pinNextAction === 'leaderOnly') {
+  if (_pinNextAction === 'leaderOnly' || _pinNextAction === 'openDrawerStandalone') {
     _saveLeaderSession(); // 세션 저장 (4시간)
     // 중간 화면 없이 바로 전체화면 배정 패널로 진입
     openLeaderDrawer(true /* standalone */);
+  } else if (_pinNextAction === 'openDrawer') {
+    _saveLeaderSession(); // 세션 저장 (4시간)
+    // 카드 화면 복원 후 배정 패널 열기
+    document.getElementById('card-screen').style.display = 'block';
+    openLeaderDrawer(false);
   } else {
     _saveLeaderSession(); // 카드 로그인 시에도 인도자 세션 저장
     // 동의 여부 확인 후 카드 진입
@@ -4613,6 +4604,16 @@ let _ldGroups = []; // admin/config.territoryGroups
 let _ldPublishers     = [];
 
 window.openLeaderDrawer = async function(standalone) {
+  // ── PIN 인증 확인: 유효한 세션이 없으면 PIN 먼저 ──
+  if (!_loadLeaderSession()) {
+    await loadLeaderAuthConfig();
+    _pinNextAction = standalone ? 'openDrawerStandalone' : 'openDrawer';
+    // 카드 화면이 열려 있으면 잠시 숨기고 PIN 화면 표시
+    document.getElementById('card-screen').style.display = 'none';
+    showPinScreen('verify');
+    return;
+  }
+
   const isStandalone = !!standalone || !_territoryId;
 
   // 헤더 정보 업데이트
