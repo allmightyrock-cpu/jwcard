@@ -2439,10 +2439,14 @@ window.bulkForceReturn = async function() {
 
 // 완료 처리
 window.completeTerritory = async function(id, name) {
-  if (!confirm(`"${name}" 구역을 완료 처리하시겠습니까?
-회차가 1 증가하고 완료일이 기록됩니다.`)) return;
   const t = window._territories.find(t => t.id === id);
   if (!t) return;
+  // 이미 완료·반납된 구역 — 강제 처리 여부 재확인
+  if (t.status === '미배정') {
+    if (!confirm(`⚠️ "${name}" 구역은 이미 완료·반납된 상태입니다.\n\n다시 완료 처리하면 회차가 또 한 번 증가합니다.\n정말 계속하시겠습니까?`)) return;
+  } else {
+    if (!confirm(`"${name}" 구역을 완료 처리하시겠습니까?\n회차가 1 증가하고 완료일이 기록됩니다.`)) return;
+  }
   const newCycle = (t.cycle || 1) + 1;
   // 배정일 추출 (S-13 기록용)
   let _assignedAtStr = '';
@@ -3411,6 +3415,22 @@ window.openTerritoryCard = function(id) {
     activeBtn.style.background = isInact ? '#FEE2E2' : '#DCFCE7';
     activeBtn.style.color      = isInact ? '#991B1B' : '#166534';
     activeBtn.style.borderColor= isInact ? '#FECACA' : '#BBF7D0';
+  }
+
+  // ── 완료 처리 버튼: 미배정(이미 완료) 상태면 비활성 표시 ──
+  const completeBtn = document.getElementById('tc-complete-btn');
+  if (completeBtn) {
+    const alreadyDone = t.status === '미배정';
+    completeBtn.disabled = alreadyDone;
+    completeBtn.style.opacity    = alreadyDone ? '0.45' : '1';
+    completeBtn.style.cursor     = alreadyDone ? 'not-allowed' : 'pointer';
+    completeBtn.title = alreadyDone
+      ? '이미 완료·반납된 구역입니다 (다시 누르면 회차 증가)'
+      : '현재 회차를 완료 처리하고 반납합니다';
+    // 관리자 강제 실행: disabled여도 Shift+클릭 시 허용 (title로 안내)
+    completeBtn.onclick = alreadyDone
+      ? (e) => { if (e.shiftKey) completeTerritoryFromCard(); }
+      : completeTerritoryFromCard;
   }
 
   document.getElementById('terr-card-modal').classList.add('open');

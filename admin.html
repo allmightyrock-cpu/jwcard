@@ -2460,7 +2460,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <textarea id="tc-memo" style="width:100%;min-height:60px;resize:vertical;padding:8px;border:1.5px solid #E2E8F0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box;transition:border 0.2s" onfocus="this.style.borderColor='#1B3A6B'" onblur="this.style.borderColor='#E2E8F0'"></textarea>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 10px">
-      <button class="btn btn-sm" style="background:#DCFCE7;color:#166534;border:1.5px solid #BBF7D0" onclick="completeTerritoryFromCard()">✅ 완료 처리</button>
+      <button id="tc-complete-btn" class="btn btn-sm" style="background:#DCFCE7;color:#166534;border:1.5px solid #BBF7D0" onclick="completeTerritoryFromCard()">✅ 완료 처리</button>
       <button class="btn btn-sm" style="background:#FEF9C3;color:#A16207;border:1.5px solid #FDE68A" onclick="incompleteTerritoryFromCard()">⏸ 미완료</button>
       <button class="btn btn-sm" onclick="previewTerritoryFromCard()">👁 미리보기</button>
       <button class="btn btn-sm" onclick="openEditModalFromCard()">✏️ 편집</button>
