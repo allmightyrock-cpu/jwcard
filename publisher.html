@@ -438,13 +438,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .unit-list{background:#fff}
 
 /* 섹션 헤더 */
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:5px 16px;background:#F8FAFC;border-bottom:1px solid #F1F5F9;border-top:2px solid #E2E8F0;position:sticky;top:0;z-index:10}
-.sec-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 16px;background:#F8FAFC;border-bottom:1px solid #F1F5F9;border-top:2px solid #D1D5DB;position:sticky;top:0;z-index:10}
+.sec-left{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .sec-label{font-size:12px;font-weight:500;color:#64748B}
 .sec-count{font-size:11px;color:#94A3B8}
-.sec-jibun{font-size:11px;color:#94A3B8;font-weight:400}
-.sec-road{font-size:10px;color:#CBD5E1}
-.sec-building{font-size:13px;font-weight:600;color:#374151}
+.sec-jibun{font-size:20px;font-weight:800;color:#1B3A6B;line-height:1;letter-spacing:-0.5px}
+.sec-road{font-size:11px;color:#475569;font-weight:400}
+.sec-building{font-size:12px;font-weight:500;color:#64748B}
 .sec-badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:500;border:none;cursor:pointer;font-family:inherit}
 .sb-done{background:#DCFCE7;color:#166534}
 .sb-partial{background:#FEF3C7;color:#92400E}
@@ -4014,8 +4014,11 @@ function renderUnitList(visitMap) {
 
     html += `<div class="sec-hdr">
       <div class="sec-left">
-        ${(sec.building||sec.jibun) ? `<span class="sec-building">${sec.building||sec.jibun}</span>` : ''}
-        ${sec.road ? `<span class="sec-road">${sec.road}</span>` : ''}
+        ${sec.jibun ? `<span class="sec-jibun">${sec.jibun}</span>` : ''}
+        <div style="display:flex;flex-direction:column;gap:1px;justify-content:center">
+          ${sec.road ? `<span class="sec-road">${sec.road}</span>` : ''}
+          ${sec.building ? `<span class="sec-building">${sec.building}</span>` : ''}
+        </div>
         ${sec.floorLabel ? `<span style="font-size:10px;background:#1B3A6B;color:#fff;padding:1px 6px;border-radius:6px;font-weight:500">${sec.floorLabel}</span>` : ''}
         <span class="sec-count">${doneCnt}/${realIndices.length}</span>
         <span class="sec-badge ${badgeClass}">${badgeText}</span>
