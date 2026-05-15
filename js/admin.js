@@ -725,7 +725,7 @@ function _refreshSchedWeeklyBoard() {
       : count === 0
       ? `<div class="sched-board-count brd-empty">─</div>`
       : `<div class="sched-board-count brd-has">${count}장</div>`;
-    return `<div class="sched-board-cell${isActive?' brd-on':''}${isSelected?' brd-sel':''}${isToday?' brd-today':''}" onclick="selectSchedDay(${i})">
+    return `<div class="sched-board-cell${isActive?' brd-on':''}${isSelected?' brd-sel':''}${isToday?' brd-today':''}" onclick="openSchedDayModal(${i})">
       <div class="sched-board-day">${name}${todayDot}</div>
       <div class="sched-board-date">${weekDates[i].label}</div>
       ${countHtml}
@@ -773,21 +773,65 @@ window.setSchedGalStatusFilter = function(status) {
   renderSchedGallery();
 };
 
+// 요일 선택 (내부 상태만 변경, 모달 미열림)
 window.selectSchedDay = function(day) {
   _schedDay = day;
+  _refreshSchedWeeklyBoard();
+  // 배분 패널이 열려 있으면 내용 갱신
+  const panel = document.getElementById('sched-day-content');
+  if (panel && panel.style.display !== 'none') {
+    const DAY_NAMES = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+    const titleEl = document.getElementById('sched-day-title');
+    if (titleEl) titleEl.textContent = '📋 ' + DAY_NAMES[day] + ' 카드 배분';
+    const ids = _schedData[day] || [];
+    const badge = document.getElementById('sched-count-badge');
+    if (badge) badge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
+    if (_schedMode === 'search')  renderUnallocatedList();
+    if (_schedMode === 'gallery') renderSchedGallery();
+  }
+};
+
+// 요일 셀 클릭 → 배분 현황 팝업 열기
+window.openSchedDayModal = function(day) {
   const DAY_NAMES = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
-  document.getElementById('sched-day-title').textContent = '📅 ' + DAY_NAMES[day] + ' 배분 현황';
-  document.getElementById('sched-day-content').style.display = 'block';
-  // 카드 배분 검색창 초기화
-  const _si = document.getElementById('sched-search-input');
-  const _gi = document.getElementById('sched-gal-search');
-  if (_si) _si.value = '';
-  if (_gi) _gi.value = '';
-  // 자동 반납 체크박스 상태 동기화
+  _schedDay = day;
+  _refreshSchedWeeklyBoard();
+  // 제목 설정
+  const titleEl = document.getElementById('sdm-title');
+  if (titleEl) titleEl.textContent = '📅 ' + DAY_NAMES[day] + ' 배분 현황';
+  // 자동 반납 체크박스 동기화
   const chk = document.getElementById('sched-auto-return-chk');
   if (chk) chk.checked = _schedDayAutoReturn[day] !== false;
-  _refreshSchedWeeklyBoard();
+  // 칩 렌더
   renderSchedTerrChips();
+  // 모달 표시
+  const modal = document.getElementById('sched-day-modal');
+  if (modal) modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+// 모달 닫기
+window.closeSchedDayModal = function() {
+  const modal = document.getElementById('sched-day-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+};
+
+// 배분 패널 열기 (모달 → 카드 배분하기 버튼)
+window.openSchedDistPanel = function() {
+  closeSchedDayModal();
+  const DAY_NAMES = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+  const titleEl = document.getElementById('sched-day-title');
+  if (titleEl) titleEl.textContent = '📋 ' + DAY_NAMES[_schedDay] + ' 카드 배분';
+  const ids = _schedData[_schedDay] || [];
+  const badge = document.getElementById('sched-count-badge');
+  if (badge) badge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
+  const panel = document.getElementById('sched-day-content');
+  if (panel) panel.style.display = 'block';
+  const si = document.getElementById('sched-search-input');
+  const gi = document.getElementById('sched-gal-search');
+  if (si) si.value = '';
+  if (gi) gi.value = '';
   if (_schedMode === 'search')  renderUnallocatedList();
   if (_schedMode === 'gallery') renderSchedGallery();
 };
@@ -1385,58 +1429,26 @@ window.confirmAutoDist = async function() {
 };
 
 // ── 배정된 구역 칩 카드 목록 ──
-let _schedChipsOpen = true; // 배분 목록 펼치기/접기 상태
-
-window.toggleSchedChips = function() {
-  _schedChipsOpen = !_schedChipsOpen;
-  const body = document.getElementById('sched-chips-body');
-  const arrow = document.getElementById('sched-chips-arrow');
-  const hdr = document.getElementById('sched-chips-hdr');
-  if (body) body.style.display = _schedChipsOpen ? '' : 'none';
-  if (arrow) arrow.textContent = _schedChipsOpen ? '▾' : '▸';
-  if (hdr) hdr.classList.toggle('chips-hdr-closed', !_schedChipsOpen);
-};
-
-function _updateChipsMini(ids, catColor) {
-  const miniEl = document.getElementById('sched-chips-mini');
-  if (!miniEl) return;
-  if (!ids.length) {
-    miniEl.innerHTML = '<span style="font-size:11px;color:#94A3B8">배분 없음</span>';
-    return;
-  }
-  const MAX = 7;
-  const shown = ids.slice(0, MAX);
-  const rest = ids.length - shown.length;
-  let html = shown.map(id => {
-    const t = _schedAllTerr.find(t => t.id === id);
-    if (!t) return '';
-    const { bg, cl } = catColor(t.category);
-    return `<span class="chips-mini-badge" style="background:${bg};color:${cl}">${t.no}</span>`;
-  }).join('');
-  if (rest > 0) html += `<span class="chips-mini-badge" style="background:#F1F5F9;color:#64748B">+${rest}</span>`;
-  miniEl.innerHTML = html;
-}
-
+// ── 배분된 구역 칩 (모달 내 렌더) ──
 function renderSchedTerrChips() {
   const ids = _schedData[_schedDay] || [];
-  const badge = document.getElementById('sched-count-badge');
-  if (badge) badge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
   const catColor = _buildCatColorMap();
-  _updateChipsMini(ids, catColor);
+  // 모달 배지
+  const sdmBadge = document.getElementById('sdm-badge');
+  if (sdmBadge) sdmBadge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
+  // 배분 패널 배지 (열려있을 때 동기화)
+  const panelBadge = document.getElementById('sched-count-badge');
+  if (panelBadge) panelBadge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
+  // 주간 현황판 배지 갱신
+  _refreshSchedWeeklyBoard();
   const wrap = document.getElementById('sched-terr-chips');
   if (!wrap) return;
-  const filtered = ids.filter(id => {
-    const t = _schedAllTerr.find(t => t.id === id);
-    if (!t) return false;
-    if (_schedCatFilter && (t.category || '') !== _schedCatFilter) return false;
-    return true;
-  });
-  if (!filtered.length) {
-    wrap.innerHTML = `<div style="text-align:center;padding:20px 16px;color:#94A3B8;font-size:13px;border:1.5px dashed #E2E8F0;border-radius:10px">${ids.length && _schedCatFilter ? '해당 구역 유형이 없습니다.' : '배분된 구역이 없습니다.<br>아래에서 구역을 추가하세요.'}</div>`;
+  if (!ids.length) {
+    wrap.innerHTML = `<div style="text-align:center;padding:28px 16px;color:#94A3B8;font-size:13px">배분된 구역이 없습니다.<br><span style="font-size:11px">아래 [카드 배분하기]에서 구역을 추가하세요.</span></div>`;
     return;
   }
   wrap.innerHTML = '<div class="scc-list">'
-    + filtered.map(id => {
+    + ids.map(id => {
       const t = _schedAllTerr.find(t => t.id === id);
       if (!t) return '';
       const { bg, cl } = catColor(t.category);
@@ -1715,12 +1727,8 @@ window.addSchedTerr = async function(id) {
   if (_schedData[_schedDay].includes(id)) return;
   _schedData[_schedDay].push(id);
   await _saveSchedDay();
-  const si = document.getElementById('sched-search-input');
-  const sr = document.getElementById('sched-search-results');
-  if (si) si.value = '';
-  if (sr) sr.style.display = 'none';
-  _refreshSchedWeeklyBoard();
   renderSchedTerrChips();
+  if (_schedMode === 'search')  renderUnallocatedList();
   if (_schedMode === 'gallery') renderSchedGallery();
   if (_isCalendarVisible()) renderSchedCalendar();
 };

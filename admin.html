@@ -340,44 +340,46 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <!-- ② 주간 배정 현황판 -->
             <div id="sched-weekly-board" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px"></div>
 
-            <!-- ② 선택된 요일 상세 -->
+            <!-- 요일별 배분 현황 팝업 모달 -->
+            <div id="sched-day-modal" class="sdm-overlay" style="display:none" onclick="if(event.target===this)closeSchedDayModal()">
+              <div class="sdm-box">
+                <div class="sdm-hdr">
+                  <div>
+                    <div id="sdm-title" class="sdm-title"></div>
+                    <div style="margin-top:5px;display:flex;align-items:center;gap:8px">
+                      <span id="sdm-badge" class="sdm-badge">배분 없음</span>
+                    </div>
+                  </div>
+                  <button class="sdm-close" onclick="closeSchedDayModal()">✕</button>
+                </div>
+                <div class="sdm-autoreturn">
+                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;cursor:pointer;user-select:none;flex:1">
+                    <input type="checkbox" id="sched-auto-return-chk" checked onchange="toggleSchedAutoReturn()" style="width:15px;height:15px;accent-color:#16A34A;cursor:pointer;flex-shrink:0">
+                    자정에 자동 반납
+                  </label>
+                  <span id="sched-auto-return-hint" style="font-size:11px;color:#94A3B8">해제 시 다음 주에도 유지</span>
+                </div>
+                <div id="sched-terr-chips" class="sdm-chips-area"></div>
+                <div class="sdm-footer">
+                  <button class="sdm-dist-btn" onclick="openSchedDistPanel()">📋 카드 배분하기</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ② 배분 패널 (카드 배분하기 버튼 클릭 후 표시) -->
             <div id="sched-day-content" style="display:none">
 
-              <!-- 요일 제목 + 배분 수 -->
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                <div id="sched-day-title" style="font-size:15px;font-weight:700;color:#1B3A6B"></div>
-                <span id="sched-count-badge" style="font-size:12px;background:#EFF6FF;color:#1D4ED8;padding:3px 10px;border-radius:10px;font-weight:600"></span>
-              </div>
-
-              <!-- 자동 반납 설정 -->
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:#F8FAFC;border-radius:8px;border:1px solid #F1F5F9">
-                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;cursor:pointer;user-select:none;flex:1">
-                  <input type="checkbox" id="sched-auto-return-chk" checked onchange="toggleSchedAutoReturn()" style="width:15px;height:15px;accent-color:#16A34A;cursor:pointer;flex-shrink:0">
-                  자정에 자동 반납
-                </label>
-                <span id="sched-auto-return-hint" style="font-size:11px;color:#94A3B8">해제 시 다음 주에도 유지</span>
-              </div>
-
-              <!-- 배분된 구역 목록 (접기/펼치기) -->
-              <div class="chips-collapse-wrap" id="sched-chips-wrap">
-                <div class="chips-collapse-hdr" id="sched-chips-hdr" onclick="toggleSchedChips()">
-                  <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;overflow:hidden">
-                    <span style="font-size:12px;font-weight:700;color:#1B3A6B;white-space:nowrap;flex-shrink:0">배분된 구역</span>
-                    <div id="sched-chips-mini" class="chips-mini-badges"></div>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:8px">
-                    <span class="chips-hdr-hint">✕로 제거</span>
-                    <span id="sched-chips-arrow" class="chips-collapse-arrow">▾</span>
-                  </div>
-                </div>
-                <div id="sched-chips-body" class="chips-collapse-body">
-                  <div id="sched-terr-chips" style="padding:8px 0 4px"></div>
+              <!-- 요일 제목 + 현황 보기 버튼 -->
+              <div class="sdp-hdr">
+                <div id="sched-day-title" style="font-size:14px;font-weight:700;color:#1B3A6B"></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span id="sched-count-badge" style="font-size:12px;background:#EFF6FF;color:#1D4ED8;padding:3px 10px;border-radius:10px;font-weight:600"></span>
+                  <button class="sdp-status-btn" onclick="openSchedDayModal(_schedDay)">📋 현황</button>
                 </div>
               </div>
 
               <!-- 카드 배분 영역 -->
-              <div style="margin-top:16px;padding-top:14px;border-top:1px solid #F1F5F9">
-                <div style="font-size:13px;font-weight:700;color:#1B3A6B;margin-bottom:10px">📋 카드 배분 <span style="font-size:11px;font-weight:400;color:#94A3B8">— 배분할 구역을 선택하세요</span></div>
+              <div>
 
                 <!-- 모드 토글 -->
                 <div style="display:flex;gap:6px;margin-bottom:10px">
@@ -467,6 +469,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                   <div id="sched-gallery-grid"></div>
                 </div>
 
+              </div><!-- /카드 배분 내부 div -->
               </div><!-- /카드 배분 -->
 
               <div class="sched-save-msg" id="sched-save-msg">✓ 저장되었습니다</div>

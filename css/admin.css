@@ -626,18 +626,26 @@
   .sched-mode-btn .smb-title{display:block;font-size:13px;font-weight:600}
   .sched-mode-btn .smb-sub{display:block;font-size:10px;font-weight:400;opacity:0.65;margin-top:2px}
 
-  /* ── 배분된 구역 목록 아코디언 ── */
-  .chips-collapse-wrap{border:1.5px solid #E2E8F0;border-radius:10px;overflow:hidden;margin-bottom:10px;background:#fff}
-  .chips-collapse-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;background:#F8FAFC;border-bottom:1.5px solid #E2E8F0;transition:background 0.15s;-webkit-tap-highlight-color:transparent}
-  .chips-collapse-hdr:hover{background:#EFF6FF}
-  .chips-collapse-hdr.chips-hdr-closed{border-bottom:none}
-  .chips-collapse-arrow{font-size:14px;color:#94A3B8;transition:none;flex-shrink:0}
-  .chips-hdr-hint{font-size:11px;color:#CBD5E1}
-  .chips-mini-badges{display:flex;flex-wrap:nowrap;gap:3px;overflow:hidden;min-width:0}
-  .chips-mini-badge{font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;flex-shrink:0}
-  .chips-collapse-body{overflow:hidden}
-  .chips-collapse-body.chips-body-closed{display:none}
-  .chips-collapse-body > #sched-terr-chips{padding:8px}
+  /* ── 배분 현황 팝업 모달 ── */
+  .sdm-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
+  .sdm-box{background:#fff;border-radius:16px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.22);overflow:hidden}
+  .sdm-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 16px 12px;border-bottom:1px solid #F1F5F9;flex-shrink:0}
+  .sdm-title{font-size:16px;font-weight:700;color:#1B3A6B}
+  .sdm-badge{font-size:12px;background:#EFF6FF;color:#1D4ED8;padding:3px 10px;border-radius:10px;font-weight:600;display:inline-block}
+  .sdm-close{background:none;border:none;font-size:22px;color:#94A3B8;cursor:pointer;padding:0;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+  .sdm-close:hover{color:#475569}
+  .sdm-autoreturn{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#F8FAFC;border-bottom:1px solid #F1F5F9;flex-shrink:0}
+  .sdm-chips-area{flex:1;overflow-y:auto;padding:10px 14px;-webkit-overflow-scrolling:touch}
+  .sdm-chips-area .scc-list{gap:6px}
+  .sdm-footer{padding:12px 14px;border-top:1px solid #F1F5F9;flex-shrink:0}
+  .sdm-dist-btn{width:100%;padding:12px;background:#1B3A6B;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s;letter-spacing:0.2px}
+  .sdm-dist-btn:hover{background:#152f58}
+  .sdm-dist-btn:active{background:#0f2240}
+
+  /* ── 배분 패널 헤더 ── */
+  .sdp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:10px 14px;background:#F8FAFC;border-radius:10px;border:1px solid #F1F5F9}
+  .sdp-status-btn{font-size:11px;padding:5px 10px;border:1.5px solid #BFDBFE;border-radius:7px;background:#EFF6FF;cursor:pointer;color:#1D4ED8;font-family:inherit;font-weight:600;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+  .sdp-status-btn:hover{background:#DBEAFE}
 
   /* ── 배분된 구역 칩 카드 (한 줄 리스트) ── */
   .scc-list{display:flex;flex-direction:column;gap:5px}
