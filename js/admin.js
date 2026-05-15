@@ -1618,16 +1618,29 @@ function renderUnallocatedList() {
     const msg = monthVal > 0 ? `${monthVal}개월 이상 된 미할당 구역이 없습니다` : (rawQ ? '검색 결과가 없습니다' : '미할당 구역이 없습니다');
     resultsEl.innerHTML = `<div style="padding:14px;text-align:center;color:#94A3B8;font-size:13px">${msg}</div>`;
   } else {
+    const _fmtShort = d => {
+      if (!d) return null;
+      const dt = d.toDate ? d.toDate() : new Date(d);
+      if (isNaN(dt)) return null;
+      return `${String(dt.getFullYear()).slice(2)}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
+    };
     resultsEl.innerHTML = filtered.map(t => {
       const { bg, cl } = catColor(t.category);
       const st = _terrStatus(t);
       const stDot = st === 'active'
-        ? '<span class="ssi-dot ssi-dot-active"></span>'
-        : '<span class="ssi-dot ssi-dot-idle"></span>';
+        ? '<span class="ssi-dot ssi-dot-active" title="진행중"></span>'
+        : '<span class="ssi-dot ssi-dot-idle" title="미배정"></span>';
+      const cycleStr = `${t.cycle || 1}회차`;
+      const dateRaw  = t.lastCompletedDate || t.lastAssignedDate;
+      const dateStr  = _fmtShort(dateRaw);
+      const metaStr  = dateStr ? `${cycleStr} · ${dateStr}` : cycleStr;
       return `<div class="sched-search-item" onclick="addSchedTerr('${t.id}')">
         ${stDot}
         <span class="ssi-no" style="background:${bg};color:${cl}">${t.no}번</span>
-        <span class="ssi-name">${t.name}</span>
+        <div class="ssi-main">
+          <span class="ssi-name">${t.name}</span>
+          <span class="ssi-meta">${metaStr}</span>
+        </div>
         <span class="ssi-cat" style="color:${cl}">${t.category||''}</span>
         <span class="ssi-add">배분</span>
       </div>`;
