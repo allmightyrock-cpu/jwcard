@@ -358,9 +358,22 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <span id="sched-auto-return-hint" style="font-size:11px;color:#94A3B8">해제 시 다음 주에도 유지</span>
               </div>
 
-              <!-- 배분된 구역 목록 -->
-              <div style="font-size:11px;color:#94A3B8;margin-bottom:6px">배분된 구역 &nbsp;·&nbsp; ✕ 터치로 제거</div>
-              <div id="sched-terr-chips"></div>
+              <!-- 배분된 구역 목록 (접기/펼치기) -->
+              <div class="chips-collapse-wrap" id="sched-chips-wrap">
+                <div class="chips-collapse-hdr" id="sched-chips-hdr" onclick="toggleSchedChips()">
+                  <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;overflow:hidden">
+                    <span style="font-size:12px;font-weight:700;color:#1B3A6B;white-space:nowrap;flex-shrink:0">배분된 구역</span>
+                    <div id="sched-chips-mini" class="chips-mini-badges"></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:8px">
+                    <span class="chips-hdr-hint">✕로 제거</span>
+                    <span id="sched-chips-arrow" class="chips-collapse-arrow">▾</span>
+                  </div>
+                </div>
+                <div id="sched-chips-body" class="chips-collapse-body">
+                  <div id="sched-terr-chips" style="padding:8px 0 4px"></div>
+                </div>
+              </div>
 
               <!-- 카드 배분 영역 -->
               <div style="margin-top:16px;padding-top:14px;border-top:1px solid #F1F5F9">

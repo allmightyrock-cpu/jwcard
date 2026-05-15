@@ -1385,11 +1385,44 @@ window.confirmAutoDist = async function() {
 };
 
 // ── 배정된 구역 칩 카드 목록 ──
+let _schedChipsOpen = true; // 배분 목록 펼치기/접기 상태
+
+function toggleSchedChips() {
+  _schedChipsOpen = !_schedChipsOpen;
+  const body = document.getElementById('sched-chips-body');
+  const arrow = document.getElementById('sched-chips-arrow');
+  const hdr = document.getElementById('sched-chips-hdr');
+  if (body) body.classList.toggle('chips-body-closed', !_schedChipsOpen);
+  if (arrow) arrow.textContent = _schedChipsOpen ? '▾' : '▸';
+  if (hdr) hdr.classList.toggle('chips-hdr-closed', !_schedChipsOpen);
+}
+
+function _updateChipsMini(ids, catColor) {
+  const miniEl = document.getElementById('sched-chips-mini');
+  if (!miniEl) return;
+  if (!ids.length) {
+    miniEl.innerHTML = '<span style="font-size:11px;color:#94A3B8">배분 없음</span>';
+    return;
+  }
+  const MAX = 7;
+  const shown = ids.slice(0, MAX);
+  const rest = ids.length - shown.length;
+  let html = shown.map(id => {
+    const t = _schedAllTerr.find(t => t.id === id);
+    if (!t) return '';
+    const { bg, cl } = catColor(t.category);
+    return `<span class="chips-mini-badge" style="background:${bg};color:${cl}">${t.no}</span>`;
+  }).join('');
+  if (rest > 0) html += `<span class="chips-mini-badge" style="background:#F1F5F9;color:#64748B">+${rest}</span>`;
+  miniEl.innerHTML = html;
+}
+
 function renderSchedTerrChips() {
   const ids = _schedData[_schedDay] || [];
   const badge = document.getElementById('sched-count-badge');
   if (badge) badge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
   const catColor = _buildCatColorMap();
+  _updateChipsMini(ids, catColor);
   const wrap = document.getElementById('sched-terr-chips');
   if (!wrap) return;
   const filtered = ids.filter(id => {
@@ -1399,7 +1432,7 @@ function renderSchedTerrChips() {
     return true;
   });
   if (!filtered.length) {
-    wrap.innerHTML = `<div style="text-align:center;padding:24px 16px;color:#94A3B8;font-size:13px;border:1.5px dashed #E2E8F0;border-radius:10px">${ids.length && _schedCatFilter ? '해당 구역 유형이 없습니다.' : '배분된 구역이 없습니다.<br>아래에서 구역을 추가하세요.'}</div>`;
+    wrap.innerHTML = `<div style="text-align:center;padding:20px 16px;color:#94A3B8;font-size:13px;border:1.5px dashed #E2E8F0;border-radius:10px">${ids.length && _schedCatFilter ? '해당 구역 유형이 없습니다.' : '배분된 구역이 없습니다.<br>아래에서 구역을 추가하세요.'}</div>`;
     return;
   }
   wrap.innerHTML = '<div class="scc-list">'
