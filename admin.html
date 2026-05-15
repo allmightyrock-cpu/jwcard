@@ -445,10 +445,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
                     <input class="sched-search-input" id="sched-gal-search"
-                      placeholder="🔍  구역명 · 번호 · 회차 검색"
+                      placeholder="구역명 · 번호 · 회차 검색"
                       oninput="renderSchedGallery()" autocomplete="off" style="flex:1;margin:0;min-width:0">
                     <div style="display:flex;align-items:center;gap:2px;flex-shrink:0" title="마지막 완료일 기준 N개월 이상 된 구역만 표시">
-                      <span style="font-size:13px;line-height:1">🗓</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                       <input type="number" id="sched-gal-month-filter" min="0" max="60" placeholder="개월"
                         style="width:50px;padding:7px 4px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;text-align:center;font-family:inherit;outline:none;height:36px"
                         oninput="renderSchedGallery()">
