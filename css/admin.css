@@ -542,6 +542,14 @@
   .ssi-meta{font-size:10px;color:#94A3B8;white-space:nowrap}
   .ssi-cat{font-size:10px;color:#94A3B8;white-space:nowrap;flex-shrink:0;max-width:60px;overflow:hidden;text-overflow:ellipsis}
   .ssi-add{font-size:11px;color:#fff;background:#2563EB;font-weight:600;white-space:nowrap;flex-shrink:0;padding:2px 8px;border-radius:5px}
+  /* 배분 대기 갤러리 뷰 */
+  .ssi-gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding-bottom:4px}
+  .ssi-gal-tile{background:#fff;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 10px;cursor:pointer;user-select:none;transition:border-color .12s}
+  .ssi-gal-tile:hover{border-color:#93C5FD;background:#F8FAFC}
+  .ssi-gal-tile:active{border-color:#3B82F6;background:#EFF6FF}
+  .ssi-gal-cat{font-size:10px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:68px}
+  .ssi-gal-meta{font-size:10px;color:#94A3B8;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ssi-gal-add{display:inline-block;margin-top:6px;font-size:10px;color:#fff;background:#2563EB;font-weight:600;padding:2px 8px;border-radius:5px}
   .sched-save-msg{text-align:center;color:#166534;font-size:13px;padding:8px 12px;background:#F0FDF4;border-radius:8px;margin-top:10px;display:none}
   /* ── 캘린더 ── */
   .sched-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}

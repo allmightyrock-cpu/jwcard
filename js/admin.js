@@ -1624,27 +1624,50 @@ function renderUnallocatedList() {
       if (isNaN(dt)) return null;
       return `${String(dt.getFullYear()).slice(2)}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
     };
-    resultsEl.innerHTML = filtered.map(t => {
-      const { bg, cl } = catColor(t.category);
-      const st = _terrStatus(t);
-      const stDot = st === 'active'
-        ? '<span class="ssi-dot ssi-dot-active" title="진행중"></span>'
-        : '<span class="ssi-dot ssi-dot-idle" title="미배정"></span>';
-      const cycleStr = `${t.cycle || 1}회차`;
-      const dateRaw  = t.lastCompletedDate || t.lastAssignedDate;
-      const dateStr  = _fmtShort(dateRaw);
-      const metaStr  = dateStr ? `${cycleStr} · ${dateStr}` : cycleStr;
-      return `<div class="sched-search-item" onclick="addSchedTerr('${t.id}')">
-        ${stDot}
-        <span class="ssi-no" style="background:${bg};color:${cl}">${t.no}번</span>
-        <div class="ssi-main">
-          <span class="ssi-name">${t.name}</span>
-          <span class="ssi-meta">${metaStr}</span>
-        </div>
-        <span class="ssi-cat" style="color:${cl}">${t.category||''}</span>
-        <span class="ssi-add">배분</span>
-      </div>`;
-    }).join('');
+
+    if (window._schedListView === 'gallery') {
+      // ── 갤러리(타일) 뷰 ──────────────────────────────────────────────────
+      resultsEl.innerHTML = `<div class="ssi-gal-grid">${
+        filtered.map(t => {
+          const { bg, cl } = catColor(t.category);
+          const cycleStr = `${t.cycle || 1}회차`;
+          const dateStr  = _fmtShort(t.lastCompletedDate || t.lastAssignedDate);
+          const metaStr  = dateStr ? `${cycleStr} · ${dateStr}` : cycleStr;
+          return `<div class="ssi-gal-tile" onclick="addSchedTerr('${t.id}')">
+            <div class="sgal-header">
+              <span class="sgal-no" style="background:${bg};color:${cl}">${t.no}번</span>
+              <span class="ssi-gal-cat" style="color:${cl}">${t.category||''}</span>
+            </div>
+            <div class="sgal-name">${t.name}</div>
+            <div class="ssi-gal-meta">${metaStr}</div>
+            <div class="ssi-gal-add">+ 배분</div>
+          </div>`;
+        }).join('')
+      }</div>`;
+    } else {
+      // ── 리스트 뷰 ────────────────────────────────────────────────────────
+      resultsEl.innerHTML = filtered.map(t => {
+        const { bg, cl } = catColor(t.category);
+        const st = _terrStatus(t);
+        const stDot = st === 'active'
+          ? '<span class="ssi-dot ssi-dot-active" title="진행중"></span>'
+          : '<span class="ssi-dot ssi-dot-idle" title="미배정"></span>';
+        const cycleStr = `${t.cycle || 1}회차`;
+        const dateRaw  = t.lastCompletedDate || t.lastAssignedDate;
+        const dateStr  = _fmtShort(dateRaw);
+        const metaStr  = dateStr ? `${cycleStr} · ${dateStr}` : cycleStr;
+        return `<div class="sched-search-item" onclick="addSchedTerr('${t.id}')">
+          ${stDot}
+          <span class="ssi-no" style="background:${bg};color:${cl}">${t.no}번</span>
+          <div class="ssi-main">
+            <span class="ssi-name">${t.name}</span>
+            <span class="ssi-meta">${metaStr}</span>
+          </div>
+          <span class="ssi-cat" style="color:${cl}">${t.category||''}</span>
+          <span class="ssi-add">배분</span>
+        </div>`;
+      }).join('');
+    }
   }
   resultsEl.style.display = 'block';
 }
@@ -3216,9 +3239,10 @@ window.filterCompletionStatus = function(status, el) {
   window.renderTerritoryTable();
 };
 
-window._terrSortDesc    = false;
-window._schedSortDesc   = false;
+window._terrSortDesc     = false;
+window._schedSortDesc    = false;
 window._schedGalSortDesc = false;
+window._schedListView    = 'list'; // 'list' | 'gallery'
 
 window.setTerrSort = function(v) {
   window._currentSort = v || 'no';
@@ -3236,6 +3260,12 @@ window.toggleSchedSortDir = function() {
   const btn = document.getElementById('sched-search-sort-dir');
   if (btn) btn.textContent = window._schedSortDesc ? '▼' : '▲';
   searchSchedTerr();
+};
+window.toggleSchedListView = function() {
+  window._schedListView = window._schedListView === 'list' ? 'gallery' : 'list';
+  const btn = document.getElementById('sched-view-toggle');
+  if (btn) btn.textContent = window._schedListView === 'list' ? '☰' : '⊞';
+  renderUnallocatedList();
 };
 window.toggleSchedGalSortDir = function() {
   window._schedGalSortDesc = !window._schedGalSortDesc;
