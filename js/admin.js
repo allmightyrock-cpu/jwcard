@@ -1479,11 +1479,18 @@ function renderSchedGallery() {
   const gsort = document.getElementById('sched-gal-sort')?.value || 'no';
   const gMonthVal = parseInt(document.getElementById('sched-gal-month-filter')?.value) || 0;
   const gMonthCutoff = gMonthVal > 0 ? Date.now() - gMonthVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
-  // 회차 키워드 파싱
+  // 회차 키워드 파싱 ("2회차", "2회", "2차", "5차", "3" 단독 숫자 모두 처리)
   let gParsedCycle = null, gKwRest = rawGq;
   if (rawGq) {
-    const mCyc = rawGq.match(/([1-6])\s*회\s*차?/);
-    if (mCyc) { gParsedCycle = parseInt(mCyc[1]); gKwRest = gKwRest.replace(mCyc[0], '').trim(); }
+    const mCyc = rawGq.match(/([1-9])\s*(?:회\s*차?|차)/);
+    if (mCyc) {
+      gParsedCycle = parseInt(mCyc[1]);
+      gKwRest = rawGq.replace(mCyc[0], '').trim();
+    } else if (/^[1-9]$/.test(rawGq)) {
+      // 단독 숫자 1~9 → 회차로 해석
+      gParsedCycle = parseInt(rawGq);
+      gKwRest = '';
+    }
   }
   const filtered = _schedAllTerr.filter(t => {
     // 타 요일에 이미 배분된 카드는 제외 (현재 요일 카드는 ✓ 표시로 유지)
@@ -1620,11 +1627,18 @@ function renderUnallocatedList() {
   const sort = document.getElementById('sched-search-sort')?.value || 'no';
   const monthVal = parseInt(document.getElementById('sched-month-filter')?.value) || 0;
   const monthCutoff = monthVal > 0 ? Date.now() - monthVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
-  // 회차 키워드 파싱 ("2회차", "2회", "2" 모두 처리)
+  // 회차 키워드 파싱 ("2회차", "2회", "2차", "5차", "3" 단독 숫자 모두 처리)
   let parsedCycle = null, kwRest = rawQ;
   if (rawQ) {
-    const mCyc = rawQ.match(/([1-6])\s*회\s*차?/);
-    if (mCyc) { parsedCycle = parseInt(mCyc[1]); kwRest = kwRest.replace(mCyc[0], '').trim(); }
+    const mCyc = rawQ.match(/([1-9])\s*(?:회\s*차?|차)/);
+    if (mCyc) {
+      parsedCycle = parseInt(mCyc[1]);
+      kwRest = rawQ.replace(mCyc[0], '').trim();
+    } else if (/^[1-9]$/.test(rawQ)) {
+      // 단독 숫자 1~9 → 회차로 해석
+      parsedCycle = parseInt(rawQ);
+      kwRest = '';
+    }
   }
   const allAllocated = _getAllAllocatedSet(-1); // 모든 요일 배분 집합 (예외 없음)
   const catColor = _buildCatColorMap();
