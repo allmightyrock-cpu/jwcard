@@ -688,7 +688,7 @@ function _getWeekDates(offsetWeeks) {
 }
 
 function _refreshSchedWeeklyBoard() {
-  const DAY_NAMES = ['일','월','화','수','목','금','토'];
+  const DAY_NAMES = ['㊐','㊊','㊋','㊌','㊍','㊎','㊏'];
   const el = document.getElementById('sched-weekly-board');
   if (!el) return;
 
