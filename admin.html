@@ -99,10 +99,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <div class="nav-item" onclick="switchTab('territory',this)">
         <span class="nav-icon">▪</span>구역관리
       </div>
-      <div id="nav-publisher" class="nav-item active" onclick="switchTab('publisher',this)">
+      <div id="nav-publisher" class="nav-item" onclick="switchTab('publisher',this)">
         <span class="nav-icon">▲</span>전도인관리
       </div>
-      <div class="nav-item" onclick="switchTab('schedule',this)">
+      <div class="nav-item active" onclick="switchTab('schedule',this)">
         <span class="nav-icon">🗓</span>봉사일정
       </div>
       <div id="nav-map" class="nav-item" onclick="switchTab('map',this)">
@@ -244,7 +244,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       </div>
 
       <!-- 전도인관리 -->
-      <div id="tab-publisher" class="tab-content active">
+      <div id="tab-publisher" class="tab-content">
 
         <!-- 실시간 접속 현황 패널 -->
         <div class="presence-panel">
@@ -296,7 +296,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
 
       <!-- 봉사일정 -->
-      <div id="tab-schedule" class="tab-content">
+      <div id="tab-schedule" class="tab-content active">
 
         <!-- 서브탭 네비게이션 -->
         <div class="sched-subtab-nav">
