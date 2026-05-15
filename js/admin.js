@@ -659,17 +659,14 @@ function _renderSchedDayManager() {
   }).join('');
 }
 
-// ── 카테고리 필터 칩 초기화 ──
+// ── 카테고리 필터 드롭다운 초기화 ──
 function _initSchedCatChips() {
   const groups = window._territoryGroups || [];
-  const make = (id, fn) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = `<button class="sched-filter-chip active" onclick="${fn}('',this)">전체</button>` +
-      groups.map(g => `<button class="sched-filter-chip" onclick="${fn}('${g}',this)">${g}</button>`).join('');
-  };
-  make('sched-cat-chips', 'setSchedCatFilter');
-  make('sched-gal-cat-chips', 'setSchedGalCatFilter');
+  const opts = `<option value="">전체 유형</option>` + groups.map(g => `<option value="${g}">${g}</option>`).join('');
+  const sel  = document.getElementById('sched-cat-select');
+  const gSel = document.getElementById('sched-gal-cat-select');
+  if (sel)  sel.innerHTML  = opts;
+  if (gSel) gSel.innerHTML = opts;
 }
 
 // ── 주간 배정 현황판 렌더 ──
@@ -767,10 +764,8 @@ window.setSchedMode = function(mode) {
 };
 
 // ── 갤러리 필터 ──
-window.setSchedGalCatFilter = function(cat, el) {
+window.setSchedGalCatFilter = function(cat) {
   _schedGalCatFilter = cat;
-  document.querySelectorAll('#sched-gal-cat-chips .sched-filter-chip').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
   renderSchedGallery();
 };
 window.setSchedGalStatusFilter = function(status) {
@@ -813,10 +808,8 @@ window.toggleSchedAutoReturn = async function() {
 };
 
 // ── 필터 ──
-window.setSchedCatFilter = function(cat, el) {
+window.setSchedCatFilter = function(cat) {
   _schedCatFilter = cat;
-  document.querySelectorAll('#sched-cat-chips .sched-filter-chip').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
   renderSchedTerrChips();
   renderUnallocatedList();
 };
@@ -1434,12 +1427,19 @@ function renderSchedGallery() {
   const otherAllocated = _getAllAllocatedSet(_schedDay); // 타 요일에 배분된 ID
   const gq = (document.getElementById('sched-gal-search')?.value || '').trim().toLowerCase();
   const gsort = document.getElementById('sched-gal-sort')?.value || 'no';
+  const gMonthVal = parseInt(document.getElementById('sched-gal-month-filter')?.value) || 0;
+  const gMonthCutoff = gMonthVal > 0 ? Date.now() - gMonthVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
   const filtered = _schedAllTerr.filter(t => {
     // 타 요일에 이미 배분된 카드는 제외 (현재 요일 카드는 ✓ 표시로 유지)
     if (otherAllocated.has(t.id)) return false;
     if (_schedGalCatFilter && (t.category||'') !== _schedGalCatFilter) return false;
     // 완료 구역: 현재 요일 배분된 카드는 유지, 나머지는 필터 적용
     if (!existing.has(t.id) && _schedGalStatusFilter === 'incomplete' && t.completionStatus === 'complete') return false;
+    if (gMonthCutoff > 0 && !existing.has(t.id)) {
+      const d = t.lastCompletedDate || t.lastAssignedDate;
+      const ms = d ? (d.toDate ? d.toDate().getTime() : new Date(d).getTime()) : 0;
+      if (ms > gMonthCutoff) return false;
+    }
     if (gq) {
       const cycleStr = String(t.cycle || 1);
       if (!String(t.no).includes(gq) && !(t.name||'').toLowerCase().includes(gq) && !cycleStr.includes(gq)) return false;
@@ -1453,20 +1453,22 @@ function renderSchedGallery() {
   if (_galIO) { _galIO.disconnect(); _galIO = null; }
 
   if (!filtered.length) {
-    el.innerHTML = '<div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">해당 조건의 구역이 없습니다</div>';
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">${gMonthVal > 0 ? `${gMonthVal}개월 이상 된 구역이 없습니다` : '해당 조건의 구역이 없습니다'}</div>`;
     return;
   }
 
   // 배정된 카드 맨 앞으로, 그 안에서 선택한 정렬 적용
   const getMs = t => {
-    if (!t.lastAssignedDate) return 0;
-    return t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+    const d = t.lastCompletedDate || t.lastAssignedDate;
+    if (!d) return 0;
+    return d.toDate ? d.toDate().getTime() : new Date(d).getTime();
   };
+  const effectiveGsort = (gMonthVal > 0 && gsort === 'no') ? 'old' : gsort;
   const cmp = (a, b) => {
-    if (gsort === 'no')       return (parseInt(a.no)||0)-(parseInt(b.no)||0);
-    if (gsort === 'old')      return getMs(a)-getMs(b);
-    if (gsort === 'cycle')    return (b.cycle||1)-(a.cycle||1) || (parseInt(a.no)||0)-(parseInt(b.no)||0);
-    if (gsort === 'progress') return (b.completionRate||0)-(a.completionRate||0);
+    if (effectiveGsort === 'no')       return (parseInt(a.no)||0)-(parseInt(b.no)||0);
+    if (effectiveGsort === 'old')      return getMs(a)-getMs(b);
+    if (effectiveGsort === 'cycle')    return (b.cycle||1)-(a.cycle||1) || (parseInt(a.no)||0)-(parseInt(b.no)||0);
+    if (effectiveGsort === 'progress') return (b.completionRate||0)-(a.completionRate||0);
     return 0;
   };
   filtered.sort((a,b) => {
@@ -1550,13 +1552,19 @@ function renderUnallocatedList() {
   if (!resultsEl) return;
   const q = (document.getElementById('sched-search-input')?.value || '').trim().toLowerCase();
   const sort = document.getElementById('sched-search-sort')?.value || 'no';
-  const existing = new Set(_schedData[_schedDay] || []);
+  const monthVal = parseInt(document.getElementById('sched-month-filter')?.value) || 0;
+  const monthCutoff = monthVal > 0 ? Date.now() - monthVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
   const allAllocated = _getAllAllocatedSet(-1); // 모든 요일 배분 집합 (예외 없음)
   const catColor = _buildCatColorMap();
   const filtered = _schedAllTerr.filter(t => {
     if (allAllocated.has(t.id)) return false;   // 어떤 요일에든 배분된 카드 제외
     if (_schedStatusFilter === 'incomplete' && t.completionStatus === 'complete') return false;
     if (_schedCatFilter && (t.category||'') !== _schedCatFilter) return false;
+    if (monthCutoff > 0) {
+      const d = t.lastCompletedDate || t.lastAssignedDate;
+      const ms = d ? (d.toDate ? d.toDate().getTime() : new Date(d).getTime()) : 0;
+      if (ms > monthCutoff) return false;
+    }
     if (q) {
       const cycleStr = String(t.cycle || 1);
       return String(t.no).includes(q) || (t.name||'').toLowerCase().includes(q) || cycleStr.includes(q);
@@ -1564,16 +1572,18 @@ function renderUnallocatedList() {
     return true;
   });
   const getMs = t => {
-    if (!t.lastAssignedDate) return 0;
-    return t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+    const d = t.lastCompletedDate || t.lastAssignedDate;
+    if (!d) return 0;
+    return d.toDate ? d.toDate().getTime() : new Date(d).getTime();
   };
-  if (sort === 'no')       filtered.sort((a,b) => (parseInt(a.no)||0)-(parseInt(b.no)||0));
-  else if (sort === 'old') filtered.sort((a,b) => getMs(a)-getMs(b));
-  else if (sort === 'cycle') filtered.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
-  else if (sort === 'progress') filtered.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
+  const effectiveSort = (monthVal > 0 && sort === 'no') ? 'old' : sort;
+  if (effectiveSort === 'no')       filtered.sort((a,b) => (parseInt(a.no)||0)-(parseInt(b.no)||0));
+  else if (effectiveSort === 'old') filtered.sort((a,b) => getMs(a)-getMs(b));
+  else if (effectiveSort === 'cycle') filtered.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
+  else if (effectiveSort === 'progress') filtered.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
   if (window._schedSortDesc) filtered.reverse();
   if (!filtered.length) {
-    const msg = q ? '검색 결과가 없습니다' : '미할당 구역이 없습니다';
+    const msg = monthVal > 0 ? `${monthVal}개월 이상 된 미할당 구역이 없습니다` : (q ? '검색 결과가 없습니다' : '미할당 구역이 없습니다');
     resultsEl.innerHTML = `<div style="padding:14px;text-align:center;color:#94A3B8;font-size:13px">${msg}</div>`;
   } else {
     resultsEl.innerHTML = filtered.map(t => {

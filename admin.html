@@ -371,17 +371,25 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
                 <!-- 미할당 패널 -->
                 <div id="sched-panel-search">
-                  <div class="sched-filter-bar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-                    <div class="sched-filter-chips" id="sched-cat-chips" style="flex:1"><button class="sched-filter-chip active" onclick="setSchedCatFilter('',this)">전체</button></div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                    <select id="sched-cat-select" onchange="setSchedCatFilter(this.value)" class="sched-sort-select" style="flex:1;min-width:0">
+                      <option value="">전체 유형</option>
+                    </select>
                     <select id="sched-status-select" onchange="setSchedStatusFilter(this.value)" class="sched-sort-select">
-                      <option value="incomplete">미완료 구역만</option>
-                      <option value="">전체 구역 (완료 포함)</option>
+                      <option value="incomplete">미완료만</option>
+                      <option value="">전체</option>
                     </select>
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
                     <input class="sched-search-input" id="sched-search-input"
                       placeholder="🔍  구역명 · 번호 · 회차 검색"
-                      oninput="searchSchedTerr()" autocomplete="off" style="flex:1;margin:0">
+                      oninput="searchSchedTerr()" autocomplete="off" style="flex:1;margin:0;min-width:0">
+                    <div style="display:flex;align-items:center;gap:2px;flex-shrink:0" title="마지막 완료일 기준 N개월 이상 된 구역만 표시">
+                      <span style="font-size:13px;line-height:1">🗓</span>
+                      <input type="number" id="sched-month-filter" min="0" max="60" placeholder="개월"
+                        style="width:50px;padding:7px 4px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;text-align:center;font-family:inherit;outline:none;height:36px"
+                        oninput="searchSchedTerr()">
+                    </div>
                     <select id="sched-search-sort" onchange="searchSchedTerr()" class="sched-sort-select">
                       <option value="no">번호순</option>
                       <option value="old">오래된순</option>
@@ -396,17 +404,25 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
                 <!-- 전체 목록(갤러리) 패널 -->
                 <div id="sched-panel-gallery" style="display:none">
-                  <div class="sched-filter-bar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-                    <div class="sched-filter-chips" id="sched-gal-cat-chips" style="flex:1"><button class="sched-filter-chip active" onclick="setSchedGalCatFilter('',this)">전체</button></div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                    <select id="sched-gal-cat-select" onchange="setSchedGalCatFilter(this.value)" class="sched-sort-select" style="flex:1;min-width:0">
+                      <option value="">전체 유형</option>
+                    </select>
                     <select id="sched-gal-status-select" onchange="setSchedGalStatusFilter(this.value)" class="sched-sort-select">
-                      <option value="incomplete">미완료 구역만</option>
-                      <option value="">전체 구역 (완료 포함)</option>
+                      <option value="incomplete">미완료만</option>
+                      <option value="">전체</option>
                     </select>
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
                     <input class="sched-search-input" id="sched-gal-search"
                       placeholder="🔍  구역명 · 번호 · 회차 검색"
-                      oninput="renderSchedGallery()" autocomplete="off" style="flex:1;margin:0">
+                      oninput="renderSchedGallery()" autocomplete="off" style="flex:1;margin:0;min-width:0">
+                    <div style="display:flex;align-items:center;gap:2px;flex-shrink:0" title="마지막 완료일 기준 N개월 이상 된 구역만 표시">
+                      <span style="font-size:13px;line-height:1">🗓</span>
+                      <input type="number" id="sched-gal-month-filter" min="0" max="60" placeholder="개월"
+                        style="width:50px;padding:7px 4px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;text-align:center;font-family:inherit;outline:none;height:36px"
+                        oninput="renderSchedGallery()">
+                    </div>
                     <select id="sched-gal-sort" onchange="renderSchedGallery()" class="sched-sort-select">
                       <option value="no">번호순</option>
                       <option value="old">오래된순</option>
