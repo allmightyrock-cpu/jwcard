@@ -1462,6 +1462,12 @@ function renderSchedGallery() {
   // 이전 Observer 해제
   if (_galIO) { _galIO.disconnect(); _galIO = null; }
 
+  const galCountEl = document.getElementById('sched-gal-result-count');
+  if (galCountEl) {
+    const isFiltered = gMonthVal > 0 || rawGq || _schedGalCatFilter;
+    galCountEl.textContent = filtered.length ? (isFiltered ? `검색 결과 ${filtered.length}개` : `${filtered.length}개 구역`) : '';
+    galCountEl.style.color = (isFiltered && filtered.length > 0) ? '#3B82F6' : '#94A3B8';
+  }
   if (!filtered.length) {
     el.innerHTML = `<div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">${gMonthVal > 0 ? `${gMonthVal}개월 이상 된 구역이 없습니다` : '해당 조건의 구역이 없습니다'}</div>`;
     return;
@@ -1602,8 +1608,14 @@ function renderUnallocatedList() {
   else if (effectiveSort === 'cycle') filtered.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
   else if (effectiveSort === 'progress') filtered.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
   if (window._schedSortDesc) filtered.reverse();
+  const schedCountEl = document.getElementById('sched-result-count');
+  if (schedCountEl) {
+    const isFiltered = monthVal > 0 || rawQ || _schedCatFilter;
+    schedCountEl.textContent = filtered.length ? (isFiltered ? `검색 결과 ${filtered.length}개` : `${filtered.length}개 구역`) : '';
+    schedCountEl.style.color = (isFiltered && filtered.length > 0) ? '#3B82F6' : '#94A3B8';
+  }
   if (!filtered.length) {
-    const msg = monthVal > 0 ? `${monthVal}개월 이상 된 미할당 구역이 없습니다` : (q ? '검색 결과가 없습니다' : '미할당 구역이 없습니다');
+    const msg = monthVal > 0 ? `${monthVal}개월 이상 된 미할당 구역이 없습니다` : (rawQ ? '검색 결과가 없습니다' : '미할당 구역이 없습니다');
     resultsEl.innerHTML = `<div style="padding:14px;text-align:center;color:#94A3B8;font-size:13px">${msg}</div>`;
   } else {
     resultsEl.innerHTML = filtered.map(t => {
@@ -3408,6 +3420,12 @@ window.renderTerritoryTable = function() {
 
   const wrap = document.getElementById('territory-table-wrap');
   if (!wrap) return;
+  const countEl = document.getElementById('terr-result-count');
+  if (countEl) {
+    const isFiltered = monthFilterVal > 0 || rawKw || cat !== '전체' || statusF !== 'all' || cmplt !== '전체';
+    countEl.textContent = isFiltered ? `검색 결과 ${list.length}개` : `전체 ${list.length}개`;
+    countEl.style.color = (isFiltered && list.length > 0) ? '#3B82F6' : '#94A3B8';
+  }
   if (!list.length) { wrap.innerHTML='<div class="loading">조건에 맞는 구역이 없습니다.</div>'; return; }
 
   const view = window._terrView || 'list';

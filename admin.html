@@ -234,6 +234,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <button class="terr-type-tab active" onclick="filterTerritory('전체',this)">전체 <span class="cnt">(0)</span></button>
           </div>
 
+          <div style="display:flex;justify-content:flex-end;margin:4px 0 2px">
+            <span id="terr-result-count" style="font-size:11px;color:#94A3B8"></span>
+          </div>
           <div id="territory-table-wrap">
             <div class="loading">구역 목록을 불러오는 중...</div>
           </div>
@@ -405,6 +408,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                     <button id="sched-search-sort-dir" onclick="toggleSchedSortDir()" title="정렬 방향 전환"
                       style="padding:5px 7px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;cursor:pointer;font-size:12px;line-height:1;color:#475569;flex-shrink:0">▲</button>
                   </div>
+                  <div id="sched-result-count" style="font-size:11px;color:#94A3B8;text-align:right;margin-bottom:4px;min-height:14px"></div>
                   <div id="sched-search-results" class="sched-search-results"></div>
                 </div>
 
@@ -438,7 +442,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                     <button id="sched-gal-sort-dir" onclick="toggleSchedGalSortDir()" title="정렬 방향 전환"
                       style="padding:5px 7px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;cursor:pointer;font-size:12px;line-height:1;color:#475569;flex-shrink:0">▲</button>
                   </div>
-                  <div style="font-size:11px;color:#94A3B8;margin-bottom:8px">탭 → 이 요일에 배분 / 다시 탭 → 제거 &nbsp;|&nbsp; ✓ = 이미 배분됨</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <span style="font-size:11px;color:#94A3B8">탭 → 이 요일에 배분 / 다시 탭 → 제거 &nbsp;|&nbsp; ✓ = 이미 배분됨</span>
+                    <span id="sched-gal-result-count" style="font-size:11px;color:#94A3B8;flex-shrink:0"></span>
+                  </div>
                   <div id="sched-gallery-grid"></div>
                 </div>
 
