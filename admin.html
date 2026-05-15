@@ -380,37 +380,40 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
                 <!-- 미할당 패널 -->
                 <div id="sched-panel-search">
-                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-                    <select id="sched-cat-select" onchange="setSchedCatFilter(this.value)" class="sched-sort-select" style="flex:1;min-width:0">
-                      <option value="">전체 유형</option>
-                    </select>
-                    <select id="sched-status-select" onchange="setSchedStatusFilter(this.value)" class="sched-sort-select">
-                      <option value="incomplete">진행중만</option>
-                      <option value="">전체 (완료 포함)</option>
-                    </select>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-                    <input class="sched-search-input" id="sched-search-input"
-                      placeholder="🔍  구역명 · 번호 · 회차 검색"
-                      oninput="searchSchedTerr()" autocomplete="off" style="flex:1;margin:0;min-width:0">
-                    <div style="display:flex;align-items:center;gap:2px;flex-shrink:0" title="마지막 완료일 기준 N개월 이상 된 구역만 표시">
-                      <span style="font-size:13px;line-height:1">🗓</span>
-                      <input type="number" id="sched-month-filter" min="0" max="60" placeholder="개월"
-                        style="width:50px;padding:7px 4px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;text-align:center;font-family:inherit;outline:none;height:36px"
-                        oninput="searchSchedTerr()">
+                  <div class="sched-filter-zone">
+                    <div class="sched-filter-label">🔍 구역 검색 · 배분</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                      <select id="sched-cat-select" onchange="setSchedCatFilter(this.value)" class="sched-sort-select" style="flex:1;min-width:0">
+                        <option value="">전체 유형</option>
+                      </select>
+                      <select id="sched-status-select" onchange="setSchedStatusFilter(this.value)" class="sched-sort-select">
+                        <option value="incomplete">진행중만</option>
+                        <option value="">전체 (완료 포함)</option>
+                      </select>
                     </div>
-                    <select id="sched-search-sort" onchange="searchSchedTerr()" class="sched-sort-select">
-                      <option value="no">번호순</option>
-                      <option value="old">오래된순</option>
-                      <option value="cycle">회차순</option>
-                      <option value="progress">진행률순</option>
-                    </select>
-                    <button id="sched-search-sort-dir" onclick="toggleSchedSortDir()" title="정렬 방향 전환"
-                      style="padding:5px 7px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;cursor:pointer;font-size:12px;line-height:1;color:#475569;flex-shrink:0">▲</button>
-                    <button id="sched-view-toggle" onclick="toggleSchedListView()" title="보기 전환 (목록/갤러리)"
-                      style="padding:5px 7px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;line-height:1;color:#475569;flex-shrink:0">☰</button>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <input class="sched-search-input sched-fi" id="sched-search-input"
+                        placeholder="🔍  구역명 · 번호 · 회차 검색"
+                        oninput="searchSchedTerr()" autocomplete="off" style="flex:1;margin:0;min-width:0">
+                      <div style="display:flex;align-items:center;gap:2px;flex-shrink:0" title="마지막 완료일 기준 N개월 이상 된 구역만 표시">
+                        <span style="font-size:13px;line-height:1">🗓</span>
+                        <input type="number" id="sched-month-filter" min="0" max="60" placeholder="개월"
+                          class="sched-fi" style="width:50px;padding:7px 4px;border:1.5px solid #BFDBFE;border-radius:8px;font-size:12px;text-align:center;font-family:inherit;outline:none;height:36px;background:#fff"
+                          oninput="searchSchedTerr()">
+                      </div>
+                      <select id="sched-search-sort" onchange="searchSchedTerr()" class="sched-sort-select">
+                        <option value="no">번호순</option>
+                        <option value="old">오래된순</option>
+                        <option value="cycle">회차순</option>
+                        <option value="progress">진행률순</option>
+                      </select>
+                      <button id="sched-search-sort-dir" onclick="toggleSchedSortDir()" title="정렬 방향 전환"
+                        style="padding:5px 7px;border:1px solid #BFDBFE;border-radius:7px;background:#fff;cursor:pointer;font-size:12px;line-height:1;color:#1D4ED8;flex-shrink:0">▲</button>
+                      <button id="sched-view-toggle" onclick="toggleSchedListView()" title="보기 전환 (목록/갤러리)"
+                        style="padding:5px 7px;border:1px solid #BFDBFE;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;line-height:1;color:#1D4ED8;flex-shrink:0">☰</button>
+                    </div>
+                    <div id="sched-result-count" style="font-size:11px;color:#60A5FA;text-align:right;margin-top:6px;min-height:14px"></div>
                   </div>
-                  <div id="sched-result-count" style="font-size:11px;color:#94A3B8;text-align:right;margin-bottom:4px;min-height:14px"></div>
                   <div id="sched-search-results" class="sched-search-results"></div>
                 </div>
 

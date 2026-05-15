@@ -509,11 +509,18 @@
   .sched-terr-cat{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:500}
   .sched-terr-del{background:none;border:none;color:#CBD5E1;cursor:pointer;font-size:18px;padding:2px 8px;border-radius:6px;transition:all 0.15s}
   .sched-terr-del:hover{color:#EF4444;background:#FEF2F2}
+  /* ── 카드 배분 검색 필터 존 ── */
+  .sched-filter-zone{background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:10px 12px 8px;margin-bottom:8px}
+  .sched-filter-label{font-size:11px;font-weight:700;color:#1D4ED8;margin-bottom:8px;display:flex;align-items:center;gap:4px;letter-spacing:0.3px}
   .sched-search-wrap{position:relative;margin-bottom:8px}
-  .sched-search-input{width:100%;padding:10px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border 0.2s}
+  .sched-search-input{width:100%;padding:10px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;transition:border 0.2s;background:#fff}
   .sched-search-input:focus{border-color:#1B3A6B}
   .sched-sort-select{padding:8px 10px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:12px;font-family:inherit;outline:none;background:#fff;cursor:pointer;transition:border 0.15s;color:#475569;flex-shrink:0;height:40px}
   .sched-sort-select:focus,.sched-sort-select:hover{border-color:#1B3A6B}
+  .sched-filter-zone .sched-sort-select{border-color:#BFDBFE}
+  .sched-filter-zone .sched-sort-select:focus,.sched-filter-zone .sched-sort-select:hover{border-color:#2563EB}
+  .sched-fi{border-color:#BFDBFE !important}
+  .sched-fi:focus{border-color:#2563EB !important}
   /* ── 강제 회수 ── */
   .tl-retrieve-btn{font-size:11px;padding:4px 8px;border:1.5px solid #FCA5A5;background:#FEF2F2;border-radius:6px;cursor:pointer;color:#DC2626;font-family:inherit;font-weight:600;white-space:nowrap;transition:all 0.15s;flex-shrink:0}
   .tl-retrieve-btn:hover{background:#DC2626;color:#fff;border-color:#DC2626}
