@@ -312,10 +312,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <!-- 헤더 -->
             <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:8px;gap:6px">
               <h3 class="section-title" style="margin:0;flex:1;min-width:80px">요일별 봉사 구역 설정</h3>
-              <button class="btn-auto-dist" onclick="openAutoDistPanel()">⚡ 자동 배분</button>
-              <button id="sched-undo-btn" onclick="undoAutoDist()" title="마지막 자동 배분 되돌리기" disabled style="font-size:12px;padding:5px 11px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;cursor:pointer;color:#64748B;font-family:inherit;transition:all 0.15s;flex-shrink:0;opacity:0.4">↩ 되돌리기</button>
-              <button onclick="clearAllSchedDist()" title="전체 배분 초기화" style="font-size:12px;padding:5px 11px;border:1.5px solid #FECACA;background:#FFF5F5;border-radius:8px;cursor:pointer;color:#DC2626;font-family:inherit;transition:all 0.15s;flex-shrink:0">🗑 초기화</button>
-              <button onclick="toggleSchedDayManager()" style="font-size:12px;padding:5px 11px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;cursor:pointer;color:#64748B;font-family:inherit;transition:all 0.15s;flex-shrink:0" id="sched-day-mgr-btn">⚙️ 요일 설정</button>
+              <button class="btn-auto-dist" onclick="openAutoDistPanel()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 자동 배분</button>
+              <button id="sched-undo-btn" onclick="undoAutoDist()" title="마지막 자동 배분 되돌리기" disabled class="sched-hdr-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a6 6 0 010 12h-1"/></svg> 되돌리기</button>
+              <button onclick="clearAllSchedDist()" title="전체 배분 초기화" class="sched-hdr-btn sched-hdr-btn-danger"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> 초기화</button>
+              <button onclick="toggleSchedDayManager()" class="sched-hdr-btn" id="sched-day-mgr-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> 요일 설정</button>
             </div>
             <p style="font-size:13px;color:#64748B;margin-bottom:14px;line-height:1.6">
               봉사 요일에 사용할 구역카드를 미리 지정합니다. 인도자가 앱을 열면 오늘 요일의 구역이 <strong>상단에 자동 표시</strong>됩니다.
@@ -361,7 +361,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 </div>
                 <div id="sched-terr-chips" class="sdm-chips-area"></div>
                 <div class="sdm-footer">
-                  <button class="sdm-dist-btn" onclick="openSchedDistPanel()">📋 카드 배분하기</button>
+                  <button class="sdm-dist-btn" onclick="openSchedDistPanel()">카드 배분하기</button>
                 </div>
               </div>
             </div>
@@ -374,7 +374,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div id="sched-day-title" style="font-size:14px;font-weight:700;color:#1B3A6B"></div>
                 <div style="display:flex;align-items:center;gap:6px">
                   <span id="sched-count-badge" style="font-size:12px;background:#EFF6FF;color:#1D4ED8;padding:3px 10px;border-radius:10px;font-weight:600"></span>
-                  <button class="sdp-status-btn" onclick="openSchedDayModal(_schedDay)">📋 현황</button>
+                  <button class="sdp-status-btn" onclick="openCurrentSchedDayModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg> 현황</button>
                 </div>
               </div>
 
@@ -384,11 +384,11 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <!-- 모드 토글 -->
                 <div style="display:flex;gap:6px;margin-bottom:10px">
                   <button id="sched-btn-search" class="sched-mode-btn active" onclick="setSchedMode('search')">
-                    <span class="smb-title">📋 배분 대기</span>
+                    <span class="smb-title"><svg class="smb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>배분 대기</span>
                     <span class="smb-sub">이번 주 일정에 없는 구역</span>
                   </button>
                   <button id="sched-btn-gallery" class="sched-mode-btn" onclick="setSchedMode('gallery')">
-                    <span class="smb-title">🗂 전체 구역</span>
+                    <span class="smb-title"><svg class="smb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>전체 구역</span>
                     <span class="smb-sub">탭으로 추가 · 제거</span>
                   </button>
                 </div>
@@ -396,7 +396,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <!-- 미할당 패널 -->
                 <div id="sched-panel-search">
                   <div class="sched-filter-zone">
-                    <div class="sched-filter-label">🔍 구역 검색 · 배분</div>
+                    <div class="sched-filter-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="18" y1="18" x2="22" y2="22"/></svg>구역 검색 · 배분</div>
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
                       <select id="sched-cat-select" onchange="setSchedCatFilter(this.value)" class="sched-sort-select" style="flex:1;min-width:0">
                         <option value="">전체 유형</option>
@@ -408,10 +408,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                     </div>
                     <div style="display:flex;align-items:center;gap:6px">
                       <input class="sched-search-input sched-fi" id="sched-search-input"
-                        placeholder="🔍  구역명 · 번호 · 회차 검색"
+                        placeholder="구역명 · 번호 · 회차 검색"
                         oninput="searchSchedTerr()" autocomplete="off" style="flex:1;margin:0;min-width:0">
                       <div style="display:flex;align-items:center;gap:2px;flex-shrink:0" title="마지막 완료일 기준 N개월 이상 된 구역만 표시">
-                        <span style="font-size:13px;line-height:1">🗓</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         <input type="number" id="sched-month-filter" min="0" max="60" placeholder="개월"
                           class="sched-fi" style="width:50px;padding:7px 4px;border:1.5px solid #BFDBFE;border-radius:8px;font-size:12px;text-align:center;font-family:inherit;outline:none;height:36px;background:#fff"
                           oninput="searchSchedTerr()">

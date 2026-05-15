@@ -623,8 +623,15 @@
   .sched-mode-btn{padding:7px 16px;border-radius:8px;cursor:pointer;border:1.5px solid #E2E8F0;background:#fff;color:#64748B;font-family:inherit;transition:all 0.15s;text-align:left;line-height:1}
   .sched-mode-btn:hover{border-color:#93C5FD;color:#1D4ED8}
   .sched-mode-btn.active{background:#1B3A6B;color:#fff;border-color:#1B3A6B}
-  .sched-mode-btn .smb-title{display:block;font-size:13px;font-weight:600}
-  .sched-mode-btn .smb-sub{display:block;font-size:10px;font-weight:400;opacity:0.65;margin-top:2px}
+  .sched-mode-btn .smb-title{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600}
+  .sched-mode-btn .smb-sub{display:block;font-size:10px;font-weight:400;opacity:0.65;margin-top:4px}
+  .smb-ico{width:14px;height:14px;flex-shrink:0}
+  /* 헤더 액션 버튼 공통 스타일 */
+  .sched-hdr-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:5px 11px;border:1.5px solid #E2E8F0;background:#fff;border-radius:8px;cursor:pointer;color:#64748B;font-family:inherit;transition:all 0.15s;flex-shrink:0}
+  .sched-hdr-btn:hover{border-color:#93C5FD;color:#1D4ED8}
+  .sched-hdr-btn:disabled{opacity:0.35;cursor:default;pointer-events:none}
+  .sched-hdr-btn-danger{border-color:#FECACA;background:#FFF5F5;color:#DC2626}
+  .sched-hdr-btn-danger:hover{border-color:#FCA5A5;background:#FEE2E2;color:#B91C1C}
 
   /* ── 배분 현황 팝업 모달 ── */
   .sdm-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -644,7 +651,7 @@
 
   /* ── 배분 패널 헤더 ── */
   .sdp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:10px 14px;background:#F8FAFC;border-radius:10px;border:1px solid #F1F5F9}
-  .sdp-status-btn{font-size:11px;padding:5px 10px;border:1.5px solid #BFDBFE;border-radius:7px;background:#EFF6FF;cursor:pointer;color:#1D4ED8;font-family:inherit;font-weight:600;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+  .sdp-status-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:5px 10px;border:1.5px solid #BFDBFE;border-radius:7px;background:#EFF6FF;cursor:pointer;color:#1D4ED8;font-family:inherit;font-weight:600;white-space:nowrap;-webkit-tap-highlight-color:transparent}
   .sdp-status-btn:hover{background:#DBEAFE}
 
   /* ── 배분된 구역 칩 카드 (한 줄 리스트) ── */

@@ -700,7 +700,7 @@ function _refreshSchedWeeklyBoard() {
   if (label) {
     const sun = weekDates[0], sat = weekDates[6];
     const offLabel = _schedWeekOffset === 0 ? '이번 주' : _schedWeekOffset === -1 ? '지난 주' : _schedWeekOffset === 1 ? '다음 주' : `${_schedWeekOffset > 0 ? '+' : ''}${_schedWeekOffset}주`;
-    label.textContent = `📅 ${offLabel}  ${sun.label}(일) ~ ${sat.label}(토)`;
+    label.textContent = `${offLabel}  ${sun.label}(일) ~ ${sat.label}(토)`;
   }
 
   const weekStart = weekDates[0].dateStr;
@@ -782,13 +782,18 @@ window.selectSchedDay = function(day) {
   if (panel && panel.style.display !== 'none') {
     const DAY_NAMES = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
     const titleEl = document.getElementById('sched-day-title');
-    if (titleEl) titleEl.textContent = '📋 ' + DAY_NAMES[day] + ' 카드 배분';
+    if (titleEl) titleEl.textContent = DAY_NAMES[day] + ' 카드 배분';
     const ids = _schedData[day] || [];
     const badge = document.getElementById('sched-count-badge');
     if (badge) badge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
     if (_schedMode === 'search')  renderUnallocatedList();
     if (_schedMode === 'gallery') renderSchedGallery();
   }
+};
+
+// 현재 선택된 요일 모달 열기 (onclick에서 _schedDay 직접 참조 불가 → wrapper)
+window.openCurrentSchedDayModal = function() {
+  openSchedDayModal(_schedDay);
 };
 
 // 요일 셀 클릭 → 배분 현황 팝업 열기
@@ -798,7 +803,7 @@ window.openSchedDayModal = function(day) {
   _refreshSchedWeeklyBoard();
   // 제목 설정
   const titleEl = document.getElementById('sdm-title');
-  if (titleEl) titleEl.textContent = '📅 ' + DAY_NAMES[day] + ' 배분 현황';
+  if (titleEl) titleEl.textContent = DAY_NAMES[day] + ' 배분 현황';
   // 자동 반납 체크박스 동기화
   const chk = document.getElementById('sched-auto-return-chk');
   if (chk) chk.checked = _schedDayAutoReturn[day] !== false;
