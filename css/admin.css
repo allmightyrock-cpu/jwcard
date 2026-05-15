@@ -603,9 +603,11 @@
   .sched-day-toggle.active{background:#1B3A6B;color:#fff;border-color:#1B3A6B}
 
   /* ── 검색/갤러리 모드 토글 ── */
-  .sched-mode-btn{padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid #E2E8F0;background:#fff;color:#64748B;font-family:inherit;transition:all 0.15s}
+  .sched-mode-btn{padding:7px 16px;border-radius:8px;cursor:pointer;border:1.5px solid #E2E8F0;background:#fff;color:#64748B;font-family:inherit;transition:all 0.15s;text-align:left;line-height:1}
   .sched-mode-btn:hover{border-color:#93C5FD;color:#1D4ED8}
   .sched-mode-btn.active{background:#1B3A6B;color:#fff;border-color:#1B3A6B}
+  .sched-mode-btn .smb-title{display:block;font-size:13px;font-weight:600}
+  .sched-mode-btn .smb-sub{display:block;font-size:10px;font-weight:400;opacity:0.65;margin-top:2px}
 
   /* ── 배분된 구역 칩 카드 (한 줄 리스트) ── */
   .scc-list{display:flex;flex-direction:column;gap:5px}

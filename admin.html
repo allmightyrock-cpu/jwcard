@@ -361,12 +361,18 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
               <!-- 카드 배분 영역 -->
               <div style="margin-top:16px;padding-top:14px;border-top:1px solid #F1F5F9">
-                <div style="font-size:13px;font-weight:700;color:#1B3A6B;margin-bottom:10px">📋 카드 배분 <span style="font-size:11px;font-weight:400;color:#94A3B8">— 미할당 카드에서 선택</span></div>
+                <div style="font-size:13px;font-weight:700;color:#1B3A6B;margin-bottom:10px">📋 카드 배분 <span style="font-size:11px;font-weight:400;color:#94A3B8">— 배분할 구역을 선택하세요</span></div>
 
                 <!-- 모드 토글 -->
                 <div style="display:flex;gap:6px;margin-bottom:10px">
-                  <button id="sched-btn-search" class="sched-mode-btn active" onclick="setSchedMode('search')">📋 미할당</button>
-                  <button id="sched-btn-gallery" class="sched-mode-btn" onclick="setSchedMode('gallery')">📇 전체 목록</button>
+                  <button id="sched-btn-search" class="sched-mode-btn active" onclick="setSchedMode('search')">
+                    <span class="smb-title">📋 배분 대기</span>
+                    <span class="smb-sub">이번 주 일정에 없는 구역</span>
+                  </button>
+                  <button id="sched-btn-gallery" class="sched-mode-btn" onclick="setSchedMode('gallery')">
+                    <span class="smb-title">🗂 전체 구역</span>
+                    <span class="smb-sub">탭으로 추가 · 제거</span>
+                  </button>
                 </div>
 
                 <!-- 미할당 패널 -->
@@ -376,8 +382,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                       <option value="">전체 유형</option>
                     </select>
                     <select id="sched-status-select" onchange="setSchedStatusFilter(this.value)" class="sched-sort-select">
-                      <option value="incomplete">미완료만</option>
-                      <option value="">전체</option>
+                      <option value="incomplete">진행중만</option>
+                      <option value="">전체 (완료 포함)</option>
                     </select>
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
@@ -409,8 +415,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                       <option value="">전체 유형</option>
                     </select>
                     <select id="sched-gal-status-select" onchange="setSchedGalStatusFilter(this.value)" class="sched-sort-select">
-                      <option value="incomplete">미완료만</option>
-                      <option value="">전체</option>
+                      <option value="incomplete">진행중만</option>
+                      <option value="">전체 (완료 포함)</option>
                     </select>
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
