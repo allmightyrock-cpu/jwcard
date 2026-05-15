@@ -780,9 +780,11 @@ window.selectSchedDay = function(day) {
   // 배분 패널이 열려 있으면 내용 갱신
   const panel = document.getElementById('sched-day-content');
   if (panel && panel.style.display !== 'none') {
-    const DAY_NAMES = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+    const DAY_NAMES  = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+    const DAY_KANJI  = ['日','月','火','水','木','金','土'];
+    const kanji = DAY_KANJI[day];
     const titleEl = document.getElementById('sched-day-title');
-    if (titleEl) titleEl.textContent = DAY_NAMES[day] + ' 카드 배분';
+    if (titleEl) titleEl.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#1B3A6B;color:#fff;border-radius:4px;font-size:13px;font-weight:700;margin-right:6px;font-family:serif;flex-shrink:0">${kanji}</span>${DAY_NAMES[day]} 카드 배분`;
     const ids = _schedData[day] || [];
     const badge = document.getElementById('sched-count-badge');
     if (badge) badge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
@@ -825,9 +827,11 @@ window.closeSchedDayModal = function() {
 // 배분 패널 열기 (모달 → 카드 배분하기 버튼)
 window.openSchedDistPanel = function() {
   closeSchedDayModal();
-  const DAY_NAMES = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+  const DAY_NAMES  = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+  const DAY_KANJI  = ['日','月','火','水','木','金','土'];
+  const kanji = DAY_KANJI[_schedDay];
   const titleEl = document.getElementById('sched-day-title');
-  if (titleEl) titleEl.textContent = '📋 ' + DAY_NAMES[_schedDay] + ' 카드 배분';
+  if (titleEl) titleEl.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#1B3A6B;color:#fff;border-radius:4px;font-size:13px;font-weight:700;margin-right:6px;font-family:serif;flex-shrink:0">${kanji}</span>${DAY_NAMES[_schedDay]} 카드 배분`;
   const ids = _schedData[_schedDay] || [];
   const badge = document.getElementById('sched-count-badge');
   if (badge) badge.textContent = ids.length ? ids.length + '개 배분됨' : '배분 없음';
