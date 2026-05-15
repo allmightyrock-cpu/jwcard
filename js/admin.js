@@ -1125,8 +1125,8 @@ function _calcAutoDist() {
     if (t.completionStatus === 'complete') return false;
     if (_ADP_EXCLUDE_CATS.has(t.category || '')) return false;
     if (t.personalAssignee) return false;
-    // 개월 수 필터: lastAssignedDate 가 cutoff 이전인 것만
-    if (_monthCutoff > 0 && _getDateMs(t.lastAssignedDate) > _monthCutoff) return false;
+    // 개월 수 필터: lastCompletedDate(완료일) 우선, 없으면 lastAssignedDate(배정일) 기준
+    if (_monthCutoff > 0 && _getDateMs(t.lastCompletedDate || t.lastAssignedDate) > _monthCutoff) return false;
     return true;
   });
 
@@ -3223,7 +3223,7 @@ function _renderTerrCardsNew(list, now) {
     const cc = Math.min(cycle, 6);
     const numCls = isInactive ? 'nc-inactive' : `nc-${cc}`;
     const pct = t.completionRate || 0;
-    const dtStr = _fmtDT(t.lastAssignedDate);
+    const dtStr = _fmtDT(t.lastCompletedDate || t.lastAssignedDate);
     const lastH = (t.cycleHistory || []).slice(-1)[0];
     const vm = (lastH && lastH.visitMode) ? lastH.visitMode : vMode;
 
@@ -3256,8 +3256,9 @@ function _renderTerrListNew(list, now) {
   const items = list.map(t => {
     const isInactive = t.active === false;
     let isOld = false;
-    if (t.lastAssignedDate) {
-      const lms = t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+    const _lastDate = t.lastCompletedDate || t.lastAssignedDate;
+    if (_lastDate) {
+      const lms = _lastDate.toDate ? _lastDate.toDate().getTime() : new Date(_lastDate).getTime();
       isOld = (now - lms) > 180*24*60*60*1000;
     } else { isOld = true; }
     const cycle = t.cycle || 1;
@@ -3265,7 +3266,7 @@ function _renderTerrListNew(list, now) {
     const numCls = isInactive ? 'nc-inactive' : `nc-${cc}`;
     const rowCls = isInactive ? 'tl-inactive' : (isOld ? 'tl-old' : '');
     const pct = t.completionRate || 0;
-    const dtStr = _fmtDT(t.lastAssignedDate);
+    const dtStr = _fmtDT(t.lastCompletedDate || t.lastAssignedDate);
     const cat = t.category || '';
     let badge = '';
     if (isInactive) {
@@ -3350,10 +3351,11 @@ window.renderTerritoryTable = function() {
       const noS = String(t.no||'').toLowerCase(), nmS = (t.name||'').toLowerCase();
       if (!noS.includes(kwRest) && !nmS.includes(kwRest)) return false;
     }
-    // 개월 필터: lastAssignedDate 가 cutoff 이전인 것만
+    // 개월 필터: lastCompletedDate(완료일) 우선, 없으면 lastAssignedDate(배정일) 기준
     if (monthCutoff > 0) {
-      const ms = t.lastAssignedDate
-        ? (t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime())
+      const dateField = t.lastCompletedDate || t.lastAssignedDate;
+      const ms = dateField
+        ? (dateField.toDate ? dateField.toDate().getTime() : new Date(dateField).getTime())
         : 0;
       if (ms > monthCutoff) return false;
     }
@@ -3361,14 +3363,17 @@ window.renderTerritoryTable = function() {
   });
 
   const getMs = t => {
-    if (!t.lastAssignedDate) return 0;
-    return t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+    const d = t.lastCompletedDate || t.lastAssignedDate;
+    if (!d) return 0;
+    return d.toDate ? d.toDate().getTime() : new Date(d).getTime();
   };
-  if (sort==='no')       list.sort((a,b) => (parseInt(a.no)||0)-(parseInt(b.no)||0));
-  else if (sort==='old') list.sort((a,b) => getMs(a)-getMs(b));
-  else if (sort==='recent') list.sort((a,b) => getMs(b)-getMs(a));
-  else if (sort==='cycle')  list.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
-  else if (sort==='progress') list.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
+  // 개월 필터 활성 시 기본 번호순이면 자동으로 오래된순 전환
+  const effectiveSort = (monthFilterVal > 0 && sort === 'no') ? 'old' : sort;
+  if (effectiveSort==='no')       list.sort((a,b) => (parseInt(a.no)||0)-(parseInt(b.no)||0));
+  else if (effectiveSort==='old') list.sort((a,b) => getMs(a)-getMs(b));
+  else if (effectiveSort==='recent') list.sort((a,b) => getMs(b)-getMs(a));
+  else if (effectiveSort==='cycle')  list.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
+  else if (effectiveSort==='progress') list.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
   if (window._terrSortDesc) list.reverse();
 
   const wrap = document.getElementById('territory-table-wrap');

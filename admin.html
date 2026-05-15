@@ -183,7 +183,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               <input class="terr-search-input" type="text" id="terr-search"
                 placeholder="🔍  구역명, 번호, 회차 검색"
                 oninput="renderTerritoryTable()">
-              <div class="terr-month-filter-wrap" title="마지막 배정일 기준 N개월 이상 된 구역만 표시">
+              <div class="terr-month-filter-wrap" title="마지막 완료일(없으면 배정일) 기준 N개월 이상 된 구역만 표시. 기록 없는 구역도 포함됩니다.">
                 <span class="terr-month-label">🗓</span>
                 <input type="number" id="terr-month-filter" min="0" max="60" placeholder="개월"
                   style="width:54px;padding:7px 6px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;text-align:center;font-family:inherit;outline:none;height:36px"
