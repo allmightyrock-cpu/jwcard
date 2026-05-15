@@ -1425,10 +1425,16 @@ function renderSchedGallery() {
   const catColor = _buildCatColorMap();
   const existing = new Set(_schedData[_schedDay] || []);
   const otherAllocated = _getAllAllocatedSet(_schedDay); // 타 요일에 배분된 ID
-  const gq = (document.getElementById('sched-gal-search')?.value || '').trim().toLowerCase();
+  const rawGq = (document.getElementById('sched-gal-search')?.value || '').trim().toLowerCase();
   const gsort = document.getElementById('sched-gal-sort')?.value || 'no';
   const gMonthVal = parseInt(document.getElementById('sched-gal-month-filter')?.value) || 0;
   const gMonthCutoff = gMonthVal > 0 ? Date.now() - gMonthVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
+  // 회차 키워드 파싱
+  let gParsedCycle = null, gKwRest = rawGq;
+  if (rawGq) {
+    const mCyc = rawGq.match(/([1-6])\s*회\s*차?/);
+    if (mCyc) { gParsedCycle = parseInt(mCyc[1]); gKwRest = gKwRest.replace(mCyc[0], '').trim(); }
+  }
   const filtered = _schedAllTerr.filter(t => {
     // 타 요일에 이미 배분된 카드는 제외 (현재 요일 카드는 ✓ 표시로 유지)
     if (otherAllocated.has(t.id)) return false;
@@ -1440,9 +1446,13 @@ function renderSchedGallery() {
       const ms = d ? (d.toDate ? d.toDate().getTime() : new Date(d).getTime()) : 0;
       if (ms > gMonthCutoff) return false;
     }
-    if (gq) {
-      const cycleStr = String(t.cycle || 1);
-      if (!String(t.no).includes(gq) && !(t.name||'').toLowerCase().includes(gq) && !cycleStr.includes(gq)) return false;
+    if (rawGq) {
+      if (gParsedCycle !== null) {
+        if ((t.cycle || 1) !== gParsedCycle) return false;
+        if (gKwRest) return String(t.no).includes(gKwRest) || (t.name||'').toLowerCase().includes(gKwRest);
+        return true;
+      }
+      if (!String(t.no).includes(rawGq) && !(t.name||'').toLowerCase().includes(rawGq)) return false;
     }
     return true;
   });
@@ -1550,10 +1560,16 @@ window.toggleSchedTerrGallery = async function(id) {
 function renderUnallocatedList() {
   const resultsEl = document.getElementById('sched-search-results');
   if (!resultsEl) return;
-  const q = (document.getElementById('sched-search-input')?.value || '').trim().toLowerCase();
+  const rawQ = (document.getElementById('sched-search-input')?.value || '').trim().toLowerCase();
   const sort = document.getElementById('sched-search-sort')?.value || 'no';
   const monthVal = parseInt(document.getElementById('sched-month-filter')?.value) || 0;
   const monthCutoff = monthVal > 0 ? Date.now() - monthVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
+  // 회차 키워드 파싱 ("2회차", "2회", "2" 모두 처리)
+  let parsedCycle = null, kwRest = rawQ;
+  if (rawQ) {
+    const mCyc = rawQ.match(/([1-6])\s*회\s*차?/);
+    if (mCyc) { parsedCycle = parseInt(mCyc[1]); kwRest = kwRest.replace(mCyc[0], '').trim(); }
+  }
   const allAllocated = _getAllAllocatedSet(-1); // 모든 요일 배분 집합 (예외 없음)
   const catColor = _buildCatColorMap();
   const filtered = _schedAllTerr.filter(t => {
@@ -1565,9 +1581,13 @@ function renderUnallocatedList() {
       const ms = d ? (d.toDate ? d.toDate().getTime() : new Date(d).getTime()) : 0;
       if (ms > monthCutoff) return false;
     }
-    if (q) {
-      const cycleStr = String(t.cycle || 1);
-      return String(t.no).includes(q) || (t.name||'').toLowerCase().includes(q) || cycleStr.includes(q);
+    if (rawQ) {
+      if (parsedCycle !== null) {
+        if ((t.cycle || 1) !== parsedCycle) return false;
+        if (kwRest) return String(t.no).includes(kwRest) || (t.name||'').toLowerCase().includes(kwRest);
+        return true;
+      }
+      return String(t.no).includes(rawQ) || (t.name||'').toLowerCase().includes(rawQ);
     }
     return true;
   });
