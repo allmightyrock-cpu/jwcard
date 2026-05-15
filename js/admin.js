@@ -1901,17 +1901,8 @@ function renderSchedCalendar() {
     const clickAttr = hasTerr ? ` onclick="openCalModal('${dateStr}',${dow})"` : '';
     html += `<div class="sched-cal-cell${isToday ? ' today' : ''}${hasTerr ? ' has-terr' : ''}"${clickAttr}>`;
     html += `<div class="sched-cal-date" style="${dateColor}">${d}</div>`;
-
-    const allTerr = _schedAllTerr.length ? _schedAllTerr : (window._territories || []);
-    terrIds.slice(0, 5).forEach(id => {
-      const t = allTerr.find(t => t.id === id);
-      if (!t) return;
-      const cat   = t.category || '';
-      const color = _CAL_CAT_COLOR[cat] || {bg:'#EFF6FF', cl:'#1D4ED8'};
-      html += `<span class="sched-cal-terr-chip" style="background:${color.bg};color:${color.cl}">${t.no}</span>`;
-    });
-    if (terrIds.length > 5) {
-      html += `<span class="sched-cal-more">+${terrIds.length - 5}</span>`;
+    if (hasTerr) {
+      html += `<div class="sched-cal-count-badge">${terrIds.length}<span class="sched-cal-count-unit">장</span></div>`;
     }
     html += '</div>';
   }

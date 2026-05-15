@@ -566,16 +566,18 @@
   .sched-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
   .sched-cal-dow{text-align:center;font-size:11px;font-weight:700;color:#94A3B8;padding:6px 0;letter-spacing:0.5px}
   .sched-cal-cells{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-  .sched-cal-cell{border-radius:8px;padding:5px 4px;min-height:52px;border:1.5px solid #F1F5F9;background:#fff;position:relative}
+  .sched-cal-cell{border-radius:8px;padding:5px 4px;min-height:52px;border:1.5px solid #F1F5F9;background:#fff;position:relative;display:flex;flex-direction:column;align-items:center}
   .sched-cal-cell.today{border-color:#1B3A6B;background:#EFF6FF}
   .sched-cal-cell.other-month{background:#F8FAFC;opacity:0.4;border-color:#F1F5F9}
   .sched-cal-cell.has-terr{border-color:#93C5FD;cursor:pointer}
   .sched-cal-cell.has-terr:hover{background:#F0F9FF;border-color:#3B82F6;box-shadow:0 2px 8px rgba(59,130,246,0.15)}
   .sched-cal-cell.today.has-terr{border-color:#1B3A6B}
-  .sched-cal-date{font-size:12px;font-weight:700;color:#475569;margin-bottom:3px}
+  .sched-cal-date{font-size:12px;font-weight:700;color:#475569;margin-bottom:4px;align-self:flex-start}
   .sched-cal-cell.today .sched-cal-date{color:#1B3A6B}
-  .sched-cal-terr-chip{font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;display:inline-block;margin:1px 1px 0 0;background:#EFF6FF;color:#1D4ED8;line-height:1.5}
-  .sched-cal-more{font-size:9px;color:#94A3B8;margin-top:1px;display:inline-block}
+  .sched-cal-count-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1B3A6B;color:#fff;border-radius:8px;width:36px;height:36px;margin-top:2px}
+  .sched-cal-count-badge{font-size:15px;font-weight:800;line-height:1.1}
+  .sched-cal-count-unit{font-size:9px;font-weight:500;opacity:0.85;line-height:1}
+  .sched-cal-cell.today .sched-cal-count-badge{background:#1B3A6B;box-shadow:0 2px 6px rgba(27,58,107,0.35)}
   /* ── 캘린더 날짜 상세 모달 ── */
   #cal-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:3000;align-items:center;justify-content:center;padding:16px}
   #cal-modal-overlay.open{display:flex}
