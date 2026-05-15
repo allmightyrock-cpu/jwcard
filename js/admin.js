@@ -1387,15 +1387,15 @@ window.confirmAutoDist = async function() {
 // ── 배정된 구역 칩 카드 목록 ──
 let _schedChipsOpen = true; // 배분 목록 펼치기/접기 상태
 
-function toggleSchedChips() {
+window.toggleSchedChips = function() {
   _schedChipsOpen = !_schedChipsOpen;
   const body = document.getElementById('sched-chips-body');
   const arrow = document.getElementById('sched-chips-arrow');
   const hdr = document.getElementById('sched-chips-hdr');
-  if (body) body.classList.toggle('chips-body-closed', !_schedChipsOpen);
+  if (body) body.style.display = _schedChipsOpen ? '' : 'none';
   if (arrow) arrow.textContent = _schedChipsOpen ? '▾' : '▸';
   if (hdr) hdr.classList.toggle('chips-hdr-closed', !_schedChipsOpen);
-}
+};
 
 function _updateChipsMini(ids, catColor) {
   const miniEl = document.getElementById('sched-chips-mini');
