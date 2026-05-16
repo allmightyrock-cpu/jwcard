@@ -942,6 +942,7 @@ body.nav-mode-active #nav-footer-bar{display:flex}
 <script src="/config.js"></script>
 <script>
 window._naverMapsLoaded = false;
+// Firebase 동적 로드용 (geocoder 없이 — document.write 차단 우회)
 window._loadNaverMaps = function(key) {
   if (!key || key.indexOf('YOUR_') === 0) return;
   if (window._naverMapsLoaded) return;
@@ -949,12 +950,15 @@ window._loadNaverMaps = function(key) {
   window._naverMapsLoaded = true;
   var s = document.createElement('script');
   s.type = 'text/javascript';
-  s.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=' + encodeURIComponent(key) + '&submodules=geocoder';
+  // 비동기 로드 시 geocoder submodule은 document.write 오류로 사용 불가 → 제외
+  s.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=' + encodeURIComponent(key);
   s.onerror = function() { window._naverMapsLoaded = false; };
   document.head.appendChild(s);
 };
 if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
-  window._loadNaverMaps(window.APP_CONFIG.naverClientId);
+  // 파서가 열려 있는 <head>에서 document.write로 동기 로드 → geocoder 정상 동작
+  document.write('<scr'+'ipt type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=' + encodeURIComponent(window.APP_CONFIG.naverClientId) + '&submodules=geocoder"><\/scr'+'ipt>');
+  window._naverMapsLoaded = true;
 }
 </script>
 </head>
@@ -2395,11 +2399,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 <script>
 var _naverMap = null;
 
-// 네이버 지도 초기화 (SDK는 <head>에서 이미 정적 로드됨)
+// 네이버 지도 초기화
 function initNaverMap() {
+  // SDK 아직 미준비 → 300ms 후 재시도
+  if (!window.naver || !naver.maps) { setTimeout(initNaverMap, 300); return; }
   try {
     var el = document.getElementById('naver-map');
     if (!el) return;
+    // 중복 초기화 방지 — 이미 지도 있으면 위치만 업데이트
+    if (_naverMap) { if (window.moveTerritoryMap) moveTerritoryMap(); return; }
     _naverMap = new naver.maps.Map(el, {
       zoom: 16,
       draggable: true,
@@ -2412,8 +2420,24 @@ function initNaverMap() {
       maxZoom: 19
     });
     console.log('[지도] 초기화 완료');
-    // SDK가 정적 로드되어 있으므로 바로 geocoding 가능
-    if (window.moveTerritoryMap) moveTerritoryMap();
+    if (naver.maps.Service) {
+      // geocoder 즉시 사용 가능
+      if (window.moveTerritoryMap) moveTerritoryMap();
+    } else {
+      // geocoder 로드 대기 (100ms 간격, 최대 4초)
+      var tries = 0;
+      var waitSvc = setInterval(function() {
+        tries++;
+        if (naver.maps.Service) {
+          clearInterval(waitSvc);
+          if (window.moveTerritoryMap) moveTerritoryMap();
+        } else if (tries >= 40) {
+          clearInterval(waitSvc);
+          // geocoder 없음 → Nominatim fallback으로 진행
+          if (window.moveTerritoryMap) moveTerritoryMap();
+        }
+      }, 100);
+    }
   } catch(e) {
     console.error('[지도] 초기화 오류:', e);
   }
