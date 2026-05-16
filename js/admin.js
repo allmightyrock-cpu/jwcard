@@ -2599,12 +2599,15 @@ window.completeTerritory = async function(id, name) {
   if (!t) return;
   // 완료 처리 확인
   if (t.status === '미배정' && _isInformalUse(t)) {
-    // 배정 없이 비공식 사용 중인 구역
+    // 배정 없이 비공식 사용 중인 구역 — 전도인명 확인 필요
     const pubs = _visitMapPubs(t);
     if (!confirm(`"${name}" 구역은 배정 없이 사용 중입니다.\n\n사용 전도인: ${pubs.join(', ') || '알 수 없음'}\n\n완료 처리하면 위 전도인 이름으로 S-13에 기록되고\n회차가 1 증가합니다. 계속하시겠습니까?`)) return;
   } else if (t.status === '미배정') {
-    // 완전 미배정 구역 재완료
+    // 완전 미배정 구역 재완료 — 경고 필요
     if (!confirm(`⚠️ "${name}" 구역은 이미 완료·반납된 상태입니다.\n\n다시 완료 처리하면 회차가 또 한 번 증가합니다.\n정말 계속하시겠습니까?`)) return;
+  } else if (t.completionStatus === 'complete') {
+    // 전도인이 완료 신청한 구역 — 확인 절차 없이 바로 처리
+    // (전도인이 이미 신청 완료한 것이므로 추가 확인 불필요)
   } else {
     if (!confirm(`"${name}" 구역을 완료 처리하시겠습니까?\n회차가 1 증가하고 완료일이 기록됩니다.`)) return;
   }
