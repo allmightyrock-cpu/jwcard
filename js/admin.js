@@ -3723,17 +3723,18 @@ window.openTerritoryCard = function(id) {
     activeBtn.style.borderColor= isInact ? '#FECACA' : '#BBF7D0';
   }
 
-  // ── 완료 처리 버튼: 미배정(이미 완료) 상태면 비활성 표시 ──
+  // ── 완료 처리 버튼 ──
+  // 비활성 조건: 미배정 상태이고 완료신청도 없음 (진짜 완료·반납된 상태)
+  // 활성 조건:   진행중 OR (미배정이어도 완료신청 있음 — 비배정 사용 후 신청)
   const completeBtn = document.getElementById('tc-complete-btn');
   if (completeBtn) {
-    const alreadyDone = t.status === '미배정';
+    const alreadyDone = t.status === '미배정' && t.completionStatus !== 'complete';
     completeBtn.disabled = alreadyDone;
     completeBtn.style.opacity    = alreadyDone ? '0.45' : '1';
     completeBtn.style.cursor     = alreadyDone ? 'not-allowed' : 'pointer';
     completeBtn.title = alreadyDone
-      ? '이미 완료·반납된 구역입니다 (다시 누르면 회차 증가)'
+      ? '이미 완료·반납된 구역입니다 (Shift+클릭으로 강제 처리)'
       : '현재 회차를 완료 처리하고 반납합니다';
-    // 관리자 강제 실행: disabled여도 Shift+클릭 시 허용 (title로 안내)
     completeBtn.onclick = alreadyDone
       ? (e) => { if (e.shiftKey) completeTerritoryFromCard(); }
       : completeTerritoryFromCard;
