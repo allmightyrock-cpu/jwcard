@@ -169,6 +169,9 @@ function enterAdmin() {
   loadTerritories();
   startAdminPresenceWatch();
   loadAdminConfig();
+  // 기본 탭이 봉사일정이므로 진입 시 초기화 (전체관리자만 — 권한 제한 시 _applyRoleUI에서 territory로 전환됨)
+  const perm = window._adminPermission || '관리자';
+  if (perm === '관리자' || perm === '봉사감독자') initScheduleTab();
 }
 
 // ── 권한에 따른 UI 제한 적용 ──
