@@ -885,6 +885,15 @@ function _terrStatus(t) {
   return 'unassigned';
 }
 
+// ── 비공식(비배정) 사용 판별: visitMap 기록 있고 assignedPublishers 없음 ──
+function _isInformalUse(t) {
+  return !t.assignedPublishers?.length && Object.keys(t.visitMap||{}).length > 0;
+}
+// visitMap에서 실제 사용 전도인 목록 추출
+function _visitMapPubs(t) {
+  return [...new Set(Object.values(t.visitMap||{}).map(v=>v?.by).filter(Boolean))];
+}
+
 // ── 전체 요일 배분 ID 집합 (특정 요일 제외 가능) ──
 function _getAllAllocatedSet(exceptDay) {
   const set = new Set();
@@ -2141,11 +2150,21 @@ window.renderPublisherTable = function() {
         ? `<button class="btn btn-sm" style="background:#EDE9FE;color:#5B21B6;border:1.5px solid #DDD6FE;font-size:10px;padding:2px 7px;display:inline-flex;align-items:center;gap:2px" onclick="cycleCartRole('${p.id}')"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="flex-shrink:0"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#5B21B6"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#5B21B6"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#5B21B6" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#5B21B6"/></svg> 인원</button>`
         : `<button class="btn btn-sm" style="background:#F1F5F9;color:#94A3B8;border:1.5px solid #E2E8F0;font-size:10px;padding:2px 7px;display:inline-flex;align-items:center;gap:2px" onclick="cycleCartRole('${p.id}')"><svg width="10" height="12" viewBox="0 0 80 90" fill="none" style="flex-shrink:0"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#94A3B8"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#94A3B8" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#94A3B8"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#94A3B8" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#94A3B8"/></svg> –</button>`;
 
+    // 비공식 사용중 구역 (visitMap에 이 전도인 이름 있고 assignedPublishers에 없는 구역)
+    const infTerrs = (window._territories||[]).filter(t =>
+      !t.assignedPublishers?.includes(p.name) &&
+      Object.values(t.visitMap||{}).some(v => v?.by === p.name)
+    );
+    const infChip = infTerrs.length > 0
+      ? `<button class="btn btn-sm" style="background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;font-size:10px;padding:2px 8px;font-weight:600" title="${infTerrs.map(t=>t.no+'번').join(', ')}" onclick="filterInformalUseByPub('${p.name.replace(/'/g,'\\\'')}')"">🔵 ${infTerrs.length}개 구역</button>`
+      : `<span style="color:#CBD5E1;font-size:11px">—</span>`;
+
     return `<tr>
       <td style="font-weight:500">${p.name}</td>
       <td class="pub-col-hide">${permChip}</td>
       <td>${statusChip}</td>
       <td class="pub-col-hide">${consentChip}</td>
+      <td>${infChip}</td>
       <td>${editAddrBtn}</td>
       <td>${cartBtn}</td>
       <td><div class="row-actions">${actions}</div></td>
@@ -2166,6 +2185,7 @@ window.renderPublisherTable = function() {
         <th class="th-sort pub-col-hide" onclick="setPubSort('permission')">시스템 권한${si('permission')}</th>
         <th class="th-sort" onclick="setPubSort('approved')">상태${si('approved')}</th>
         <th class="th-sort pub-col-hide" onclick="setPubSort('consent')">동의${si('consent')}</th>
+        <th title="배정 없이 직접 사용 중인 구역 수 (클릭 시 구역목록으로 이동)">비배정 사용</th>
         <th>주소편집</th>
         <th>전시대</th>
         <th>작업</th>
@@ -2577,8 +2597,13 @@ window.bulkForceReturn = async function() {
 window.completeTerritory = async function(id, name) {
   const t = window._territories.find(t => t.id === id);
   if (!t) return;
-  // 이미 완료·반납된 구역 — 강제 처리 여부 재확인
-  if (t.status === '미배정') {
+  // 완료 처리 확인
+  if (t.status === '미배정' && _isInformalUse(t)) {
+    // 배정 없이 비공식 사용 중인 구역
+    const pubs = _visitMapPubs(t);
+    if (!confirm(`"${name}" 구역은 배정 없이 사용 중입니다.\n\n사용 전도인: ${pubs.join(', ') || '알 수 없음'}\n\n완료 처리하면 위 전도인 이름으로 S-13에 기록되고\n회차가 1 증가합니다. 계속하시겠습니까?`)) return;
+  } else if (t.status === '미배정') {
+    // 완전 미배정 구역 재완료
     if (!confirm(`⚠️ "${name}" 구역은 이미 완료·반납된 상태입니다.\n\n다시 완료 처리하면 회차가 또 한 번 증가합니다.\n정말 계속하시겠습니까?`)) return;
   } else {
     if (!confirm(`"${name}" 구역을 완료 처리하시겠습니까?\n회차가 1 증가하고 완료일이 기록됩니다.`)) return;
@@ -3279,6 +3304,8 @@ function updateTerritoryStats() {
   document.getElementById('t-stat-active').textContent = t.filter(x => x.status === '진행중').length;
   document.getElementById('t-stat-done').textContent = t.filter(x => x.status === '완료').length;
   document.getElementById('t-stat-unassigned').textContent = t.filter(x => !x.assignedPublishers || x.assignedPublishers.length === 0).length;
+  const infEl = document.getElementById('t-stat-informal');
+  if (infEl) infEl.textContent = t.filter(x => _isInformalUse(x)).length;
 }
 
 window.filterTerritory = function(cat, el) {
@@ -3294,6 +3321,41 @@ window.filterCompletionStatus = function(status, el) {
   } else {
     window._currentCompletionFilter = status;
   }
+  window.renderTerritoryTable();
+};
+
+// 상태 드롭다운 필터 (active/inactive/진행중/완료/미배정/사용중)
+window.setTerrStatusFilter = function(val) {
+  window._currentStatusFilter = val || 'all';
+  // "비배정 사용중" 버튼 동기화
+  const infBtn = document.getElementById('filter-informal-use');
+  if (infBtn) infBtn.classList.toggle('active', val === '사용중');
+  window.renderTerritoryTable();
+};
+
+// 전도인관리 탭 → 해당 전도인의 비배정 사용 구역 목록 팝업
+window.filterInformalUseByPub = function(pubName) {
+  const terrs = (window._territories||[]).filter(t =>
+    !t.assignedPublishers?.includes(pubName) &&
+    Object.values(t.visitMap||{}).some(v => v?.by === pubName)
+  );
+  if (!terrs.length) { alert(pubName + ': 비배정 사용 구역 없음'); return; }
+  const lines = terrs.map(t => {
+    const pct = t.completionRate || 0;
+    const vm  = Object.keys(t.visitMap||{}).length;
+    return `• ${t.no}번 ${t.name} — ${vm}세대 방문, 진행률 ${pct}%`;
+  }).join('\n');
+  const action = confirm(
+    `[${pubName}] 비배정 사용 중인 구역 ${terrs.length}개\n\n${lines}\n\n` +
+    `구역관리 탭에서 "비배정 사용중" 필터로 이동하시겠습니까?`
+  );
+  if (!action) return;
+  switchTab('territory', document.querySelector('.nav-item[onclick*="territory"]'));
+  window._currentStatusFilter = '사용중';
+  const sel = document.getElementById('terr-status-filter');
+  if (sel) sel.value = '사용중';
+  const kw = document.getElementById('terr-search');
+  if (kw) kw.value = '';
   window.renderTerritoryTable();
 };
 
@@ -3377,6 +3439,9 @@ function _renderTerrCardsNew(list, now) {
       badgeHtml = `<div class="tc-mini-badge b-done">완료신청</div>`;
     } else if (t.completionStatus === 'incomplete') {
       badgeHtml = `<div class="tc-mini-badge b-inc">미완료</div>`;
+    } else if (_isInformalUse(t)) {
+      const pubs = _visitMapPubs(t);
+      badgeHtml = `<div class="tc-mini-badge b-informal">🔵 ${pubs.length ? pubs.join(', ') : '비배정 사용중'}</div>`;
     } else if (pct > 0) {
       badgeHtml = `<div class="tc-mini-badge b-pct">${pct}% 완료</div>`;
     }
@@ -3418,6 +3483,9 @@ function _renderTerrListNew(list, now) {
       badge = `<span class="tl-badge-ok">🔔 완료신청</span>`;
     } else if (t.completionStatus === 'incomplete') {
       badge = `<span class="tl-badge-inc">⏸ 미완료</span>`;
+    } else if (_isInformalUse(t)) {
+      const pubs = _visitMapPubs(t);
+      badge = `<span class="tl-badge-informal">🔵 비배정 사용중${pubs.length ? ': '+pubs.join(', ') : ''}</span>`;
     } else if (isOld) {
       badge = `<span class="tl-badge-old">⏰ 오래됨</span>`;
     } else if (pct > 0) {
@@ -3474,6 +3542,13 @@ window.renderTerritoryTable = function() {
   if (cBtn) cBtn.classList.toggle('active', cmplt==='complete');
   if (iBtn) iBtn.classList.toggle('active', cmplt==='incomplete');
 
+  // 비배정 사용중 카운트 + 버튼 상태
+  const infUse = allT.filter(t => _isInformalUse(t));
+  const infEl  = document.getElementById('informal-use-count');
+  const infBtn = document.getElementById('filter-informal-use');
+  if (infEl) infEl.textContent = infUse.length;
+  if (infBtn) infBtn.classList.toggle('active', statusF==='사용중');
+
   let parsedCycle = null, kwRest = rawKw.toLowerCase();
   if (rawKw) {
     const mCyc = rawKw.match(/([1-6])\s*회\s*차?/);
@@ -3489,6 +3564,7 @@ window.renderTerritoryTable = function() {
     if (statusF==='진행중'   && t.status!=='진행중') return false;
     if (statusF==='완료'     && t.status!=='완료')   return false;
     if (statusF==='미배정'   && t.status!=='미배정') return false;
+    if (statusF==='사용중'   && !_isInformalUse(t)) return false;
     if (parsedCycle!==null && (t.cycle||1)!==parsedCycle) return false;
     if (kwRest) {
       const noS = String(t.no||'').toLowerCase(), nmS = (t.name||'').toLowerCase();

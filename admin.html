@@ -149,6 +149,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <div class="stat-box"><div class="stat-label">진행 중</div><div class="stat-value" id="t-stat-active" style="color:#1B3A6B">—</div></div>
           <div class="stat-box"><div class="stat-label">완료</div><div class="stat-value" id="t-stat-done" style="color:#166534">—</div></div>
           <div class="stat-box"><div class="stat-label">미배정</div><div class="stat-value" id="t-stat-unassigned" style="color:#92400E">—</div></div>
+          <div class="stat-box" style="cursor:pointer" onclick="setTerrStatusFilter('사용중');document.getElementById('terr-status-filter').value='사용중'" title="배정 없이 사용 중인 구역 수 (클릭 시 필터)">
+            <div class="stat-label">비배정 사용중</div>
+            <div class="stat-value" id="t-stat-informal" style="color:#1D4ED8">—</div>
+          </div>
         </div>
         <div class="card">
           <div class="card-header">
@@ -170,6 +174,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <option value="진행중">진행중</option>
                 <option value="완료">완료</option>
                 <option value="미배정">미배정</option>
+                <option value="사용중">비배정 사용중</option>
               </select>
               <select id="terr-sort" onchange="setTerrSort(this.value)" title="정렬 기준">
                 <option value="no">번호순</option>
@@ -200,6 +205,11 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               <button class="terr-view-btn active" id="btn-view-list" onclick="setTerrView('list')" title="리스트 뷰">☰</button>
               <button class="terr-view-btn" id="btn-view-card" onclick="setTerrView('card')" title="카드 뷰">⊞</button>
               <button class="terr-view-btn" onclick="downloadAllTerritoriesExcel()" title="전체 엑셀 백업 (ZIP)">⬇</button>
+              <button class="terr-cmpl-btn" id="filter-informal-use"
+                onclick="setTerrStatusFilter(window._currentStatusFilter==='사용중'?'all':'사용중');document.getElementById('terr-status-filter').value=window._currentStatusFilter"
+                title="배정 없이 사용 중인 구역만 보기">
+                🔵 <span class="badge" id="informal-use-count">0</span>
+              </button>
               <button class="terr-cmpl-btn" id="filter-complete-req"
                 onclick="filterCompletionStatus('complete',this)" title="완료 신청된 구역만 보기">
                 🔔 <span class="badge" id="complete-req-count">0</span>
