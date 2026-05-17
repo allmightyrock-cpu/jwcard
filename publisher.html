@@ -628,6 +628,23 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .assign-btn-row .assign-confirm-btn{margin-top:0;flex:1}
 .assign-unassign-btn{flex:0 0 auto;padding:12px 14px;background:#FEF2F2;color:#991B1B;border:1.5px solid #FECACA;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background 0.15s}
 .assign-unassign-btn:hover{background:#FECACA}
+/* 구역 추가 팝업 */
+.atp-overlay{display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,0.55)}
+.atp-sheet{position:absolute;bottom:0;left:0;right:0;max-height:90vh;background:#fff;border-radius:16px 16px 0 0;overflow:hidden;display:flex;flex-direction:column}
+.atp-header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #E2E8F0;flex-shrink:0;background:#fff}
+.atp-title{font-size:14px;font-weight:700;color:#1B3A6B}
+.atp-close-btn{background:none;border:none;font-size:22px;color:#64748B;cursor:pointer;padding:0 4px;line-height:1;font-family:inherit}
+.atp-body{overflow-y:auto;flex:1;padding:12px 14px 4px}
+#add-terr-popup #ld-unalloc-results{max-height:calc(90vh - 230px)}
+.atp-footer{padding:12px 14px;border-top:1px solid #E2E8F0;flex-shrink:0;background:#F8FAFC}
+.atp-done-btn{width:100%;padding:13px;background:#1B3A6B;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+/* 구역 추가 팝업 열기 버튼 */
+.ld-add-terr-btn{width:100%;margin-top:12px;padding:13px 16px;background:#fff;border:2px dashed #93C5FD;border-radius:10px;font-size:14px;font-weight:600;color:#1D4ED8;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+.ld-add-terr-btn:active{background:#EFF6FF}
+/* 팝업 카드 [+추가] 버튼 */
+.tc-add-btn{margin-left:auto;font-size:11px;background:#EFF6FF;color:#1D4ED8;border:1px solid #93C5FD;border-radius:5px;padding:3px 9px;cursor:pointer;flex-shrink:0;font-weight:700;transition:all 0.15s}
+.tc-add-btn:active,.tc-add-btn:hover{background:#DBEAFE}
+.tc-add-btn.added{background:#DCFCE7;color:#166534;border-color:#86EFAC;cursor:default}
 .assign-history{margin-top:12px;padding-top:10px;border-top:1px solid #E2E8F0}
 .assign-history-title{font-size:11px;font-weight:600;color:#94A3B8;letter-spacing:0.3px;margin-bottom:6px}
 .assign-history-item{display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px solid #F8FAFC;font-size:11px}
@@ -1948,67 +1965,12 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               <button class="assign-unassign-btn" id="ld-today-unassign-btn" style="display:none" onclick="unassignTodayTerr()">🗑 해제</button>
             </div>
           </div>
-          <!-- 미할당 카드 현장 추가 -->
-          <div style="border-top:1px dashed #E2E8F0;margin:14px 0 10px"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div style="font-size:12px;font-weight:600;color:#1B3A6B">➕ 미할당 카드 현장 추가</div>
-            <button id="ld-unalloc-toggle" type="button" onclick="toggleUnallocatedList()"
-              style="font-size:11px;padding:3px 9px;border:1px solid #BFDBFE;background:#EFF6FF;color:#1D4ED8;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600">
-              ▼ 목록 보기 <span id="ld-unalloc-count" style="background:#1D4ED8;color:#fff;border-radius:8px;padding:1px 6px;margin-left:3px;font-size:10px">0</span>
-            </button>
-          </div>
-          <div id="ld-unalloc-input-wrap" style="display:none;margin-bottom:6px">
-            <div style="display:flex;gap:6px;margin-bottom:0">
-              <input id="ld-unalloc-input" type="text" placeholder="번호 · 이름 · 회차 검색..."
-                style="flex:1;min-width:0;box-sizing:border-box;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
-                oninput="searchUnallocatedForToday()" autocomplete="off">
-              <select id="ld-unalloc-cat-sel" onchange="setLdUnallocCat(this.value)"
-                style="flex-shrink:0;padding:8px 6px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff;max-width:110px">
-                <option value="">전체 유형</option>
-              </select>
-            </div>
-          </div>
-          <div id="ld-unalloc-results" style="display:none;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;max-height:340px;overflow-y:auto;background:#fff;margin-bottom:4px"></div>
         </div>
 
-        <div class="ld-filter">
-          <select id="ld-status" onchange="renderLdTerritoryList()">
-            <option value="unassigned">미배정만</option>
-            <option value="">전체 상태</option>
-            <option value="진행중">미완료만</option>
-          </select>
-          <select id="ld-cat" onchange="renderLdTerritoryList()">
-            <option value="">전체 유형</option>
-          </select>
-          <select id="ld-cycle" onchange="renderLdTerritoryList()">
-            <option value="">전체 회차</option>
-          </select>
-          <select id="ld-sort" onchange="renderLdTerritoryList()">
-            <option value="sched_first">예정 우선</option>
-            <option value="old">오래된 순</option>
-            <option value="recent_next">최근 완료 다음</option>
-            <option value="units_asc">세대 적은 순</option>
-            <option value="rate_asc">진행률 낮은 순</option>
-          </select>
-        </div>
-        <div class="ld-chip-row">
-          <button class="ld-chip on" id="ldc-sched-today" onclick="toggleLdChip('sched-today',this)"
-            style="background:#1B3A6B;color:#fff;border-color:#1B3A6B">📅 오늘 예정만</button>
-          <button class="ld-chip warn" id="ldc-no-escort" onclick="toggleLdChip('no-escort',this)">동행필수 없는 구역만</button>
-          <button class="ld-chip" id="ldc-revisit" onclick="toggleLdChip('revisit',this)">재방문 세대 있는 구역</button>
-          <button class="ld-chip" id="ldc-old6m" onclick="toggleLdChip('old6m',this)">6개월+ 미사용</button>
-        </div>
-        <div id="ld-addable-hdr" class="tc-section-hdr addable">➕ 구역 선택 · 배정 추가 <span id="ld-addable-count" style="margin-left:auto;font-size:11px;color:#94A3B8"></span></div>
-        <div id="ld-terr-list" style="margin-bottom:14px"></div>
-        <div class="assign-box" id="ld-assign-box" style="display:none">
-          <div class="assign-label">👤 배정할 전도인 선택 (최대 6명)</div>
-          <div class="pub-chip-list" id="ld-pub-chips"></div>
-          <div class="assign-btn-row">
-            <button class="assign-confirm-btn" id="ld-confirm-btn" disabled onclick="confirmLdAssign()">배정 확정</button>
-            <button class="assign-unassign-btn" id="ld-unassign-btn" style="display:none" onclick="unassignLdTerr()">🗑 해제</button>
-          </div>
-          <div id="ld-assign-history"></div>
-        </div>
+        <button class="ld-add-terr-btn" onclick="openAddTerrPopup()">
+          ➕ 구역 추가
+          <span id="ld-today-addable-badge" style="font-size:11px;font-weight:600;background:#1D4ED8;color:#fff;padding:2px 8px;border-radius:8px;display:none"></span>
+        </button>
       </div>
       <!-- 오늘의 봉사 탭 -->
       <div id="ld-tab-meeting" style="display:none">
@@ -2075,33 +2037,108 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           .ldh-warn{background:#FEE2E2;border:1px solid #FECACA;border-radius:8px;padding:10px 12px;font-size:12px;color:#991B1B;line-height:1.65;margin-bottom:10px}
         </style>
 
-        <!-- 🗓 오늘의 봉사 탭 — 3단계 배정 -->
+        <!-- 전체 흐름 -->
         <div class="ldh-sec">
-          <div class="ldh-title">🗓 오늘의 봉사 탭 — 3단계 배정 흐름</div>
+          <div class="ldh-title">🗺 전체 사용 흐름</div>
           <div class="ldh-step-box">
             <div class="ldh-step-row">
               <span class="ldh-num">1</span>
-              <div><strong>① 출석 확인</strong><br>
-                전도인이 앱에서 "✋ 오늘의 봉사 참여 신청"을 누르면 출석 목록에 실시간으로 나타납니다.<br>
-                앱 사용이 어려운 전도인은 <strong>이름 직접 추가</strong>로 수동 등록하세요.
+              <div><strong>구역 배정 탭 — 오늘 사용할 구역 추가</strong><br>
+                <strong>➕ 구역 추가</strong> 버튼을 탭해 팝업을 열고, 필터·검색으로 구역을 찾아 <strong>[+ 추가]</strong>를 누릅니다.<br>
+                필요한 구역을 모두 추가한 후 <strong>✅ 완료 — 오늘의 봉사로 이동</strong>을 누르세요.
               </div>
             </div>
             <div class="ldh-step-row">
               <span class="ldh-num">2</span>
-              <div><strong>② 구역 선택</strong><br>
-                오늘 사용할 구역카드를 탭해서 선택합니다. 여러 개 선택 가능합니다.<br>
-                <strong>오늘 예정 구역</strong>이 미리 설정된 경우 상단에 자동으로 표시됩니다.
+              <div><strong>오늘의 봉사 탭 ① — 출석 확인</strong><br>
+                전도인이 앱에서 "✋ 오늘의 봉사 참여 신청"을 누르면 실시간으로 목록에 나타납니다.<br>
+                앱 사용이 어려운 전도인은 <strong>이름 직접 추가</strong>로 수동 등록하세요.
               </div>
             </div>
             <div class="ldh-step-row">
               <span class="ldh-num">3</span>
-              <div><strong>③ 전도인 배정</strong><br>
-                각 구역 카드 아래 <strong>+ 전도인 추가</strong>를 탭해서 배정할 전도인을 선택합니다.<br>
-                모두 선택 후 <strong>✅ 배정 확정</strong> 버튼을 누르면 전도인 화면에 구역번호가 즉시 표시됩니다.
+              <div><strong>오늘의 봉사 탭 ② — 구역 선택</strong><br>
+                1단계에서 추가한 구역이 목록에 표시됩니다. 오늘 실제 사용할 카드를 탭해 선택하세요 (여러 개 가능).
+              </div>
+            </div>
+            <div class="ldh-step-row">
+              <span class="ldh-num">4</span>
+              <div><strong>오늘의 봉사 탭 ③ — 전도인 배정</strong><br>
+                각 구역 카드 아래 <strong>+ 전도인 추가</strong>를 탭해 배정할 전도인을 선택합니다.<br>
+                모두 선택 후 <strong>✅ 배정 확정</strong>을 누르면 전도인 화면에 구역번호가 즉시 표시됩니다.
               </div>
             </div>
           </div>
           <div class="ldh-tip">💡 배정이 완료되면 전도인 앱에 <strong>"🗺 구역카드 바로 열기"</strong> 버튼이 나타납니다. 전도인에게 앱을 확인하도록 안내하세요.</div>
+        </div>
+
+        <!-- 구역 배정 탭 -->
+        <div class="ldh-sec">
+          <div class="ldh-title">📋 구역 배정 탭</div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#F0FDF4">✅</div>
+            <div class="ldh-text">
+              <strong>배당된 구역 (초록 카드)</strong>
+              <span>관리자가 오늘 요일에 미리 배분해 둔 구역과 팝업에서 추가한 구역이 초록 카드로 표시됩니다.</span>
+            </div>
+          </div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#EFF6FF">➕</div>
+            <div class="ldh-text">
+              <strong>구역 추가 버튼</strong>
+              <span>탭하면 구역 추가 팝업이 열립니다. 팝업에서 구역을 찾아 <strong>[+ 추가]</strong>를 누르면 배당 목록에 즉시 반영됩니다. 카드가 부족하면 언제든지 다시 열어 추가할 수 있습니다.</span>
+            </div>
+          </div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#FEF2F2">↩</div>
+            <div class="ldh-text">
+              <strong>반납 버튼</strong>
+              <span>카드 오른쪽 <strong style="color:#DC2626">반납</strong>을 탭하면 해당 구역이 즉시 미할당 풀로 반납됩니다. 현장에서 사용하지 않을 구역을 수동으로 돌려줄 때 사용합니다.</span>
+            </div>
+          </div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#F0FDF4">🌙</div>
+            <div class="ldh-text">
+              <strong>자정에 자동 반납</strong>
+              <span>체크 시(기본값) 자정이 지나면 해당 요일 배분 카드가 자동으로 미할당 풀로 반납됩니다. 해제하면 다음 주도 그대로 유지됩니다.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 구역 추가 팝업 -->
+        <div class="ldh-sec">
+          <div class="ldh-title">🔍 구역 추가 팝업 — 필터 · 검색</div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#F8FAFC">🏷</div>
+            <div class="ldh-text">
+              <strong>드롭다운 필터 4개</strong>
+              <span>
+                <strong>상태</strong> — 미배정만 / 전체 / 미완료만<br>
+                <strong>유형</strong> — 아파트 / 상가 / 주택 등 구역 유형별<br>
+                <strong>회차</strong> — 특정 회차만 보기<br>
+                <strong>정렬</strong> — 오래된 순(기본) / 번호 순 / 최근 완료 다음 / 세대 적은 순 / 진행률 낮은 순
+              </span>
+            </div>
+          </div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#FEF3C7">🔘</div>
+            <div class="ldh-text">
+              <strong>칩 필터 3가지</strong>
+              <span>
+                <strong style="color:#991B1B">⚠ 동행필수 없는 구역만</strong> — 인도자 혼자 방문 가능한 구역<br>
+                <strong>⏰ 재방문 세대 있는 구역</strong> — 재방문 코드가 기록된 세대가 있는 구역<br>
+                <strong>🕐 6개월+ 미사용</strong> — 최근 6개월간 배정 이력이 없는 구역
+              </span>
+            </div>
+          </div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#EFF6FF">🔎</div>
+            <div class="ldh-text">
+              <strong>텍스트 검색</strong>
+              <span>구역 번호 · 이름 · 회차로 검색합니다. 드롭다운 필터 + 칩 필터 + 텍스트 검색이 동시에 적용됩니다.</span>
+            </div>
+          </div>
+          <div class="ldh-tip">💡 카드를 탭(또는 [+ 추가])하면 즉시 오늘 배당 목록에 추가됩니다. 이미 추가된 카드는 <strong style="color:#16A34A">✅ 추가됨</strong>으로 표시됩니다.</div>
         </div>
 
         <!-- 배정 인원 -->
@@ -2125,78 +2162,14 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div class="ldh-icon" style="background:#EFF6FF">🔵</div>
             <div class="ldh-text">
               <strong>동행 — 나머지 최대 4명</strong>
-              <span>3번째부터는 "함께 활동중" 파란 점(🔵)으로 구분 표시됩니다. 구역 목록에서도 "+N명 동행"으로 표시됩니다.</span>
+              <span>3번째부터는 "함께 활동중" 파란 점(🔵)으로 구분 표시되며, 목록에서도 "+N명 동행"으로 표시됩니다.</span>
             </div>
           </div>
           <div class="ldh-item">
             <div class="ldh-icon" style="background:#DBEAFE">📱</div>
             <div class="ldh-text">
               <strong>카카오톡으로 구역 공유</strong>
-              <span>구역 목록에서 구역 번호(숫자)를 탭하면 카카오톡으로 구역 정보와 접속 링크를 공유할 수 있습니다.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 오늘 예정 구역 섹션 -->
-        <div class="ldh-sec">
-          <div class="ldh-title">📅 오늘 예정 구역 — 배정 탭 상단</div>
-          <div class="ldh-item">
-            <div class="ldh-icon" style="background:#EFF6FF">📅</div>
-            <div class="ldh-text">
-              <strong>자동 표시</strong>
-              <span>관리자가 오늘 요일에 배분한 구역이 배정 탭 상단에 자동으로 나타납니다. 탭하면 바로 배정 패널이 열립니다.</span>
-            </div>
-          </div>
-          <div class="ldh-item">
-            <div class="ldh-icon" style="background:#FEF2F2">↩</div>
-            <div class="ldh-text">
-              <strong>반납 버튼</strong>
-              <span>예정 구역 오른쪽 <strong style="color:#DC2626">반납</strong> 버튼을 탭하면 해당 구역이 미할당 풀로 즉시 반납됩니다. 현장에서 사용하지 않을 구역을 수동으로 돌려줄 때 사용합니다.</span>
-            </div>
-          </div>
-          <div class="ldh-item">
-            <div class="ldh-icon" style="background:#F0FDF4">🌙</div>
-            <div class="ldh-text">
-              <strong>자정에 자동 반납</strong>
-              <span>체크 시(기본값) 자정이 지난 후 앱 접속 시 해당 요일 배분 카드가 자동으로 미할당 풀로 반납됩니다. 해제하면 다음 주도 그대로 유지됩니다.</span>
-            </div>
-          </div>
-          <div class="ldh-item">
-            <div class="ldh-icon" style="background:#FFFBEB">➕</div>
-            <div class="ldh-text">
-              <strong>미할당 카드 현장 추가</strong>
-              <span>예정 구역 섹션 하단 <strong>▼ 목록 보기</strong>를 탭하면 아직 어느 요일에도 배분되지 않은 카드를 검색해 오늘 일정에 즉시 추가할 수 있습니다. 카테고리 필터 칩으로 범위를 좁혀 빠르게 찾을 수 있습니다.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 구역 배정 탭 검색·필터 -->
-        <div class="ldh-sec">
-          <div class="ldh-title">🔍 구역 배정 탭 — 검색 및 필터</div>
-          <div class="ldh-item">
-            <div class="ldh-icon" style="background:#F8FAFC">↕</div>
-            <div class="ldh-text">
-              <strong>정렬</strong>
-              <span>예정 우선 / 오래된 순 / 최근 완료 다음 / 세대 적은 순 / 진행률 낮은 순</span>
-            </div>
-          </div>
-          <div class="ldh-item">
-            <div class="ldh-icon" style="background:#F8FAFC">🏷</div>
-            <div class="ldh-text">
-              <strong>유형·상태·회차 필터</strong>
-              <span>구역 유형(주택구역, 상가구역 등), 배정 상태(미배정만·전체·미완료만), 회차(1~6회차)로 각각 필터합니다.</span>
-            </div>
-          </div>
-          <div class="ldh-item">
-            <div class="ldh-icon" style="background:#FEF3C7">🔘</div>
-            <div class="ldh-text">
-              <strong>칩 필터 (4가지)</strong>
-              <span>
-                <strong>📅 오늘 예정만</strong> — 오늘 요일에 배분된 구역만 표시 (기본 켜짐)<br>
-                <strong style="color:#991B1B">⚠ 동행필수 없는 구역만</strong> — 혼자 방문 가능한 구역만<br>
-                <strong>⏰ 재방문 세대 있는 구역</strong> — 재방문 코드가 기록된 세대가 있는 구역<br>
-                <strong>🕐 6개월+ 미사용</strong> — 최근 6개월간 배정 이력이 없는 구역
-              </span>
+              <span>구역 번호(숫자)를 탭하면 카카오톡으로 구역 정보와 접속 링크를 공유할 수 있습니다.</span>
             </div>
           </div>
         </div>
@@ -2267,6 +2240,75 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         </p>
         <div id="ld-manage-list"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 구역 추가 팝업 ── -->
+<div id="add-terr-popup" class="atp-overlay">
+  <div class="atp-sheet">
+    <div class="atp-header">
+      <div class="atp-title">➕ 구역 추가</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="atp-selected-count" style="font-size:12px;color:#16A34A;font-weight:600;display:none"></span>
+        <button class="atp-close-btn" onclick="closeAddTerrPopup()">×</button>
+      </div>
+    </div>
+    <div class="atp-body">
+      <!-- ① 필터 (미할당 카드에 적용) -->
+      <div class="ld-filter">
+        <select id="ld-status" onchange="searchUnallocatedForToday()">
+          <option value="unassigned">미배정만</option>
+          <option value="">전체 상태</option>
+          <option value="진행중">미완료만</option>
+        </select>
+        <select id="ld-cat" onchange="searchUnallocatedForToday()">
+          <option value="">전체 유형</option>
+        </select>
+        <select id="ld-cycle" onchange="searchUnallocatedForToday()">
+          <option value="">전체 회차</option>
+        </select>
+        <select id="ld-sort" onchange="searchUnallocatedForToday()">
+          <option value="old">오래된 순</option>
+          <option value="no_asc">번호 순</option>
+          <option value="recent_next">최근 완료 다음</option>
+          <option value="units_asc">세대 적은 순</option>
+          <option value="rate_asc">진행률 낮은 순</option>
+        </select>
+      </div>
+      <!-- ② 칩 필터 (미할당 카드에 적용 — "오늘 예정만" 제외) -->
+      <div class="ld-chip-row" style="margin-bottom:8px">
+        <button class="ld-chip warn" id="ldc-no-escort" onclick="toggleLdChip('no-escort',this)">동행필수 없는 구역만</button>
+        <button class="ld-chip" id="ldc-revisit" onclick="toggleLdChip('revisit',this)">재방문 세대 있는 구역</button>
+        <button class="ld-chip" id="ldc-old6m" onclick="toggleLdChip('old6m',this)">6개월+ 미사용</button>
+      </div>
+      <!-- ③ 텍스트 검색 -->
+      <div style="margin-bottom:8px">
+        <input id="ld-unalloc-input" type="text" placeholder="번호 · 이름 · 회차 검색..."
+          style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+          oninput="searchUnallocatedForToday()" autocomplete="off">
+      </div>
+      <!-- ④ 결과 목록 -->
+      <div id="ld-unalloc-results" style="border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;overflow-y:auto;background:#fff;margin-bottom:4px"></div>
+      <!-- JS 참조용 숨김 요소 -->
+      <div id="ld-terr-list" style="display:none"></div>
+      <div id="ld-addable-hdr" style="display:none"></div>
+      <span id="ld-addable-count" style="display:none"></span>
+      <span id="ld-unalloc-count" style="display:none">0</span>
+      <span id="ld-unalloc-toggle" style="display:none"></span>
+      <div id="ld-assign-box" style="display:none">
+        <div class="pub-chip-list" id="ld-pub-chips"></div>
+        <div class="assign-btn-row">
+          <button class="assign-confirm-btn" id="ld-confirm-btn" disabled onclick="confirmLdAssign()">배정 확정</button>
+          <button class="assign-unassign-btn" id="ld-unassign-btn" style="display:none" onclick="unassignLdTerr()">해제</button>
+        </div>
+        <div id="ld-assign-history"></div>
+      </div>
+    </div>
+    <div class="atp-footer">
+      <button class="atp-done-btn" onclick="closeAddTerrPopupDone()">
+        ✅ 완료 — 오늘의 봉사로 이동
+      </button>
     </div>
   </div>
 </div>
@@ -4773,6 +4815,65 @@ window.switchLdTab = function(tab, el) {
   if (tab === 'meeting') initMeetingTab();
 };
 
+// ── 구역 추가 팝업 ──
+let _inTerrPopup = false;
+window.openAddTerrPopup = function() {
+  _inTerrPopup = true;
+  document.getElementById('add-terr-popup').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  // 필터 드롭다운 초기화
+  _renderLdCatSelect();
+  _renderLdCycleSelect();
+  // 검색 인풋 초기화 후 결과 표시
+  const inp = document.getElementById('ld-unalloc-input');
+  if (inp) inp.value = '';
+  searchUnallocatedForToday();
+  _updateAtpCount();
+  // 인풋 포커스
+  setTimeout(() => inp?.focus(), 120);
+};
+window.closeAddTerrPopup = function() {
+  _inTerrPopup = false;
+  document.getElementById('add-terr-popup').style.display = 'none';
+  document.body.style.overflow = '';
+  _ldSelectedTerrId = null; _ldSelectedPubs = [];
+  renderTodaySection();
+};
+window.closeAddTerrPopupDone = function() {
+  closeAddTerrPopup();
+  const meetingBtn = document.getElementById('ld-tab-meeting-btn');
+  if (meetingBtn) switchLdTab('meeting', meetingBtn);
+};
+window.addTerrToPopup = async function(id, btnEl) {
+  if (_todaySchedIds.includes(id)) return;
+  if (btnEl) { btnEl.textContent = '추가 중…'; btnEl.disabled = true; }
+  try {
+    if (_todayDayOfWeek >= 0) {
+      const newIds = [..._todaySchedIds, id];
+      await setDoc(doc(db,'weeklySchedule',String(_todayDayOfWeek)), {
+        terrIds: newIds, active: true,
+        allocatedDate: new Date().toISOString().slice(0,10),
+        updatedAt: serverTimestamp()
+      });
+      _todaySchedIds = newIds;
+      _allSchedIds.add(id);
+    }
+    if (btnEl) { btnEl.textContent = '✅ 추가됨'; btnEl.classList.add('added'); }
+    _updateAtpCount();
+    renderTodaySection();
+  } catch(e) {
+    if (btnEl) { btnEl.textContent = '+ 추가'; btnEl.disabled = false; }
+    alert('추가 오류: '+e.message);
+  }
+};
+function _updateAtpCount() {
+  const cnt = _todaySchedIds.length;
+  const badge = document.getElementById('atp-selected-count');
+  if (badge) { badge.textContent = `${cnt}개 배당됨`; badge.style.display = cnt ? 'inline' : 'none'; }
+  const addBadge = document.getElementById('ld-today-addable-badge');
+  if (addBadge) { addBadge.textContent = `${cnt}개`; addBadge.style.display = cnt ? 'inline' : 'none'; }
+}
+
 async function _loadLdData() {
   try {
     const [terrSnap, pubSnap, cfgSnap] = await Promise.all([
@@ -4859,6 +4960,7 @@ window.renderLdTerritoryList = function() {
   });
 
   const wrap = document.getElementById('ld-terr-list');
+  if (!wrap || wrap.style.display === 'none') return; // 팝업 모드에서 숨김 처리된 경우 skip
   const cntEl = document.getElementById('ld-addable-count');
   if (cntEl) cntEl.textContent = list.length ? `${list.length}개` : '';
   if (!list.length) {
@@ -4898,6 +5000,36 @@ window.renderLdTerritoryList = function() {
           <span style="color:#7C3AED;font-weight:600">담당: ${t.personalAssignee}</span>
         </div>
         <div class="tc-prog"><div class="tc-prog-fill" style="width:${t.completionRate||0}%;background:#C4B5FD"></div></div>
+      </div>`;
+    }
+    if (_inTerrPopup) {
+      // 팝업 모드: [+ 추가] 버튼 표시, 클릭으로 오늘 예정에 추가
+      const alreadyAdded = _todaySchedIds.includes(t.id);
+      return `<div class="tc-card${isToday?' today':''}">
+        <div class="tc-top">
+          <span class="tc-no">${t.no}</span>
+          <span class="tc-name">${t.name}</span>
+          ${t.category?`<span class="tc-chip" style="background:${catBg(t.category)};color:${catCl(t.category)}">${t.category}</span>`:''}
+          ${isToday?'<span class="tc-today-tag">📅예정</span>':''}
+          ${hasEsc?'<span class="tc-chip" style="background:#FEF3C7;color:#92400E">⚠동행필수</span>':''}
+          ${hasRev?'<span class="tc-chip" style="background:#DBEAFE;color:#1D4ED8">⏰재방문</span>':''}
+          <button class="tc-add-btn${alreadyAdded?' added':''}"
+            onclick="event.stopPropagation();${alreadyAdded?'':'addTerrToPopup(\''+t.id+'\',this)'}"
+            ${alreadyAdded?'disabled':''}>
+            ${alreadyAdded?'✅ 추가됨':'+ 추가'}
+          </button>
+        </div>
+        <div class="tc-meta">
+          <span>${t.cycle||1}회차</span><span>최종: ${ago}</span>
+          <span>${t.totalUnits||0}세대</span>
+          <span>${(() => {
+            const mp = (t.assignedPublishers||[]).slice(0,2);
+            const sp = (t.assignedPublishers||[]).slice(2);
+            const main = mp.join(', ')||'미배정';
+            return sp.length ? `배정: ${main} <span style="color:#93C5FD">+${sp.length}명 동행</span>` : `배정: ${main}`;
+          })()}</span>
+        </div>
+        <div class="tc-prog"><div class="tc-prog-fill" style="width:${t.completionRate||0}%"></div></div>
       </div>`;
     }
     return `<div class="tc-card${sel?' selected':''}${isToday?' today':''}" onclick="selectLdTerr('${t.id}')">
@@ -5000,7 +5132,8 @@ window.toggleLdPub = function(name) {
 window.toggleLdChip = function(key, el) {
   _ldChips[key] = !_ldChips[key];
   el.classList.toggle('on', _ldChips[key]);
-  renderLdTerritoryList();
+  if (_inTerrPopup) searchUnallocatedForToday();
+  else renderLdTerritoryList();
 };
 window.confirmLdAssign = async function() {
   if (!_ldSelectedTerrId || !_ldSelectedPubs.length) return;
@@ -5145,10 +5278,11 @@ function renderTodaySection() {
   // 예정 0개면 예정 목록·자동반납 영역 숨기고 미배정 카드 추가 안내만 강조
   const listEl = document.getElementById('ld-today-list');
   if (!todayTerrs.length) {
-    listEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px;background:#F8FAFC;border-radius:8px;border:1.5px dashed #E2E8F0">아래 <strong style="color:#1B3A6B">▼ 목록 보기</strong>를 눌러 미배정 구역을 추가하세요</div>';
+    listEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px;background:#F8FAFC;border-radius:8px;border:1.5px dashed #E2E8F0"><strong style="color:#1B3A6B">➕ 구역 추가</strong> 버튼을 눌러 오늘 사용할 구역을 선택하세요</div>';
     document.getElementById('ld-today-assign-box').style.display = 'none';
     _refreshUnallocatedCount();
     _renderLdUnallocCatSelect();
+    if (typeof _updateAtpCount === 'function') _updateAtpCount();
     return;
   }
 
@@ -5199,6 +5333,8 @@ function renderTodaySection() {
   // 미배정 카드 카운트 + 유형 필터 갱신 (이미 펼쳐져 있을 경우)
   _refreshUnallocatedCount();
   _renderLdUnallocCatSelect();
+  // 오늘 배당 카운트 배지 갱신
+  if (typeof _updateAtpCount === 'function') _updateAtpCount();
 }
 
 window.selectTodayTerr = function(id) {
@@ -5373,31 +5509,64 @@ window.toggleUnallocatedList = function() {
 let _ldUnallocShowAll = false;
 window.searchUnallocatedForToday = function(showAll) {
   if (showAll !== undefined) _ldUnallocShowAll = showAll;
-  const q = (document.getElementById('ld-unalloc-input')?.value || '').trim().toLowerCase();
+  const q       = (document.getElementById('ld-unalloc-input')?.value || '').trim().toLowerCase();
+  const cat     = document.getElementById('ld-cat')?.value    || '';
+  const status  = document.getElementById('ld-status')?.value || 'unassigned';
+  const cycleF  = document.getElementById('ld-cycle')?.value  || '';
+  const sort    = document.getElementById('ld-sort')?.value   || 'old';
   const resultsEl = document.getElementById('ld-unalloc-results');
   if (!resultsEl) return;
+
   const CAT_BG2 = {'아파트':'#DBEAFE','상가':'#FEF3C7','주택':'#DCFCE7','각지':'#F3E8FF','인터폰':'#FFE4E6','편지':'#FEF9C3'};
   const CAT_CL2 = {'아파트':'#1D4ED8','상가':'#92400E','주택':'#166534','각지':'#7C3AED','인터폰':'#BE123C','편지':'#A16207'};
+  const getMs   = d => d ? (d.toDate ? d.toDate().getTime() : new Date(d).getTime()) : 0;
   const todaySet = new Set(_todaySchedIds);
+
   const pool = _getUnallocatedPool();
   const filtered = pool.filter(t => {
-    if (_ldUnallocCatFilter && (t.category||'') !== _ldUnallocCatFilter) return false;
-    if (!q) return true;
-    const cycleStr = String(parseInt(t.cycle)||1);
-    return String(t.no||'').includes(q)
-      || (t.name||'').toLowerCase().includes(q)
-      || (t.category||'').includes(q)
-      || cycleStr === q
-      || (q.endsWith('회차') && cycleStr === q.replace('회차','').trim())
-      || (q.endsWith('차') && !q.endsWith('회차') && cycleStr === q.replace('차','').trim());
+    // 유형 필터
+    if (cat && (t.category||'') !== cat) return false;
+    // 회차 필터
+    if (cycleF && String(parseInt(t.cycle)||1) !== cycleF) return false;
+    // 상태 필터
+    if (status === 'unassigned' && (t.assignedPublishers||[]).length > 0) return false;
+    if (status === '진행중'     && t.status !== '진행중') return false;
+    // 칩 필터
+    const vm = t.visitMap || {};
+    const units = Object.values(vm);
+    if (_ldChips['no-escort'] && units.some(v => v?.code === 'escort')) return false;
+    if (_ldChips['revisit']   && !units.some(v => v?.code === 'revisit')) return false;
+    if (_ldChips['old6m']) {
+      const ms = getMs(t.lastAssignedDate);
+      if (ms && (Date.now() - ms) < 180 * 86400000) return false;
+    }
+    // 텍스트 검색
+    if (q) {
+      const cycleStr = String(parseInt(t.cycle)||1);
+      return String(t.no||'').includes(q)
+        || (t.name||'').toLowerCase().includes(q)
+        || (t.category||'').includes(q)
+        || cycleStr === q
+        || (q.endsWith('회차') && cycleStr === q.replace('회차','').trim())
+        || (q.endsWith('차') && !q.endsWith('회차') && cycleStr === q.replace('차','').trim());
+    }
+    return true;
   });
-  // 번호 오름차순 정렬
-  filtered.sort((a,b) => parseInt(a.no||0) - parseInt(b.no||0));
+
+  // 정렬
+  filtered.sort((a, b) => {
+    if (sort === 'old')         return getMs(a.lastAssignedDate) - getMs(b.lastAssignedDate);
+    if (sort === 'recent_next') return getMs(b.lastAssignedDate) - getMs(a.lastAssignedDate);
+    if (sort === 'units_asc')   return (a.totalUnits||0) - (b.totalUnits||0);
+    if (sort === 'rate_asc')    return (a.completionRate||0) - (b.completionRate||0);
+    return parseInt(a.no||0) - parseInt(b.no||0); // no_asc (default)
+  });
+
   if (!filtered.length) {
     resultsEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px">' +
-      (q || _ldUnallocCatFilter ? '검색 결과가 없습니다' : '미배정 카드가 없습니다') + '</div>';
+      (q || cat || cycleF ? '검색 결과가 없습니다' : '조건에 맞는 카드가 없습니다') + '</div>';
   } else {
-    const hasFilter = q || _ldUnallocCatFilter;
+    const hasFilter = q || cat || cycleF || status !== 'unassigned' || Object.values(_ldChips).some(Boolean);
     const SHOW_LIMIT = 200;
     const useLimit = !hasFilter && !_ldUnallocShowAll && filtered.length > SHOW_LIMIT;
     const shown = useLimit ? filtered.slice(0, SHOW_LIMIT) : filtered;
@@ -5409,15 +5578,18 @@ window.searchUnallocatedForToday = function(showAll) {
       const bg = CAT_BG2[t.category] || '#F1F5F9';
       const cl = CAT_CL2[t.category] || '#475569';
       const isToday = todaySet.has(t.id);
-      const namePart  = t.name ? `<span style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</span>` : `<span style="flex:1"></span>`;
+      const ago = (() => { const ms = getMs(t.lastAssignedDate); return ms ? Math.floor((Date.now()-ms)/86400000)+'일 전' : '기록없음'; })();
+      const namePart = t.name
+        ? `<span style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</span>`
+        : `<span style="flex:1"></span>`;
       const cyclePart = t.cycle ? `<span style="font-size:10px;color:#94A3B8">${t.cycle}회차</span>` : '';
       return `<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #F1F5F9;cursor:${isToday?'default':'pointer'};${isToday?'background:#F0FDF4;':''}" ${isToday ? '' : `onclick="addUnallocatedToToday('${t.id}')"`}>
         <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px;background:${bg};color:${cl};white-space:nowrap;flex-shrink:0">${t.no}번</span>
         ${namePart}
         ${cyclePart}
-        <span style="font-size:10px;color:${cl};flex-shrink:0">${t.category||''}</span>
+        <span style="font-size:10px;color:#94A3B8;flex-shrink:0">${ago}</span>
         ${isToday
-          ? '<span style="font-size:11px;color:#16A34A;font-weight:600;flex-shrink:0">✓ 예정</span>'
+          ? '<span style="font-size:11px;color:#16A34A;font-weight:600;flex-shrink:0">✅ 추가됨</span>'
           : '<span style="font-size:11px;background:#2563EB;color:#fff;padding:2px 8px;border-radius:5px;flex-shrink:0">+ 추가</span>'}
       </div>`;
     }).join('');
@@ -5430,7 +5602,6 @@ window.searchUnallocatedForToday = function(showAll) {
     }
     resultsEl.innerHTML = html;
   }
-  resultsEl.style.display = 'block';
 };
 
 window.addUnallocatedToToday = async function(id) {
@@ -5447,11 +5618,9 @@ window.addUnallocatedToToday = async function(id) {
     _todaySchedIds = newIds;
     _allSchedIds.add(id);
     renderTodaySection();
-    renderLdTerritoryList();
-    // 카운트·칩·검색 목록 새로고침
-    _refreshUnallocatedCount();
-    _renderLdUnallocCatSelect();
+    // 검색 목록 새로고침 + 카운트 갱신
     searchUnallocatedForToday();
+    if (typeof _updateAtpCount === 'function') _updateAtpCount();
     // 인풋 포커스 유지
     document.getElementById('ld-unalloc-input')?.focus();
   } catch(e) { alert('추가 오류: ' + e.message); }
