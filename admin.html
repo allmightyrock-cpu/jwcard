@@ -319,7 +319,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         <div class="sched-subtab-nav">
           <button class="sched-subtab active" onclick="switchSchedSubtab('weekly',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>요일별 구역</button>
           <button class="sched-subtab" onclick="switchSchedSubtab('calendar',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>월간 캘린더</button>
-          <button class="sched-subtab" onclick="switchSchedSubtab('notice',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>공지 관리</button>
+          <button class="sched-subtab" onclick="switchSchedSubtab('notice',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><path d="m23 16a1 1 0 0 1 -.446-.105l-2-1a1 1 0 0 1 .894-1.79l2 1a1 1 0 0 1 -.448 1.895zm-1.553-9.1 2-1a1 1 0 1 0 -.894-1.79l-2 1a1 1 0 0 0 .894 1.79zm2.553 3.1a1 1 0 0 0 -1-1h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 1-1zm-6 9v-18a1 1 0 0 0 -2 0c0 2.949-2.583 4-5 4h-7a4 4 0 0 0 -4 4v2a4 4 0 0 0 4 4h7c2.417 0 5 1.051 5 4a1 1 0 0 0 2 0zm-9.814-2h-4.186a6 6 0 0 1 -1.382-.167l2.5 5.582a2.671 2.671 0 0 0 2.44 1.585 2.462 2.462 0 0 0 2.242-3.472z"/></svg>공지 관리</button>
         </div>
 
         <!-- ① 요일별 구역 설정 -->
@@ -534,7 +534,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
             <!-- 공지 작성 폼 -->
             <div class="notice-editor">
-              <div class="notice-editor-title">✍️ 새 공지 작성</div>
+              <div class="notice-editor-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:5px" xmlns="http://www.w3.org/2000/svg"><path d="m23 16a1 1 0 0 1 -.446-.105l-2-1a1 1 0 0 1 .894-1.79l2 1a1 1 0 0 1 -.448 1.895zm-1.553-9.1 2-1a1 1 0 1 0 -.894-1.79l-2 1a1 1 0 0 0 .894 1.79zm2.553 3.1a1 1 0 0 0 -1-1h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 1-1zm-6 9v-18a1 1 0 0 0 -2 0c0 2.949-2.583 4-5 4h-7a4 4 0 0 0 -4 4v2a4 4 0 0 0 4 4h7c2.417 0 5 1.051 5 4a1 1 0 0 0 2 0zm-9.814-2h-4.186a6 6 0 0 1 -1.382-.167l2.5 5.582a2.671 2.671 0 0 0 2.44 1.585 2.462 2.462 0 0 0 2.242-3.472z"/></svg>새 공지 작성</div>
               <div class="notice-field">
                 <label>제목</label>
                 <input type="text" id="notice-title-input" placeholder="예: 이번 주 봉사 안내">
@@ -546,9 +546,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               <div class="notice-field">
                 <label>대상</label>
                 <select id="notice-target-input" style="flex:1;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#1E293B">
-                  <option value="all">📢 전체 (구역카드 + 전시대)</option>
+                  <option value="all">🔊 전체 (구역카드 + 전시대)</option>
                   <option value="publisher">🗺 구역카드 전도인만</option>
-                  <option value="cart">🛒 전시대 봉사자만</option>
+                  <option value="cart">👥 전시대 봉사자만</option>
                 </select>
               </div>
               <div class="notice-expire-row">
@@ -556,7 +556,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <input type="date" id="notice-expire-input">
                 <span class="notice-expire-hint">비우면 수동 비활성화</span>
               </div>
-              <button class="btn btn-navy" onclick="saveNotice()" style="width:100%;padding:11px">📢 저장 및 활성화</button>
+              <button class="btn btn-navy" onclick="saveNotice()" style="width:100%;padding:11px;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="m23 16a1 1 0 0 1 -.446-.105l-2-1a1 1 0 0 1 .894-1.79l2 1a1 1 0 0 1 -.448 1.895zm-1.553-9.1 2-1a1 1 0 1 0 -.894-1.79l-2 1a1 1 0 0 0 .894 1.79zm2.553 3.1a1 1 0 0 0 -1-1h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 1-1zm-6 9v-18a1 1 0 0 0 -2 0c0 2.949-2.583 4-5 4h-7a4 4 0 0 0 -4 4v2a4 4 0 0 0 4 4h7c2.417 0 5 1.051 5 4a1 1 0 0 0 2 0zm-9.814-2h-4.186a6 6 0 0 1 -1.382-.167l2.5 5.582a2.671 2.671 0 0 0 2.44 1.585 2.462 2.462 0 0 0 2.242-3.472z"/></svg>저장 및 활성화</button>
             </div>
 
             <!-- 공지 목록 -->
@@ -3193,7 +3193,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-
+<!-- Icons by <a href="https://www.flaticon.com" title="Flaticon">Flaticon</a> -->
 </body>
 </html>
 
