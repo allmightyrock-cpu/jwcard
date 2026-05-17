@@ -594,12 +594,15 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .ld-tab{flex:1;padding:10px;text-align:center;font-size:13px;cursor:pointer;border:none;background:none;font-family:inherit;color:#64748B;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s}
 .ld-tab.active{color:#1B3A6B;border-bottom-color:#1B3A6B;font-weight:600}
 .ld-body{flex:1;overflow-y:auto;padding:14px 16px;background:#F1F5F9}
-.tc-card{border:1.5px solid #E2E8F0;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;background:#fff}
+/* 추가 가능 목록 카드 — 연회색 */
+.tc-card{border:1.5px solid #E2E8F0;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;background:#F8FAFC}
 .tc-card.selected{border-color:#1B3A6B;background:#EFF6FF}
-/* 오늘 예정 구역 카드 */
-.tc-card.today{border-color:#93C5FD;background:#EFF6FF}
-.tc-card.today.selected{border-color:#1B3A6B;background:#DBEAFE}
-.tc-today-tag{font-size:10px;background:#2563EB;color:#fff;padding:2px 7px;border-radius:6px;font-weight:600}
+/* 배당된 구역 카드 — 초록 계열 */
+.tc-card.today{border-color:#86EFAC;background:#F0FDF4}
+.tc-card.today.selected{border-color:#16A34A;background:#DCFCE7}
+.tc-card.today .tc-no{color:#166534}
+.tc-card.today .tc-prog-fill{background:#16A34A}
+.tc-today-tag{font-size:10px;background:#16A34A;color:#fff;padding:2px 7px;border-radius:6px;font-weight:600}
 .tc-return-btn{margin-left:auto;font-size:11px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;border-radius:5px;padding:2px 8px;cursor:pointer;flex-shrink:0;font-weight:600}
 .tc-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
 .tc-no{font-size:15px;font-weight:700;color:#1B3A6B}
@@ -608,6 +611,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .tc-meta{font-size:11px;color:#94A3B8;display:flex;gap:10px;flex-wrap:wrap}
 .tc-prog{height:4px;background:#E2E8F0;border-radius:2px;overflow:hidden;margin-top:6px}
 .tc-prog-fill{height:100%;background:#1B3A6B;border-radius:2px}
+/* 배당 섹션 / 추가 섹션 구분 헤더 */
+.tc-section-hdr{font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.tc-section-hdr.assigned{background:#DCFCE7;color:#166534;border:1px solid #86EFAC}
+.tc-section-hdr.addable{background:#F1F5F9;color:#475569;border:1px solid #E2E8F0}
 .assign-box{background:#F8FAFC;border-radius:10px;padding:14px;margin-top:4px}
 .assign-label{font-size:12px;font-weight:600;color:#475569;margin-bottom:8px}
 .pub-chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
@@ -1918,9 +1925,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
         <!-- ── 오늘 예정 구역 섹션 ── -->
         <div id="ld-today-section" style="display:none;margin-bottom:16px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-            <div style="font-size:13px;font-weight:600;color:#1B3A6B" id="ld-today-title">📅 오늘 예정 구역</div>
-            <span id="ld-today-badge" style="font-size:11px;background:#DBEAFE;color:#1D4ED8;padding:2px 8px;border-radius:8px;font-weight:600"></span>
+          <div class="tc-section-hdr assigned">
+            ✅ 배당된 구역
+            <span id="ld-today-title" style="font-weight:400;font-size:11px;color:#166534;opacity:0.8">오늘 봉사 예정</span>
+            <span id="ld-today-badge" style="margin-left:auto;font-size:11px;background:#16A34A;color:#fff;padding:2px 8px;border-radius:8px;font-weight:700"></span>
           </div>
           <!-- 자동 반납 설정 -->
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:#F8FAFC;border-radius:8px;border:1px solid #F1F5F9">
@@ -1990,6 +1998,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <button class="ld-chip" id="ldc-revisit" onclick="toggleLdChip('revisit',this)">재방문 세대 있는 구역</button>
           <button class="ld-chip" id="ldc-old6m" onclick="toggleLdChip('old6m',this)">6개월+ 미사용</button>
         </div>
+        <div id="ld-addable-hdr" class="tc-section-hdr addable">➕ 구역 선택 · 배정 추가 <span id="ld-addable-count" style="margin-left:auto;font-size:11px;color:#94A3B8"></span></div>
         <div id="ld-terr-list" style="margin-bottom:14px"></div>
         <div class="assign-box" id="ld-assign-box" style="display:none">
           <div class="assign-label">👤 배정할 전도인 선택 (최대 6명)</div>
@@ -4850,6 +4859,8 @@ window.renderLdTerritoryList = function() {
   });
 
   const wrap = document.getElementById('ld-terr-list');
+  const cntEl = document.getElementById('ld-addable-count');
+  if (cntEl) cntEl.textContent = list.length ? `${list.length}개` : '';
   if (!list.length) {
     const msg = (_ldChips['sched-today'] && schedSet.size === 0)
       ? '오늘 예정 구역이 없습니다 (관리자 페이지에서 요일별 구역을 설정하세요)'
@@ -5007,9 +5018,26 @@ window.confirmLdAssign = async function() {
       lastAssignedDate: serverTimestamp(),
       assignHistory: arrayUnion(historyEntry),
     });
-    alert(`배정 완료!\n${t?t.no+'번 '+t.name:''} → ${_ldSelectedPubs.join(', ')}`);
+    const assignedId  = _ldSelectedTerrId;
+    const assignedPubs = [..._ldSelectedPubs];
     _ldSelectedTerrId=null; _ldSelectedPubs=[];
-    await _loadLdData(); renderLdTerritoryList();
+    // 배정 확정된 구역 → 오늘 예정 목록(상단 배당 섹션)에도 추가
+    if (!_todaySchedIds.includes(assignedId) && _todayDayOfWeek >= 0) {
+      try {
+        const newIds = [..._todaySchedIds, assignedId];
+        await setDoc(doc(db,'weeklySchedule',String(_todayDayOfWeek)), {
+          terrIds: newIds, active: true,
+          allocatedDate: new Date().toISOString().slice(0,10),
+          updatedAt: serverTimestamp()
+        });
+        _todaySchedIds = newIds;
+        _allSchedIds.add(assignedId);
+      } catch(_e) { /* 이동 실패해도 배정 자체는 완료 */ }
+    }
+    alert(`배정 완료!\n${t?t.no+'번 '+t.name:''} → ${assignedPubs.join(', ')}`);
+    await _loadLdData();
+    renderTodaySection();
+    renderLdTerritoryList();
     document.getElementById('ld-assign-box').style.display='none';
   } catch(e) { alert('배정 오류: '+e.message); }
 };
@@ -5107,12 +5135,12 @@ function renderTodaySection() {
   // 오늘 요일 이름
   const DAY_KO = ['일','월','화','수','목','금','토'];
   const dayName = DAY_KO[new Date().getDay()];
-  document.getElementById('ld-today-title').textContent = todayTerrs.length
-    ? `📅 ${dayName}요일 봉사 예정 구역`
-    : `📅 ${dayName}요일 — 예정 구역 없음`;
-  document.getElementById('ld-today-badge').textContent = `${todayTerrs.length}개`;
-  document.getElementById('ld-today-badge').style.background  = todayTerrs.length ? '#DBEAFE' : '#FEF3C7';
-  document.getElementById('ld-today-badge').style.color       = todayTerrs.length ? '#1D4ED8' : '#92400E';
+  document.getElementById('ld-today-title').textContent =
+    `${dayName}요일 봉사 예정`;
+  const badge = document.getElementById('ld-today-badge');
+  badge.textContent = `${todayTerrs.length}개`;
+  badge.style.background = todayTerrs.length ? '#16A34A' : '#94A3B8';
+  badge.style.color = '#fff';
 
   // 예정 0개면 예정 목록·자동반납 영역 숨기고 미배정 카드 추가 안내만 강조
   const listEl = document.getElementById('ld-today-list');
