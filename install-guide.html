@@ -266,7 +266,7 @@ td code {
 
   <!-- 표지 -->
   <div class="cover">
-    <div class="cover-badge">설치 안내서 v1.0</div>
+    <div class="cover-badge">설치 안내서 v1.1</div>
     <h1>전자구역카드 시스템<br>설치 및 배포 안내</h1>
     <h2>여호와의 증인 회중 구역 관리 시스템</h2>
     <div class="cover-meta">
@@ -281,7 +281,7 @@ td code {
     <h3>📋 목차</h3>
     <ol>
       <li><strong>개요</strong> — 사용 서비스 및 비용 안내</li>
-      <li><strong>STEP 1</strong> — Firebase 프로젝트 설정 (데이터베이스)</li>
+      <li><strong>STEP 1</strong> — Firebase 프로젝트 설정 (데이터베이스 · 보안 규칙 · 익명 인증)</li>
       <li><strong>STEP 2</strong> — Naver Cloud Platform Maps API 설정</li>
       <li><strong>STEP 3</strong> — 소스 코드 설정값 변경</li>
       <li><strong>STEP 4</strong> — Cloudflare Pages 배포</li>
@@ -391,9 +391,40 @@ service cloud.firestore {
             </div>
           </li>
         </ul>
-        <div class="hint">
+        <div class="hint warn" style="margin-top:4px">
           <span class="hint-icon">🔒</span>
-          <div class="hint-body">위 보안 규칙은 <strong>앱을 통해 인증된 사용자만</strong> 접근 가능한 설정입니다. 앱이 자동으로 익명 인증을 수행하므로 별도 로그인 없이 이용 가능하며, 외부에서 Firebase API 키만으로 직접 접근하는 것을 차단합니다.</div>
+          <div class="hint-body">
+            <strong>이 보안 규칙은 반드시 적용해야 합니다</strong><br>
+            기본값(<code>allow read, write: if false</code>)으로 두면 앱이 작동하지 않고,<br>
+            <code>allow read, write: if true</code>로 두면 인터넷상 누구나 Firebase에 직접 접근 가능합니다.<br>
+            위 규칙(<code>request.auth != null</code>)을 적용하면 앱이 자동으로 수행하는 <strong>익명 인증</strong>을 통해서만 접근이 허용됩니다.
+          </div>
+        </div>
+        <div class="hint info" style="margin-top:0">
+          <span class="hint-icon">ℹ</span>
+          <div class="hint-body">
+            <strong>Firebase Anonymous Authentication도 함께 활성화해야 합니다</strong><br>
+            Firebase 콘솔 → <strong>[Authentication]</strong> → <strong>[Sign-in method]</strong> → <strong>[Anonymous]</strong> → <strong>[사용 설정]</strong> 클릭 후 저장<br>
+            이 설정을 빠뜨리면 앱 접속 시 "Missing or insufficient permissions" 오류가 발생합니다.
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">익명 인증(Anonymous Auth) 활성화</div>
+        <ul class="step-list">
+          <li class="step">
+            <span class="step-num">7</span>
+            <div class="step-body">왼쪽 메뉴 <strong>[Authentication]</strong> 클릭 → <strong>[시작하기]</strong> (처음 방문 시) 또는 <strong>[Sign-in method]</strong> 탭 클릭</div>
+          </li>
+          <li class="step">
+            <span class="step-num">8</span>
+            <div class="step-body">제공업체 목록에서 <strong>[Anonymous]</strong> 선택 → 오른쪽 토글을 클릭해 <strong>[사용 설정]</strong> 으로 변경 → <strong>[저장]</strong></div>
+          </li>
+        </ul>
+        <div class="hint warn">
+          <span class="hint-icon">⚠</span>
+          <div class="hint-body">이 단계를 빠뜨리면 앱에서 <strong>"Missing or insufficient permissions"</strong> 오류가 발생합니다. Firestore 보안 규칙이 익명 인증 토큰을 요구하기 때문에, 인증 없이는 데이터를 읽거나 쓸 수 없습니다.</div>
         </div>
       </div>
 
@@ -401,19 +432,19 @@ service cloud.firestore {
         <div class="section-title">웹 앱 등록 및 설정값 확인</div>
         <ul class="step-list">
           <li class="step">
-            <span class="step-num">7</span>
+            <span class="step-num">9</span>
             <div class="step-body">왼쪽 상단 <strong>톱니바퀴(⚙) → [프로젝트 설정]</strong> 클릭</div>
           </li>
           <li class="step">
-            <span class="step-num">8</span>
+            <span class="step-num">10</span>
             <div class="step-body"><strong>[일반]</strong> 탭 → 아래로 스크롤 → <strong>"내 앱"</strong> 섹션 → <strong>[앱 추가]</strong> → <strong>웹(&lt;/&gt;) 아이콘</strong> 클릭</div>
           </li>
           <li class="step">
-            <span class="step-num">9</span>
+            <span class="step-num">11</span>
             <div class="step-body">앱 닉네임 입력 (예: <code>jwcard-web</code>) → "Firebase 호스팅 설정"은 체크 해제 → <strong>[앱 등록]</strong></div>
           </li>
           <li class="step">
-            <span class="step-num">10</span>
+            <span class="step-num">12</span>
             <div class="step-body">
               화면에 표시되는 <strong>firebaseConfig</strong> 코드 전체를 복사해 메모해 두세요.
               <code class="code-block">const firebaseConfig = {
@@ -765,7 +796,15 @@ service cloud.firestore {
         <div class="hint warn">
           <span class="hint-icon">Q</span>
           <div class="hint-body"><strong>파일을 수정했는데 변경사항이 반영이 안 돼요</strong><br>
-          → Cloudflare Pages에서 <strong>[새 배포 만들기]</strong>로 수정된 파일을 다시 업로드해야 합니다. 브라우저 캐시도 Ctrl+Shift+R로 강력 새로고침하세요.</div>
+          → Cloudflare Pages에서 <strong>[새 배포 만들기]</strong>로 수정된 파일을 다시 업로드했는지 확인하세요.<br>
+          배포가 완료되면 앱 로그인 화면에 <strong>"새 버전이 있습니다"</strong> 카드 또는 상단 파란 배너가 표시됩니다. <strong>[지금 업데이트]</strong>를 탭하세요.<br>
+          배너가 보이지 않으면 로그인 화면 하단의 <strong>"↺ 앱이 최신 버전이 아닌 경우 탭하세요"</strong> 버튼을 눌러 캐시를 강제 초기화하세요.</div>
+        </div>
+        <div class="hint warn">
+          <span class="hint-icon">Q</span>
+          <div class="hint-body"><strong>"Missing or insufficient permissions" 오류가 나타나요</strong><br>
+          → Firebase Authentication에서 <strong>익명 인증(Anonymous)</strong>이 활성화되어 있는지 확인하세요 (STEP 1 ⑦~⑧ 참조).<br>
+          → Firestore 보안 규칙이 <code>allow read, write: if request.auth != null;</code>으로 되어 있는지 확인하세요 (STEP 1 ⑥ 참조).</div>
         </div>
         <div class="hint warn">
           <span class="hint-icon">Q</span>
@@ -831,10 +870,21 @@ service cloud.firestore {
         <div class="hint success">
           <span class="hint-icon">✅</span>
           <div class="hint-body">
-            <strong>업데이트 확인</strong><br>
-            배포 완료 후 앱 접속 → 화면 아래쪽에 <strong>"새 버전이 있습니다"</strong> 배너가 뜨면
-            [업데이트] 버튼을 눌러 주세요.<br>
-            <small style="color:#64748B">배너가 안 뜨면 브라우저에서 Ctrl+Shift+R (강력 새로고침) 한 번 해주세요.</small>
+            <strong>업데이트 확인 — 앱이 자동으로 알려줍니다</strong><br>
+            Cloudflare 배포 완료 후 전도인이 앱을 열면:<br>
+            • 로그인 화면에 <strong>"새 버전이 있습니다"</strong> 카드가 나타나거나<br>
+            • 화면 상단에 파란색 <strong>"🔄 새 버전 대기 중"</strong> 배너가 표시됩니다.<br>
+            <strong>[지금 업데이트]</strong> 버튼을 탭하면 <strong>"업데이트 중…"</strong> 표시 후 자동으로 새로고침됩니다.
+          </div>
+        </div>
+
+        <div class="hint info">
+          <span class="hint-icon">🔁</span>
+          <div class="hint-body">
+            <strong>알림이 뜨지 않거나 버튼을 눌러도 변경이 없을 때</strong><br>
+            로그인 화면 하단의 <strong>↺ 앱이 최신 버전이 아닌 경우 탭하세요</strong> 버튼을 누르면
+            Service Worker·캐시를 완전히 초기화하고 강제로 새 버전을 불러옵니다.<br>
+            <small style="color:#64748B">PC 브라우저는 Ctrl+Shift+R (Mac: Cmd+Shift+R) 강력 새로고침으로도 가능합니다.</small>
           </div>
         </div>
 
@@ -876,7 +926,7 @@ service cloud.firestore {
   </div>
 
   <div style="text-align:center;padding:32px 0 16px;color:#94A3B8;font-size:11px;border-top:1px solid #E2E8F0;margin-top:32px">
-    전자구역카드 시스템 — 설치 안내서 v1.0 · 2026년<br>
+    전자구역카드 시스템 — 설치 안내서 v1.1 · 2026년<br>
     본 문서는 여호와의 증인 회중 구역 관리 시스템 배포를 위한 기술 안내서입니다.
   </div>
 
