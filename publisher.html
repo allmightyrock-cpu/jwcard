@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>구역카드 — 동두천남부회중</title>
+<title>구역카드</title>
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -435,27 +435,29 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .pc-esc{background:#FEF3C7;color:#92400E}
 .pc-jwm{background:#EDE9FE;color:#5B21B6}
 .pc-std{background:#CCFBF1;color:#0F766E}
-.unit-list{background:#fff}
+.unit-list{background:transparent;padding:12px;display:flex;flex-direction:column;gap:12px}
+.sec-card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,0.06),0 6px 16px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.03)}
 
 /* 섹션 헤더 */
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 16px;background:#F8FAFC;border-bottom:1px solid #F1F5F9;border-top:2px solid #D1D5DB;position:sticky;top:0;z-index:10}
-.sec-left{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.sec-hdr{display:flex;align-items:center;padding:9px 14px 7px;background:linear-gradient(135deg,#F8FAFF 0%,#F1F5FB 100%);border-bottom:1px solid #E8EEF6}
+.sec-left{display:flex;align-items:center;gap:7px;flex:1;min-width:0}
 .sec-label{font-size:12px;font-weight:500;color:#64748B}
-.sec-count{font-size:11px;color:#94A3B8}
-.sec-jibun{font-size:26px;font-weight:900;color:#003087;line-height:1;letter-spacing:-0.5px}
-.sec-road{font-size:11px;color:#1B3A6B;font-weight:500}
-.sec-building{font-size:12px;font-weight:500;color:#64748B}
-.sec-badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:500;border:none;cursor:pointer;font-family:inherit}
+.sec-count{font-size:11px;color:#94A3B8;flex-shrink:0}
+.sec-jibun{font-size:26px;font-weight:900;color:#003087;line-height:1;letter-spacing:-0.5px;flex-shrink:0}
+.sec-road{font-size:11px;color:#1B3A6B;font-weight:600}
+.sec-bldg-badge{font-size:13px;font-weight:700;color:#1E3A5F;background:#EEF4FF;padding:2px 10px;border-radius:20px;border:1px solid #C7D9F5;flex-shrink:0;margin-left:6px}
+.sec-badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:500;border:none;cursor:pointer;font-family:inherit;flex-shrink:0}
 .sb-done{background:#DCFCE7;color:#166534}
 .sb-partial{background:#FEF3C7;color:#92400E}
 .sb-none{background:#F1F5F9;color:#94A3B8}
 .sec-btn-icon{font-size:18px;color:#94A3B8;border:none;background:none;cursor:pointer;padding:4px 6px;border-radius:4px;line-height:1;font-family:inherit}
 /* 커스텀 구분선 */
-.unit-divider{background:#FFFBEB;border-top:1px solid #FDE68A;border-bottom:1px solid #FDE68A}
+.unit-divider{background:linear-gradient(90deg,#EEF4FF,#F8FAFF,#EEF4FF);border-top:1px solid #BFDBFE;border-bottom:1px solid #BFDBFE}
 .unit-divider-bar{display:flex;align-items:center;gap:8px;padding:6px 16px}
-.unit-divider-line{flex:1;height:1px;background:#FDE68A}
-.unit-divider-label{font-size:11px;color:#92400E;font-weight:600;white-space:nowrap}
-.unit-divider-note{font-size:11px;color:#78350F;padding:4px 16px 6px;line-height:1.5;white-space:pre-wrap;background:#FFFFF5;border-top:1px solid #FEF3C7}
+.unit-divider-line{flex:1;height:1px;background:#BFDBFE}
+.unit-divider-dot{width:6px;height:6px;background:#3B82F6;border-radius:50%;flex-shrink:0}
+.unit-divider-label{font-size:11px;color:#1D4ED8;font-weight:700;white-space:nowrap}
+.unit-divider-note{font-size:11px;color:#1D4ED8;padding:4px 16px 6px;line-height:1.5;white-space:pre-wrap;background:#EEF4FF;border-top:1px solid #BFDBFE}
 
 /* 여기까지 마커 */
 .here-marker{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#EFF6FF;border-top:1px solid #BFDBFE;border-bottom:1px solid #BFDBFE}
@@ -793,13 +795,15 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   .pin-card   { max-width:440px }
 
   /* ── 구역카드 호수 목록: 2열 그리드 ── */
-  /* sec-hdr(섹션 헤더)와 here-marker는 전체 폭, unit-row는 좌우 2칸으로 */
-  .unit-list {
+  /* sec-card 내부: sec-hdr·here-marker·unit-divider는 전체 폭, unit-row는 2칸 */
+  .unit-list { padding:16px; gap:16px }
+  .sec-card {
     display:grid;
     grid-template-columns:1fr 1fr;
   }
   .sec-hdr,
-  .here-marker {
+  .here-marker,
+  .unit-divider {
     grid-column:1 / -1;   /* 양 열 전체 차지 */
   }
   /* 오른쪽 열 unit-row 왼쪽 구분선 */
@@ -836,7 +840,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   #ld-today-list { grid-template-columns:1fr 1fr 1fr }
 
   /* 호수 목록: 3열 (iPad Pro 가로 등) */
-  .unit-list { grid-template-columns:1fr 1fr 1fr }
+  .sec-card { grid-template-columns:1fr 1fr 1fr }
 }
 
 /* ════════════════════════════════════════════════
@@ -1055,7 +1059,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         </svg>
       </div>
       <h1>전자 구역 카드</h1>
-      <p>— 동두천남부회중 —</p>
+      <p>— 우리 회중 —</p>
     </div>
 
 
@@ -1218,7 +1222,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <div class="login-header">
       <div class="badge">다시 오셨군요!</div>
       <h1>구역카드</h1>
-      <p>동두천남부회중</p>
+      <p>우리 회중</p>
     </div>
     <div class="resume-info-box">
       <div class="resume-name" id="resume-name-txt"></div>
@@ -1293,7 +1297,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
     <div class="consent-section">
       <h3>제3자 제공</h3>
-      <p class="consent-text">수집된 정보는 동두천남부회중 봉사감독자의 S-13 기록 관리 목적으로만 사용되며, 외부에 제공되지 않습니다.</p>
+      <p class="consent-text">수집된 정보는 봉사감독자의 S-13 기록 관리 목적으로만 사용되며, 외부에 제공되지 않습니다.</p>
     </div>
     <div class="consent-section">
       <h3>귀하의 권리</h3>
@@ -2499,7 +2503,7 @@ function tryNominatimGeocode(queries, idx, label, count) {
           + '?format=json&limit=1&accept-language=ko'
           + '&q=' + encodeURIComponent(q)
           + '&countrycodes=kr';
-  fetch(url, { headers: { 'User-Agent': 'JWCard/1.0 (kingdomhall1305.workers.dev)' } })
+  fetch(url, { headers: { 'User-Agent': 'JWCard/1.0' } })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data && data.length > 0) {
@@ -2618,6 +2622,7 @@ let _heartbeatTimer = null;
 let _activeUnitIdx = null;
 let _activeSectionKey = null;
 let _ignoreNextSnap = false; // 내 업데이트로 인한 snapshot 중복 렌더 방지
+let _knownForceRetrievedAt = 0; // 관리자 강제 회수 감지용
 let _permission = '';
 let _isLeader        = false;  // 인도자 이상
 let _isSO            = false;  // 봉사감독자 전용
@@ -3779,15 +3784,42 @@ function stopPresenceListener() {
   if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
 }
 
+// ── 구역 강제 회수 알림 ──
+function _showReclaimedScreen() {
+  stopTerritoryListener();
+  // localStorage 구역 정보 삭제 (재접속 시 회수된 구역으로 복귀 방지)
+  try { localStorage.removeItem('jwcard_terr_id'); } catch(e) {}
+  // 기존 화면 숨기고 알림 표시
+  document.getElementById('card-screen').style.display = 'none';
+  const overlay = document.createElement('div');
+  overlay.id = 'reclaimed-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#1B3A6B;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px;text-align:center';
+  overlay.innerHTML = `
+    <div style="font-size:48px;margin-bottom:16px">🔔</div>
+    <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:8px">구역이 회수되었습니다</div>
+    <div style="font-size:14px;color:#93C5FD;margin-bottom:32px">관리자가 이 구역을 회수했습니다.<br>처음 화면으로 돌아갑니다.</div>
+    <button onclick="location.reload()" style="padding:12px 32px;background:#fff;color:#1B3A6B;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">확인</button>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => location.reload(), 5000);
+}
+
 // ── 구역 실시간 동기화 (복수 팀 지원) ──
 function startTerritoryListener() {
   if (_terrUnsub) { _terrUnsub(); _terrUnsub = null; }
   if (!_territoryId) return;
+  // 현재 forceRetrievedAt 기준값 저장
+  _knownForceRetrievedAt = _territory?.forceRetrievedAt?.toMillis?.() || 0;
   _terrUnsub = onSnapshot(doc(db, 'territories', _territoryId), (snap) => {
     if (!snap.exists() || !_territory) return;
     // 내가 직접 쓴 직후의 snapshot은 이미 로컬에 반영돼 있으므로 건너뜀
     if (_ignoreNextSnap) { _ignoreNextSnap = false; return; }
     const data = snap.data();
+    // ── 강제 회수 감지 ──
+    const newFrAt = data.forceRetrievedAt?.toMillis?.() || 0;
+    if (newFrAt && newFrAt !== _knownForceRetrievedAt) {
+      _showReclaimedScreen();
+      return;
+    }
     // 실시간으로 바뀐 필드만 갱신
     _territory.visitMap      = data.visitMap      || {};
     _territory.sectionStatus = data.sectionStatus || {};
@@ -4043,18 +4075,20 @@ function renderUnitList(visitMap) {
     const badgeClass = status==='done'?'sb-done':status==='partial'?'sb-partial':'sb-none';
     const badgeText = status==='done'?'✓ 완료':status==='partial'?'⏸ 여기까지':'—';
 
-    html += `<div class="sec-hdr">
+    html += `<div class="sec-card"><div class="sec-hdr">
       <div class="sec-left">
         ${sec.jibun ? `<span class="sec-jibun">${sec.jibun}</span>` : ''}
         <div style="display:flex;flex-direction:column;gap:1px;justify-content:center">
           ${sec.road ? `<span class="sec-road">${sec.road}</span>` : ''}
-          ${sec.building ? `<span class="sec-building">${sec.building}</span>` : ''}
+          ${sec.floorLabel ? `<span style="font-size:10px;background:#1B3A6B;color:#fff;padding:1px 6px;border-radius:6px;font-weight:500">${sec.floorLabel}</span>` : ''}
         </div>
-        ${sec.floorLabel ? `<span style="font-size:10px;background:#1B3A6B;color:#fff;padding:1px 6px;border-radius:6px;font-weight:500">${sec.floorLabel}</span>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        ${sec.building ? `<span class="sec-bldg-badge">${sec.building}</span>` : ''}
         <span class="sec-count">${doneCnt}/${realIndices.length}</span>
         <span class="sec-badge ${badgeClass}">${badgeText}</span>
+        <button class="sec-btn-icon" onclick="openSecSheet('${sec.key}','${sec.label}')" title="섹션 상태 변경">⋮</button>
       </div>
-      <button class="sec-btn-icon" onclick="openSecSheet('${sec.key}','${sec.label}')" title="섹션 상태 변경">⋮</button>
     </div>`;
 
     let shownHere = false;
@@ -4068,7 +4102,9 @@ function renderUnitList(visitMap) {
         html += `<div class="unit-divider">
           <div class="unit-divider-bar">
             <div class="unit-divider-line"></div>
-            <span class="unit-divider-label">🔻 ${u.label || '구분'}</span>
+            <div class="unit-divider-dot"></div>
+            <span class="unit-divider-label">${u.label || '구분'}</span>
+            <div class="unit-divider-dot"></div>
             <div class="unit-divider-line"></div>
           </div>${noteHtml}
         </div>`;
@@ -4108,6 +4144,7 @@ function renderUnitList(visitMap) {
         <div class="unit-more">···</div>
       </div>`;
     });
+    html += '</div>'; // .sec-card 닫기
   });
 
   document.getElementById('unit-list').innerHTML = html;
@@ -4305,7 +4342,7 @@ window.moveTerritoryMap = function moveTerritoryMap() {
   // ── 참조 코드 방식: road + jibun 공백 없이 붙임 ──
   // 참조앱: $(".road_name").text() + $(".tr_no").text()
   // → "행선로" + "123-19" = "행선로123-19"
-  const BASE = '경기도 동두천시 ';
+  const BASE = (window._mapRegion ? window._mapRegion + ' ' : '');
   const queries = [];
 
   // ① 참조 코드와 동일: road+jibun 공백 없이 결합 (최우선)
@@ -4351,7 +4388,7 @@ window.openMapSearch = function() {
   const firstUnit = units.find(u => u.road || u.jibun) || {};
   const query = [firstUnit.road, firstUnit.jibun, firstUnit.building]
     .filter(Boolean).join(' ') || _territory.name;
-  const encoded = encodeURIComponent(query + ' 동두천시');
+  const encoded = encodeURIComponent(query + (window._mapRegion ? ' ' + window._mapRegion : ''));
   window.open('https://map.naver.com/v5/search/' + encoded, '_blank');
 };
 
@@ -5691,7 +5728,7 @@ function _navBuildLinks(coords, name, addr, walk) {
 // ── 인덱스로 주소/섹션 정보 추출 ─────────────────────────────
 function _navAddrInfo(idx) {
   var sec    = _navSectionOf(idx);
-  var region = (window._mapRegion || '경기도 동두천시') + ' ';
+  var region = (window._mapRegion || '') + ' ';
   var road   = (sec && sec.road)     || '';
   var jibun  = (sec && sec.jibun)    || '';
   var bldg   = (sec && sec.building) || '';
@@ -5837,7 +5874,7 @@ function _navPrefetchCoords(idx) {
     var sec    = _navSectionOf(i);
     var secKey = (sec && sec.key) || ('idx_' + i);
     if (_navCoordCache[secKey]) return;
-    var region = (window._mapRegion || '경기도 동두천시') + ' ';
+    var region = (window._mapRegion || '') + ' ';
     var road   = (sec && sec.road)     || '';
     var jibun  = (sec && sec.jibun)    || '';
     var bldg   = (sec && sec.building) || '';
@@ -5877,7 +5914,7 @@ function _renderNavNextCard() {
 
   var u   = units[_navIdx];
   var sec = _navSectionOf(_navIdx);
-  var region   = (window._mapRegion || '경기도 동두천시') + ' ';
+  var region   = (window._mapRegion || '') + ' ';
   var road     = (sec && sec.road)     || '';
   var jibun    = (sec && sec.jibun)    || '';
   var bldg     = (sec && sec.building) || '';

@@ -156,9 +156,14 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         </div>
         <div class="card">
           <div class="card-header">
-            <div class="card-title">구역 목록</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="card-title">구역 목록</div>
+              <button class="terr-view-btn active" id="btn-view-list" onclick="setTerrView('list')" title="리스트 뷰">☰ 리스트</button>
+              <button class="terr-view-btn" id="btn-view-card" onclick="setTerrView('card')" title="카드 뷰">⊞ 카드</button>
+            </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-warn" onclick="manualReset()" title="모든 구역을 1회차로 리셋">↺ 전체 리셋</button>
+              <button class="btn" onclick="downloadAllTerritoriesExcel()" title="전체 구역 엑셀 백업 (ZIP)">⬇ 엑셀 백업</button>
               <button class="btn" onclick="openBatchUploadModal()" title="여러 엑셀 파일 또는 ZIP을 한 번에 업로드">📦 일괄 업로드</button>
               <button class="btn" onclick="openUploadModal()">엑셀 업로드</button>
               <button class="btn btn-navy" onclick="openTerritoryModal()">+ 구역 추가</button>
@@ -184,7 +189,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <option value="progress">진행률순</option>
               </select>
               <button id="terr-sort-dir" onclick="toggleTerrSortDir()" title="정렬 방향 전환"
-                style="padding:6px 8px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;line-height:1;color:#475569;flex-shrink:0">▲</button>
+                style="padding:6px 10px;border:1.5px solid #BFDBFE;border-radius:7px;background:#EFF6FF;cursor:pointer;font-size:12px;font-weight:600;line-height:1;color:#1D4ED8;flex-shrink:0;height:36px;white-space:nowrap;font-family:inherit">오름↑</button>
               <input class="terr-search-input" type="text" id="terr-search"
                 placeholder="🔍  구역명, 번호, 회차 검색"
                 oninput="renderTerritoryTable()">
@@ -193,30 +198,32 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <input type="number" id="terr-month-filter" min="0" max="60" placeholder="개월"
                   style="width:54px;padding:7px 6px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;text-align:center;font-family:inherit;outline:none;height:36px"
                   oninput="renderTerritoryTable()">
-                <span class="terr-month-label">개월↑</span>
+                <span class="terr-month-label">개월 이상</span>
                 <button onclick="document.getElementById('terr-month-filter').value='';renderTerritoryTable()"
                   id="terr-month-clear" style="display:none;padding:4px 7px;border:1px solid #FECACA;border-radius:6px;background:#FFF5F5;color:#EF4444;font-size:11px;cursor:pointer;font-family:inherit">✕</button>
               </div>
             </div>
             <div class="terr-toolbar-right">
               <button class="terr-cmpl-btn" id="btn-overdue" onclick="toggleOverduePanel()" title="장기 미반납 구역 보기" style="position:relative">
-                ⏰ <span class="badge" id="overdue-badge">0</span>
+                ⏰ 미반납 <span class="badge" id="overdue-badge">0</span>
               </button>
-              <button class="terr-view-btn active" id="btn-view-list" onclick="setTerrView('list')" title="리스트 뷰">☰</button>
-              <button class="terr-view-btn" id="btn-view-card" onclick="setTerrView('card')" title="카드 뷰">⊞</button>
-              <button class="terr-view-btn" onclick="downloadAllTerritoriesExcel()" title="전체 엑셀 백업 (ZIP)">⬇</button>
               <button class="terr-cmpl-btn" id="filter-informal-use"
                 onclick="setTerrStatusFilter(window._currentStatusFilter==='사용중'?'all':'사용중');document.getElementById('terr-status-filter').value=window._currentStatusFilter"
                 title="배정 없이 사용 중인 구역만 보기">
-                🔵 <span class="badge" id="informal-use-count">0</span>
+                🔵 비배정 <span class="badge" id="informal-use-count">0</span>
+              </button>
+              <button class="terr-cmpl-btn" id="btn-bulk-reclaim-informal"
+                onclick="bulkReclaimInformal()"
+                title="비배정 사용중 구역 전체 일괄 회수 (방문기록 초기화)">
+                🔴 일괄 회수
               </button>
               <button class="terr-cmpl-btn" id="filter-complete-req"
                 onclick="filterCompletionStatus('complete',this)" title="완료 신청된 구역만 보기">
-                🔔 <span class="badge" id="complete-req-count">0</span>
+                🔔 완료신청 <span class="badge" id="complete-req-count">0</span>
               </button>
               <button class="terr-cmpl-btn" id="filter-incomplete-req"
                 onclick="filterCompletionStatus('incomplete',this)" title="미완료 신청된 구역만 보기">
-                ⏸ <span class="badge" id="incomplete-req-count">0</span>
+                ⏸ 미완료 <span class="badge" id="incomplete-req-count">0</span>
               </button>
             </div>
           </div>

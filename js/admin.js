@@ -2500,6 +2500,77 @@ window.confirmForceReturn = async function() {
   } catch(e) { alert('회수 중 오류: ' + e.message); }
 };
 
+// ── 비배정 사용중 일괄 회수 ──
+window.bulkReclaimInformal = async function() {
+  const allInformal = (window._territories || []).filter(t => _isInformalUse(t));
+  if (!allInformal.length) { alert('비배정 사용중인 구역이 없습니다.'); return; }
+
+  const toReclaim    = allInformal.filter(t => !t.completionStatus);               // 일반 회수
+  const toComplete   = allInformal.filter(t => t.completionStatus === 'complete');  // 완료 확정
+  const toIncomplete = allInformal.filter(t => t.completionStatus === 'incomplete');// 미완료 회수
+
+  let msg = `비배정 사용중 ${allInformal.length}개 구역을 처리합니다.\n\n`;
+  if (toReclaim.length)    msg += `• 일반 회수 ${toReclaim.length}개 (기록 초기화)\n`;
+  if (toComplete.length)   msg += `• 완료 확정 ${toComplete.length}개 (S-13 기록, 회차↑)\n`;
+  if (toIncomplete.length) msg += `• 미완료 회수 ${toIncomplete.length}개 (⏸ 미완료 목록 유지)\n`;
+  if (!confirm(msg + '\n계속하시겠습니까?')) return;
+
+  try {
+    const byAdmin = window._adminPermission || '관리자';
+
+    // ① 일반 회수: visitMap·기록 초기화
+    for (const t of toReclaim) {
+      await updateDoc(doc(db, 'territories', t.id), {
+        visitMap: {}, sectionStatus: {}, completionRate: 0,
+        forceRetrievedAt: serverTimestamp(), forceRetrievedBy: byAdmin
+      });
+      Object.assign(t, { visitMap: {}, sectionStatus: {}, completionRate: 0 });
+    }
+
+    // ② 완료 확정: S-13 기록 + 회차 증가 (completeTerritory 로직 동일)
+    for (const t of toComplete) {
+      const newCycle = (t.cycle || 1) + 1;
+      const _visitedPubs = [...new Set(Object.values(t.visitMap||{}).map(v=>v?.by).filter(Boolean))];
+      const historyEntry = {
+        cycle: t.cycle || 1,
+        completedAt: new Date().toISOString().slice(0, 10),
+        publishers: _visitedPubs,
+        visitMode: window._visitMode || '호별',
+        unitVisits: t.visitMap || {}
+      };
+      await updateDoc(doc(db, 'territories', t.id), {
+        cycle: newCycle, status: '미배정', completionRate: 0,
+        completionStatus: null, assignedPublishers: [], visitMap: {},
+        sectionStatus: {}, lastCompletedDate: serverTimestamp(),
+        cycleHistory: [...(t.cycleHistory || []), historyEntry]
+      });
+      Object.assign(t, {
+        cycle: newCycle, status: '미배정', completionRate: 0,
+        completionStatus: null, assignedPublishers: [], visitMap: {},
+        cycleHistory: [...(t.cycleHistory || []), historyEntry]
+      });
+    }
+
+    // ③ 미완료 회수: visitMap만 초기화, completionStatus='incomplete' 유지
+    for (const t of toIncomplete) {
+      await updateDoc(doc(db, 'territories', t.id), {
+        visitMap: {}, sectionStatus: {}, completionRate: 0,
+        forceRetrievedAt: serverTimestamp(), forceRetrievedBy: byAdmin
+        // completionStatus: 'incomplete' 그대로 유지 → ⏸ 미완료 목록에 남음
+      });
+      Object.assign(t, { visitMap: {}, sectionStatus: {}, completionRate: 0 });
+    }
+
+    renderTerritoryTable();
+    updateTerritoryStats();
+    let result = '✅ 처리 완료\n';
+    if (toReclaim.length)    result += `• 일반 회수: ${toReclaim.length}개\n`;
+    if (toComplete.length)   result += `• 완료 확정: ${toComplete.length}개\n`;
+    if (toIncomplete.length) result += `• 미완료 회수: ${toIncomplete.length}개 (⏸ 미완료 목록에 유지)`;
+    alert(result);
+  } catch(e) { alert('처리 중 오류: ' + e.message); }
+};
+
 // ── 장기 미반납 패널 ──
 let _overdueSelected = new Set();
 
@@ -3375,7 +3446,21 @@ window.setTerrSort = function(v) {
 window.toggleTerrSortDir = function() {
   window._terrSortDesc = !window._terrSortDesc;
   const btn = document.getElementById('terr-sort-dir');
-  if (btn) btn.textContent = window._terrSortDesc ? '▼' : '▲';
+  if (btn) {
+    if (window._terrSortDesc) {
+      btn.textContent = '내림↓';
+      btn.style.cssText = btn.style.cssText
+        .replace(/background:[^;]+/, 'background:#FFF7ED')
+        .replace(/border:[^;]+/, 'border:1.5px solid #FED7AA')
+        .replace(/color:[^;]+/, 'color:#C2410C');
+    } else {
+      btn.textContent = '오름↑';
+      btn.style.cssText = btn.style.cssText
+        .replace(/background:[^;]+/, 'background:#EFF6FF')
+        .replace(/border:[^;]+/, 'border:1.5px solid #BFDBFE')
+        .replace(/color:[^;]+/, 'color:#1D4ED8');
+    }
+  }
   window.renderTerritoryTable();
 };
 window.toggleSchedSortDir = function() {
