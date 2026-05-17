@@ -6520,26 +6520,31 @@ window.navOpenSheetApp = async function(app) {
     if (btnEl) { btnEl.textContent = '업데이트 중…'; btnEl.disabled = true; }
 
     // 1. SW 대기 중이면 skip waiting 요청
+    // ★ serviceWorker.ready 는 일부 환경에서 영원히 hang → 3초 타임아웃으로 강제 탈출
     if ('serviceWorker' in navigator) {
       try {
-        const reg = await navigator.serviceWorker.ready;
+        const swReady = Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise((_, rej) => setTimeout(() => rej(new Error('sw-timeout')), 3000))
+        ]);
+        const reg = await swReady;
         if (reg.waiting) {
           window._swUpdatePending = true;
           reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          // controllerchange → reload (최대 4초 대기 후 강제 리로드)
+          // controllerchange → reload (최대 3초 대기 후 강제 리로드)
           setTimeout(() => {
-            if (window._swUpdatePending) window.location.reload();
-          }, 4000);
+            if (window._swUpdatePending) location.reload();
+          }, 3000);
           return;
         }
-      } catch(e) {}
+      } catch(e) { /* SW 없음 or 타임아웃 → 아래 캐시 삭제 경로로 진행 */ }
     }
-    // 2. 캐시 전체 삭제 후 강제 리로드 (cache-bust 파라미터로 HTTP캐시도 우회)
+    // 2. 캐시 전체 삭제 후 리로드
     if ('caches' in window) {
       const keys = await caches.keys().catch(() => []);
       await Promise.all(keys.map(k => caches.delete(k)));
     }
-    window.location.replace(location.pathname + '?_r=' + Date.now());
+    location.reload();
   };
 
   // ── 강제 초기화 (캐시·SW 전부 삭제 후 리로드) ──────────────────────────────
@@ -6560,8 +6565,7 @@ window.navOpenSheetApp = async function(app) {
       // 버전 저장값 초기화 (다음 로드에서 재체크)
       localStorage.removeItem('jwcard_ver');
     } catch(e) {}
-    // cache-bust 파라미터로 HTTP캐시 우회 (location.reload(true)는 deprecated)
-    window.location.replace(location.pathname + '?_r=' + Date.now());
+    location.reload();
   };
 
   // Service Worker 등록 + 업데이트 감지
