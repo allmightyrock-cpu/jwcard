@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>구역카드</title>
+<title>구역카드 — 우리 회중</title>
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1297,7 +1297,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
     <div class="consent-section">
       <h3>제3자 제공</h3>
-      <p class="consent-text">수집된 정보는 봉사감독자의 S-13 기록 관리 목적으로만 사용되며, 외부에 제공되지 않습니다.</p>
+      <p class="consent-text">수집된 정보는 우리 회중 봉사감독자의 S-13 기록 관리 목적으로만 사용되며, 외부에 제공되지 않습니다.</p>
     </div>
     <div class="consent-section">
       <h3>귀하의 권리</h3>
@@ -2503,7 +2503,7 @@ function tryNominatimGeocode(queries, idx, label, count) {
           + '?format=json&limit=1&accept-language=ko'
           + '&q=' + encodeURIComponent(q)
           + '&countrycodes=kr';
-  fetch(url, { headers: { 'User-Agent': 'JWCard/1.0' } })
+  fetch(url, { headers: { 'User-Agent': 'JWCard/1.0 (kingdomhall1305.workers.dev)' } })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data && data.length > 0) {
@@ -2564,6 +2564,7 @@ function _drawMarker(position, label, count) {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // Firebase 설정은 config.js 에서 로드됩니다
 const firebaseConfig = (window.APP_CONFIG && window.APP_CONFIG.firebase)
@@ -2572,8 +2573,12 @@ const firebaseConfig = (window.APP_CONFIG && window.APP_CONFIG.firebase)
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// ── 익명 인증 (Firestore 보안 규칙: request.auth != null 대응) ──
+const _authReady = signInAnonymously(getAuth(app)).catch(e => console.warn('익명 인증 실패:', e));
+
 // ── Firestore에서 Naver Client ID 로드 (config.js 값으로 이미 로드됐으면 무시) ──
 (async function _loadNaverFromFirestore() {
+  await _authReady;
   try {
     const cfgSnap = await getDoc(doc(db, 'admin', 'config'));
     if (cfgSnap.exists()) {
@@ -2585,6 +2590,7 @@ const db = getFirestore(app);
 
 // ── 관리자 공지 로드 ──
 (async function loadActiveNotice() {
+  await _authReady;
   try {
     const snap = await getDocs(query(collection(db, 'adminNotices'), where('active', '==', true)));
     if (snap.empty) return;
@@ -4342,7 +4348,7 @@ window.moveTerritoryMap = function moveTerritoryMap() {
   // ── 참조 코드 방식: road + jibun 공백 없이 붙임 ──
   // 참조앱: $(".road_name").text() + $(".tr_no").text()
   // → "행선로" + "123-19" = "행선로123-19"
-  const BASE = (window._mapRegion ? window._mapRegion + ' ' : '');
+  const BASE = '경기도 동두천시 ';
   const queries = [];
 
   // ① 참조 코드와 동일: road+jibun 공백 없이 결합 (최우선)
@@ -4388,7 +4394,7 @@ window.openMapSearch = function() {
   const firstUnit = units.find(u => u.road || u.jibun) || {};
   const query = [firstUnit.road, firstUnit.jibun, firstUnit.building]
     .filter(Boolean).join(' ') || _territory.name;
-  const encoded = encodeURIComponent(query + (window._mapRegion ? ' ' + window._mapRegion : ''));
+  const encoded = encodeURIComponent(query + ' 동두천시');
   window.open('https://map.naver.com/v5/search/' + encoded, '_blank');
 };
 
@@ -5728,7 +5734,7 @@ function _navBuildLinks(coords, name, addr, walk) {
 // ── 인덱스로 주소/섹션 정보 추출 ─────────────────────────────
 function _navAddrInfo(idx) {
   var sec    = _navSectionOf(idx);
-  var region = (window._mapRegion || '') + ' ';
+  var region = (window._mapRegion || '경기도 동두천시') + ' ';
   var road   = (sec && sec.road)     || '';
   var jibun  = (sec && sec.jibun)    || '';
   var bldg   = (sec && sec.building) || '';
@@ -5874,7 +5880,7 @@ function _navPrefetchCoords(idx) {
     var sec    = _navSectionOf(i);
     var secKey = (sec && sec.key) || ('idx_' + i);
     if (_navCoordCache[secKey]) return;
-    var region = (window._mapRegion || '') + ' ';
+    var region = (window._mapRegion || '경기도 동두천시') + ' ';
     var road   = (sec && sec.road)     || '';
     var jibun  = (sec && sec.jibun)    || '';
     var bldg   = (sec && sec.building) || '';
@@ -5914,7 +5920,7 @@ function _renderNavNextCard() {
 
   var u   = units[_navIdx];
   var sec = _navSectionOf(_navIdx);
-  var region   = (window._mapRegion || '') + ' ';
+  var region   = (window._mapRegion || '경기도 동두천시') + ' ';
   var road     = (sec && sec.road)     || '';
   var jibun    = (sec && sec.jibun)    || '';
   var bldg     = (sec && sec.building) || '';
@@ -6749,3 +6755,4 @@ window.navOpenSheetApp = async function(app) {
 </script>
 </body>
 </html>
+

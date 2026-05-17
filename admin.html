@@ -825,7 +825,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div class="settings-card-title">회중 정보</div>
             <div class="form-group">
               <label>회중명</label>
-              <input type="text" id="s-congregation" placeholder="예: 동두천남부회중">
+              <input type="text" id="s-congregation" placeholder="예: 우리 회중">
             </div>
             <button class="btn btn-navy" onclick="saveCongregation()">저장</button>
           </div>
@@ -1989,8 +1989,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-hint success"><span class="man-hint-icon">①</span><div><strong>firebase.google.com</strong> 접속 → Google 계정으로 로그인 → <strong>[프로젝트 추가]</strong> 클릭</div></div>
                 <div class="man-hint success"><span class="man-hint-icon">②</span><div>프로젝트 이름 입력 (예: <code>jwcard-회중이름</code>) → Google 애널리틱스 <strong>사용 안 함</strong> → <strong>[프로젝트 만들기]</strong></div></div>
                 <div class="man-hint success"><span class="man-hint-icon">③</span><div>왼쪽 메뉴 <strong>[Firestore Database]</strong> → <strong>[데이터베이스 만들기]</strong> → <strong>프로덕션 모드</strong> → 리전 <strong>asia-northeast3 (서울)</strong> → <strong>[완료]</strong></div></div>
-                <div class="man-hint warn"><span class="man-hint-icon">④</span><div><strong>[규칙]</strong> 탭 클릭 → 아래 내용으로 교체 후 <strong>[게시]</strong><br>
-                  <code style="display:block;background:#F8FAFC;border-radius:6px;padding:10px;margin-top:8px;font-size:12px;line-height:1.7">rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code>
+                <div class="man-hint success"><span class="man-hint-icon">④</span><div><strong>[규칙]</strong> 탭 클릭 → 아래 내용으로 교체 후 <strong>[게시]</strong><br>
+                  <code style="display:block;background:#F8FAFC;border-radius:6px;padding:10px;margin-top:8px;font-size:12px;line-height:1.7">rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if request.auth != null;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code>
+                  <span style="font-size:11px;color:#166534">🔒 앱을 통해 인증된 사용자만 접근 가능 — 외부 직접 접근 차단</span>
                 </div></div>
                 <div class="man-hint success"><span class="man-hint-icon">⑤</span><div><strong>[프로젝트 설정(⚙)]</strong> → <strong>[일반]</strong> 탭 → 아래로 스크롤 → <strong>[앱 추가]</strong> → <strong>웹(&lt;/&gt;)</strong> 선택 → 앱 닉네임 입력 → <strong>[앱 등록]</strong></div></div>
                 <div class="man-hint success"><span class="man-hint-icon">⑥</span><div>표시되는 <code>firebaseConfig</code> 값을 복사해 둡니다 (다음 단계에서 코드에 입력)</div></div>
@@ -3195,3 +3196,4 @@ if ('serviceWorker' in navigator) {
 
 </body>
 </html>
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -184,6 +184,7 @@ select:focus,input:focus{border-color:var(--navy);}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <div id="toast"></div>
 <div id="app"></div>
 <!-- ── 봉사자 선택 모달 (고정 DOM — render()와 무관) ── -->
@@ -204,11 +205,14 @@ const IMG_LOGO = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BS
 
 // ── FIREBASE ──
 let db = null;
+let _authReady = Promise.resolve();
 try {
   const _cfg = (window.APP_CONFIG && window.APP_CONFIG.firebase) ? window.APP_CONFIG.firebase : null;
   if (_cfg) {
     if(!firebase.apps.length){ firebase.initializeApp(_cfg); }
     db = firebase.firestore();
+    // ── 익명 인증 (Firestore 보안 규칙: request.auth != null 대응) ──
+    _authReady = firebase.auth().signInAnonymously().catch(e => console.warn('익명 인증 실패:', e));
   } else { console.warn('⚠ config.js를 찾을 수 없습니다.'); }
 } catch(e){ console.warn('Firebase:',e.message); }
 
@@ -238,6 +242,7 @@ let _sharedLeaderPin  = '';           // 공용 암호 방식일 때 사용
 // ── 앱 초기 설정 로드 ──
 async function _loadCartConfig() {
   if (!db) return;
+  await _authReady;
   try {
     const snap = await db.collection('admin').doc('config').get();
     if (snap.exists) {

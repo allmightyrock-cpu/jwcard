@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // ── Firebase 초기화 (config.js 에서 로드) ──
 // config.js 파일의 window.APP_CONFIG.firebase 값을 사용합니다.
@@ -8,6 +9,9 @@ const firebaseConfig = (window.APP_CONFIG && window.APP_CONFIG.firebase)
   : (console.error('⚠ config.js를 찾을 수 없습니다. Firebase가 작동하지 않습니다.'), {});
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// ── 익명 인증 (Firestore 보안 규칙: request.auth != null 대응) ──
+const _authReady = signInAnonymously(getAuth(app)).catch(e => console.warn('익명 인증 실패:', e));
 
 // ── 카테고리 색상 상수 ──
 const CAT_BG = {'아파트':'#DBEAFE','상가':'#FEF3C7','주택':'#DCFCE7','각지':'#F3E8FF','인터폰':'#FFE4E6','편지':'#FEF9C3'};
@@ -90,6 +94,7 @@ window.adminNameInput = function() {
 
 // ── 통합 로그인: 이름 있으면 개인 PIN, 없으면 관리자 비밀번호 ──
 window.handleLogin = async function() {
+  await _authReady;
   const name = (document.getElementById('login-name-input').value || '').trim();
   const pw   = (document.getElementById('pw-input').value || '').trim();
   const pwConfirm = (document.getElementById('pw-confirm') ? document.getElementById('pw-confirm').value : '').trim();
