@@ -1,5 +1,11 @@
 # 📋 전자구역카드 시스템
 
+> **🔒 사용 대상 제한**  
+> 이 소프트웨어는 **한국 여호와의 증인 회중 전용**입니다.  
+> 여호와의 증인 회중 이외의 개인·단체는 이 소프트웨어를 사용·배포·수정할 수 없습니다.  
+> This software is intended exclusively for use by **Jehovah's Witnesses congregations in Korea**.  
+> Use by any other individual or organization is not permitted.
+
 종이 구역카드를 완전히 대체하는 웹 기반 구역관리 시스템입니다.  
 Firebase + Cloudflare Pages 기반 · 실시간 동기화 · **월 비용 0원**
 
@@ -154,4 +160,11 @@ service cloud.firestore {
 
 ## 📄 라이선스
 
-비상업 · 회중 봉사 전용 · 개인정보 미수집 시스템
+**사용 제한 라이선스 (Restricted Use License)**
+
+- 이 소프트웨어는 **한국 여호와의 증인 회중** 만 사용할 수 있습니다.
+- 여호와의 증인 회중 이외의 개인, 단체, 기업은 어떠한 목적으로도 사용·복사·수정·배포할 수 없습니다.
+- 비상업 · 회중 봉사 전용 · 개인정보 미수집 시스템
+
+This software may only be used by Jehovah's Witnesses congregations in Korea.  
+Use, copying, modification, or distribution by any other individual, group, or organization is prohibited.
