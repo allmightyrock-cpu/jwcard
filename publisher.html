@@ -3206,6 +3206,7 @@ window.handleLogin = async function() {
   if (!name) { showErr('이름을 입력해 주세요.'); return; }
   if (!no || no === '00') { showErr('구역 번호를 입력해 주세요.'); return; }
 
+  await _authReady;
   try {
     // 전도인 확인 — 이름만으로 단순 검색 후 JS에서 승인 체크
     const pubSnap = await getDocs(query(collection(db, 'publishers'), where('name','==',name)));
@@ -3328,6 +3329,7 @@ window.resumeNewCard = function() {
   try { sessionStorage.removeItem('jwcard_admin_preview'); } catch(e) {}
 
   _isPreview = true;
+  await _authReady;
   const snap = await getDoc(doc(db, 'territories', id));
   if (!snap.exists()) { alert('구역을 찾을 수 없습니다.'); return; }
   _territory   = snap.data();
@@ -3351,6 +3353,7 @@ const _LD_SESSION_HOURS = 4;
   if (leaderSess) {
     setTimeout(async function() {
       try {
+        await _authReady;
         const pubSnap = await getDocs(query(collection(db, 'publishers'), where('name','==',leaderSess.name)));
         if (pubSnap.empty || !pubSnap.docs[0].data().approved) { _clearLeaderSession(); return; }
         _pubDoc         = { id: pubSnap.docs[0].id, ...pubSnap.docs[0].data() };
@@ -3386,6 +3389,7 @@ const _LD_SESSION_HOURS = 4;
   if (savedName && savedNo && savedId) {
     setTimeout(async function() {
       try {
+        await _authReady;
         // 전도인 확인
         const pubSnap = await getDocs(query(collection(db, 'publishers'), where('name','==',savedName)));
         if (pubSnap.empty || !pubSnap.docs[0].data().approved) {
