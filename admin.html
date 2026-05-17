@@ -825,7 +825,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div class="settings-card-title">회중 정보</div>
             <div class="form-group">
               <label>회중명</label>
-              <input type="text" id="s-congregation" placeholder="예: 우리 회중">
+              <input type="text" id="s-congregation" placeholder="예: 동두천남부회중">
             </div>
             <button class="btn btn-navy" onclick="saveCongregation()">저장</button>
           </div>
@@ -1991,10 +1991,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                 <div class="man-hint success"><span class="man-hint-icon">③</span><div>왼쪽 메뉴 <strong>[Firestore Database]</strong> → <strong>[데이터베이스 만들기]</strong> → <strong>프로덕션 모드</strong> → 리전 <strong>asia-northeast3 (서울)</strong> → <strong>[완료]</strong></div></div>
                 <div class="man-hint success"><span class="man-hint-icon">④</span><div><strong>[규칙]</strong> 탭 클릭 → 아래 내용으로 교체 후 <strong>[게시]</strong><br>
                   <code style="display:block;background:#F8FAFC;border-radius:6px;padding:10px;margin-top:8px;font-size:12px;line-height:1.7">rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if request.auth != null;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code>
-                  <span style="font-size:11px;color:#166534">🔒 앱을 통해 인증된 사용자만 접근 가능 — 외부 직접 접근 차단</span>
+                  <span style="font-size:11px;color:#64748B">⚠ <code>if true</code>로 두면 누구나 DB에 직접 접근 가능 — 반드시 위 규칙으로 교체할 것</span>
                 </div></div>
-                <div class="man-hint success"><span class="man-hint-icon">⑤</span><div><strong>[프로젝트 설정(⚙)]</strong> → <strong>[일반]</strong> 탭 → 아래로 스크롤 → <strong>[앱 추가]</strong> → <strong>웹(&lt;/&gt;)</strong> 선택 → 앱 닉네임 입력 → <strong>[앱 등록]</strong></div></div>
-                <div class="man-hint success"><span class="man-hint-icon">⑥</span><div>표시되는 <code>firebaseConfig</code> 값을 복사해 둡니다 (다음 단계에서 코드에 입력)</div></div>
+                <div class="man-hint warn"><span class="man-hint-icon">⑤</span><div>
+                  <strong>익명 인증(Anonymous Auth) 활성화</strong> — ④ 규칙과 반드시 함께 설정해야 합니다<br>
+                  왼쪽 메뉴 <strong>[Authentication]</strong> → <strong>[Sign-in method]</strong> 탭 → <strong>[Anonymous]</strong> 선택 → 토글 <strong>[사용 설정]</strong> → <strong>[저장]</strong><br>
+                  <span style="font-size:11px;color:#92400E">이 단계를 빠뜨리면 앱 접속 시 <strong>"Missing or insufficient permissions"</strong> 오류가 발생합니다</span>
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑥</span><div><strong>[프로젝트 설정(⚙)]</strong> → <strong>[일반]</strong> 탭 → 아래로 스크롤 → <strong>[앱 추가]</strong> → <strong>웹(&lt;/&gt;)</strong> 선택 → 앱 닉네임 입력 → <strong>[앱 등록]</strong></div></div>
+                <div class="man-hint success"><span class="man-hint-icon">⑦</span><div>표시되는 <code>firebaseConfig</code> 값을 복사해 둡니다 (다음 단계에서 코드에 입력)</div></div>
               </div>
 
               <!-- STEP 2: Naver Maps -->
@@ -2079,6 +2084,37 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
                   저장 용량: 구역 200개 × 방문 기록 포함 약 5MB → 무료 한도(1GB) 대비 미미
                 </div></div>
                 <div class="man-hint"><span class="man-hint-icon">📌</span><div>Firebase 콘솔 → <strong>[사용량]</strong> 탭에서 실시간으로 사용량 모니터링 가능</div></div>
+              </div>
+
+              <!-- 업데이트 방법 -->
+              <div class="man-sec">
+                <div class="man-sec-title">🔄 시스템 업데이트 방법 (GitHub → Cloudflare)</div>
+                <p class="man-p">새 기능이 추가되거나 오류가 수정되면 GitHub에 새 버전이 올라옵니다. 아래 순서로 업데이트하세요.</p>
+                <div class="man-hint success"><span class="man-hint-icon">①</span><div>
+                  <strong>GitHub에서 최신 파일 다운로드</strong><br>
+                  <code>https://github.com/allmightyrock-cpu/jwcard</code> 접속 →
+                  초록색 <strong>[&lt;&gt; Code]</strong> → <strong>[Download ZIP]</strong> → 압축 해제
+                </div></div>
+                <div class="man-hint warn"><span class="man-hint-icon">②</span><div>
+                  <strong>⚠ config.js 는 교체하지 마세요</strong><br>
+                  압축 해제한 폴더에는 <code>config.example.js</code>만 있습니다. 기존에 만들어둔 <strong>본인의 config.js를 그대로 유지</strong>하고 나머지 파일만 새 버전으로 교체합니다.
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">③</span><div>
+                  <strong>Cloudflare Pages 재배포</strong><br>
+                  Cloudflare 대시보드 → Workers &amp; Pages → 해당 프로젝트 →
+                  <strong>[배포 관리]</strong> → <strong>[새 배포 만들기]</strong> →
+                  업데이트된 파일 전체(config.js 포함) 드래그&amp;드롭 → 배포
+                </div></div>
+                <div class="man-hint success"><span class="man-hint-icon">④</span><div>
+                  <strong>전도인 앱 업데이트 확인</strong><br>
+                  배포 완료 후 전도인이 앱을 열면 로그인 화면에 <strong>"새 버전이 있습니다"</strong> 카드 또는 상단에 파란색 <strong>"🔄 새 버전 대기 중"</strong> 배너가 표시됩니다.<br>
+                  <strong>[지금 업데이트]</strong> 버튼을 탭하면 자동으로 새로고침됩니다.
+                </div></div>
+                <div class="man-hint"><span class="man-hint-icon">🔁</span><div>
+                  배너가 표시되지 않거나 버튼을 눌러도 반응이 없으면, 로그인 화면 하단
+                  <strong>↺ 앱이 최신 버전이 아닌 경우 탭하세요</strong> 버튼을 누르면
+                  캐시·Service Worker를 완전히 초기화하고 강제로 최신 버전을 불러옵니다.
+                </div></div>
               </div>
 
             </div>
@@ -3196,4 +3232,3 @@ if ('serviceWorker' in navigator) {
 <!-- Icons by <a href="https://www.flaticon.com" title="Flaticon">Flaticon</a> -->
 </body>
 </html>
-
