@@ -1,9 +1,21 @@
-# ★ Firebase 키가 담긴 설정 파일 — 절대 GitHub에 올리지 마세요
-config.js
+# 회중 전용 데이터 - GitHub 업로드 절대 금지
+구역카드_excel_변경완료_*/
+*.xlsx
+*.xls
+*.csv
 
-# macOS
+# 회중 고유 설정 파일
+settings.local.json
+.env
+.env.*
+
+# 개인정보 포함 가능 파일
+*.json.local
+
+# 시스템 파일
 .DS_Store
-
-# Windows
 Thumbs.db
 desktop.ini
+
+config.js
+*.bak*
