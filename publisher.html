@@ -87,7 +87,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 }
 .jw-bg-text{
   font-family:'Barlow','Arial Black',sans-serif;
-  font-weight:900;
+  font-weight:600;
   font-size:240px;
   letter-spacing:20px;
 }
@@ -966,7 +966,7 @@ body.nav-mode-active #nav-footer-bar{display:flex}
 .nav-sheet-mode-btn.sel{background:#fff;color:#1E293B;box-shadow:0 1px 6px rgba(0,0,0,.10)}
 .nav-sheet-apps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Barlow:wght@900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Barlow:wght@600;900&display=swap" rel="stylesheet">
 <script src="/config.js"></script>
 <script>
 window._naverMapsLoaded = false;
@@ -1063,7 +1063,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   <!-- JW 3D 배경 -->
   <svg class="jw-3d-bg" id="jw-bg-svg" viewBox="0 0 480 260" width="480" height="260" overflow="visible">
     <defs>
-      <style>.jw-bg-text{font-family:'Barlow','Arial Black',sans-serif;font-weight:900;font-size:240px;letter-spacing:20px;}</style>
+      <style>.jw-bg-text{font-family:'Barlow','Arial Black',sans-serif;font-weight:600;font-size:240px;letter-spacing:20px;}</style>
     </defs>
     <g id="jw-bg-depth"></g>
     <text class="jw-bg-text" x="240" y="232" text-anchor="middle" fill="rgba(255,255,255,0.10)" id="jw-bg-front">JW</text>
@@ -1204,7 +1204,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </button>
 
     <!-- 전시대봉사 뱃지 -->
-    <button class="badge-btn badge-cart" id="badge-cart" style="display:none" onclick="location.href='/cart.html'">
+    <button class="badge-btn badge-cart" id="badge-cart" style="display:none" onclick="toggleCartSection()">
       <div class="badge-icon">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(196,181,253,0.9)" xmlns="http://www.w3.org/2000/svg"><path d="M3.5,2.5c0-1.38,1.12-2.5,2.5-2.5s2.5,1.12,2.5,2.5-1.12,2.5-2.5,2.5-2.5-1.12-2.5-2.5Zm7.5,7.5v3c0,1.48-.81,2.77-2,3.46v6.54c0,.55-.45,1-1,1s-1-.45-1-1v-6h-2v6c0,.55-.45,1-1,1s-1-.45-1-1v-6.54c-1.19-.69-2-1.99-2-3.46v-3c0-2.21,1.79-4,4-4h2c2.21,0,4,1.79,4,4Zm-2,0c0-1.1-.9-2-2-2h-2c-1.1,0-2,.9-2,2v3c0,1.1,.9,2,2,2h2c1.1,0,2-.9,2-2v-3Zm9-5c1.38,0,2.5-1.12,2.5-2.5s-1.12-2.5-2.5-2.5-2.5,1.12-2.5,2.5,1.12,2.5,2.5,2.5Zm4.25,13.99c-.34,.39-.77,.67-1.25,.84v3.17c0,.55-.45,1-1,1s-1-.45-1-1v-3h-2v3c0,.55-.45,1-1,1s-1-.45-1-1v-3.17c-.48-.17-.91-.46-1.25-.84-.57-.65-.83-1.5-.73-2.36l.88-7.01c.26-2.06,2.02-3.62,4.1-3.62s3.84,1.56,4.1,3.62l.88,7.01c.11,.85-.16,1.71-.73,2.36Zm-1.26-2.11l-.88-7.01c-.13-1.07-1.04-1.87-2.12-1.87s-1.98,.8-2.12,1.87l-.88,7.01c-.04,.29,.05,.57,.24,.79,.19,.22,.46,.34,.75,.34h4c.29,0,.56-.12,.75-.34,.19-.22,.28-.5,.24-.79Z"/></svg>
       </div>
@@ -1212,10 +1212,42 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         <div class="badge-name" id="cart-name-label"></div>
         <div class="badge-label">전시대봉사 일정</div>
       </div>
-      <span class="badge-arrow">›</span>
+      <span class="badge-arrow" id="cart-badge-arrow" style="transition:transform .2s">›</span>
     </button>
 
   </div><!-- /badge-zone -->
+
+  <!-- 전시대봉사 신청 섹션 (뱃지 탭 후 펼침) -->
+  <div id="cart-section" style="display:none;width:calc(100% - 32px);max-width:300px;margin-top:8px;position:relative;z-index:1">
+    <div style="
+      background:linear-gradient(158deg,rgba(255,255,255,0.97) 0%,rgba(255,255,255,0.91) 50%,rgba(222,232,255,0.84) 100%);
+      backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      border-radius:20px;padding:16px;
+      box-shadow:0 20px 56px rgba(0,0,0,0.30),0 6px 20px rgba(0,0,0,0.16),inset 0 1.5px 0 rgba(255,255,255,0.95);
+      border:1px solid rgba(255,255,255,0.60);
+    ">
+      <!-- 헤더 -->
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:13px;padding-bottom:11px;border-bottom:1.5px solid rgba(27,58,107,0.09)">
+        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(140deg,#4A7FD4 0%,#1B3A6B 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(27,58,107,0.38);flex-shrink:0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M3.5,2.5c0-1.38,1.12-2.5,2.5-2.5s2.5,1.12,2.5,2.5-1.12,2.5-2.5,2.5-2.5-1.12-2.5-2.5Zm7.5,7.5v3c0,1.48-.81,2.77-2,3.46v6.54c0,.55-.45,1-1,1s-1-.45-1-1v-6h-2v6c0,.55-.45,1-1,1s-1-.45-1-1v-6.54c-1.19-.69-2-1.99-2-3.46v-3c0-2.21,1.79-4,4-4h2c2.21,0,4,1.79,4,4Zm-2,0c0-1.1-.9-2-2-2h-2c-1.1,0-2,.9-2,2v3c0,1.1,.9,2,2,2h2c1.1,0,2-.9,2-2v-3Zm9-5c1.38,0,2.5-1.12,2.5-2.5s-1.12-2.5-2.5-2.5-2.5,1.12-2.5,2.5,1.12,2.5,2.5,2.5Zm4.25,13.99c-.34,.39-.77,.67-1.25,.84v3.17c0,.55-.45,1-1,1s-1-.45-1-1v-3h-2v3c0,.55-.45,1-1,1s-1-.45-1-1v-3.17c-.48-.17-.91-.46-1.25-.84-.57-.65-.83-1.5-.73-2.36l.88-7.01c.26-2.06,2.02-3.62,4.1-3.62s3.84,1.56,4.1,3.62l.88,7.01c.11,.85-.16,1.71-.73,2.36Zm-1.26-2.11l-.88-7.01c-.13-1.07-1.04-1.87-2.12-1.87s-1.98,.8-2.12,1.87l-.88,7.01c-.04,.29,.05,.57,.24,.79,.19,.22,.46,.34,.75,.34h4c.29,0,.56-.12,.75-.34,.19-.22,.28-.5,.24-.79Z"/></svg>
+        </div>
+        <span style="font-size:13px;font-weight:700;color:#1B3A6B;letter-spacing:-0.2px;flex:1">이번 주 전시대 봉사</span>
+        <span id="cart-section-approved-badge" style="font-size:9px;font-weight:700;background:linear-gradient(135deg,#EDE9FE,#DDD6FE);color:#5B21B6;padding:3px 8px;border-radius:8px;box-shadow:0 1px 5px rgba(91,33,182,0.20);white-space:nowrap">인원 승인됨</span>
+      </div>
+      <!-- 세션 목록 -->
+      <div id="cart-sessions-list" style="min-height:40px">
+        <div style="text-align:center;padding:20px;color:#94A3B8;font-size:12px">불러오는 중...</div>
+      </div>
+      <!-- 인도자 전용 관리 링크 (숨김, JS에서 표시) -->
+      <div id="cart-admin-link" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(27,58,107,0.10)">
+        <a href="/cart.html?tab=__signup" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;background:linear-gradient(135deg,rgba(27,58,107,0.08),rgba(43,82,153,0.12));border:1px solid rgba(27,58,107,0.18);border-radius:11px;text-decoration:none;font-size:12px;font-weight:700;color:#1B3A6B;letter-spacing:-0.1px;transition:all .18s" onclick="this.style.opacity='0.7'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#1B3A6B"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+          팀 편성 관리
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B3A6B" style="opacity:0.5"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
 
   <!-- 캐시 초기화 버튼 — 업데이트 안 될 때 사용 -->
   <button onclick="hardRefresh()" style="position:relative;z-index:2;margin-top:18px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:11px;font-family:inherit;cursor:pointer;padding:6px 12px;letter-spacing:.3px;text-shadow:0 1px 4px rgba(0,0,0,0.4)">
@@ -2598,7 +2630,7 @@ function _drawMarker(position, label, count) {
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // Firebase 설정은 config.js 에서 로드됩니다
@@ -2787,6 +2819,8 @@ window.onNameInput = async function(val) {
     if (lBadge) lBadge.style.display = 'none';
     if (cBadge) cBadge.style.display = 'none';
     stopPubMeetingListener();
+    _cartMyName = '';
+    _stopCartSignupListener();
     return;
   }
   // 이름 있음 — DB 조회
@@ -2807,12 +2841,14 @@ window.onNameInput = async function(val) {
         badgeVisible = true;
       } else if (lBadge) { lBadge.style.display = 'none'; }
       if (hasCart && cBadge) {
+        _cartMyName = name;
+        _cartMyRole = data.cartRole || '';
         if (cl) cl.textContent = name + '님';
         cBadge.style.display = 'flex';
         cBadge.style.animation = 'none';
         setTimeout(() => { cBadge.style.animation = 'badge-in 0.35s cubic-bezier(0.34,1.56,0.64,1) 90ms both'; }, 10);
         badgeVisible = true;
-      } else if (cBadge) { cBadge.style.display = 'none'; }
+      } else if (cBadge) { cBadge.style.display = 'none'; _cartMyName = ''; _stopCartSignupListener(); }
       if (zone) zone.classList.toggle('hidden', !badgeVisible);
       if (approved) startPubMeetingListener(name);
       else stopPubMeetingListener();
@@ -6352,6 +6388,228 @@ window.navOpenSheetApp = async function(app) {
     if (_origExit) _origExit.apply(this, arguments);
   };
 })();
+
+// ════ 전시대봉사 신청 섹션 (모듈 스코프 — Firebase 함수 접근 가능) ════
+function _fmt12h(str) { // "HH:MM" → "오전/오후 H:MM"
+  const [h, m] = str.split(':').map(Number);
+  const ap = h < 12 ? '오전' : '오후';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${ap} ${h12}:${String(m).padStart(2, '0')}`;
+}
+let _cartSectionOpen = false;
+let _cartMyName = '';
+let _cartMyRole = '';   // 'admin' | 'member' | ''
+let _cartSignupListener = null;
+const _CART_CUTOFF_H = 3;
+const _CART_DOW_KO = ['일','월','화','수','목','금','토'];
+
+function _cartWeekMonday() {
+  const now = new Date();
+  const d = now.getDay();
+  const m = new Date(now);
+  m.setHours(0, 0, 0, 0);
+  m.setDate(now.getDate() - (d === 0 ? 6 : d - 1));
+  return m;
+}
+
+function _stopCartSignupListener() {
+  if (_cartSignupListener) { _cartSignupListener(); _cartSignupListener = null; }
+  if (_cartSectionOpen) {
+    _cartSectionOpen = false;
+    const sec = document.getElementById('cart-section');
+    const arrow = document.getElementById('cart-badge-arrow');
+    if (sec) sec.style.display = 'none';
+    if (arrow) arrow.style.transform = '';
+  }
+}
+
+function _cartToggleSection() {
+  _cartSectionOpen = !_cartSectionOpen;
+  const sec   = document.getElementById('cart-section');
+  const arrow = document.getElementById('cart-badge-arrow');
+  const adminLink = document.getElementById('cart-admin-link');
+  if (sec) sec.style.display = _cartSectionOpen ? '' : 'none';
+  if (arrow) arrow.style.transform = _cartSectionOpen ? 'rotate(90deg)' : '';
+  if (adminLink) adminLink.style.display = (_cartSectionOpen && _cartMyRole === 'admin') ? '' : 'none';
+  if (_cartSectionOpen) {
+    _loadCartSessions();
+  } else {
+    if (_cartSignupListener) { _cartSignupListener(); _cartSignupListener = null; }
+  }
+}
+
+function _schedTypeToDow(t) {
+  const ID_DOW = {mon:1, tue:2, wed:3, thu:4, fri:5, sat:6, sun:0};
+  const prefix = (t.id || '').split('_')[0].toLowerCase();
+  if (ID_DOW[prefix] !== undefined) return ID_DOW[prefix];
+  const LABEL_DOW = {'월':1,'화':2,'수':3,'목':4,'금':5,'토':6,'일':0};
+  const lbl = t.label || '';
+  for (const [k, v] of Object.entries(LABEL_DOW)) {
+    if (lbl.includes(k + '요일')) return v;
+  }
+  return -1;
+}
+
+function _apHmTo24(ap, h, m) {
+  let hr = parseInt(h) || 0;
+  if (ap === '오후' && hr !== 12) hr += 12;
+  if (ap === '오전' && hr === 12) hr = 0;
+  return { h: hr, m: parseInt(m || '0') };
+}
+
+async function _loadCartSessions() {
+  const listEl = document.getElementById('cart-sessions-list');
+  if (!listEl || !_cartMyName) return;
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#94A3B8;font-size:12px">불러오는 중...</div>';
+  try {
+    const configSnap = await getDoc(doc(db, 'admin', 'cartConfig'));
+    let schedTypes = [];
+    if (configSnap.exists()) {
+      const cd = configSnap.data();
+      if (Array.isArray(cd.scheduleTypes) && cd.scheduleTypes.length > 0) schedTypes = cd.scheduleTypes;
+    }
+    if (!schedTypes.length) {
+      listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#94A3B8;font-size:12px">등록된 전시대 봉사 일정이 없습니다</div>';
+      return;
+    }
+    const monday = _cartWeekMonday();
+    const wkStr = monday.toISOString().slice(0, 10).replace(/-/g, '');
+    const now = new Date();
+    const sessions = [];
+    schedTypes.forEach(t => {
+      const dow = _schedTypeToDow(t);
+      if (dow < 0) return;
+      const st = _apHmTo24(t.ds?.ap, t.ds?.h, t.ds?.m);
+      const et = _apHmTo24(t.de?.ap, t.de?.h, t.de?.m);
+      const daysFromMon = dow === 0 ? 6 : dow - 1;
+      const dt = new Date(monday); dt.setDate(monday.getDate() + daysFromMon); dt.setHours(st.h, st.m, 0, 0);
+      const dtEnd = new Date(monday); dtEnd.setDate(monday.getDate() + daysFromMon); dtEnd.setHours(et.h, et.m, 0, 0);
+      const pad = n => String(n).padStart(2, '0');
+      sessions.push({
+        key: wkStr + '_' + t.id, typeId: t.id,
+        label: t.label || (_CART_DOW_KO[dow] + '요일'), emoji: t.emoji || '',
+        dateLabel: `${dt.getMonth()+1}월 ${dt.getDate()}일 (${_CART_DOW_KO[dow]})`,
+        startStr: pad(st.h) + ':' + pad(st.m), endStr: pad(et.h) + ':' + pad(et.m),
+        dt, dtEnd, ended: now >= dtEnd
+      });
+    });
+    sessions.sort((a, b) => a.dt - b.dt);
+    if (_cartSignupListener) { _cartSignupListener(); _cartSignupListener = null; }
+    _cartSignupListener = onSnapshot(
+      query(collection(db, 'cartSessions'), where('weekKey', '==', wkStr)),
+      snap => {
+        const data = {};
+        snap.forEach(d => { data[d.id] = d.data(); });
+        _renderCartSessions(sessions, data, listEl);
+      },
+      err => {
+        if (listEl) listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#EF4444;font-size:12px">로드 오류: ${err.message}</div>`;
+      }
+    );
+  } catch (e) {
+    if (listEl) listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#EF4444;font-size:12px">오류: ${e.message}</div>`;
+  }
+}
+
+function _renderCartSessions(sessions, signupsData, listEl) {
+  const now = new Date();
+  const allEnded = sessions.every(s => s.ended);
+  const rows = sessions.map(s => {
+    const sd = signupsData[s.key] || {};
+    const signups = sd.signups || [];
+    const count = signups.length;
+    const iSignedUp = signups.includes(_cartMyName);
+    const ended = s.ended;
+    const open = !ended && (Date.now() < s.dt.getTime() - _CART_CUTOFF_H * 3600000);
+    const msLeft = s.dt.getTime() - _CART_CUTOFF_H * 3600000 - now.getTime();
+    let timeTag = '';
+    if (ended) timeTag = '<span style="font-size:10px;color:#94A3B8;font-weight:600"> · 봉사 종료</span>';
+    else if (!open) timeTag = '<span style="font-size:10px;color:#EF4444;font-weight:700"> · 신청 마감</span>';
+    else if (msLeft < 6 * 3600000) {
+      const dh = Math.floor(msLeft / 3600000), dm = Math.floor((msLeft % 3600000) / 60000);
+      timeTag = `<span style="font-size:10px;color:#F59E0B;font-weight:600"> · ${dh>0?dh+'시간 '+dm+'분':dm+'분'} 후 마감</span>`;
+    }
+    const confirmedTag = sd.confirmed ? '<span style="font-size:9px;background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:5px;font-weight:700;margin-left:4px">팀 확정</span>' : '';
+
+    // 내 배정 슬롯 찾기 (팀 확정 후)
+    let mySlotHtml = '';
+    if (sd.confirmed && sd.teams && _cartMyName) {
+      const INTERVALS = {1:120,2:60,3:40,4:30,5:24,6:20};
+      for (const [teamKey, team] of Object.entries(sd.teams)) {
+        const rows = team.rows || [];
+        const slotIdx = rows.findIndex(r => Array.isArray(r) && r.includes(_cartMyName));
+        if (slotIdx >= 0) {
+          const [sh, sm] = s.startStr.split(':').map(Number);
+          const intv = INTERVALS[team.numSlots] || Math.round(120 / (team.numSlots || 1));
+          const tot = sh * 60 + sm + intv * slotIdx;
+          const h = Math.floor(tot / 60) % 24, m = tot % 60;
+          const slotTime = _fmt12h((h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m);
+          const partner = (rows[slotIdx] || []).filter(n => n && n !== _cartMyName)[0] || '';
+          const loc = team.loc ? ` · ${team.loc}` : '';
+          mySlotHtml = `<div style="margin-top:7px;padding:7px 10px;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(5,150,105,0.07));border:1px solid rgba(16,185,129,0.30);border-radius:9px;font-size:11px;color:#065F46">
+            <b style="color:#047857">📌 내 배정:</b> 팀 ${teamKey} · ${slotTime}${loc}${partner ? ` · 동반: ${partner}` : ''}
+          </div>`;
+          break;
+        }
+      }
+    }
+    let toggleHtml;
+    if (open) {
+      toggleHtml = `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
+        <div style="width:44px;height:24px;border-radius:12px;background:${iSignedUp?'#16A34A':'#E2E8F0'};position:relative;transition:background .2s">
+          <div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:${iSignedUp?'23':'3'}px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
+        </div>
+        <div style="font-size:9px;font-weight:700;color:${iSignedUp?'#16A34A':'#94A3B8'}">${iSignedUp?'신청됨':'미신청'}</div>
+      </div>`;
+    } else if (ended) {
+      toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:44px;height:24px;border-radius:12px;background:#E2E8F0;position:relative;opacity:0.2"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+        <div style="font-size:9px;font-weight:600;color:#94A3B8">종료</div></div>`;
+    } else {
+      toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:44px;height:24px;border-radius:12px;background:#E2E8F0;position:relative;opacity:0.35"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+        <div style="font-size:9px;font-weight:700;color:#EF4444">마감</div></div>`;
+    }
+    return `<div style="padding:10px 11px;border-radius:12px;margin-bottom:6px;background:${mySlotHtml?'linear-gradient(135deg,rgba(209,250,229,0.6),rgba(167,243,208,0.35))':iSignedUp?'linear-gradient(135deg,rgba(220,252,231,0.7),rgba(187,247,208,0.45))':ended?'rgba(241,245,249,0.5)':'rgba(248,250,255,0.6)'};border:1px solid ${mySlotHtml?'rgba(16,185,129,0.35)':iSignedUp?'rgba(34,197,94,0.25)':ended?'rgba(226,232,240,0.6)':'rgba(219,228,255,0.5)'};${ended?'opacity:0.55':''}">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:#0F172A;letter-spacing:-0.1px">${s.emoji?s.emoji+' ':''}${s.dateLabel}${confirmedTag}</div>
+          <div style="font-size:11px;color:#64748B;margin-top:2px;font-weight:500">${_fmt12h(s.startStr)} ~ ${_fmt12h(s.endStr)}</div>
+          <div style="font-size:10px;color:#475569;margin-top:3px">신청 <b style="color:#2563EB;font-weight:700">${count}</b>명${timeTag}</div>
+        </div>
+        <div style="flex-shrink:0">${toggleHtml}</div>
+      </div>${mySlotHtml}
+    </div>`;
+  }).join('');
+  const endedMsg = allEnded ? `<div style="text-align:center;padding:12px 0 2px;font-size:11px;color:#94A3B8">
+    이번 주 전시대 봉사가 모두 완료됐습니다<br>
+    <span style="font-size:10px">다음 주 일정은 인도자가 공개하면 표시됩니다</span></div>` : '';
+  listEl.innerHTML = rows + endedMsg;
+}
+
+async function _cartDoToggle(sessionKey) {
+  if (!_cartMyName) return;
+  const wkStr = sessionKey.substring(0, 8);
+  const typeId = sessionKey.substring(9);
+  const sessionRef = doc(db, 'cartSessions', sessionKey);
+  try {
+    const snap = await getDoc(sessionRef);
+    if (snap.exists()) {
+      const signups = snap.data().signups || [];
+      if (signups.includes(_cartMyName)) {
+        await updateDoc(sessionRef, { signups: arrayRemove(_cartMyName) });
+      } else {
+        await updateDoc(sessionRef, { signups: arrayUnion(_cartMyName) });
+      }
+    } else {
+      await setDoc(sessionRef, { weekKey: wkStr, typeId, signups: [_cartMyName], confirmed: false, createdAt: serverTimestamp() });
+    }
+  } catch (e) { console.warn('전시대 신청 오류:', e.message); }
+}
+
+// 전역 노출 (HTML onclick에서 호출)
+window.toggleCartSection  = _cartToggleSection;
+window._cartDoToggle      = _cartDoToggle;
 
 </script>
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -274,8 +274,8 @@ async function _loadCartConfig() {
       }
     }
   } catch(e) { /* 무시 */ }
-  // S.tab이 유효한 요일인지 확인
-  if (!SCHEDULE_TYPES.find(t => t.id === S.tab)) {
+  // S.tab이 유효한 탭인지 확인 (__signup은 항상 유효)
+  if (S.tab !== '__signup' && !SCHEDULE_TYPES.find(t => t.id === S.tab)) {
     S.tab = SCHEDULE_TYPES[0]?.id || '';
   }
   // cart 승인 전도인 목록 로드 (권한 포함)
@@ -308,6 +308,7 @@ async function _loadCartConfig() {
     S.role = 'member'; // 항상 봉사자 모드로 자동 입장 (인도자 모드는 PIN 필요)
     localStorage.setItem('cw_myname', _savedPubName);
     await loadData();
+    if (S.tab === '__signup') _loadWeekSignups();
     loadCartNotice(); // 공지 비동기 로드 (로그인 후)
     return;
   }
@@ -319,7 +320,8 @@ _loadCartConfig();
 
 // ── STATE ──
 const S = {
-  screen:"login", role:null, tab:"thu_pm",
+  screen:"login", role:null,
+  tab: new URLSearchParams(location.search).get('tab') === '__signup' ? '__signup' : 'thu_pm',
   schedules:[], selected:null,
   loading:false, loadErr:null,
   form:null, prevScreen:null,
@@ -334,6 +336,11 @@ const S = {
 
 // ── UTILS ──
 function pad2(n){ return String(parseInt(n)||0).padStart(2,"0"); }
+function fmt12h(str){ // "HH:MM" → "오전/오후 H:MM"
+  const [h,m]=str.split(":").map(Number);
+  const ap=h<12?"오전":"오후", h12=h===0?12:h>12?h-12:h;
+  return `${ap} ${h12}:${String(m).padStart(2,"0")}`;
+}
 function calcTime(ap,h,m,n,idx){
   const hh=parseInt(h)||0, mm=parseInt(m)||0, nn=parseInt(n)||1;
   const add=(60/nn)*idx;
@@ -544,13 +551,14 @@ function headerHTML(){
 
 function tabsHTML(){
   if(S.screen!=="list") return "";
-  return `<div class="tabs">${SCHEDULE_TYPES.map(t=>
+  const signupTab=`<div class="tab${S.tab==="__signup"?" active":""}" data-tab="__signup">📋 이번 주</div>`;
+  return `<div class="tabs">${signupTab}${SCHEDULE_TYPES.map(t=>
     `<div class="tab${S.tab===t.id?" active":""}" data-tab="${t.id}">${t.emoji} ${t.label}</div>`
   ).join("")}</div>`;
 }
 
 function mainHTML(){
-  if(S.screen==="list")   return listHTML();
+  if(S.screen==="list")   return S.tab==="__signup" ? signupWeekHTML() : listHTML();
   if(S.screen==="detail") return detailHTML();
   if(S.screen==="create"||S.screen==="edit") return formHTML();
   return "";
@@ -1021,15 +1029,49 @@ function settingsModalHTML(){
     </div>`;
   const schLen=SCHEDULE_TYPES.length;
   const listSection=isSchTab
-    ?SCHEDULE_TYPES.map((t,idx)=>`<div style="display:flex;align-items:center;padding:10px 12px;border-radius:9px;font-size:14px;border-bottom:1px solid var(--border);gap:6px">
-        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
-          <button class="st-sch-up" data-idx="${idx}" ${idx===0?"disabled":""} style="width:22px;height:22px;border-radius:5px;border:1.5px solid ${idx===0?"#e2e8f0":"var(--border)"};background:${idx===0?"#f8fafc":"#fff"};color:${idx===0?"#cbd5e1":"var(--text-dim)"};cursor:${idx===0?"not-allowed":"pointer"};font-size:11px;line-height:1;padding:0">&#9650;</button>
-          <button class="st-sch-dn" data-idx="${idx}" ${idx===schLen-1?"disabled":""} style="width:22px;height:22px;border-radius:5px;border:1.5px solid ${idx===schLen-1?"#e2e8f0":"var(--border)"};background:${idx===schLen-1?"#f8fafc":"#fff"};color:${idx===schLen-1?"#cbd5e1":"var(--text-dim)"};cursor:${idx===schLen-1?"not-allowed":"pointer"};font-size:11px;line-height:1;padding:0">&#9660;</button>
-        </div>
-        <span style="min-width:120px;font-weight:600">${t.emoji} ${t.label}</span>
-        <span style="font-size:12px;color:var(--text-muted);flex:1">${t.ds.ap} ${t.ds.h}:${String(t.ds.m).padStart(2,"0")} – ${t.de.ap} ${t.de.h}:${String(t.de.m).padStart(2,"0")}</span>
-        <button class="st-sch-del" data-idx="${idx}" ${schLen<=1?"disabled":""} style="flex-shrink:0;width:24px;height:24px;border-radius:50%;border:none;background:${schLen<=1?"#eee":"#ffe8e5"};color:${schLen<=1?"#aaa":"var(--red)"};cursor:${schLen<=1?"not-allowed":"pointer"};font-size:12px">&#215;</button>
-      </div>`).join("")
+    ?SCHEDULE_TYPES.map((t,idx)=>{
+      if(_stEditIdx===idx){
+        return `<div style="padding:11px 12px;border-bottom:1px solid var(--border);background:#F0F5FF">
+          <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">${t.emoji} ${t.label} — 시간 수정</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--text-dim);min-width:30px">시작</span>
+            <select id="ste-sap" style="border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;outline:none;background:#fff;font-family:inherit">
+              <option${t.ds.ap==="오전"?" selected":""}>오전</option><option${t.ds.ap==="오후"?" selected":""}>오후</option>
+            </select>
+            <input id="ste-sh" type="number" min="1" max="12" value="${t.ds.h}" style="width:48px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;text-align:center;outline:none">
+            <span style="font-size:12px;color:var(--text-dim)">시</span>
+            <select id="ste-sm" style="border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;outline:none;background:#fff;font-family:inherit">
+              <option value="00"${String(t.ds.m)==="00"?" selected":""}>00분</option><option value="30"${String(t.ds.m)==="30"?" selected":""}>30분</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
+            <span style="font-size:12px;color:var(--text-dim);min-width:30px">종료</span>
+            <select id="ste-eap" style="border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;outline:none;background:#fff;font-family:inherit">
+              <option${t.de.ap==="오전"?" selected":""}>오전</option><option${t.de.ap==="오후"?" selected":""}>오후</option>
+            </select>
+            <input id="ste-eh" type="number" min="1" max="12" value="${t.de.h}" style="width:48px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;text-align:center;outline:none">
+            <span style="font-size:12px;color:var(--text-dim)">시</span>
+            <select id="ste-em" style="border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;outline:none;background:#fff;font-family:inherit">
+              <option value="00"${String(t.de.m)==="00"?" selected":""}>00분</option><option value="30"${String(t.de.m)==="30"?" selected":""}>30분</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:7px">
+            <button id="ste-save" data-idx="${idx}" style="flex:1;padding:8px;border-radius:9px;border:none;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">저장</button>
+            <button id="ste-cancel" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--border);background:#fff;color:var(--text-dim);font-size:13px;cursor:pointer;font-family:inherit">취소</button>
+          </div>
+        </div>`;
+      }
+      return `<div style="display:flex;align-items:center;padding:10px 12px;border-radius:9px;font-size:14px;border-bottom:1px solid var(--border);gap:6px">
+          <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+            <button class="st-sch-up" data-idx="${idx}" ${idx===0?"disabled":""} style="width:22px;height:22px;border-radius:5px;border:1.5px solid ${idx===0?"#e2e8f0":"var(--border)"};background:${idx===0?"#f8fafc":"#fff"};color:${idx===0?"#cbd5e1":"var(--text-dim)"};cursor:${idx===0?"not-allowed":"pointer"};font-size:11px;line-height:1;padding:0">&#9650;</button>
+            <button class="st-sch-dn" data-idx="${idx}" ${idx===schLen-1?"disabled":""} style="width:22px;height:22px;border-radius:5px;border:1.5px solid ${idx===schLen-1?"#e2e8f0":"var(--border)"};background:${idx===schLen-1?"#f8fafc":"#fff"};color:${idx===schLen-1?"#cbd5e1":"var(--text-dim)"};cursor:${idx===schLen-1?"not-allowed":"pointer"};font-size:11px;line-height:1;padding:0">&#9660;</button>
+          </div>
+          <span style="min-width:110px;font-weight:600">${t.emoji} ${t.label}</span>
+          <span style="font-size:12px;color:var(--text-muted);flex:1">${t.ds.ap} ${t.ds.h}:${String(t.ds.m).padStart(2,"0")} – ${t.de.ap} ${t.de.h}:${String(t.de.m).padStart(2,"0")}</span>
+          <button class="st-sch-edit" data-idx="${idx}" title="시간 수정" style="flex-shrink:0;width:26px;height:26px;border-radius:7px;border:1.5px solid var(--border);background:#fff;color:var(--navy);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">✏</button>
+          <button class="st-sch-del" data-idx="${idx}" ${schLen<=1?"disabled":""} style="flex-shrink:0;width:24px;height:24px;border-radius:50%;border:none;background:${schLen<=1?"#eee":"#ffe8e5"};color:${schLen<=1?"#aaa":"var(--red)"};cursor:${schLen<=1?"not-allowed":"pointer"};font-size:12px">&#215;</button>
+        </div>`;
+    }).join("")
     :cur.map((item,idx)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:9px;font-size:14px;border-bottom:1px solid var(--border)">
         <span>${item}</span>
         <button class="st-del" data-idx="${idx}" style="width:24px;height:24px;border-radius:50%;border:none;background:#ffe8e5;color:var(--red);cursor:pointer;font-size:12px">&#215;</button>
@@ -1220,6 +1262,313 @@ function bindLogin(){
   setTimeout(() => document.getElementById('lname-trigger')?.focus(), 80);
 }
 
+// ──── 이번 주 신청 현황 탭 ────
+let _weekSignupListener = null;
+let _weekSignupData = {};
+let _weekSessions = [];
+let _stEditIdx = null; // 봉사 요일 인라인 편집 중인 인덱스
+let _sePicker = null;
+let _seTeams = [];
+let _seSessionKey = "";
+let _seSessionInfo = {};
+
+function _cwSchedTypeToDow(t){
+  const ID_DOW={mon:1,tue:2,wed:3,thu:4,fri:5,sat:6,sun:0};
+  const prefix=(t.id||"").split("_")[0].toLowerCase();
+  if(ID_DOW[prefix]!==undefined) return ID_DOW[prefix];
+  const LABEL_DOW={"월":1,"화":2,"수":3,"목":4,"금":5,"토":6,"일":0};
+  const lbl=t.label||"";
+  for(const [k,v] of Object.entries(LABEL_DOW)){
+    if(lbl.includes(k+"요일")) return v;
+  }
+  return -1;
+}
+
+function _cwApHmTo24(ap,h,m){
+  let hr=parseInt(h)||0;
+  if(ap==="오후"&&hr!==12) hr+=12;
+  if(ap==="오전"&&hr===12) hr=0;
+  return {h:hr,m:parseInt(m||"0")};
+}
+
+function _cwWeekMonday(){
+  const now=new Date(),d=now.getDay();
+  const m=new Date(now);
+  m.setHours(0,0,0,0);
+  m.setDate(now.getDate()-(d===0?6:d-1));
+  return m;
+}
+
+function _cwBuildWeekSessions(){
+  const monday=_cwWeekMonday();
+  const wkStr=monday.toISOString().slice(0,10).replace(/-/g,"");
+  const DOW_KO=["일","월","화","수","목","금","토"];
+  const now=new Date();
+  const sessions=[];
+  SCHEDULE_TYPES.forEach(t=>{
+    const dow=_cwSchedTypeToDow(t); if(dow<0) return;
+    const st=_cwApHmTo24(t.ds?.ap,t.ds?.h,t.ds?.m);
+    const et=_cwApHmTo24(t.de?.ap,t.de?.h,t.de?.m);
+    const daysFromMon=dow===0?6:dow-1;
+    const dt=new Date(monday); dt.setDate(monday.getDate()+daysFromMon); dt.setHours(st.h,st.m,0,0);
+    const dtEnd=new Date(monday); dtEnd.setDate(monday.getDate()+daysFromMon); dtEnd.setHours(et.h,et.m,0,0);
+    const pad=n=>String(n).padStart(2,"0");
+    sessions.push({
+      key:wkStr+"_"+t.id,typeId:t.id,
+      label:t.label||(DOW_KO[dow]+"요일"),emoji:t.emoji||"",
+      dateLabel:`${dt.getMonth()+1}월 ${dt.getDate()}일 (${DOW_KO[dow]})`,
+      startStr:pad(st.h)+":"+pad(st.m),endStr:pad(et.h)+":"+pad(et.m),
+      dt,dtEnd,ended:now>=dtEnd,wkStr
+    });
+  });
+  sessions.sort((a,b)=>a.dt-b.dt);
+  return {sessions,wkStr};
+}
+
+function _loadWeekSignups(){
+  const {sessions,wkStr}=_cwBuildWeekSessions();
+  _weekSessions=sessions;
+  if(_weekSignupListener){_weekSignupListener();_weekSignupListener=null;}
+  if(!sessions.length){render();return;}
+  _weekSignupListener=db.collection("cartSessions").where("weekKey","==",wkStr)
+    .onSnapshot(snap=>{
+      _weekSignupData={};
+      snap.forEach(d=>{_weekSignupData[d.id]=d.data();});
+      if(S.tab==="__signup"&&S.screen==="list") render();
+    },err=>console.warn("signups load:",err.message));
+}
+
+function signupWeekHTML(){
+  if(!_weekSessions.length){
+    return `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">설정에서 전시대 봉사 요일을 추가하세요</div></div>`;
+  }
+  return _weekSessions.map(s=>{
+    const sd=_weekSignupData[s.key]||{};
+    const signups=sd.signups||[];
+    const confirmed=sd.confirmed||false;
+    const statusBadge=confirmed
+      ?`<span class="scard-badge" style="background:#DCFCE7;color:#166534">✅ 팀 확정</span>`
+      :s.ended
+        ?`<span class="scard-badge" style="background:#F1F5F9;color:#94A3B8">봉사 종료</span>`
+        :`<span class="scard-badge" style="background:#DBEAFE;color:#1D4ED8">신청 접수중</span>`;
+    const chips=signups.length
+      ?signups.map(n=>`<span style="font-size:11px;padding:3px 9px;border-radius:10px;background:#F1F5F9;color:#374151">${n}</span>`).join("")
+      :`<span style="font-size:11px;color:var(--text-muted)">신청자 없음</span>`;
+    const adminBtn=S.role==="admin"
+      ?`<button class="signup-edit-btn btn btn-navy btn-sm" data-key="${s.key}" style="font-size:11px;padding:6px 14px">${confirmed?"팀 수정":"팀 편성"}</button>`:"";
+    return `<div class="schedule-card" ${s.ended?'style="opacity:0.6"':""}>
+      <div class="scard-head"><div class="scard-date">${s.emoji} ${s.dateLabel}</div>${statusBadge}</div>
+      <div class="scard-body"><span>${fmt12h(s.startStr)} ~ ${fmt12h(s.endStr)}</span><span style="color:var(--navy);font-weight:600">✋ ${signups.length}명 신청</span></div>
+      <div style="padding:6px 14px 8px;display:flex;flex-wrap:wrap;gap:4px">${chips}</div>
+      ${S.role==="admin"?`<div style="padding:4px 14px 12px;display:flex;justify-content:flex-end">${adminBtn}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+// ──── 신청 기반 팀 편성 에디터 ────
+const _SE_COLORS=[
+  {ac:"#1a4f8a",bg:"#EFF6FF",border:"#BFDBFE"},
+  {ac:"#166534",bg:"#F0FDF4",border:"#BBF7D0"},
+  {ac:"#7C3AED",bg:"#F5F3FF",border:"#DDD6FE"},
+  {ac:"#B45309",bg:"#FFFBEB",border:"#FDE68A"},
+];
+const _SE_NAMES=["A팀","B팀","C팀","D팀"];
+
+function _openSignupEditor(sessionKey){
+  const sd=_weekSignupData[sessionKey]||{};
+  const s=_weekSessions.find(x=>x.key===sessionKey); if(!s) return;
+  _seSessionKey=sessionKey;
+  _seSessionInfo=s;
+  const saved=sd.teams||{};
+  _seTeams=[];
+  const teamKeys=Object.keys(saved);
+  if(teamKeys.length){
+    teamKeys.forEach((k,i)=>{
+      const t=saved[k];
+      const ns=parseInt(t.numSlots)||2;
+      const rows=Array.from({length:ns},(_,ri)=>Array.isArray(t.rows)?[...(t.rows[ri]||["","",""])]:["","",""]);
+      _seTeams.push({id:i,loc:t.loc||LOCATIONS[0]||"",numSlots:ns,rows,cartPerson:t.cartPerson||""});
+    });
+  } else {
+    _seTeams=[{id:0,loc:LOCATIONS[0]||"",numSlots:2,rows:Array.from({length:6},()=>["","",""]),cartPerson:""}];
+  }
+  _renderSignupEditor();
+}
+
+function _renderSignupEditor(){
+  let el=document.getElementById("_se_overlay");
+  if(!el){el=document.createElement("div");el.id="_se_overlay";document.body.appendChild(el);}
+  const s=_seSessionInfo;
+  const sd=_weekSignupData[_seSessionKey]||{};
+  const signups=sd.signups||[];
+  const allUsed=new Set();
+  _seTeams.forEach(t=>t.rows.slice(0,t.numSlots).forEach(r=>r.forEach(n=>{if(n)allUsed.add(n);})));
+  const poolHtml=signups.map(n=>`<div style="padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid ${allUsed.has(n)?"#1B3A6B":"#E2E8F0"};background:${allUsed.has(n)?"#1B3A6B":"#fff"};color:${allUsed.has(n)?"#fff":"#374151"};opacity:${allUsed.has(n)?".5":"1"}">${n}${CONDUCTORS.includes(n)?` <span style="font-size:9px;opacity:.7">인도자</span>`:""}</div>`).join("");
+  const [startH,startM]=s.startStr.split(":").map(Number);
+  function calcT(ti,ns){
+    const intv=INTERVALS[ns]||Math.round(120/ns);
+    const tot=startH*60+startM+intv*ti;
+    const h=Math.floor(tot/60)%24,m=tot%60;
+    const ap=h<12?"오전":"오후",h12=h===0?12:h>12?h-12:h;
+    return `${ap} ${h12}:${String(m).padStart(2,"0")}`;
+  }
+  const teamsHtml=_seTeams.map((t,ti)=>{
+    const c=_SE_COLORS[ti%_SE_COLORS.length];
+    const ns=t.numSlots;
+    const intv=INTERVALS[ns]||Math.round(120/ns);
+    const slotBtns=[2,3,4,5,6].map(v=>`<button onclick="_seSetSlots(${ti},${v})" style="width:36px;height:36px;border-radius:8px;font-size:11px;font-weight:700;border:2px solid ${v===ns?c.ac:"#E2E8F0"};background:${v===ns?c.bg:"#fff"};color:${v===ns?c.ac:"#94A3B8"};cursor:pointer;font-family:inherit">${v}조<br><span style="font-size:9px;font-weight:400">${INTERVALS[v]}분</span></button>`).join("");
+    const gridRows=Array.from({length:ns},(_,si)=>{
+      const time=calcT(si,ns);
+      const row=t.rows[si]||["","",""];
+      const cells=[0,1,2].map(ci=>{
+        const name=row[ci];
+        return name
+          ?`<div style="flex:1;padding:5px 4px;border-right:${ci<2?"1px solid rgba(0,0,0,.07)":"none"}"><div style="width:100%;display:flex;align-items:center;gap:3px;background:${c.bg};border-radius:6px;padding:5px 7px;border:1px solid ${c.border};cursor:pointer" onclick="_seClearCell(${ti},${si},${ci})"><span style="font-size:12px;font-weight:600;color:${c.ac};flex:1">${name}</span><span style="font-size:11px;color:${c.ac};opacity:.5">×</span></div></div>`
+          :`<div style="flex:1;padding:5px 4px;border-right:${ci<2?"1px solid rgba(0,0,0,.07)":"none"}"><button style="width:100%;padding:5px 3px;border-radius:6px;border:1.5px ${ci===2?"dashed":"solid"} ${c.border};${ci===2?"opacity:.5;":""}background:transparent;color:${c.ac};font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;-webkit-tap-highlight-color:transparent" ontouchend="event.preventDefault();event.stopPropagation();_seOpenPicker(${ti},${si},${ci})" onclick="_seOpenPicker(${ti},${si},${ci})">+ 선택</button></div>`;
+      }).join("");
+      return `<div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr;border-top:1px solid rgba(0,0,0,.06)">
+        <div style="padding:6px 4px;border-right:1px solid rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;background:${c.bg}88"><div style="font-size:12px;font-weight:700;color:${c.ac};font-variant-numeric:tabular-nums">${time}</div><div style="font-size:9px;color:#94A3B8">${intv}분</div></div>
+        ${cells}</div>`;
+    }).join("");
+    const locOpts=LOCATIONS.map(l=>`<option${l===t.loc?" selected":""}>${l}</option>`).join("");
+    const cartOpts=`<option value="">— 선택 —</option>`+signups.map(m=>`<option${m===t.cartPerson?" selected":""}>${m}</option>`).join("");
+    return `<div style="margin-bottom:12px;border-radius:12px;overflow:hidden;border:2px solid ${c.ac}55">
+      <div style="padding:10px 14px;background:${c.ac};display:flex;align-items:center;gap:8px">
+        <span style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:#fff">${_SE_NAMES[ti]}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.18);padding:2px 9px;border-radius:10px">${ns}조 · ${intv}분 간격</span>
+        <button onclick="_seDelTeam(${ti})" style="margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:13px;width:26px;height:26px;border-radius:50%;cursor:pointer">×</button>
+      </div>
+      <div style="background:#fff;padding:11px 12px">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:140px"><label style="font-size:10px;color:#64748B;font-weight:600;display:block;margin-bottom:4px">📍 장소</label>
+            <select onchange="_seSetLoc(${ti},this.value)" style="width:100%;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#1E293B;outline:none">${locOpts}</select></div>
+          <div><label style="font-size:10px;color:#64748B;font-weight:600;display:block;margin-bottom:4px">몇 개 조?</label>
+            <div style="display:flex;gap:4px">${slotBtns}</div></div>
+        </div>
+        <div style="margin-bottom:10px"><label style="font-size:10px;color:#64748B;font-weight:600;display:block;margin-bottom:4px">🛒 카트 준비</label>
+          <select onchange="_seSetCart(${ti},this.value)" style="width:100%;background:#FFF7ED;border:1.5px solid ${c.border};border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#1E293B;outline:none">${cartOpts}</select></div>
+        <div style="border:1.5px solid ${c.ac}44;border-radius:9px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr;background:${c.bg};color:${c.ac};font-size:10px;font-weight:700;text-align:center">
+            <div style="padding:6px 4px;border-right:1px solid rgba(0,0,0,.07)">봉사 시간</div><div style="padding:6px 4px;border-right:1px solid rgba(0,0,0,.07)">① 봉사자</div><div style="padding:6px 4px;border-right:1px solid rgba(0,0,0,.07)">② 봉사자</div><div style="padding:6px 4px">③ 추가</div>
+          </div>${gridRows}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  let allFilled=_seTeams.length>0;
+  _seTeams.forEach(t=>{for(let i=0;i<t.numSlots;i++){if(!t.rows[i][0]||!t.rows[i][1])allFilled=false;}});
+  el.innerHTML=`<div style="position:fixed;inset:0;background:rgba(10,30,60,.55);z-index:500;display:flex;flex-direction:column;overflow:hidden" ontouchstart=""><!-- iOS active state fix -->
+    <div style="background:#1B3A6B;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <button onclick="_closeSignupEditor()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 11px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">← 목록</button>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">${s.emoji} ${s.dateLabel}</div><div style="font-size:10px;opacity:.75">${fmt12h(s.startStr)} ~ ${fmt12h(s.endStr)} · 팀 편성</div></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:12px 14px;background:#F8FAFC">
+      <div style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;padding:10px 12px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">신청자 — 셀 탭해서 배치</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${poolHtml||'<span style="font-size:11px;color:#94A3B8">신청자 없음</span>'}</div>
+      </div>
+      ${teamsHtml}
+      <button onclick="_seAddTeam()" style="width:100%;padding:9px;border:2px dashed #BFDBFE;border-radius:10px;background:#F8FBFF;color:#2563EB;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px">+ 팀 추가</button>
+    </div>
+    <div style="padding:10px 14px 14px;border-top:1px solid #F1F5F9;background:#fff;flex-shrink:0">
+      <button onclick="_seConfirm()" ${allFilled?"":"disabled"} style="width:100%;padding:13px;background:${allFilled?"#16A34A":"#CBD5E1"};color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:${allFilled?"pointer":"not-allowed"};font-family:inherit">✅ 팀 확정 · 저장</button>
+    </div>
+  </div>
+  <div id="_se_picker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;flex-direction:column;align-items:flex-end;justify-content:center">
+    <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:16px 16px 28px" onclick="event.stopPropagation()">
+      <div style="width:40px;height:4px;background:#E2E8F0;border-radius:2px;margin:0 auto 14px"></div>
+      <div style="font-size:13px;font-weight:700;color:#1B3A6B;margin-bottom:12px;text-align:center">봉사자 선택</div>
+      <div id="_se_picker_names" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
+      <button ontouchend="event.preventDefault();_seClosePicker()" onclick="_seClosePicker()" style="width:100%;padding:10px;margin-top:14px;border:none;background:#F1F5F9;border-radius:10px;font-size:13px;color:#64748B;cursor:pointer;font-family:inherit;font-weight:600">취소</button>
+    </div>
+  </div>`;
+  _seBlurAll();
+}
+
+function _closeSignupEditor(){
+  const el=document.getElementById("_se_overlay"); if(el) el.remove();
+}
+function _seBlurAll(){
+  // 모바일 키보드 방지: innerHTML 재빌드 후 포커스 강제 해제
+  setTimeout(()=>{ if(document.activeElement?.blur) document.activeElement.blur(); },30);
+}
+
+function _seAddTeam(){
+  _seTeams.push({id:_seTeams.length,loc:LOCATIONS[0]||"",numSlots:2,rows:Array.from({length:6},()=>["","",""]),cartPerson:""});
+  _renderSignupEditor();
+}
+
+function _seDelTeam(idx){
+  _seTeams.splice(idx,1);
+  _seTeams.forEach((t,i)=>t.id=i);
+  _renderSignupEditor();
+}
+
+function _seSetSlots(ti,ns){_seTeams[ti].numSlots=ns;_renderSignupEditor();}
+function _seSetLoc(ti,v){_seTeams[ti].loc=v;}
+function _seSetCart(ti,v){_seTeams[ti].cartPerson=v;}
+
+function _seClearCell(ti,si,ci){
+  if(!_seTeams[ti]) return;
+  _seTeams[ti].rows[si][ci]="";
+  _renderSignupEditor();
+}
+
+function _seOpenPicker(ti,si,ci){
+  // 키보드/포커스 강제 해제 (모바일에서 키보드 올라오는 현상 방지)
+  if(document.activeElement && typeof document.activeElement.blur==="function"){
+    document.activeElement.blur();
+  }
+  _sePicker={ti,si,ci};
+  const allUsed=new Set();
+  _seTeams.forEach(t=>t.rows.slice(0,t.numSlots).forEach(r=>r.forEach(n=>{if(n)allUsed.add(n);})));
+  const sd=_weekSignupData[_seSessionKey]||{};
+  const signups=sd.signups||[];
+  const pickerEl=document.getElementById("_se_picker");
+  const namesEl=document.getElementById("_se_picker_names");
+  if(!pickerEl||!namesEl) return;
+  namesEl.innerHTML=signups.map(m=>{
+    const used=allUsed.has(m);
+    return `<button ontouchend="event.preventDefault();${used?"":"_sePickMember('"+m+"')"}" onclick="${used?"":"_sePickMember('"+m+"')"}" ${used?"disabled":""} style="padding:11px 20px;border-radius:24px;font-size:14px;font-weight:600;border:2px solid ${used?"#E2E8F0":"#BFDBFE"};background:${used?"#F8FAFC":"#EFF6FF"};color:${used?"#CBD5E1":"#1D4ED8"};cursor:${used?"not-allowed":"pointer"};font-family:inherit;opacity:${used?".4":"1"};-webkit-tap-highlight-color:transparent">${m}${CONDUCTORS.includes(m)?" 👑":""}</button>`;
+  }).join("");
+  pickerEl.style.display="flex";
+}
+
+function _seClosePicker(){
+  const el=document.getElementById("_se_picker"); if(el) el.style.display="none";
+  _sePicker=null;
+}
+
+function _sePickMember(name){
+  if(!_sePicker) return;
+  const {ti,si,ci}=_sePicker;
+  if(_seTeams[ti]) _seTeams[ti].rows[si][ci]=name;
+  _seClosePicker();
+  _renderSignupEditor();
+}
+
+async function _seConfirm(){
+  const wkStr=_seSessionKey.substring(0,8);
+  const typeId=_seSessionKey.substring(9);
+  const teamsData={};
+  _seTeams.forEach((t,i)=>{
+    const k=["A","B","C","D"][i]||String(i);
+    teamsData[k]={loc:t.loc,numSlots:t.numSlots,cartPerson:t.cartPerson,rows:t.rows.slice(0,t.numSlots)};
+  });
+  try{
+    const ref=db.collection("cartSessions").doc(_seSessionKey);
+    const snap=await ref.get();
+    if(snap.exists()){
+      await ref.update({teams:teamsData,confirmed:true});
+    } else {
+      await ref.set({weekKey:wkStr,typeId,signups:[],confirmed:true,teams:teamsData,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    toast("팀이 확정되었습니다");
+    _closeSignupEditor();
+  }catch(e){toast("저장 실패: "+e.message);}
+}
+
 // ── BIND: MAIN ──
 function bind(){
   // 헤더
@@ -1229,7 +1578,14 @@ function bind(){
   document.getElementById("hsettings")?.addEventListener("click",()=>{S.settingsModal=true;render();});
   // 탭
   document.querySelectorAll(".tab").forEach(t=>
-    t.addEventListener("click",()=>{S.tab=t.dataset.tab;render();}));
+    t.addEventListener("click",()=>{
+      S.tab=t.dataset.tab;
+      if(S.tab==="__signup") _loadWeekSignups();
+      render();
+    }));
+  // 이번 주 신청 현황 — 팀 편성 버튼
+  document.querySelectorAll(".signup-edit-btn").forEach(b=>
+    b.addEventListener("click",e=>{e.stopPropagation();_openSignupEditor(b.dataset.key);}));
   // 목록
   document.querySelectorAll(".schedule-card").forEach(c=>
     c.addEventListener("click",e=>{
@@ -1338,6 +1694,9 @@ function bind(){
   document.querySelectorAll(".st-sch-del").forEach(b=>b.addEventListener("click",()=>deleteScheduleType(parseInt(b.dataset.idx))));
   document.querySelectorAll(".st-sch-up").forEach(b=>b.addEventListener("click",()=>moveScheduleType(parseInt(b.dataset.idx),-1)));
   document.querySelectorAll(".st-sch-dn").forEach(b=>b.addEventListener("click",()=>moveScheduleType(parseInt(b.dataset.idx),1)));
+  document.querySelectorAll(".st-sch-edit").forEach(b=>b.addEventListener("click",()=>{_stEditIdx=parseInt(b.dataset.idx);render();}));
+  document.getElementById("ste-save")?.addEventListener("click",()=>saveScheduleTypeEdit(parseInt(document.getElementById("ste-save").dataset.idx)));
+  document.getElementById("ste-cancel")?.addEventListener("click",()=>{_stEditIdx=null;render();});
   // applyModal
   document.getElementById("ap-overlay")?.addEventListener("click",e=>{if(e.target.id==="ap-overlay"){S.applyModal=false;render();}});
   document.getElementById("ap-close")?.addEventListener("click",()=>{S.applyModal=false;render();});
@@ -1457,6 +1816,7 @@ async function loadData(){
     if(S.schedules.length) toast("오프라인 모드: 로컬 데이터 표시 중",3000);
   }
   S.loading=false;render();
+  _loadWeekSignups();
 }
 
 // ── 전시대 공지 로드 ──
@@ -1664,6 +2024,18 @@ async function deleteScheduleType(idx){
   SCHEDULE_TYPES.splice(idx,1);
   if(S.tab===deletedId) S.tab=SCHEDULE_TYPES[0]?.id||"";
   await saveScheduleTypes("삭제되었습니다");
+}
+async function saveScheduleTypeEdit(idx){
+  const t=SCHEDULE_TYPES[idx]; if(!t) return;
+  const sap=document.getElementById("ste-sap")?.value||t.ds.ap;
+  const sh=parseInt(document.getElementById("ste-sh")?.value)||t.ds.h;
+  const sm=document.getElementById("ste-sm")?.value||String(t.ds.m);
+  const eap=document.getElementById("ste-eap")?.value||t.de.ap;
+  const eh=parseInt(document.getElementById("ste-eh")?.value)||t.de.h;
+  const em=document.getElementById("ste-em")?.value||String(t.de.m);
+  SCHEDULE_TYPES[idx]={...t, ds:{ap:sap,h:sh,m:sm}, de:{ap:eap,h:eh,m:em}};
+  _stEditIdx=null;
+  await saveScheduleTypes("✅ 시간이 수정되었습니다");
 }
 async function saveScheduleTypes(msg){
   if(db){
