@@ -6400,6 +6400,8 @@ let _cartSectionOpen = false;
 let _cartMyName = '';
 let _cartMyRole = '';   // 'admin' | 'member' | ''
 let _cartSignupListener = null;
+let _cartLastSessions = [];       // 마지막 렌더 세션 목록 (바텀 시트용)
+let _cartLastSignupsData = {};    // 마지막 렌더 세션 데이터 (바텀 시트용)
 const _CART_CUTOFF_H = 3;
 const _CART_DOW_KO = ['일','월','화','수','목','금','토'];
 
@@ -6512,6 +6514,8 @@ async function _loadCartSessions() {
 }
 
 function _renderCartSessions(sessions, signupsData, listEl) {
+  _cartLastSessions    = sessions;      // 바텀 시트 참조용 캐시
+  _cartLastSignupsData = signupsData;
   const now = new Date();
   const allEnded = sessions.every(s => s.ended);
   const rows = sessions.map(s => {
@@ -6546,8 +6550,11 @@ function _renderCartSessions(sessions, signupsData, listEl) {
           const slotTime = _fmt12h((h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m);
           const partner = (rows[slotIdx] || []).filter(n => n && n !== _cartMyName)[0] || '';
           const loc = team.loc ? ` · ${team.loc}` : '';
-          mySlotHtml = `<div style="margin-top:7px;padding:7px 10px;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(5,150,105,0.07));border:1px solid rgba(16,185,129,0.30);border-radius:9px;font-size:11px;color:#065F46">
-            <b style="color:#047857">📌 내 배정:</b> 팀 ${teamKey} · ${slotTime}${loc}${partner ? ` · 동반: ${partner}` : ''}
+          mySlotHtml = `<div onclick="window._cartShowTeamSheet('${s.key}')" style="cursor:pointer;margin-top:7px;padding:7px 10px;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(5,150,105,0.07));border:1px solid rgba(16,185,129,0.30);border-radius:9px;font-size:11px;color:#065F46;-webkit-tap-highlight-color:transparent;transition:opacity .15s" onpointerdown="this.style.opacity='.75'" onpointerup="this.style.opacity='1'" onpointerleave="this.style.opacity='1'">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+              <span><b style="color:#047857">📌 내 배정:</b> 팀 ${teamKey} · ${slotTime}${loc}${partner ? ` · 동반: ${partner}` : ''}</span>
+              <span style="font-size:10px;color:#10B981;font-weight:700;flex-shrink:0">전체 보기 ›</span>
+            </div>
           </div>`;
           break;
         }
@@ -6607,9 +6614,98 @@ async function _cartDoToggle(sessionKey) {
   } catch (e) { console.warn('전시대 신청 오류:', e.message); }
 }
 
+// ── 팀 배정 바텀 시트 ───────────────────────────────────────────────
+const _TEAM_SHEET_COLORS = {
+  A:'#1B3A6B', B:'#7C3AED', C:'#B45309', D:'#047857', E:'#B91C1C', F:'#0369A1'
+};
+const _TEAM_SHEET_INTERVALS = {1:120, 2:60, 3:40, 4:30, 5:24, 6:20};
+
+function _cartShowTeamSheet(key) {
+  const s  = _cartLastSessions.find(x => x.key === key);
+  const sd = _cartLastSignupsData[key] || {};
+  if (!s || !sd.confirmed || !sd.teams) return;
+
+  const bg      = document.getElementById('cart-team-sheet-bg');
+  const sheet   = document.getElementById('cart-team-sheet');
+  const hdrEl   = document.getElementById('cart-team-sheet-header');
+  const bodyEl  = document.getElementById('cart-team-sheet-body');
+  if (!sheet) return;
+
+  // 헤더
+  hdrEl.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#0F172A">${s.emoji ? s.emoji + ' ' : ''}${s.dateLabel}</div>
+        <div style="font-size:11px;color:#64748B;margin-top:3px">${_fmt12h(s.startStr)} ~ ${_fmt12h(s.endStr)}</div>
+      </div>
+      <button onclick="window._cartCloseTeamSheet()" style="background:#F1F5F9;border:none;border-radius:8px;width:30px;height:30px;font-size:15px;cursor:pointer;color:#64748B;flex-shrink:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent">✕</button>
+    </div>`;
+
+  // 팀별 시간표
+  const [sh, sm] = s.startStr.split(':').map(Number);
+  let html = '';
+  const teamEntries = Object.entries(sd.teams);
+  teamEntries.forEach(([teamKey, team]) => {
+    const ns   = parseInt(team.numSlots) || 2;
+    const intv = _TEAM_SHEET_INTERVALS[ns] || Math.round(120 / ns);
+    const rows = team.rows || [];
+    const col  = _TEAM_SHEET_COLORS[teamKey] || '#1B3A6B';
+    html += `<div style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:26px;height:26px;border-radius:7px;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${teamKey}</div>
+        <div>
+          <span style="font-size:13px;font-weight:700;color:#0F172A">${team.loc || '장소 미정'}</span>
+          ${team.cartPerson ? `<span style="font-size:10px;color:#64748B;margin-left:6px">🛒 ${team.cartPerson}</span>` : ''}
+        </div>
+      </div>
+      <div style="border:1.5px solid ${col}22;border-radius:10px;overflow:hidden">`;
+    for (let i = 0; i < ns; i++) {
+      const tot = sh * 60 + sm + intv * i;
+      const hh  = Math.floor(tot / 60) % 24, mm = tot % 60;
+      const timeStr = _fmt12h((hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm);
+      const rowArr  = rows[i] || [];
+      const isMyRow = rowArr.includes(_cartMyName);
+      html += `<div style="display:flex;align-items:center;padding:8px 10px;background:${isMyRow ? `linear-gradient(90deg,${col}14,${col}07)` : i%2===0 ? '#fff' : '#FAFBFD'};border-bottom:${i < ns-1 ? `1px solid ${col}18` : 'none'}">
+        <div style="width:62px;font-size:11px;font-weight:700;color:${isMyRow ? col : '#64748B'};flex-shrink:0">${timeStr}</div>`;
+      for (let j = 0; j < 2; j++) {
+        const name = (rowArr[j] || '').trim();
+        const isMe = name === _cartMyName;
+        html += `<div style="flex:1;font-size:12px;font-weight:${isMe ? '700' : name ? '500' : '400'};color:${isMe ? col : name ? '#0F172A' : '#CBD5E1'}">
+          ${isMe ? '★ ' : ''}${name || '—'}
+        </div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div></div>`;
+  });
+
+  bodyEl.innerHTML = html || '<div style="text-align:center;padding:20px;color:#94A3B8;font-size:12px">팀 배정 정보가 없습니다.</div>';
+
+  // 표시 + 슬라이드 업 애니메이션
+  bg.style.display    = 'block';
+  sheet.style.display = 'flex';
+  sheet.style.transform = 'translateY(100%)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    sheet.style.transform = 'translateY(0)';
+  }));
+}
+
+function _cartCloseTeamSheet() {
+  const bg    = document.getElementById('cart-team-sheet-bg');
+  const sheet = document.getElementById('cart-team-sheet');
+  if (!sheet) return;
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(() => {
+    if (bg)    bg.style.display    = 'none';
+    sheet.style.display = 'none';
+  }, 300);
+}
+
 // 전역 노출 (HTML onclick에서 호출)
-window.toggleCartSection  = _cartToggleSection;
-window._cartDoToggle      = _cartDoToggle;
+window.toggleCartSection    = _cartToggleSection;
+window._cartDoToggle        = _cartDoToggle;
+window._cartShowTeamSheet   = _cartShowTeamSheet;
+window._cartCloseTeamSheet  = _cartCloseTeamSheet;
 
 </script>
 
@@ -7208,6 +7304,27 @@ window._cartDoToggle      = _cartDoToggle;
   depth.appendChild(edge);
 })();
 </script>
+<!-- ── 팀 배정 바텀 시트 ── -->
+<div id="cart-team-sheet-bg" onclick="window._cartCloseTeamSheet()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.50);z-index:900;-webkit-tap-highlight-color:transparent"></div>
+<div id="cart-team-sheet"
+  style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:82vh;
+    background:#fff;border-radius:20px 20px 0 0;z-index:901;
+    flex-direction:column;overflow:hidden;
+    transition:transform .30s cubic-bezier(.4,0,.2,1);transform:translateY(100%);
+    box-shadow:0 -4px 32px rgba(0,0,0,.18)">
+  <!-- 드래그 핸들 -->
+  <div style="text-align:center;padding:10px 0 0;flex-shrink:0">
+    <div style="width:40px;height:4px;border-radius:2px;background:#E2E8F0;margin:0 auto"></div>
+  </div>
+  <!-- 헤더 -->
+  <div id="cart-team-sheet-header"
+    style="padding:12px 18px 10px;border-bottom:1px solid #F1F5F9;flex-shrink:0"></div>
+  <!-- 내용 (스크롤) -->
+  <div id="cart-team-sheet-body"
+    style="overflow-y:auto;padding:14px 18px 32px;-webkit-overflow-scrolling:touch"></div>
+</div>
+
 <!-- Icons by <a href="https://www.flaticon.com" title="Flaticon">Flaticon</a> -->
 </body>
 </html>

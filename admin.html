@@ -541,35 +541,18 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
         <!-- ④ 전시대 봉사 -->
         <div id="sched-cart" class="sched-subview">
-
-          <!-- 장소 관리 -->
-          <div class="section-card" style="margin-bottom:14px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-              <h3 class="section-title" style="margin:0">📍 장소 관리</h3>
-              <button class="btn btn-navy" onclick="openCartLocModal()">+ 장소 추가</button>
-            </div>
-            <p style="font-size:13px;color:#64748B;margin-bottom:14px;line-height:1.6">전시대 봉사에 사용할 장소 풀을 등록·관리합니다.</p>
-            <div id="cart-loc-list">
-              <div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">장소가 없습니다</div>
-            </div>
+          <div class="section-card" style="text-align:center;padding:36px 24px">
+            <div style="font-size:36px;margin-bottom:12px">🎯</div>
+            <div style="font-size:15px;font-weight:700;color:#1B3A6B;margin-bottom:8px">전시대 봉사 설정</div>
+            <p style="font-size:13px;color:#64748B;line-height:1.7;margin-bottom:20px">
+              장소 목록·봉사 요일·인도자 명단 등<br>전시대 봉사 설정은 <b>전시대 봉사 앱</b>에서 관리합니다.
+            </p>
+            <a href="/cart.html?tab=__signup" target="_blank"
+               style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:#1B3A6B;color:#fff;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 2px 10px rgba(27,58,107,0.25)">
+              🔗 전시대 봉사 앱 열기
+            </a>
+            <div style="margin-top:12px;font-size:11px;color:#94A3B8">앱 내 ⚙️ 설정에서 장소·봉사 요일을 관리하세요</div>
           </div>
-
-          <!-- 주간 템플릿 관리 -->
-          <div class="section-card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-              <h3 class="section-title" style="margin:0">🗓 주간 시간대 설정</h3>
-              <button class="btn btn-navy" onclick="openCartTmplModal()">+ 시간대 추가</button>
-            </div>
-            <p style="font-size:13px;color:#64748B;margin-bottom:14px;line-height:1.6">매주 반복되는 전시대 봉사 시간대를 등록합니다. 활성 템플릿은 다가오는 2주치 세션을 자동으로 생성합니다.</p>
-            <div id="cart-tmpl-list">
-              <div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">시간대가 없습니다</div>
-            </div>
-            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #E2E8F0">
-              <button class="btn" onclick="runCartSessionAutoGen()" style="font-size:12px;color:#1D4ED8;border-color:#BFDBFE;background:#EFF6FF">⚙ 2주치 세션 수동 생성</button>
-              <span style="font-size:11px;color:#94A3B8;margin-left:8px">페이지 진입 시 자동 실행됩니다</span>
-            </div>
-          </div>
-
         </div>
 
         <!-- ③ 공지 관리 -->
