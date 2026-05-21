@@ -3,933 +3,567 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>전자구역카드 시스템 설치 안내서</title>
+<title>전자구역카드 시스템 — 설치 안내서</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif;
-  font-size: 13px;
-  color: #1E293B;
-  background: #fff;
-  line-height: 1.7;
-}
-.page {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 40px 48px;
-}
+  :root {
+    --blue: #1B3A6B;
+    --blue-light: #EEF2FF;
+    --green: #166534;
+    --green-light: #F0FDF4;
+    --orange: #92400E;
+    --orange-light: #FFFBEB;
+    --gray: #64748B;
+    --border: #E2E8F0;
+    --text: #1E293B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    color: var(--text);
+    background: #F8FAFC;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .page { max-width: 800px; margin: 0 auto; padding: 32px 24px 64px; }
 
-/* ── 표지 ── */
-.cover {
-  text-align: center;
-  padding: 80px 0 60px;
-  border-bottom: 3px solid #0F4C2A;
-  margin-bottom: 48px;
-}
-.cover-badge {
-  display: inline-block;
-  background: #0F4C2A;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 5px 16px;
-  border-radius: 20px;
-  letter-spacing: 1px;
-  margin-bottom: 20px;
-}
-.cover h1 {
-  font-size: 28px;
-  font-weight: 800;
-  color: #0F4C2A;
-  line-height: 1.3;
-  margin-bottom: 12px;
-}
-.cover h2 {
-  font-size: 16px;
-  font-weight: 400;
-  color: #475569;
-  margin-bottom: 32px;
-}
-.cover-meta {
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-  font-size: 12px;
-  color: #64748B;
-}
-.cover-meta span { display: flex; align-items: center; gap: 6px; }
+  /* 헤더 */
+  .doc-header {
+    background: var(--blue);
+    color: #fff;
+    border-radius: 16px;
+    padding: 32px 36px;
+    margin-bottom: 32px;
+  }
+  .doc-header h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .doc-header p  { font-size: 13px; opacity: .80; }
+  .doc-header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,.18);
+    padding: 3px 12px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 10px;
+  }
 
-/* ── 목차 ── */
-.toc { margin-bottom: 48px; }
-.toc h3 { font-size: 15px; font-weight: 700; color: #0F4C2A; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #BBF7D0; }
-.toc ol { padding-left: 20px; }
-.toc li { margin-bottom: 6px; font-size: 13px; color: #334155; }
-.toc li strong { color: #0F4C2A; }
+  /* 섹션 제목 */
+  .section-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--gray);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 32px 0 12px;
+  }
 
-/* ── 챕터 ── */
-.chapter {
-  margin-bottom: 48px;
-  page-break-inside: avoid;
-}
-.chapter-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #0F4C2A;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 8px 8px 0 0;
-  margin-bottom: 0;
-}
-.chapter-num {
-  background: rgba(255,255,255,0.2);
-  border-radius: 5px;
-  padding: 2px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-.chapter-title { font-size: 16px; font-weight: 700; }
-.chapter-body {
-  border: 1px solid #E2E8F0;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  padding: 20px 24px;
-}
+  /* 준비물 그리드 */
+  .prereq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .prereq-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .prereq-card .icon { font-size: 22px; margin-bottom: 6px; }
+  .prereq-card .name { font-size: 13px; font-weight: 700; color: var(--blue); margin-bottom: 2px; }
+  .prereq-card .desc { font-size: 11px; color: var(--gray); }
+  .prereq-card .opt  {
+    display: inline-block;
+    background: #F1F5F9;
+    color: var(--gray);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 99px;
+    margin-top: 4px;
+  }
 
-/* ── 섹션 ── */
-.section { margin-bottom: 20px; }
-.section:last-child { margin-bottom: 0; }
-.section-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #0F4C2A;
-  padding: 0 0 6px;
-  margin-bottom: 12px;
-  border-bottom: 2px solid #D1FAE5;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.section-title::before {
-  content: '';
-  display: inline-block;
-  width: 4px;
-  height: 14px;
-  background: #10B981;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
+  /* 단계 카드 */
+  .step-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--blue-light);
+    border-bottom: 1.5px solid var(--border);
+  }
+  .step-num {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .step-title { font-size: 15px; font-weight: 800; color: var(--blue); }
+  .step-sub   { font-size: 11px; color: var(--gray); margin-top: 1px; }
+  .step-opt-badge {
+    margin-left: auto;
+    background: var(--orange-light);
+    color: var(--orange);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .step-body { padding: 18px 20px; }
+  .step-body ol { padding-left: 20px; }
+  .step-body ol li { margin-bottom: 8px; }
+  .step-body ol li:last-child { margin-bottom: 0; }
 
-p { margin-bottom: 10px; }
+  /* 코드 블록 */
+  .code-block {
+    background: #1E293B;
+    color: #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    margin: 10px 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .cm { color: #94a3b8; }
+  .ky { color: #7dd3fc; }
+  .ph { color: #fbbf24; }
 
-/* ── 스텝 ── */
-.step-list { list-style: none; padding: 0; }
-.step {
-  display: flex;
-  gap: 12px;
-  padding: 9px 12px;
-  border-radius: 7px;
-  margin-bottom: 8px;
-  background: #F8FAFC;
-  border-left: 3px solid #10B981;
-  align-items: flex-start;
-}
-.step-num {
-  min-width: 22px;
-  height: 22px;
-  background: #0F4C2A;
-  color: #fff;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-.step-body { flex: 1; font-size: 12.5px; color: #334155; line-height: 1.7; }
-.step-body strong { color: #0F4C2A; }
-.step-body code {
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
-  color: #1D4ED8;
-  border-radius: 4px;
-  padding: 1px 5px;
-  font-size: 11.5px;
-  font-family: 'Consolas', 'D2Coding', monospace;
-}
-.step-body .code-block {
-  display: block;
-  background: #F1F5F9;
-  border: 1px solid #E2E8F0;
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin-top: 8px;
-  font-family: 'Consolas', 'D2Coding', monospace;
-  font-size: 11px;
-  color: #334155;
-  line-height: 1.8;
-  white-space: pre;
-}
+  /* 인라인 코드 */
+  code {
+    background: #F1F5F9;
+    color: var(--blue);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 700;
+  }
 
-/* ── 경고/안내 ── */
-.hint {
-  display: flex;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  align-items: flex-start;
-}
-.hint.warn { background: #FFFBEB; border: 1px solid #FDE68A; }
-.hint.info { background: #EFF6FF; border: 1px solid #BFDBFE; }
-.hint.success { background: #F0FDF4; border: 1px solid #BBF7D0; }
-.hint-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-.hint-body { font-size: 12px; color: #374151; line-height: 1.7; }
-.hint-body strong { color: #1E293B; }
+  /* 안내 박스 */
+  .info-box  { background:var(--blue-light);  border-left:4px solid var(--blue);   border-radius:0 10px 10px 0; padding:10px 14px; font-size:13px; margin:10px 0; color:var(--blue); }
+  .warn-box  { background:var(--orange-light); border-left:4px solid #D97706;       border-radius:0 10px 10px 0; padding:10px 14px; font-size:13px; margin:10px 0; color:var(--orange); }
+  .ok-box    { background:var(--green-light);  border-left:4px solid var(--green);  border-radius:0 10px 10px 0; padding:10px 14px; font-size:13px; margin:10px 0; color:var(--green); }
 
-/* ── 표 ── */
-.table-wrap { overflow-x: auto; margin-bottom: 12px; }
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-th {
-  background: #F1F5F9;
-  color: #475569;
-  font-weight: 600;
-  padding: 7px 10px;
-  text-align: left;
-  border: 1px solid #E2E8F0;
-}
-td {
-  padding: 7px 10px;
-  border: 1px solid #E2E8F0;
-  color: #334155;
-  vertical-align: top;
-}
-td code {
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border-radius: 3px;
-  padding: 1px 4px;
-  font-family: 'Consolas', 'D2Coding', monospace;
-  font-size: 11px;
-}
+  /* 링크 버튼 */
+  .lbtn {
+    display: inline-block;
+    background: var(--blue);
+    color: #fff;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 4px 4px 4px 0;
+  }
 
-/* ── 인쇄 ── */
-@media print {
-  body { font-size: 12px; }
-  .page { padding: 20px 24px; max-width: 100%; }
-  .chapter { page-break-inside: avoid; }
-  .chapter-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .step { page-break-inside: avoid; }
-  .hint { page-break-inside: avoid; }
-  .no-print { display: none !important; }
-  .page-break { page-break-before: always; }
-}
+  /* 표 */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+  th { background: var(--blue-light); color: var(--blue); font-weight: 700; padding: 8px 12px; text-align: left; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
 
-/* ── 인쇄 버튼 ── */
-.print-bar {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  display: flex;
-  gap: 8px;
-  z-index: 100;
-}
-.print-btn {
-  background: #0F4C2A;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 12px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  font-family: inherit;
-}
-.print-btn:hover { background: #0a3a1e; }
+  /* 체크리스트 */
+  .checklist { list-style: none; padding: 0; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before {
+    content: '☐';
+    font-size: 16px;
+    color: var(--gray);
+    flex-shrink: 0;
+    line-height: 1.4;
+  }
+
+  /* 하단 */
+  .footer {
+    text-align: center;
+    color: var(--gray);
+    font-size: 12px;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* 인쇄 */
+  @media print {
+    body { background: #fff; }
+    .page { padding: 0; }
+    .step-card { break-inside: avoid; }
+    .no-print  { display: none !important; }
+  }
 </style>
 </head>
 <body>
-
-<div class="print-bar no-print">
-  <button class="print-btn" onclick="window.print()">🖨 PDF로 저장 / 인쇄</button>
-</div>
-
 <div class="page">
 
-  <!-- 표지 -->
-  <div class="cover">
-    <div class="cover-badge">설치 안내서 v1.1</div>
-    <h1>전자구역카드 시스템<br>설치 및 배포 안내</h1>
-    <h2>여호와의 증인 회중 구역 관리 시스템</h2>
-    <div class="cover-meta">
-      <span>📅 2026년</span>
-      <span>💰 월 비용 0원</span>
-      <span>⏱ 설치 소요 시간 약 30~60분</span>
-    </div>
+  <!-- 헤더 -->
+  <div class="doc-header">
+    <h1>📋 전자구역카드 시스템 설치 안내서</h1>
+    <p>종이 구역카드를 완전히 대체하는 웹 기반 구역관리 시스템<br>
+       Firebase + Cloudflare 기반 · 실시간 동기화 · 월 비용 0원</p>
+    <div class="badge">한국 여호와의 증인 회중 전용</div>
   </div>
 
-  <!-- 목차 -->
-  <div class="toc">
-    <h3>📋 목차</h3>
-    <ol>
-      <li><strong>개요</strong> — 사용 서비스 및 비용 안내</li>
-      <li><strong>STEP 1</strong> — Firebase 프로젝트 설정 (데이터베이스 · 보안 규칙 · 익명 인증)</li>
-      <li><strong>STEP 2</strong> — Naver Cloud Platform Maps API 설정</li>
-      <li><strong>STEP 3</strong> — 소스 코드 설정값 변경</li>
-      <li><strong>STEP 4</strong> — Cloudflare Pages 배포</li>
-      <li><strong>STEP 5</strong> — 시스템 초기 설정 (구역 엑셀 파일 형식 포함)</li>
-      <li><strong>부록</strong> — 비용·한도 안내 / 문제 해결</li>
-    </ol>
+  <!-- 인쇄 버튼 -->
+  <div class="no-print" style="text-align:right;margin-bottom:20px">
+    <button onclick="window.print()"
+      style="background:#1B3A6B;color:#fff;border:none;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">
+      🖨 PDF로 저장 / 인쇄
+    </button>
   </div>
 
-  <!-- 챕터 1: 개요 -->
-  <div class="chapter">
-    <div class="chapter-header">
-      <span class="chapter-num">개요</span>
-      <span class="chapter-title">사용 서비스 및 비용 안내</span>
+  <!-- 준비물 -->
+  <div class="section-title">준비물</div>
+  <div class="prereq-grid">
+    <div class="prereq-card">
+      <div class="icon">🔥</div>
+      <div class="name">Google 계정</div>
+      <div class="desc">Firebase 데이터베이스 생성에 필요합니다.</div>
     </div>
-    <div class="chapter-body">
-      <div class="section">
-        <div class="hint success">
-          <span class="hint-icon">💰</span>
-          <div class="hint-body">이 시스템은 <strong>모두 무료 클라우드 서비스</strong>로 운영됩니다. 회중당 월 비용 <strong>0원</strong>으로 사용 가능합니다.</div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <tr><th>서비스</th><th>용도</th><th>무료 한도</th><th>가입 주소</th></tr>
-            <tr>
-              <td><strong>Firebase</strong><br><small>(Google 제공)</small></td>
-              <td>구역·전도인·방문 기록 데이터베이스</td>
-              <td>저장 1GB · 읽기 5만/일 · 쓰기 2만/일</td>
-              <td>firebase.google.com</td>
-            </tr>
-            <tr>
-              <td><strong>Cloudflare Pages</strong></td>
-              <td>웹사이트 무료 호스팅 (HTTPS 자동)</td>
-              <td>무제한 트래픽 · 배포 500회/월</td>
-              <td>cloudflare.com</td>
-            </tr>
-            <tr>
-              <td><strong>Naver Cloud Platform</strong></td>
-              <td>구역 지도 표시 (Maps API)</td>
-              <td>300만 요청/월</td>
-              <td>ncloud.com</td>
-            </tr>
-          </table>
-        </div>
-        <div class="hint info">
-          <span class="hint-icon">📋</span>
-          <div class="hint-body">
-            <strong>설치 전 준비물</strong><br>
-            • Google 계정 1개 (Gmail)<br>
-            • Cloudflare 계정 1개 (이메일로 가입)<br>
-            • Naver Cloud 계정 1개 (휴대폰 본인인증 필요)<br>
-            • 시스템 소스 파일 폴더<br>
-            • 텍스트 편집기 (메모장, VS Code 등)
-          </div>
-        </div>
+    <div class="prereq-card">
+      <div class="icon">☁️</div>
+      <div class="name">Cloudflare 계정</div>
+      <div class="desc">웹 앱 무료 호스팅에 사용합니다.</div>
+    </div>
+    <div class="prereq-card">
+      <div class="icon">🗺️</div>
+      <div class="name">네이버 클라우드 계정</div>
+      <div class="desc">구역 지도 표시 기능에 필요합니다.</div>
+      <div class="opt">선택</div>
+    </div>
+    <div class="prereq-card">
+      <div class="icon">💬</div>
+      <div class="name">카카오 개발자 계정</div>
+      <div class="desc">카카오톡 주소 수정 요청 전송에 필요합니다.</div>
+      <div class="opt">선택</div>
+    </div>
+  </div>
+  <div class="info-box">⏱ 전체 설치 소요 시간: 약 20~30분 · 컴퓨터 필요 (스마트폰만으로는 설치 불가)</div>
+
+  <!-- STEP 1 -->
+  <div class="section-title">설치 단계</div>
+
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">최신 버전 다운로드</div>
+        <div class="step-sub">GitHub에서 소스 파일 받기</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <ol>
+        <li>아래 링크 접속 → 오른쪽 상단 초록색 <b>[&lt;&gt; Code]</b> 버튼 클릭</li>
+        <li><b>[Download ZIP]</b> 선택 → 다운로드 후 압축 해제</li>
+        <li>폴더 안에 <code>config.example.js</code> 파일이 있는지 확인합니다.</li>
+      </ol>
+      <div style="margin-top:12px">
+        <a class="lbtn no-print" href="https://github.com/allmightyrock-cpu/jwcard" target="_blank">🔗 GitHub 저장소 열기</a>
+      </div>
+      <div class="info-box" style="margin-top:10px">
+        💡 <b>업데이트 알림 받기:</b> GitHub 페이지 우측 상단 <b>[Watch] → [Releases only]</b> 선택하면
+        새 버전이 출시될 때 이메일로 알림이 옵니다.
       </div>
     </div>
   </div>
 
-  <!-- 챕터 2: Firebase -->
-  <div class="chapter page-break">
-    <div class="chapter-header">
-      <span class="chapter-num">STEP 1</span>
-      <span class="chapter-title">Firebase 프로젝트 설정 (데이터베이스)</span>
-    </div>
-    <div class="chapter-body">
-      <div class="section">
-        <div class="section-title">Firebase 프로젝트 생성</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">1</span>
-            <div class="step-body"><strong>firebase.google.com</strong> 접속 → Google 계정으로 로그인 → 우측 상단 <strong>[콘솔로 이동]</strong> 클릭</div>
-          </li>
-          <li class="step">
-            <span class="step-num">2</span>
-            <div class="step-body"><strong>[프로젝트 추가]</strong> 클릭 → 프로젝트 이름 입력 (예: <code>jwcard-회중이름</code>) → <strong>[계속]</strong></div>
-          </li>
-          <li class="step">
-            <span class="step-num">3</span>
-            <div class="step-body">Google 애널리틱스 화면에서 <strong>"이 프로젝트에서 Google 애널리틱스 사용 설정"을 해제</strong> → <strong>[프로젝트 만들기]</strong></div>
-          </li>
-        </ul>
+  <!-- STEP 2 -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Firebase 프로젝트 만들기</div>
+        <div class="step-sub">데이터베이스(Firestore) 생성 및 키 복사</div>
       </div>
-
-      <div class="section">
-        <div class="section-title">Firestore 데이터베이스 생성</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">4</span>
-            <div class="step-body">왼쪽 메뉴 <strong>[Firestore Database]</strong> 클릭 → <strong>[데이터베이스 만들기]</strong></div>
-          </li>
-          <li class="step">
-            <span class="step-num">5</span>
-            <div class="step-body"><strong>"프로덕션 모드로 시작"</strong> 선택 → <strong>[다음]</strong> → 위치: <strong>asia-northeast3 (서울)</strong> 선택 → <strong>[완료]</strong></div>
-          </li>
-          <li class="step">
-            <span class="step-num">6</span>
-            <div class="step-body">
-              <strong>[규칙]</strong> 탭 클릭 → 기존 내용을 모두 지우고 아래 내용으로 교체 후 <strong>[게시]</strong>
-              <code class="code-block">rules_version = '2';
+    </div>
+    <div class="step-body">
+      <ol>
+        <li>
+          <a class="lbtn no-print" href="https://console.firebase.google.com" target="_blank">🔥 Firebase 콘솔 열기</a>
+          접속 → <b>[프로젝트 만들기]</b>
+        </li>
+        <li>프로젝트 이름 입력 (예: <code>jwcard-회중이름</code>) → Google 애널리틱스 <b>사용 안 함</b> → 만들기</li>
+        <li>좌측 메뉴 <b>Firestore Database</b> → <b>[데이터베이스 만들기]</b></li>
+        <li>위치: <b>asia-northeast3 (서울)</b> 선택 → <b>프로덕션 모드</b>로 시작</li>
+        <li>생성 완료 후 <b>[규칙]</b> 탭 → 아래 내용으로 교체 후 <b>[게시]</b>:</li>
+      </ol>
+<div class="code-block"><span class="cm">// Firestore 보안 규칙 (익명 인증된 사용자만 접근)</span>
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
   }
-}</code>
-            </div>
-          </li>
-        </ul>
-        <div class="hint warn" style="margin-top:4px">
-          <span class="hint-icon">🔒</span>
-          <div class="hint-body">
-            <strong>이 보안 규칙은 반드시 적용해야 합니다</strong><br>
-            기본값(<code>allow read, write: if false</code>)으로 두면 앱이 작동하지 않고,<br>
-            <code>allow read, write: if true</code>로 두면 인터넷상 누구나 Firebase에 직접 접근 가능합니다.<br>
-            위 규칙(<code>request.auth != null</code>)을 적용하면 앱이 자동으로 수행하는 <strong>익명 인증</strong>을 통해서만 접근이 허용됩니다.
-          </div>
-        </div>
-        <div class="hint info" style="margin-top:0">
-          <span class="hint-icon">ℹ</span>
-          <div class="hint-body">
-            <strong>Firebase Anonymous Authentication도 함께 활성화해야 합니다</strong><br>
-            Firebase 콘솔 → <strong>[Authentication]</strong> → <strong>[Sign-in method]</strong> → <strong>[Anonymous]</strong> → <strong>[사용 설정]</strong> 클릭 후 저장<br>
-            이 설정을 빠뜨리면 앱 접속 시 "Missing or insufficient permissions" 오류가 발생합니다.
-          </div>
-        </div>
-      </div>
+}</div>
+      <div class="warn-box">⚠️ <code>allow read, write: if true</code>는 사용하지 마세요. 앱이 익명 인증을 자동으로 처리하므로 위 규칙이 안전합니다.</div>
+      <br>
+      <b style="font-size:13px;color:var(--blue)">Firebase 익명 인증 활성화</b>
+      <ol style="margin-top:8px">
+        <li>좌측 메뉴 <b>Authentication → [시작하기]</b></li>
+        <li><b>Sign-in method → 익명</b> → 사용 설정 → 저장</li>
+      </ol>
+      <br>
+      <b style="font-size:13px;color:var(--blue)">앱 등록 및 키 복사</b>
+      <ol style="margin-top:8px">
+        <li>좌측 ⚙ <b>프로젝트 설정 → 일반</b> 탭 → 하단 <b>내 앱</b> → <code>&lt;/&gt;</code> (웹) 클릭</li>
+        <li>앱 닉네임 입력 → <b>앱 등록</b></li>
+        <li><b>SDK 설정 → 구성</b> 선택 → 표시되는 값들을 복사해 둡니다</li>
+      </ol>
+      <div class="ok-box">✅ 이 단계에서 <b>apiKey, projectId, appId</b> 등의 값을 얻게 됩니다.</div>
+    </div>
+  </div>
 
-      <div class="section">
-        <div class="section-title">익명 인증(Anonymous Auth) 활성화</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">7</span>
-            <div class="step-body">왼쪽 메뉴 <strong>[Authentication]</strong> 클릭 → <strong>[시작하기]</strong> (처음 방문 시) 또는 <strong>[Sign-in method]</strong> 탭 클릭</div>
-          </li>
-          <li class="step">
-            <span class="step-num">8</span>
-            <div class="step-body">제공업체 목록에서 <strong>[Anonymous]</strong> 선택 → 오른쪽 토글을 클릭해 <strong>[사용 설정]</strong> 으로 변경 → <strong>[저장]</strong></div>
-          </li>
-        </ul>
-        <div class="hint warn">
-          <span class="hint-icon">⚠</span>
-          <div class="hint-body">이 단계를 빠뜨리면 앱에서 <strong>"Missing or insufficient permissions"</strong> 오류가 발생합니다. Firestore 보안 규칙이 익명 인증 토큰을 요구하기 때문에, 인증 없이는 데이터를 읽거나 쓸 수 없습니다.</div>
-        </div>
+  <!-- STEP 3 -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">config.js 만들기</div>
+        <div class="step-sub">본인 API 키를 설정 파일에 입력</div>
       </div>
-
-      <div class="section">
-        <div class="section-title">웹 앱 등록 및 설정값 확인</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">9</span>
-            <div class="step-body">왼쪽 상단 <strong>톱니바퀴(⚙) → [프로젝트 설정]</strong> 클릭</div>
-          </li>
-          <li class="step">
-            <span class="step-num">10</span>
-            <div class="step-body"><strong>[일반]</strong> 탭 → 아래로 스크롤 → <strong>"내 앱"</strong> 섹션 → <strong>[앱 추가]</strong> → <strong>웹(&lt;/&gt;) 아이콘</strong> 클릭</div>
-          </li>
-          <li class="step">
-            <span class="step-num">11</span>
-            <div class="step-body">앱 닉네임 입력 (예: <code>jwcard-web</code>) → "Firebase 호스팅 설정"은 체크 해제 → <strong>[앱 등록]</strong></div>
-          </li>
-          <li class="step">
-            <span class="step-num">12</span>
-            <div class="step-body">
-              화면에 표시되는 <strong>firebaseConfig</strong> 코드 전체를 복사해 메모해 두세요.
-              <code class="code-block">const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.firebasestorage.app",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123"
-};</code>
-            </div>
-          </li>
-        </ul>
+    </div>
+    <div class="step-body">
+      <ol>
+        <li>다운로드한 폴더에서 <code>config.example.js</code> 파일을 복사</li>
+        <li>복사한 파일 이름을 <code>config.js</code>로 변경</li>
+        <li>메모장(또는 텍스트 편집기)으로 열어 STEP 2에서 복사한 값들을 입력:</li>
+      </ol>
+<div class="code-block"><span class="cm">// config.js — 이 파일은 절대 GitHub에 올리지 마세요!</span>
+window.APP_CONFIG = {
+  firebase: {
+    <span class="ky">apiKey</span>:            <span class="ph">"AIzaSy..."</span>,
+    <span class="ky">authDomain</span>:        <span class="ph">"프로젝트ID.firebaseapp.com"</span>,
+    <span class="ky">projectId</span>:         <span class="ph">"프로젝트ID"</span>,
+    <span class="ky">storageBucket</span>:     <span class="ph">"프로젝트ID.firebasestorage.app"</span>,
+    <span class="ky">messagingSenderId</span>: <span class="ph">"숫자..."</span>,
+    <span class="ky">appId</span>:             <span class="ph">"1:숫자:web:영문숫자..."</span>
+  },
+  <span class="ky">naverClientId</span>: <span class="ph">"네이버 Client ID"</span>,   <span class="cm">// STEP 5 참고 (선택)</span>
+  <span class="ky">kakaoJsKey</span>:    <span class="ph">"카카오 JavaScript 키"</span>  <span class="cm">// STEP 6 참고 (선택)</span>
+};</div>
+      <div class="warn-box">
+        ⚠️ <code>config.js</code>에는 본인 Firebase 키가 들어있습니다.
+        <b>절대 GitHub이나 카카오톡 등에 공유하지 마세요.</b>
+        (<code>.gitignore</code>에 자동 포함되어 실수로 GitHub에 올라가지 않습니다.)
       </div>
     </div>
   </div>
 
-  <!-- 챕터 3: Naver Maps -->
-  <div class="chapter page-break">
-    <div class="chapter-header">
-      <span class="chapter-num">STEP 2</span>
-      <span class="chapter-title">Naver Cloud Platform — Maps API 설정</span>
+  <!-- STEP 4 -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Cloudflare Pages 배포</div>
+        <div class="step-sub">웹 앱을 인터넷에 공개 (무료)</div>
+      </div>
     </div>
-    <div class="chapter-body">
-      <div class="section">
-        <div class="section-title">Naver Cloud Platform 가입 및 Application 등록</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">1</span>
-            <div class="step-body"><strong>ncloud.com</strong> 접속 → 우측 상단 <strong>[회원가입]</strong> → 개인 계정으로 가입<br>
-            <small style="color:#64748B">※ 신용카드 등록을 요구할 수 있으나, 무료 한도(300만 요청/월) 내에서는 결제가 발생하지 않습니다.</small></div>
-          </li>
-          <li class="step">
-            <span class="step-num">2</span>
-            <div class="step-body">로그인 후 상단 메뉴 <strong>[콘솔]</strong> 클릭 → 왼쪽 메뉴에서 <strong>[AI·NAVER API]</strong> → <strong>[Maps]</strong> 클릭</div>
-          </li>
-          <li class="step">
-            <span class="step-num">3</span>
-            <div class="step-body"><strong>[Application 등록]</strong> 클릭 → 이름 입력 (예: <code>jwcard-map</code>)</div>
-          </li>
-          <li class="step">
-            <span class="step-num">4</span>
-            <div class="step-body">
-              서비스 선택에서 아래 <strong>두 가지를 모두 체크</strong>하세요:<br>
-              ✅ <strong>Maps — Web Dynamic Map</strong><br>
-              ✅ <strong>Maps — Geocoding</strong>
-            </div>
-          </li>
-          <li class="step">
-            <span class="step-num">5</span>
-            <div class="step-body">
-              <strong>Web 서비스 URL</strong> 입력란에 배포할 Cloudflare 도메인 추가:<br>
-              예: <code>https://my-jwcard.pages.dev</code><br>
-              <small style="color:#64748B">※ 도메인이 아직 없으면 임시로 <code>http://localhost</code> 입력 후 STEP 4 완료 후 수정</small>
-            </div>
-          </li>
-          <li class="step">
-            <span class="step-num">6</span>
-            <div class="step-body">등록 완료 후 <strong>Client ID (ncpKeyId)</strong> 값을 복사해 메모해 두세요.<br>예: <code>abcd1234ef56</code> (발급받은 실제 값)</div>
-          </li>
-        </ul>
+    <div class="step-body">
+      <ol>
+        <li>
+          <a class="lbtn no-print" href="https://dash.cloudflare.com" target="_blank">☁️ Cloudflare 대시보드 열기</a>
+          접속 → 회원가입(또는 로그인)
+        </li>
+        <li>좌측 메뉴 <b>Workers &amp; Pages → Pages</b> → <b>[파일 직접 업로드]</b></li>
+        <li>프로젝트 이름 입력 (예: <code>jwcard</code>)</li>
+        <li>다운로드한 폴더를 <b>통째로</b> 드래그&amp;드롭 — <code>config.js</code>가 포함되어 있는지 꼭 확인!</li>
+        <li><b>[배포]</b> 클릭 → 완료 후 발급된 주소 확인 (예: <code>jwcard.pages.dev</code>)</li>
+      </ol>
+      <div class="ok-box">
+        ✅ 배포 완료! 발급된 주소를 회중 전도인들과 공유하세요.<br>
+        이후 업데이트 시에도 동일한 방법으로 새 파일을 업로드하면 됩니다.
       </div>
     </div>
   </div>
 
-  <!-- 챕터 4: 코드 수정 -->
-  <div class="chapter page-break">
-    <div class="chapter-header">
-      <span class="chapter-num">STEP 3</span>
-      <span class="chapter-title">소스 코드 설정값 변경</span>
+  <!-- STEP 5 -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">5</div>
+      <div>
+        <div class="step-title">첫 로그인 및 기본 설정</div>
+        <div class="step-sub">비밀번호 변경 · 전도인 등록 · 구역 업로드</div>
+      </div>
     </div>
-    <div class="chapter-body">
-      <div class="section">
-        <p>텍스트 편집기(메모장, VS Code 등)로 아래 파일들을 열어 <strong>찾기·바꾸기(Ctrl+H)</strong>로 수정합니다.</p>
+    <div class="step-body">
+      <ol>
+        <li>배포된 주소 뒤에 <code>/admin.html</code>을 붙여 관리자 화면 접속</li>
+        <li>초기 비밀번호 <b><code>1914</code></b> 입력 → 로그인</li>
+        <li><b>설정 탭 → 비밀번호 변경</b>에서 즉시 새 비밀번호로 변경</li>
+        <li><b>전도인관리 탭</b> → 전도인 이름 등록 및 역할 지정</li>
+        <li>엑셀 구역카드 파일이 있다면 <b>구역관리 → 엑셀 업로드</b>로 구역 데이터 가져오기</li>
+      </ol>
+      <br>
+      <b style="font-size:13px;color:var(--blue)">역할 체계</b>
+      <table style="margin-top:8px">
+        <tr><th>역할</th><th>주요 권한</th></tr>
+        <tr><td><b>관리자</b></td><td>모든 기능 사용 가능 (구역 배정·회수·설정 변경)</td></tr>
+        <tr><td><b>봉사감독자</b></td><td>구역 배정·회수, 전도인 관리</td></tr>
+        <tr><td><b>구역의종</b></td><td>구역 배정·회수</td></tr>
+        <tr><td><b>인도자</b></td><td>전시대봉사 팀 편성</td></tr>
+        <tr><td><b>일반</b></td><td>배정받은 구역 방문 기록</td></tr>
+      </table>
+    </div>
+  </div>
 
-        <div class="section-title">① Firebase 설정 변경 (2개 파일)</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">1</span>
-            <div class="step-body">
-              <strong>js/admin.js</strong> 파일 열기 → 상단 5~12번 줄의 <code>firebaseConfig</code> 블록 전체를 STEP 1에서 복사한 내용으로 교체
-            </div>
-          </li>
-          <li class="step">
-            <span class="step-num">2</span>
-            <div class="step-body">
-              <strong>publisher.html</strong> 파일 열기 → <code>Ctrl+F</code>로 <code>const firebaseConfig</code> 검색 → 해당 블록 전체(약 7줄)를 STEP 1에서 복사한 내용으로 교체
-            </div>
-          </li>
-        </ul>
-        <div class="hint warn">
-          <span class="hint-icon">⚠</span>
-          <div class="hint-body"><strong>admin.js와 publisher.html 두 곳 모두</strong> 교체해야 합니다. 하나라도 빠지면 관리자와 전도인이 서로 다른 데이터베이스를 바라보게 됩니다.</div>
-        </div>
-
-        <div class="section-title" style="margin-top:16px">② Naver Maps API 키 변경 (2개 파일)</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">3</span>
-            <div class="step-body">
-              <strong>admin.html</strong> 파일 열기 → <code>Ctrl+H</code> → 찾기: <code>ncpKeyId=YOUR_NAVER_CLIENT_ID</code> → 바꾸기: <code>ncpKeyId=본인_Client_ID</code>
-            </div>
-          </li>
-          <li class="step">
-            <span class="step-num">4</span>
-            <div class="step-body">
-              <strong>publisher.html</strong> 파일에서도 동일하게 <code>ncpKeyId=YOUR_NAVER_CLIENT_ID</code>를 본인 Client ID로 교체
-            </div>
-          </li>
-        </ul>
-
-        <div class="section-title" style="margin-top:16px">③ 회중 이름 설정</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">5</span>
-            <div class="step-body">
-              코드 수정은 불필요합니다. 배포 파일에는 이미 회중 이름이 제거되어 있습니다.<br>
-              Cloudflare 배포 후 <strong>admin.html → 로그인 → 설정 탭 → 회중 정보 → 회중명 입력 → 저장</strong>으로 설정하세요.
-            </div>
-          </li>
-        </ul>
-
-        <div class="section-title" style="margin-top:16px">변경 파일 요약</div>
-        <div class="table-wrap">
-          <table>
-            <tr><th>파일</th><th>변경 항목</th></tr>
-            <tr><td><code>js/admin.js</code></td><td>firebaseConfig (5~12번 줄), 회중명</td></tr>
-            <tr><td><code>publisher.html</code></td><td>firebaseConfig, Naver Maps ncpKeyId, 회중명</td></tr>
-            <tr><td><code>admin.html</code></td><td>Naver Maps ncpKeyId, 회중명</td></tr>
-            <tr><td><code>manifest.json</code></td><td>name, short_name (회중명)</td></tr>
-          </table>
-        </div>
+  <!-- STEP 6 선택: 네이버 지도 -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">6</div>
+      <div>
+        <div class="step-title">네이버 지도 API 설정</div>
+        <div class="step-sub">관리자 화면에서 구역 지도 표시</div>
+      </div>
+      <div class="step-opt-badge">선택</div>
+    </div>
+    <div class="step-body">
+      <div class="warn-box">설정하지 않아도 앱은 정상 동작합니다. 지도 기능만 비활성화됩니다.</div>
+      <ol style="margin-top:10px">
+        <li>
+          <a class="lbtn no-print" href="https://console.ncloud.com" target="_blank">🗺️ 네이버 클라우드 열기</a>
+          접속 → 로그인
+        </li>
+        <li><b>AI·NAVER API → Application → Application 등록</b></li>
+        <li>서비스 선택: <b>Maps → Web Dynamic Map</b> + <b>Geocoding</b> 두 개 체크</li>
+        <li>Web 서비스 URL에 배포 주소 입력 (예: <code>https://jwcard.pages.dev</code>)</li>
+        <li>등록 후 <b>Client ID</b> 복사 → <code>config.js</code>의 <code>naverClientId</code>에 붙여넣기</li>
+      </ol>
+      <div class="info-box">
+        💡 <code>admin.html → 설정 탭 → 네이버 지도 API</code>에서도 변경 가능합니다. (서버 재배포 불필요)
       </div>
     </div>
   </div>
 
-  <!-- 챕터 5: Cloudflare -->
-  <div class="chapter page-break">
-    <div class="chapter-header">
-      <span class="chapter-num">STEP 4</span>
-      <span class="chapter-title">Cloudflare Pages 배포</span>
+  <!-- STEP 7 선택: 카카오 -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">7</div>
+      <div>
+        <div class="step-title">카카오 SDK 설정</div>
+        <div class="step-sub">주소 수정 요청을 카카오톡으로 전송</div>
+      </div>
+      <div class="step-opt-badge">선택</div>
     </div>
-    <div class="chapter-body">
-      <div class="section">
-        <div class="section-title">Cloudflare 계정 생성 및 배포</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">1</span>
-            <div class="step-body"><strong>cloudflare.com</strong> 접속 → <strong>[Sign Up]</strong> → 이메일·비밀번호 입력 → 이메일 인증 완료<br><small style="color:#64748B">※ 무료 플랜 선택 (Free plan)</small></div>
-          </li>
-          <li class="step">
-            <span class="step-num">2</span>
-            <div class="step-body">대시보드 왼쪽 메뉴 <strong>[Workers &amp; Pages]</strong> 클릭 → 우측 상단 <strong>[Create]</strong></div>
-          </li>
-          <li class="step">
-            <span class="step-num">3</span>
-            <div class="step-body"><strong>[Pages]</strong> 탭 선택 → <strong>"업로드로 배포"</strong> (또는 "Upload files") 선택</div>
-          </li>
-          <li class="step">
-            <span class="step-num">4</span>
-            <div class="step-body">프로젝트 이름 입력 (예: <code>my-jwcard</code>) → <strong>소스 파일 폴더 전체를 드래그 앤 드롭</strong> (폴더 안의 모든 파일 선택)</div>
-          </li>
-          <li class="step">
-            <span class="step-num">5</span>
-            <div class="step-body"><strong>[사이트 배포]</strong> 클릭 → 완료 후 자동 생성된 URL 확인<br>
-            예: <code>https://my-jwcard.pages.dev</code></div>
-          </li>
-          <li class="step">
-            <span class="step-num">6</span>
-            <div class="step-body">이 URL을 <strong>Naver Cloud의 Web 서비스 URL</strong>에 등록 (STEP 2-⑤에서 임시로 넣었다면 이 시점에 수정)</div>
-          </li>
-        </ul>
-
-        <div class="hint info">
-          <span class="hint-icon">🔄</span>
-          <div class="hint-body">
-            <strong>이후 파일 수정 시 재배포 방법:</strong><br>
-            Cloudflare 대시보드 → Workers &amp; Pages → 해당 프로젝트 → [배포 관리] → [새 배포 만들기] → 수정된 파일 업로드
-          </div>
-        </div>
-
-        <div class="hint success">
-          <span class="hint-icon">🔗</span>
-          <div class="hint-body">
-            <strong>배포 후 URL 구조:</strong><br>
-            • 전도인 구역카드: <code>https://my-jwcard.pages.dev/publisher.html</code><br>
-            • 관리자 대시보드: <code>https://my-jwcard.pages.dev/admin</code>
-          </div>
-        </div>
+    <div class="step-body">
+      <div class="warn-box">설정하지 않아도 앱은 정상 동작합니다. 미설정 시 클립보드 복사로 대체됩니다.</div>
+      <ol style="margin-top:10px">
+        <li>
+          <a class="lbtn no-print" href="https://developers.kakao.com" target="_blank">💬 카카오 개발자 열기</a>
+          접속 → 카카오 계정 로그인
+        </li>
+        <li><b>내 애플리케이션 → 애플리케이션 추가</b> → 이름 입력 (예: <code>jwcard</code>)</li>
+        <li><b>앱 설정 → 플랫폼 → Web</b> → <b>사이트 도메인</b>에 배포 주소 입력 후 저장<br>
+            (예: <code>https://jwcard.pages.dev</code>)</li>
+        <li><b>앱 키 → JavaScript 키</b> 복사</li>
+        <li><code>config.js</code>에 아래 항목 추가:</li>
+      </ol>
+<div class="code-block">  <span class="ky">kakaoJsKey</span>: <span class="ph">"복사한_JavaScript_키"</span></div>
+      <div class="ok-box">
+        ✅ 설정 후 전도인이 구역카드에서 주소 오류를 발견하면
+        카카오톡으로 수정 요청을 바로 전송할 수 있습니다.
       </div>
     </div>
   </div>
 
-  <!-- 챕터 6: 초기 설정 -->
-  <div class="chapter page-break">
-    <div class="chapter-header">
-      <span class="chapter-num">STEP 5</span>
-      <span class="chapter-title">시스템 초기 설정</span>
+  <!-- 업데이트 방법 -->
+  <div class="section-title">업데이트 방법</div>
+  <div class="step-card">
+    <div class="step-header" style="background:#F0FDF4;border-bottom-color:#bbf7d0">
+      <div class="step-num" style="background:var(--green)">↺</div>
+      <div>
+        <div class="step-title" style="color:var(--green)">새 버전으로 업데이트</div>
+        <div class="step-sub">기존 데이터는 Firebase에 그대로 보존됩니다</div>
+      </div>
     </div>
-    <div class="chapter-body">
-      <div class="section">
-        <div class="section-title">관리자 최초 로그인 및 기본 설정</div>
-        <ul class="step-list">
-          <li class="step">
-            <span class="step-num">1</span>
-            <div class="step-body"><code>https://my-jwcard.pages.dev/admin</code> 접속 → <strong>최초 접속 시 "비밀번호 설정 모드"</strong>로 진입 → 관리자 비밀번호 설정 (4자리 이상, 기억하기 쉬운 숫자나 단어)</div>
-          </li>
-          <li class="step">
-            <span class="step-num">2</span>
-            <div class="step-body">상단 메뉴 <strong>[설정]</strong> → 인도자 PIN, 봉사감독자 PIN 설정 (관리자와 다른 번호 권장)</div>
-          </li>
-          <li class="step">
-            <span class="step-num">3</span>
-            <div class="step-body"><strong>[전도인관리]</strong> → 이름 입력 후 <strong>[전도인 추가]</strong> → 회중 전도인 전원 등록</div>
-          </li>
-          <li class="step">
-            <span class="step-num">4</span>
-            <div class="step-body">
-              <strong>[구역관리]</strong> → 우측 상단 <strong>[엑셀 업로드]</strong> 버튼 클릭<br>
-              구역번호·구역이름 입력 후 엑셀 파일 선택 → 미리보기 확인 → <strong>[저장]</strong><br>
-              <small style="color:#64748B">💡 GitHub에서 받은 파일 안의 <code>sample_excel/</code> 폴더에 샘플 파일이 있습니다 — 형식 확인 후 본인 데이터로 작성하세요.</small>
-            </div>
-          </li>
-          <li class="step">
-            <span class="step-num">5</span>
-            <div class="step-body">전도인에게 아래 URL을 카카오톡·문자 등으로 공유:<br>
-            <code>https://my-jwcard.pages.dev/publisher.html</code><br>
-            <small style="color:#64748B">※ 이 URL로 들어오면 이름 입력 후 바로 구역카드 사용 가능. 홈 화면에 앱으로 설치 권장.</small></div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- 엑셀 파일 형식 안내 -->
-      <div class="section">
-        <div class="section-title">📊 구역 엑셀 파일 형식 안내</div>
-
-        <div class="hint success">
-          <span class="hint-icon">📁</span>
-          <div class="hint-body">
-            <strong>샘플 파일 활용을 권장합니다</strong><br>
-            GitHub에서 다운로드한 파일 안의 <code>sample_excel/</code> 폴더에
-            아파트·단독주택 예시 파일 2개가 있습니다.<br>
-            이 파일을 열어서 형식을 확인한 뒤, 본인 회중 구역 데이터로 교체하여 사용하세요.
-          </div>
-        </div>
-
-        <p style="margin:12px 0 8px;font-weight:700;color:#0F4C2A;font-size:13px">① 파일명 형식</p>
-        <p style="font-size:12.5px;color:#334155;margin-bottom:8px">
-          파일명을 <code>번호_구역이름.xlsx</code> 형식으로 저장하면 업로드 시 구역번호와 이름이 자동으로 인식됩니다.
-        </p>
-        <div class="table-wrap">
-          <table>
-            <tr><th>파일명 예시</th><th>인식 결과</th></tr>
-            <tr><td><code>1_에이스3,4단지.xlsx</code></td><td>구역번호: 1 / 구역이름: 에이스3,4단지</td></tr>
-            <tr><td><code>23_행복마을빌라.xlsx</code></td><td>구역번호: 23 / 구역이름: 행복마을빌라</td></tr>
-            <tr><td><code>101번구역_중앙로.xlsx</code></td><td>구역번호: 101 / 구역이름: 중앙로</td></tr>
-          </table>
-        </div>
-
-        <p style="margin:16px 0 8px;font-weight:700;color:#0F4C2A;font-size:13px">② 열(컬럼) 구성</p>
-        <p style="font-size:12.5px;color:#334155;margin-bottom:8px">
-          첫 번째 행은 반드시 아래 헤더명으로 작성해야 자동으로 인식됩니다.
-        </p>
-        <div class="table-wrap">
-          <table>
-            <tr><th>열 이름</th><th>입력 내용</th><th>필수</th><th>예시</th></tr>
-            <tr><td><strong>도로명</strong></td><td>도로명 주소</td><td style="text-align:center">✅</td><td>행복로</td></tr>
-            <tr><td><strong>번지</strong></td><td>건물 번지 (도로명 번호)</td><td style="text-align:center">✅</td><td>12</td></tr>
-            <tr><td><strong>건물명</strong></td><td>아파트·단지 이름</td><td style="text-align:center">—</td><td>행복아파트 1동</td></tr>
-            <tr><td><strong>세부주소</strong></td><td>호수 (단독주택은 비워둠)</td><td style="text-align:center">—</td><td>101호</td></tr>
-            <tr><td><strong>방문금지(Y)</strong></td><td>방문 거절 세대: <code>Y</code> 입력</td><td style="text-align:center">—</td><td>Y</td></tr>
-            <tr><td><strong>메모</strong></td><td>전달 사항 (앱에서 메모로 표시)</td><td style="text-align:center">—</td><td>이사 예정</td></tr>
-          </table>
-        </div>
-
-        <p style="margin:16px 0 8px;font-weight:700;color:#0F4C2A;font-size:13px">③ 주소 자동 승계 기능</p>
-        <p style="font-size:12.5px;color:#334155;margin-bottom:8px">
-          같은 건물의 여러 세대를 입력할 때, <strong>도로명·번지·건물명이 동일하면 첫 줄에만 적고 나머지 줄은 비워두면</strong> 자동으로 위의 값을 이어받습니다. 데이터 입력이 훨씬 간편해집니다.
-        </p>
-        <div class="table-wrap">
-          <table>
-            <tr>
-              <th>도로명</th><th>번지</th><th>건물명</th><th>세부주소</th><th>방문금지(Y)</th><th>메모</th>
-            </tr>
-            <tr>
-              <td>행복로</td><td>12</td><td>행복아파트 1동</td><td>101호</td><td></td><td></td>
-            </tr>
-            <tr style="background:#F8FAFC">
-              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
-              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
-              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
-              <td>201호</td><td></td><td></td>
-            </tr>
-            <tr>
-              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
-              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
-              <td style="color:#94A3B8;font-style:italic">(비워둠)</td>
-              <td>301호</td><td>Y</td><td>방문 거절</td>
-            </tr>
-          </table>
-        </div>
-        <div class="hint info" style="margin-top:8px">
-          <span class="hint-icon">💡</span>
-          <div class="hint-body">
-            단독주택의 경우 <strong>건물명과 세부주소를 비워두고 번지만 입력</strong>하면 됩니다.<br>
-            엑셀 업로드 전 미리보기 화면에서 몇 세대가 인식됐는지 확인할 수 있습니다.
-          </div>
-        </div>
-      </div>
-
+    <div class="step-body">
+      <ol>
+        <li>GitHub → <b>[&lt;&gt; Code] → [Download ZIP]</b> → 압축 해제</li>
+        <li>⚠️ 기존에 만들어 둔 <code>config.js</code>를 새 폴더에 복사해 넣기 (절대 덮어쓰지 마세요)</li>
+        <li>Cloudflare 대시보드 → 해당 프로젝트 → <b>[새 배포 만들기]</b> → 폴더 전체 업로드</li>
+        <li>앱 화면에 <b>"새 버전이 있습니다"</b> 배너 → <b>[업데이트]</b> 클릭</li>
+      </ol>
     </div>
   </div>
 
-  <!-- 챕터 7: 부록 -->
-  <div class="chapter">
-    <div class="chapter-header">
-      <span class="chapter-num">부록</span>
-      <span class="chapter-title">비용·한도 안내 / 자주 묻는 질문</span>
-    </div>
-    <div class="chapter-body">
-      <div class="section">
-        <div class="section-title">Firebase 무료 한도 실사용량 예상</div>
-        <div class="table-wrap">
-          <table>
-            <tr><th>항목</th><th>무료 한도</th><th>예상 사용량 (전도인 50명, 구역 200개)</th></tr>
-            <tr><td>Firestore 읽기</td><td>5만 건/일</td><td>약 500~2,000건/일 (한도의 4% 이하)</td></tr>
-            <tr><td>Firestore 쓰기</td><td>2만 건/일</td><td>약 100~500건/일 (한도의 2.5% 이하)</td></tr>
-            <tr><td>저장 용량</td><td>1 GB</td><td>약 5~20 MB (한도의 2% 이하)</td></tr>
-          </table>
-        </div>
-        <div class="hint info">
-          <span class="hint-icon">📊</span>
-          <div class="hint-body">Firebase 콘솔 → 프로젝트 → <strong>[사용량]</strong> 탭에서 실시간으로 사용량 모니터링 가능</div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">자주 묻는 질문 (FAQ)</div>
-        <div class="hint warn">
-          <span class="hint-icon">Q</span>
-          <div class="hint-body"><strong>지도가 표시되지 않아요</strong><br>
-          → Naver Cloud Application의 "Web 서비스 URL"에 현재 접속하는 도메인이 정확히 등록되어 있는지 확인하세요. <code>https://</code> 포함, 슬래시(/) 없이 입력해야 합니다.</div>
-        </div>
-        <div class="hint warn">
-          <span class="hint-icon">Q</span>
-          <div class="hint-body"><strong>전도인이 접속하면 데이터가 안 보여요</strong><br>
-          → publisher.html의 firebaseConfig가 admin.js와 동일한지 확인하세요. 프로젝트 ID가 다르면 서로 다른 DB를 바라봅니다.</div>
-        </div>
-        <div class="hint warn">
-          <span class="hint-icon">Q</span>
-          <div class="hint-body"><strong>파일을 수정했는데 변경사항이 반영이 안 돼요</strong><br>
-          → Cloudflare Pages에서 <strong>[새 배포 만들기]</strong>로 수정된 파일을 다시 업로드했는지 확인하세요.<br>
-          배포가 완료되면 앱 로그인 화면에 <strong>"새 버전이 있습니다"</strong> 카드 또는 상단 파란 배너가 표시됩니다. <strong>[지금 업데이트]</strong>를 탭하세요.<br>
-          배너가 보이지 않으면 로그인 화면 하단의 <strong>"↺ 앱이 최신 버전이 아닌 경우 탭하세요"</strong> 버튼을 눌러 캐시를 강제 초기화하세요.</div>
-        </div>
-        <div class="hint warn">
-          <span class="hint-icon">Q</span>
-          <div class="hint-body"><strong>"Missing or insufficient permissions" 오류가 나타나요</strong><br>
-          → Firebase Authentication에서 <strong>익명 인증(Anonymous)</strong>이 활성화되어 있는지 확인하세요 (STEP 1 ⑦~⑧ 참조).<br>
-          → Firestore 보안 규칙이 <code>allow read, write: if request.auth != null;</code>으로 되어 있는지 확인하세요 (STEP 1 ⑥ 참조).</div>
-        </div>
-        <div class="hint warn">
-          <span class="hint-icon">Q</span>
-          <div class="hint-body"><strong>관리자 비밀번호를 잊었어요</strong><br>
-          → Firebase 콘솔 → Firestore Database → <strong>admin</strong> 컬렉션 → <strong>config</strong> 문서 → <code>password</code> 필드를 직접 수정할 수 있습니다.</div>
-        </div>
-        <div class="hint warn">
-          <span class="hint-icon">Q</span>
-          <div class="hint-body"><strong>PWA 앱 설치가 안 돼요</strong><br>
-          → Android Chrome 또는 iOS Safari에서만 홈 화면 추가가 가능합니다. 카카오톡·네이버 앱 내 브라우저에서는 설치가 되지 않으니 Safari 또는 Chrome으로 열어야 합니다.</div>
-        </div>
-      </div>
-
-      <!-- GitHub 업데이트 -->
-      <div class="section">
-        <div class="section-title">🔄 시스템 업데이트 받는 방법 (GitHub)</div>
-        <p style="font-size:13px;color:#475569;margin-bottom:14px;line-height:1.8">
-          이 시스템은 <strong>GitHub</strong>를 통해 배포됩니다.
-          새 기능이 추가되거나 오류가 수정되면 GitHub에 새 버전이 올라오며,
-          아래 방법으로 간단히 업데이트할 수 있습니다.
-        </p>
-
-        <div class="hint info">
-          <span class="hint-icon">①</span>
-          <div class="hint-body">
-            <strong>GitHub 저장소 접속</strong><br>
-            브라우저에서 아래 주소로 이동합니다:<br>
-            <code>https://github.com/allmightyrock-cpu/jwcard</code>
-          </div>
-        </div>
-
-        <div class="hint info">
-          <span class="hint-icon">②</span>
-          <div class="hint-body">
-            <strong>최신 파일 다운로드</strong><br>
-            초록색 <strong>[&lt;&gt; Code]</strong> 버튼 클릭
-            → <strong>[Download ZIP]</strong> 클릭<br>
-            → 다운로드된 ZIP 파일 압축 해제
-          </div>
-        </div>
-
-        <div class="hint warn">
-          <span class="hint-icon">③</span>
-          <div class="hint-body">
-            <strong>⚠ config.js 는 교체하지 마세요!</strong><br>
-            압축 해제한 폴더 안에 <code>config.example.js</code> 파일은 있지만
-            <code>config.js</code>는 없습니다.<br>
-            <strong>본인이 기존에 만들어둔 config.js 파일을 그대로 유지</strong>하고,
-            나머지 파일만 새 버전으로 교체합니다.
-          </div>
-        </div>
-
-        <div class="hint info">
-          <span class="hint-icon">④</span>
-          <div class="hint-body">
-            <strong>Cloudflare Pages 재배포</strong><br>
-            Cloudflare 대시보드 → Workers &amp; Pages → 해당 프로젝트
-            → <strong>[배포 관리]</strong> → <strong>[새 배포 만들기]</strong><br>
-            → 업데이트된 파일 전체(config.js 포함)를 드래그&amp;드롭 → 배포
-          </div>
-        </div>
-
-        <div class="hint success">
-          <span class="hint-icon">✅</span>
-          <div class="hint-body">
-            <strong>업데이트 확인 — 앱이 자동으로 알려줍니다</strong><br>
-            Cloudflare 배포 완료 후 전도인이 앱을 열면:<br>
-            • 로그인 화면에 <strong>"새 버전이 있습니다"</strong> 카드가 나타나거나<br>
-            • 화면 상단에 파란색 <strong>"🔄 새 버전 대기 중"</strong> 배너가 표시됩니다.<br>
-            <strong>[지금 업데이트]</strong> 버튼을 탭하면 <strong>"업데이트 중…"</strong> 표시 후 자동으로 새로고침됩니다.
-          </div>
-        </div>
-
-        <div class="hint info">
-          <span class="hint-icon">🔁</span>
-          <div class="hint-body">
-            <strong>알림이 뜨지 않거나 버튼을 눌러도 변경이 없을 때</strong><br>
-            로그인 화면 하단의 <strong>↺ 앱이 최신 버전이 아닌 경우 탭하세요</strong> 버튼을 누르면
-            Service Worker·캐시를 완전히 초기화하고 강제로 새 버전을 불러옵니다.<br>
-            <small style="color:#64748B">PC 브라우저는 Ctrl+Shift+R (Mac: Cmd+Shift+R) 강력 새로고침으로도 가능합니다.</small>
-          </div>
-        </div>
-
-        <div class="hint info">
-          <span class="hint-icon">💬</span>
-          <div class="hint-body">
-            <strong>업데이트 알림 받는 방법</strong><br>
-            GitHub 저장소 페이지 오른쪽 상단 <strong>[Watch]</strong> 버튼
-            → <strong>[Releases only]</strong> 선택<br>
-            → 새 버전이 출시될 때 이메일로 자동 알림을 받을 수 있습니다.<br>
-            <small style="color:#64748B">(GitHub 계정이 있어야 합니다)</small>
-          </div>
-        </div>
-
-        <div class="hint warn">
-          <span class="hint-icon">📞</span>
-          <div class="hint-body">
-            <strong>업데이트 중 문의</strong><br>
-            설치·업데이트 과정에서 문제가 생기면 아래로 연락해 주세요:<br>
-            <strong>080-966-0404</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">시스템 구조 요약</div>
-        <div class="hint info">
-          <span class="hint-icon">🏗</span>
-          <div class="hint-body" style="line-height:2">
-            <strong>전도인 접속:</strong> publisher.html → Firebase (방문 기록 저장)<br>
-            <strong>관리자 접속:</strong> admin → Firebase (구역·전도인·통계 관리)<br>
-            <strong>지도 표시:</strong> Naver Maps API (주소 → 좌표 변환)<br>
-            <strong>오프라인 지원:</strong> Service Worker 캐시 (publisher.html 오프라인 동작)
-          </div>
-        </div>
-      </div>
-
+  <!-- 최종 체크리스트 -->
+  <div class="section-title">설치 완료 체크리스트</div>
+  <div class="step-card">
+    <div class="step-body">
+      <ul class="checklist">
+        <li>Firebase Firestore 데이터베이스가 생성되었다</li>
+        <li>Firestore 보안 규칙이 <code>request.auth != null</code>로 설정되었다</li>
+        <li>Firebase Authentication에서 <b>익명</b> 로그인이 활성화되었다</li>
+        <li><code>config.js</code>에 Firebase 키가 모두 입력되었다</li>
+        <li>Cloudflare Pages 배포가 완료되어 주소가 발급되었다</li>
+        <li>초기 비밀번호 <code>1914</code>를 변경했다</li>
+        <li>관리자 계정 이름이 등록되었다</li>
+        <li>(선택) 네이버 지도 API Client ID가 설정되었다</li>
+        <li>(선택) 카카오 JavaScript 키가 설정되었다</li>
+        <li>스마트폰에서 홈 화면에 앱이 추가되었다 (PWA)</li>
+      </ul>
     </div>
   </div>
 
-  <div style="text-align:center;padding:32px 0 16px;color:#94A3B8;font-size:11px;border-top:1px solid #E2E8F0;margin-top:32px">
-    전자구역카드 시스템 — 설치 안내서 v1.1 · 2026년<br>
-    본 문서는 여호와의 증인 회중 구역 관리 시스템 배포를 위한 기술 안내서입니다.
+  <!-- FAQ -->
+  <div class="section-title">자주 묻는 질문</div>
+  <div class="step-card">
+    <div class="step-body" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <b>Q. 비용이 정말 없나요?</b><br>
+        A. Firebase Firestore와 Cloudflare Pages는 소규모 회중 사용량에서 무료 한도 내에 들어옵니다. 데이터가 매우 많아지거나 접속자가 급증할 경우 소액 과금이 발생할 수 있으나 일반적인 회중 규모에서는 0원입니다.
+      </div>
+      <div>
+        <b>Q. 구역카드 데이터가 삭제되지 않나요?</b><br>
+        A. 모든 데이터는 Firebase Firestore에 저장됩니다. 앱 업데이트나 재배포와 무관하게 데이터는 유지됩니다.
+      </div>
+      <div>
+        <b>Q. 기존 엑셀 구역카드를 그대로 사용할 수 있나요?</b><br>
+        A. <code>admin.html → 구역관리 → 엑셀 업로드</code>를 통해 기존 엑셀 파일을 업로드할 수 있습니다. 샘플 파일은 다운로드 폴더 내 <code>sample_excel/</code>에 있습니다.
+      </div>
+      <div>
+        <b>Q. 여러 장로가 동시에 접속해도 되나요?</b><br>
+        A. Firebase 실시간 동기화 덕분에 여러 명이 동시 접속해도 항상 최신 상태가 유지됩니다.
+      </div>
+      <div>
+        <b>Q. iOS(아이폰)에서도 사용 가능한가요?</b><br>
+        A. 네. iOS Safari에서 접속 후 <b>[공유 → 홈 화면에 추가]</b>를 선택하면 앱처럼 설치되어 사용할 수 있습니다.
+      </div>
+    </div>
   </div>
 
-</div><!-- /page -->
+  <!-- 하단 -->
+  <div class="footer">
+    <p style="font-size:14px;font-weight:700;color:var(--blue);margin-bottom:6px">📞 설치 중 문의</p>
+    <p>같은 여호와의 증인 형제자매를 위해 피드백을 제공합니다.</p>
+    <p style="margin-top:4px;font-size:15px;font-weight:700">080-966-0404</p>
+    <p style="margin-top:16px;font-size:11px;color:#94A3B8">
+      이 소프트웨어는 한국 여호와의 증인 회중 전용입니다.<br>
+      여호와의 증인 회중 이외의 개인·단체는 사용·배포·수정할 수 없습니다.
+    </p>
+  </div>
+
+</div>
 </body>
 </html>

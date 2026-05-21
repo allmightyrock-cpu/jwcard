@@ -993,8 +993,13 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
 <script>
 (function(){
-  if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
-    Kakao.init('YOUR_KAKAO_JAVASCRIPT_KEY'); // ← 발급받은 JavaScript 키로 교체
+  // config.js의 APP_CONFIG.kakaoJsKey 에서 읽습니다.
+  // config.example.js 를 참고하여 config.js 에 kakaoJsKey 를 설정하세요.
+  const _kakaoKey = (window.APP_CONFIG && window.APP_CONFIG.kakaoJsKey)
+    || 'YOUR_KAKAO_JAVASCRIPT_KEY';
+  if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()
+      && _kakaoKey && _kakaoKey !== 'YOUR_KAKAO_JAVASCRIPT_KEY') {
+    Kakao.init(_kakaoKey);
   }
 })();
 </script>

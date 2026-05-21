@@ -79,6 +79,24 @@ window.APP_CONFIG = {
 };
 ```
 
+### STEP 2-1 — 카카오 SDK 설정 *(선택 · 카카오톡 공유 기능)*
+
+> 전도인이 주소 오류를 발견했을 때 카카오톡으로 수정 요청을 보낼 수 있는 기능입니다.  
+> **설정하지 않아도** 앱은 정상 동작합니다 — 미설정 시 클립보드 복사로 대체됩니다.
+
+1. [developers.kakao.com](https://developers.kakao.com) 접속 → **로그인 → 내 애플리케이션 → 애플리케이션 추가**
+2. 앱 이름 입력 (예: `jwcard`) → 저장
+3. **앱 설정 → 플랫폼 → Web → 사이트 도메인** 에 배포된 주소 입력 후 저장  
+   (예: `https://your-project.pages.dev`)
+4. **앱 키 → JavaScript 키** 복사
+5. `config.js` 에 아래 항목 추가:
+
+```js
+kakaoJsKey: "복사한_JavaScript_키"
+```
+
+---
+
 ### STEP 3 — Firebase 설정
 
 1. [console.firebase.google.com](https://console.firebase.google.com) 접속
