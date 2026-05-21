@@ -3496,6 +3496,75 @@ function renderTerritoryDashboard() {
     </div>`;
 }
 
+// ── 주소 수정 요청 패널 ──────────────────────────────────────────────
+window.toggleAddrReqPanel = function() {
+  const body  = document.getElementById('addr-req-body');
+  const arrow = document.getElementById('addr-req-arrow');
+  const hdr   = document.getElementById('addr-req-hdr');
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? '' : 'none';
+  if (arrow) arrow.textContent = open ? '▲' : '▼';
+  if (hdr)   hdr.style.borderBottom = open ? '1px solid #e2e8f0' : 'none';
+  const hint = hdr && hdr.querySelector('span[style*="94a3b8"]:last-child');
+  if (hint)  hint.textContent = open ? '(클릭하여 접기)' : '(클릭하여 펼치기)';
+  if (open)  loadAddressRequests();
+};
+
+async function loadAddressRequests() {
+  const el = document.getElementById('addr-req-body');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:12px;font-size:13px">로딩 중…</div>';
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'addressRequests'),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc')
+    ));
+    const fieldLabels = { building:'건물명', jibun:'번지', detail:'세부주소', unit:'호수' };
+    if (snap.empty) {
+      el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:16px;font-size:13px">처리 대기 중인 요청이 없습니다.</div>';
+      const badge = document.getElementById('addr-req-badge');
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    const badge = document.getElementById('addr-req-badge');
+    if (badge) { badge.textContent = snap.size; badge.style.display = ''; }
+
+    const rows = snap.docs.map(d => {
+      const r = d.data();
+      const ts = r.createdAt?.toDate?.() || null;
+      const dateStr = ts ? ts.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+      const fieldsStr = (r.fields||[]).map(k => fieldLabels[k]||k).join(', ') || '—';
+      return `<div style="padding:11px 14px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;background:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:3px">
+              ${r.terrNo ? `구역 ${r.terrNo}` : ''} ${r.terrName || ''} <span style="font-size:11px;color:#94a3b8">${r.addr||''}</span>
+            </div>
+            <div style="font-size:12px;color:#475569;margin-bottom:2px">수정 항목: <b>${fieldsStr}</b></div>
+            <div style="font-size:12px;color:#1E293B;margin-bottom:3px">내용: ${r.detail||'—'}</div>
+            <div style="font-size:11px;color:#94a3b8">${r.requester||'전도인'} · ${dateStr}</div>
+          </div>
+          <button onclick="resolveAddrRequest('${d.id}')" style="flex-shrink:0;padding:6px 12px;background:#166534;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">처리 완료</button>
+        </div>
+      </div>`;
+    }).join('');
+    el.innerHTML = rows
+      + `<div style="font-size:11px;color:#94a3b8;margin-top:6px;text-align:right">총 ${snap.size}건 대기 중</div>`;
+  } catch(e) {
+    el.innerHTML = `<div style="color:#EF4444;font-size:12px;padding:8px">로드 실패: ${e.message}</div>`;
+  }
+}
+
+window.resolveAddrRequest = async function(docId) {
+  if (!docId) return;
+  try {
+    await updateDoc(doc(db, 'addressRequests', docId), { status: 'resolved', resolvedAt: serverTimestamp() });
+    await loadAddressRequests(); // 목록 새로고침
+  } catch(e) { alert('처리 실패: ' + e.message); }
+};
+
 window.filterTerritory = function(cat, el) {
   window._currentCategory = cat;
   document.querySelectorAll('#cat-tabs .terr-type-tab, #cat-tabs .cat-tab').forEach(t => t.classList.remove('active'));

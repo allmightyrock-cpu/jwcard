@@ -989,6 +989,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   window._naverMapsLoaded = true;
 }
 </script>
+<!-- Kakao SDK (주소 수정 요청 카카오톡 공유) -->
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
+<script>
+(function(){
+  if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+    Kakao.init('b4e8f17ccc0d414d0db102892634edf0');
+  }
+})();
+</script>
 </head>
 <body>
 
@@ -2434,12 +2443,11 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <span>관심자</span>
     </button>
   </div>
-  <!-- 호수 미기록 수정 요청 (호수 없는 세대에서만 표시) -->
-  <div id="sheet-fix-request" style="display:none;margin:10px 16px 0;padding:12px 14px;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:12px">
+  <!-- 주소 수정 요청 (모든 세대에 표시) -->
+  <div id="sheet-fix-request" style="display:none;margin:10px 16px 0;padding:10px 14px;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div style="font-size:12px;color:#94A3B8;line-height:1.4">
-        <span style="font-weight:600;color:#64748B">호수가 기록되지 않은 세대입니다.</span><br>
-        관리자/인도자에게 수정을 요청할 수 있어요.
+      <div id="sheet-fix-text" style="font-size:12px;color:#94A3B8;line-height:1.4">
+        주소 정보(건물명·번지·세부주소·호수) 수정을 요청할 수 있어요.
       </div>
       <button id="sheet-fix-btn" onclick="showUnitFixRequest()" style="flex-shrink:0;background:#1E293B;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">수정 요청 ✉</button>
     </div>
@@ -2630,7 +2638,7 @@ function _drawMarker(position, label, count) {
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, collection, query, where, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // Firebase 설정은 config.js 에서 로드됩니다
@@ -4280,23 +4288,41 @@ window.openCodeSheet = function(idx) {
   const _sheetLbl = _fmtUnitLabel(_cleanUnitVal(u?.unit));
   const _noUnit = !_sheetLbl;
   document.getElementById('sheet-unit-label').textContent = _sheetLbl || '호수 미기록';
-  // 호수 미기록 세대면 수정 요청 영역 표시 + 메시지 미리 빌드
+  // 주소 수정 요청 영역 — 항상 표시 (모든 세대)
   const fixReq = document.getElementById('sheet-fix-request');
-  if (fixReq) fixReq.style.display = _noUnit ? 'block' : 'none';
-  if (_noUnit && u) {
-    const _road  = (u.road     || '').trim();
-    const _jibun = (u.jibun    || '').trim();
-    const _bldg  = (u.building || '').trim();
+  if (u) {
+    const _road   = (u.road     || '').trim();
+    const _jibun  = (u.jibun    || '').trim();
+    const _bldg   = (u.building || '').trim();
+    const _detail = (u.detail   || '').trim();
+    const _unitStr = _fmtUnitLabel(_cleanUnitVal(u.unit));
     const _addrParts = [_road && _jibun ? _road + ' ' + _jibun : _road || _jibun, _bldg].filter(Boolean);
-    // 메시지 조합에 필요한 기본 정보만 저장 — 수정 내용은 모달에서 입력
     window._unitFixInfo = {
       terrNo:   (_territory && _territory.no  ) ? String(_territory.no)   : '',
       terrName: (_territory && _territory.name) ? String(_territory.name) : '',
       addr:     _addrParts.join(' · ') || (_territory && _territory.name) || '',
+      building: _bldg,
+      jibun:    _jibun,
+      unit:     _unitStr,
+      detail:   _detail,
+      noUnit:   !_unitStr,
+      unitIdx:  idx,
       requester: _pubName || '전도인'
     };
+    if (fixReq) {
+      fixReq.style.display = 'block';
+      const fixText = document.getElementById('sheet-fix-text');
+      if (fixText) {
+        if (!_unitStr) {
+          fixText.innerHTML = '<span style="font-weight:600;color:#64748B">호수가 기록되지 않은 세대입니다.</span><br>주소 정보 수정을 요청할 수 있어요.';
+        } else {
+          fixText.textContent = '주소 정보(건물명·번지·세부주소·호수) 수정을 요청할 수 있어요.';
+        }
+      }
+    }
   } else {
     window._unitFixInfo = null;
+    if (fixReq) fixReq.style.display = 'none';
   }
   // 현재 코드 표시
   const existing = (_territory.visitMap||{})[idx];
@@ -4682,9 +4708,9 @@ function _fmtUnitLabel(s) {
   return s;
 }
 
-// ── 호수 미기록 수정 요청 ────────────────────────────────────────────────────
+// ── 주소 수정 요청 모달 ────────────────────────────────────────────────────
 // openCodeSheet에서 window._unitFixInfo(기본 정보)를 저장
-// 전도인이 modal에서 수정 내용을 직접 입력 → 최종 메시지 조합 후 공유
+// 전도인이 modal에서 수정 항목 선택 + 내용 입력 → Firestore 저장 + 카카오톡 공유
 window.showUnitFixRequest = function() {
   const info = window._unitFixInfo;
   if (!info) return;
@@ -4693,56 +4719,131 @@ window.showUnitFixRequest = function() {
   const old = document.getElementById('unit-fix-modal');
   if (old) old.remove();
 
+  // 수정 가능 필드 목록
+  const fixFields = [
+    { key: 'building', label: '건물명',   cur: info.building || '없음' },
+    { key: 'jibun',    label: '번지',     cur: info.jibun    || '없음' },
+    { key: 'detail',   label: '세부주소', cur: info.detail   || '없음' },
+    { key: 'unit',     label: '호수',     cur: info.unit     || '미기록' },
+  ];
+
+  const fieldsHtml = fixFields.map(f =>
+    `<label style="display:flex;align-items:center;gap:8px;padding:8px 11px;background:#F1F5F9;border-radius:9px;cursor:pointer">
+      <input type="checkbox" class="ufix-chk" data-key="${f.key}"${f.key==='unit'&&info.noUnit?' checked':''} style="width:16px;height:16px;accent-color:#1B3A6B;cursor:pointer;flex-shrink:0">
+      <span style="font-size:13px;color:#1E293B"><b>${f.label}</b><span style="color:#94A3B8;font-size:11px;margin-left:6px">현재: ${f.cur}</span></span>
+    </label>`
+  ).join('');
+
   const el = document.createElement('div');
   el.id = 'unit-fix-modal';
   el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 0 env(safe-area-inset-bottom,0px)';
   el.innerHTML =
     '<div style="background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 28px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto">'
-    // 제목
-    + '<div style="font-size:15px;font-weight:800;color:#1E293B;margin-bottom:2px">📋 호수 수정 요청</div>'
-    + '<div style="font-size:12px;color:#94A3B8;margin-bottom:16px">수정 내용을 입력 후 공유해 주세요.</div>'
-    // ── 입력 영역
-    + '<div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">새로 알게 된 내용 <span style="color:#EF4444">*</span></div>'
-    + '<textarea id="unit-fix-input" placeholder="예) 101호 / 김씨 문패 / 공실 확인됨 / 호수 불명확" '
-    + 'style="width:100%;height:80px;border:1.5px solid #CBD5E1;border-radius:10px;padding:11px 12px;'
+    + '<div style="font-size:15px;font-weight:800;color:#1E293B;margin-bottom:2px">📋 주소 수정 요청</div>'
+    + '<div style="font-size:12px;color:#94A3B8;margin-bottom:14px">수정할 항목을 선택 후 내용을 입력해 주세요.</div>'
+    // 구역 정보
+    + ((info.terrNo || info.terrName)
+        ? `<div style="font-size:12px;color:#64748B;margin-bottom:12px;padding:8px 12px;background:#F8FAFC;border-radius:8px">🗺️ 구역 ${[info.terrNo,info.terrName].filter(Boolean).join(' ')}${info.addr ? ' · '+info.addr : ''}</div>`
+        : '')
+    // 수정 항목 체크박스
+    + '<div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px">수정할 항목 <span style="color:#EF4444">*</span></div>'
+    + `<div id="ufix-fields" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">${fieldsHtml}</div>`
+    // 수정 내용 입력
+    + '<div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">수정 내용 <span style="color:#EF4444">*</span></div>'
+    + '<textarea id="unit-fix-input" placeholder="예) 101호 / 김씨 문패 확인 / 공실 / 4층 402호" '
+    + 'style="width:100%;height:72px;border:1.5px solid #CBD5E1;border-radius:10px;padding:11px 12px;'
     + 'font-size:13px;line-height:1.6;color:#1E293B;resize:none;background:#fff;font-family:inherit;'
-    + 'box-sizing:border-box;outline:none" oninput="_unitFixRefreshPreview()"></textarea>'
-    // ── 미리보기
-    + '<div style="font-size:12px;font-weight:700;color:#475569;margin:14px 0 6px">전송 메시지 미리보기</div>'
+    + 'box-sizing:border-box;outline:none" oninput="window._unitFixRefreshPreview()"></textarea>'
+    // 미리보기
+    + '<div style="font-size:12px;font-weight:700;color:#475569;margin:12px 0 6px">전송 메시지 미리보기</div>'
     + '<textarea id="unit-fix-preview" readonly '
-    + 'style="width:100%;height:130px;border:1px solid #E2E8F0;border-radius:10px;padding:11px 12px;'
+    + 'style="width:100%;height:110px;border:1px solid #E2E8F0;border-radius:10px;padding:11px 12px;'
     + 'font-size:12px;line-height:1.7;color:#475569;resize:none;background:#F8FAFC;font-family:inherit;'
     + 'box-sizing:border-box"></textarea>'
-    // ── 버튼
+    // 버튼
     + '<div style="display:flex;gap:8px;margin-top:14px">'
-    + '<button id="unit-fix-share-btn" style="flex:1;padding:13px 0;background:#1B3A6B;color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">공유하기 ↗</button>'
+    + '<button id="unit-fix-share-btn" style="flex:1;padding:13px 0;background:#FAE100;color:#3C1E1E;border:none;border-radius:11px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">'
+    + '<svg width="17" height="17" viewBox="0 0 18 18" style="flex-shrink:0"><path d="M9 1.5C5.1 1.5 2 4.1 2 7.3c0 2.1 1.3 3.9 3.3 5l-.8 2.9 3.2-2.1c.4.1.8.1 1.3.1 3.9 0 7-2.6 7-5.8S12.9 1.5 9 1.5z" fill="#3C1E1E"/></svg>'
+    + '카카오톡으로 보내기</button>'
     + '<button onclick="document.getElementById(\'unit-fix-modal\').remove()" style="padding:13px 16px;background:#F1F5F9;color:#64748B;border:none;border-radius:11px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">닫기</button>'
     + '</div></div>';
   el.addEventListener('click', e => { if (e.target === el) el.remove(); });
   document.body.appendChild(el);
 
+  // 체크박스 변경 시 미리보기 갱신
+  el.querySelectorAll('.ufix-chk').forEach(chk => {
+    chk.addEventListener('change', () => window._unitFixRefreshPreview());
+  });
+
   // 미리보기 초기값
-  _unitFixRefreshPreview();
+  window._unitFixRefreshPreview();
 
   // 공유 버튼
   document.getElementById('unit-fix-share-btn').onclick = async function() {
-    const msg = _unitFixBuildMsg();
-    if (!msg.trim()) {
-      document.getElementById('unit-fix-input').focus();
-      document.getElementById('unit-fix-input').style.borderColor = '#EF4444';
+    const checkedFields = [...document.querySelectorAll('.ufix-chk:checked')].map(c => c.dataset.key);
+    const detail = (document.getElementById('unit-fix-input')?.value || '').trim();
+
+    // 유효성 검사
+    if (!checkedFields.length) {
+      document.querySelectorAll('#ufix-fields label').forEach(l => { l.style.background = '#FEF2F2'; });
+      setTimeout(() => { document.querySelectorAll('#ufix-fields label').forEach(l => { l.style.background = '#F1F5F9'; }); }, 1500);
       return;
     }
+    if (!detail) {
+      const inp = document.getElementById('unit-fix-input');
+      if (inp) { inp.style.borderColor = '#EF4444'; inp.focus(); }
+      return;
+    }
+
+    const msg = _unitFixBuildMsg();
+
+    // Firestore에 요청 저장
+    try {
+      await addDoc(collection(db, 'addressRequests'), {
+        terrNo:   info.terrNo   || '',
+        terrName: info.terrName || '',
+        addr:     info.addr     || '',
+        unitIdx:  info.unitIdx  ?? null,
+        fields:   checkedFields,
+        detail:   detail,
+        requester: info.requester || '전도인',
+        status:   'pending',
+        createdAt: serverTimestamp()
+      });
+    } catch(e) { console.warn('addressRequests 저장 실패:', e); }
+
+    // 카카오톡 공유
+    if (typeof Kakao !== 'undefined' && Kakao.isInitialized()) {
+      try {
+        Kakao.Share.sendDefault({
+          objectType: 'text',
+          text: msg,
+          link: {
+            mobileWebUrl: 'https://jwcard-admin.kingdomhall1305.workers.dev',
+            webUrl: 'https://jwcard-admin.kingdomhall1305.workers.dev'
+          }
+        });
+        el.remove();
+        return;
+      } catch(e) { console.warn('Kakao 공유 실패:', e); }
+    }
+    // fallback: navigator.share
     if (navigator.share) {
-      try { await navigator.share({ title: '호수 수정 요청', text: msg }); return; }
+      try { await navigator.share({ title: '주소 수정 요청', text: msg }); el.remove(); return; }
       catch(e) { if (e.name === 'AbortError') return; }
     }
+    // fallback: clipboard 복사
     try {
       await navigator.clipboard.writeText(msg);
       const btn = document.getElementById('unit-fix-share-btn');
-      if (btn) { btn.textContent = '✓ 복사됨'; setTimeout(() => { btn.textContent = '공유하기 ↗'; }, 2000); }
+      if (btn) {
+        btn.textContent = '✓ 클립보드에 복사됨';
+        setTimeout(() => {
+          btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 18 18" style="flex-shrink:0"><path d="M9 1.5C5.1 1.5 2 4.1 2 7.3c0 2.1 1.3 3.9 3.3 5l-.8 2.9 3.2-2.1c.4.1.8.1 1.3.1 3.9 0 7-2.6 7-5.8S12.9 1.5 9 1.5z" fill="#3C1E1E"/></svg>카카오톡으로 보내기';
+        }, 2500);
+      }
     } catch(e) {
-      const btn = document.getElementById('unit-fix-share-btn');
-      if (btn) btn.textContent = '직접 복사해 주세요';
+      _showToast('메시지를 직접 복사해 주세요.');
     }
   };
 };
@@ -4750,12 +4851,17 @@ window.showUnitFixRequest = function() {
 // 입력 내용으로 최종 메시지 조합
 function _unitFixBuildMsg() {
   const info = window._unitFixInfo || {};
+  const fieldLabels = { building:'건물명', jibun:'번지', detail:'세부주소', unit:'호수' };
+  const checkedFields = [...(document.querySelectorAll('.ufix-chk:checked') || [])].map(c => c.dataset.key);
   const detail = (document.getElementById('unit-fix-input') || {}).value || '';
-  const lines = ['[호수 수정 요청]'];
+  const lines = ['[주소 수정 요청]'];
   if (info.terrNo || info.terrName) {
     lines.push('구역: ' + [info.terrNo, info.terrName].filter(Boolean).join(' '));
   }
   if (info.addr) lines.push('주소: ' + info.addr);
+  if (checkedFields.length) {
+    lines.push('수정 항목: ' + checkedFields.map(k => fieldLabels[k] || k).join(', '));
+  }
   if (detail.trim()) lines.push('수정 내용: ' + detail.trim());
   lines.push('요청자: ' + (info.requester || '전도인'));
   return lines.join('\n');
