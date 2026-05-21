@@ -3387,6 +3387,113 @@ function updateTerritoryStats() {
   document.getElementById('t-stat-unassigned').textContent = t.filter(x => !x.assignedPublishers || x.assignedPublishers.length === 0).length;
   const infEl = document.getElementById('t-stat-informal');
   if (infEl) infEl.textContent = t.filter(x => _isInformalUse(x)).length;
+  // 패널이 열려 있으면 대시보드도 갱신
+  const body = document.getElementById('terr-dashboard-body');
+  if (body && body.style.display !== 'none') renderTerritoryDashboard();
+}
+
+// ── 구역현황 대시보드 ──────────────────────────────────────────────
+window.toggleTerrDashboard = function() {
+  const body  = document.getElementById('terr-dashboard-body');
+  const arrow = document.getElementById('terr-dashboard-arrow');
+  const hdr   = document.getElementById('terr-dashboard-hdr');
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display  = open ? '' : 'none';
+  if (arrow) arrow.textContent = open ? '▲' : '▼';
+  if (hdr)   hdr.style.borderBottomColor = open ? '#e2e8f0' : 'transparent';
+  const hint = hdr && hdr.querySelector('span[style*="94a3b8"]');
+  if (hint)  hint.textContent = open ? '(클릭하여 접기)' : '(클릭하여 펼치기)';
+  if (open)  renderTerritoryDashboard();
+};
+
+function renderTerritoryDashboard() {
+  const el = document.getElementById('terr-dashboard-body');
+  if (!el) return;
+  const T = window._territories || [];
+  if (!T.length) {
+    el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:16px;font-size:13px">구역 데이터가 없습니다.</div>';
+    return;
+  }
+
+  // ① 회차별 구역 수
+  const cycleCounts = {};
+  T.forEach(t => { const c = t.cycle || 1; cycleCounts[c] = (cycleCounts[c] || 0) + 1; });
+  const maxCount = Math.max(...Object.values(cycleCounts));
+  const sortedCycles = Object.entries(cycleCounts).sort((a, b) => b[0] - a[0]);
+
+  // ② 6개월 방문율: cycleHistory 완료 건수 / 전체 구역
+  const now = Date.now();
+  const MS6M = 180 * 24 * 60 * 60 * 1000;
+  let done6m = 0;
+  T.forEach(t => {
+    (t.cycleHistory || []).forEach(h => {
+      if (h.completedAt && (now - new Date(h.completedAt).getTime()) <= MS6M) done6m++;
+    });
+    // lastCompletedDate 도 체크 (cycleHistory 없는 레거시 구역)
+    if (!t.cycleHistory?.length && t.lastCompletedDate) {
+      const ms = t.lastCompletedDate.toMillis ? t.lastCompletedDate.toMillis() : new Date(t.lastCompletedDate).getTime();
+      if ((now - ms) <= MS6M) done6m++;
+    }
+  });
+  const visitRate = T.length ? Math.round(done6m / T.length * 100) : 0;
+
+  // ③ 1년 부재율: visitMap 에서 최근 1년 기록 중 absent 세대 비율
+  const MS1Y = 365 * 24 * 60 * 60 * 1000;
+  let absCnt = 0, visCnt = 0;
+  T.forEach(t => {
+    Object.values(t.visitMap || {}).forEach(v => {
+      if (!v || !v.at) return;
+      if ((now - new Date(v.at).getTime()) > MS1Y) return;
+      visCnt++;
+      if (v.code === 'absent') absCnt++;
+    });
+  });
+  const absRate = visCnt ? Math.round(absCnt / visCnt * 100) : 0;
+
+  // ④ 바 차트 HTML
+  const bars = sortedCycles.map(([cycle, count]) => {
+    const pct = Math.round(count / maxCount * 100);
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+      <div style="width:40px;text-align:right;font-size:12px;color:#64748b;font-weight:600;flex-shrink:0">${cycle}회차</div>
+      <div style="flex:1;background:#f1f5f9;border-radius:6px;height:20px;position:relative;overflow:hidden">
+        <div style="width:${pct}%;background:linear-gradient(90deg,#1B3A6B 0%,#2563eb 100%);height:100%;border-radius:6px"></div>
+      </div>
+      <div style="width:32px;font-size:12px;font-weight:700;color:#1B3A6B;text-align:right;flex-shrink:0">${count}</div>
+    </div>`;
+  }).join('');
+
+  // ⑤ 원형 통계 SVG
+  function circleStat(pct, label, num, den) {
+    const r = 28, circ = +(2 * Math.PI * r).toFixed(2);
+    const fill = Math.min(pct, 100);
+    const offset = +(circ - fill / 100 * circ).toFixed(2);
+    const col = label.includes('부재') ? '#e05a2b' : '#1B3A6B';
+    return `<div style="text-align:center;padding:4px 14px">
+      <svg width="76" height="76" viewBox="0 0 76 76">
+        <circle cx="38" cy="38" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+        <circle cx="38" cy="38" r="${r}" fill="none" stroke="${col}" stroke-width="8"
+          stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+          stroke-linecap="round" transform="rotate(-90 38 38)"/>
+        <text x="38" y="43" text-anchor="middle" font-size="12" font-weight="700" fill="${col}">${pct}%</text>
+      </svg>
+      <div style="font-size:11px;font-weight:700;color:#475569;margin-top:3px">${label}</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:1px">${num} / ${den}</div>
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.5px;margin-bottom:12px;text-transform:uppercase">회차별 구역 수</div>
+        ${bars}
+        <div style="font-size:10px;color:#94a3b8;margin-top:6px">전체 ${T.length}개 구역 기준</div>
+      </div>
+      <div style="display:flex;gap:0;align-items:center;border-left:1.5px solid #f1f5f9;padding-left:16px;flex-shrink:0">
+        ${circleStat(visitRate, '6개월 방문율', done6m, T.length)}
+        ${circleStat(absRate,  '1년 부재율',   absCnt, visCnt)}
+      </div>
+    </div>`;
 }
 
 window.filterTerritory = function(cat, el) {

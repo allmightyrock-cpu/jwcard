@@ -154,6 +154,21 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div class="stat-value" id="t-stat-informal" style="color:#1D4ED8">—</div>
           </div>
         </div>
+
+        <!-- ── 구역현황 대시보드 패널 ── -->
+        <div id="terr-dashboard" style="margin-bottom:12px;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff">
+          <div onclick="toggleTerrDashboard()" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#f8fafc;cursor:pointer;user-select:none;border-bottom:1.5px solid transparent" id="terr-dashboard-hdr">
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:#1B3A6B">
+              📊 <span>구역현황</span>
+              <span style="font-size:11px;font-weight:400;color:#94a3b8">(클릭하여 펼치기)</span>
+            </div>
+            <span id="terr-dashboard-arrow" style="font-size:11px;color:#94a3b8">▼</span>
+          </div>
+          <div id="terr-dashboard-body" style="display:none;padding:16px 18px">
+            <div style="text-align:center;color:#94a3b8;padding:12px;font-size:13px">계산 중…</div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:8px">
@@ -320,6 +335,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <button class="sched-subtab active" onclick="switchSchedSubtab('weekly',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>요일별 구역</button>
           <button class="sched-subtab" onclick="switchSchedSubtab('calendar',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>월간 캘린더</button>
           <button class="sched-subtab" onclick="switchSchedSubtab('notice',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><path d="m23 16a1 1 0 0 1 -.446-.105l-2-1a1 1 0 0 1 .894-1.79l2 1a1 1 0 0 1 -.448 1.895zm-1.553-9.1 2-1a1 1 0 1 0 -.894-1.79l-2 1a1 1 0 0 0 .894 1.79zm2.553 3.1a1 1 0 0 0 -1-1h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 1-1zm-6 9v-18a1 1 0 0 0 -2 0c0 2.949-2.583 4-5 4h-7a4 4 0 0 0 -4 4v2a4 4 0 0 0 4 4h7c2.417 0 5 1.051 5 4a1 1 0 0 0 2 0zm-9.814-2h-4.186a6 6 0 0 1 -1.382-.167l2.5 5.582a2.671 2.671 0 0 0 2.44 1.585 2.462 2.462 0 0 0 2.242-3.472z"/></svg>공지 관리</button>
+          <button class="sched-subtab" onclick="switchSchedSubtab('cart',this)">🎯 전시대 봉사</button>
         </div>
 
         <!-- ① 요일별 구역 설정 -->
@@ -521,6 +537,39 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <!-- 날짜 셀 -->
             <div class="sched-cal-cells" id="sched-cal-cells"></div>
           </div>
+        </div>
+
+        <!-- ④ 전시대 봉사 -->
+        <div id="sched-cart" class="sched-subview">
+
+          <!-- 장소 관리 -->
+          <div class="section-card" style="margin-bottom:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <h3 class="section-title" style="margin:0">📍 장소 관리</h3>
+              <button class="btn btn-navy" onclick="openCartLocModal()">+ 장소 추가</button>
+            </div>
+            <p style="font-size:13px;color:#64748B;margin-bottom:14px;line-height:1.6">전시대 봉사에 사용할 장소 풀을 등록·관리합니다.</p>
+            <div id="cart-loc-list">
+              <div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">장소가 없습니다</div>
+            </div>
+          </div>
+
+          <!-- 주간 템플릿 관리 -->
+          <div class="section-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <h3 class="section-title" style="margin:0">🗓 주간 시간대 설정</h3>
+              <button class="btn btn-navy" onclick="openCartTmplModal()">+ 시간대 추가</button>
+            </div>
+            <p style="font-size:13px;color:#64748B;margin-bottom:14px;line-height:1.6">매주 반복되는 전시대 봉사 시간대를 등록합니다. 활성 템플릿은 다가오는 2주치 세션을 자동으로 생성합니다.</p>
+            <div id="cart-tmpl-list">
+              <div style="text-align:center;padding:24px;color:#94A3B8;font-size:13px">시간대가 없습니다</div>
+            </div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #E2E8F0">
+              <button class="btn" onclick="runCartSessionAutoGen()" style="font-size:12px;color:#1D4ED8;border-color:#BFDBFE;background:#EFF6FF">⚙ 2주치 세션 수동 생성</button>
+              <span style="font-size:11px;color:#94A3B8;margin-left:8px">페이지 진입 시 자동 실행됩니다</span>
+            </div>
+          </div>
+
         </div>
 
         <!-- ③ 공지 관리 -->
@@ -3215,6 +3264,84 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <div class="modal-footer">
       <button class="btn btn-navy" onclick="s13SaveEdit()">저장</button>
       <button class="btn" onclick="closeModal('s13-edit-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 전시대 장소 추가/수정 모달 ══ -->
+<div id="cart-loc-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal('cart-loc-modal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="cart-loc-modal-title">장소 추가</span>
+      <button class="modal-close" onclick="closeModal('cart-loc-modal')">✕</button>
+    </div>
+    <div class="form-row">
+      <label>장소명</label>
+      <input type="text" id="cart-loc-name" placeholder="예: 동두천역 1번 출구" style="flex:1">
+    </div>
+    <div class="form-row">
+      <label>주소</label>
+      <input type="text" id="cart-loc-address" placeholder="예: 경기도 동두천시 ..." style="flex:1">
+    </div>
+    <div class="form-row">
+      <label>위도</label>
+      <input type="number" id="cart-loc-lat" placeholder="예: 37.894" step="any" style="flex:1">
+    </div>
+    <div class="form-row">
+      <label>경도</label>
+      <input type="number" id="cart-loc-lng" placeholder="예: 127.060" step="any" style="flex:1">
+    </div>
+    <div class="form-row" style="align-items:center">
+      <label>활성</label>
+      <input type="checkbox" id="cart-loc-active" checked style="width:16px;height:16px;accent-color:#16A34A;cursor:pointer">
+    </div>
+    <input type="hidden" id="cart-loc-edit-id">
+    <div class="modal-footer">
+      <button class="btn btn-navy" onclick="saveCartLoc()">저장</button>
+      <button class="btn" onclick="closeModal('cart-loc-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 전시대 템플릿 추가/수정 모달 ══ -->
+<div id="cart-tmpl-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal('cart-tmpl-modal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="cart-tmpl-modal-title">시간대 추가</span>
+      <button class="modal-close" onclick="closeModal('cart-tmpl-modal')">✕</button>
+    </div>
+    <div class="form-row">
+      <label>요일</label>
+      <select id="cart-tmpl-dow" style="flex:1;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#1E293B">
+        <option value="0">일요일</option>
+        <option value="1">월요일</option>
+        <option value="2">화요일</option>
+        <option value="3">수요일</option>
+        <option value="4">목요일</option>
+        <option value="5">금요일</option>
+        <option value="6" selected>토요일</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>시작</label>
+      <input type="time" id="cart-tmpl-start" value="09:00" style="flex:1">
+    </div>
+    <div class="form-row">
+      <label>종료</label>
+      <input type="time" id="cart-tmpl-end" value="11:00" style="flex:1">
+    </div>
+    <div class="form-row">
+      <label>메모</label>
+      <input type="text" id="cart-tmpl-note" placeholder="선택 입력" style="flex:1">
+    </div>
+    <div class="form-row" style="align-items:center">
+      <label>활성</label>
+      <input type="checkbox" id="cart-tmpl-active" checked style="width:16px;height:16px;accent-color:#16A34A;cursor:pointer">
+    </div>
+    <input type="hidden" id="cart-tmpl-edit-id">
+    <div class="modal-footer">
+      <button class="btn btn-navy" onclick="saveCartTmpl()">저장</button>
+      <button class="btn" onclick="closeModal('cart-tmpl-modal')">취소</button>
     </div>
   </div>
 </div>
