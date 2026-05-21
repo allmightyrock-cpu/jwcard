@@ -183,10 +183,11 @@ function enterAdmin() {
 function _applyRoleUI() {
   const perm = window._adminPermission || '관리자';
   const isFullAdmin = (perm === '관리자');
-  // 전도인관리·설정: 관리자만 접근
+  const canSeePub   = (perm === '관리자' || perm === '봉사감독자');
+  // 전도인관리: 관리자·봉사감독자 접근 / 설정: 관리자만 접근
   const navPub = document.getElementById('nav-publisher');
   const navSet = document.getElementById('nav-settings');
-  if (navPub) navPub.style.display = isFullAdmin ? '' : 'none';
+  if (navPub) navPub.style.display = canSeePub ? '' : 'none';
   if (navSet) navSet.style.display = isFullAdmin ? '' : 'none';
   // 구역지도·방문내역·메모관리: 관리자·봉사감독자만 접근 (S-13은 구역의종도 접근 가능)
   const isTerrOnly = (perm === '구역의종');
@@ -625,8 +626,8 @@ window.switchSchedSubtab = function(name, el) {
   el.classList.add('active');
   document.querySelectorAll('.sched-subview').forEach(v => v.classList.remove('active'));
   document.getElementById('sched-' + name).classList.add('active');
-  // 캘린더 탭으로 전환 시 최신 데이터로 재렌더
   if (name === 'calendar') renderSchedCalendar();
+  if (name === 'cart') initCartTab();
 };
 
 // ── 요일 관리 패널 토글 ──
