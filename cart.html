@@ -1817,6 +1817,47 @@ async function loadData(){
   }
   S.loading=false;render();
   _loadWeekSignups();
+  _autoCleanOldCartData(); // 30일 이전 완료 데이터 자동 정리 (인도자만)
+}
+
+// ── 30일 이전 완료 데이터 자동 정리 (인도자 전용) ──
+async function _autoCleanOldCartData() {
+  if (!db || S.role !== 'admin') return;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);   // "YYYY-MM-DD"
+  const cutoffWk  = cutoffStr.replace(/-/g, '');         // "YYYYMMDD"
+  try {
+    // ① cart_witnessing_schedules: 완료 처리 + 30일 이전
+    const schedSnap = await db.collection('cart_witnessing_schedules')
+      .where('completed', '==', true)
+      .where('date', '<', cutoffStr)
+      .get();
+    const b1 = db.batch();
+    schedSnap.docs.forEach(d => b1.delete(d.ref));
+    if (schedSnap.size > 0) await b1.commit();
+
+    // ② cartSessions: weekKey 기준 30일 이전 (팀 신청·확정 기록)
+    const sessSnap = await db.collection('cartSessions')
+      .where('weekKey', '<', cutoffWk)
+      .get();
+    const b2 = db.batch();
+    sessSnap.docs.forEach(d => b2.delete(d.ref));
+    if (sessSnap.size > 0) await b2.commit();
+
+    const total = schedSnap.size + sessSnap.size;
+    if (total > 0) {
+      console.log(`[자동정리] 30일 이전 전시대 데이터 ${total}건 삭제`);
+      toast(`🗑 30일 이전 완료 데이터 ${total}건 자동 정리됨`, 3000);
+      // 로컬 상태에서도 제거
+      const deletedIds = new Set(schedSnap.docs.map(d => d.id));
+      S.schedules = S.schedules.filter(s => !deletedIds.has(s.id));
+      localStorage.setItem('cw_schedules', JSON.stringify(S.schedules));
+      render();
+    }
+  } catch (e) {
+    console.warn('[자동정리] 삭제 오류:', e.message);
+  }
 }
 
 // ── 전시대 공지 로드 ──
