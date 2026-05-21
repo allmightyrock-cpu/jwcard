@@ -864,7 +864,7 @@ function formHTML(){
             <div style="font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:7px;display:flex;align-items:center;gap:4px"><svg width="12" height="14" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;flex-shrink:0"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 카트 준비</div>
             <select id="fcart${k}" style="width:100%;border-radius:8px;border:1.5px solid ${c.ac}55;padding:7px 10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;-webkit-appearance:none;background:#fff">
               <option value="">봉사자 선택</option>
-              ${CONDUCTORS.map(m=>`<option${t.cartPerson===m?" selected":""}>${m}</option>`).join("")}
+              ${MEMBERS.map(m=>`<option${t.cartPerson===m?" selected":""}>${m}</option>`).join("")}
             </select>
           </div>
         </div>
