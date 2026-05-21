@@ -627,7 +627,7 @@ window.switchSchedSubtab = function(name, el) {
   document.querySelectorAll('.sched-subview').forEach(v => v.classList.remove('active'));
   document.getElementById('sched-' + name).classList.add('active');
   if (name === 'calendar') renderSchedCalendar();
-  if (name === 'cart') initCartTab();
+  // 전시대봉사 탭은 cart.html 링크로 대체됨 — initCartTab 제거
 };
 
 // ── 요일 관리 패널 토글 ──
@@ -3516,10 +3516,10 @@ async function loadAddressRequests() {
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:12px;font-size:13px">로딩 중…</div>';
   try {
+    // orderBy 제거 → 복합 인덱스 불필요, JS에서 정렬
     const snap = await getDocs(query(
       collection(db, 'addressRequests'),
-      where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc')
+      where('status', '==', 'pending')
     ));
     const fieldLabels = { building:'건물명', jibun:'번지', detail:'세부주소', unit:'호수' };
     if (snap.empty) {
@@ -3531,7 +3531,14 @@ async function loadAddressRequests() {
     const badge = document.getElementById('addr-req-badge');
     if (badge) { badge.textContent = snap.size; badge.style.display = ''; }
 
-    const rows = snap.docs.map(d => {
+    // 최신순 정렬 (JS)
+    const sortedDocs = snap.docs.slice().sort((a, b) => {
+      const ta = a.data().createdAt?.toMillis?.() || 0;
+      const tb = b.data().createdAt?.toMillis?.() || 0;
+      return tb - ta;
+    });
+
+    const rows = sortedDocs.map(d => {
       const r = d.data();
       const ts = r.createdAt?.toDate?.() || null;
       const dateStr = ts ? ts.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
