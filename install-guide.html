@@ -461,29 +461,114 @@ window.APP_CONFIG = {
     <div class="step-header">
       <div class="step-num">7</div>
       <div>
-        <div class="step-title">카카오 SDK 설정</div>
-        <div class="step-sub">주소 수정 요청을 카카오톡으로 전송</div>
+        <div class="step-title">카카오 JavaScript 키 발급 및 설정</div>
+        <div class="step-sub">카카오톡 공유 기능 활성화 (주소 수정 요청 · 팀 배정표 전송)</div>
       </div>
       <div class="step-opt-badge">선택</div>
     </div>
     <div class="step-body">
-      <div class="warn-box">설정하지 않아도 앱은 정상 동작합니다. 미설정 시 클립보드 복사로 대체됩니다.</div>
-      <ol style="margin-top:10px">
-        <li>
-          <a class="lbtn no-print" href="https://developers.kakao.com" target="_blank">💬 카카오 개발자 열기</a>
-          접속 → 카카오 계정 로그인
-        </li>
-        <li><b>내 애플리케이션 → 애플리케이션 추가</b> → 이름 입력 (예: <code>jwcard</code>)</li>
-        <li><b>앱 설정 → 플랫폼 → Web</b> → <b>사이트 도메인</b>에 배포 주소 입력 후 저장<br>
-            (예: <code>https://jwcard.pages.dev</code>)</li>
-        <li><b>앱 키 → JavaScript 키</b> 복사</li>
-        <li><code>config.js</code>에 아래 항목 추가:</li>
-      </ol>
-<div class="code-block">  <span class="ky">kakaoJsKey</span>: <span class="ph">"복사한_JavaScript_키"</span></div>
-      <div class="ok-box">
-        ✅ 설정 후 전도인이 구역카드에서 주소 오류를 발견하면
-        카카오톡으로 수정 요청을 바로 전송할 수 있습니다.
+
+      <!-- 기능 소개 -->
+      <div class="info-box" style="margin-bottom:14px">
+        💬 <b>카카오 키를 설정하면 아래 기능들이 활성화됩니다:</b><br><br>
+        &nbsp; 🏠 <b>주소 수정 요청</b> — 전도인이 구역카드를 보다가 주소가 틀렸을 때
+        담당 봉사의 종에게 카카오톡으로 수정 요청을 바로 보낼 수 있습니다.<br><br>
+        &nbsp; 🛒 <b>전시대봉사 팀 배정표 공유</b> — 인도자가 팀 편성을 완료한 뒤
+        배정표 스크린샷을 팀원들에게 카카오톡으로 한 번에 전송할 수 있습니다.
       </div>
+      <div class="warn-box" style="margin-bottom:16px">
+        ⚡ <b>설정하지 않아도 앱은 100% 정상 동작합니다.</b><br>
+        카카오 키가 없으면 위 기능이 "클립보드 복사" 방식으로 자동 대체됩니다.
+        급하면 설치 후 나중에 추가해도 됩니다.
+      </div>
+
+      <!-- 발급 절차 -->
+      <b style="font-size:14px;color:var(--blue)">① 카카오 개발자 계정 만들기 (이미 있으면 건너뛰세요)</b>
+      <ol style="margin-top:8px;margin-bottom:16px">
+        <li>
+          <a class="lbtn no-print" href="https://developers.kakao.com" target="_blank">💬 카카오 개발자 사이트 열기</a>
+          접속 후 오른쪽 상단 <b>[로그인]</b> 클릭
+        </li>
+        <li>평소에 쓰는 카카오톡 계정으로 로그인합니다.<br>
+            <span style="color:var(--gray);font-size:12px">※ 별도의 가입 없이 카카오톡 계정을 그대로 사용합니다.</span></li>
+        <li>처음 접속하면 <b>개발자 등록 동의</b> 화면이 나올 수 있습니다. 내용 확인 후 동의하고 진행합니다.</li>
+      </ol>
+
+      <b style="font-size:14px;color:var(--blue)">② 애플리케이션 만들기</b>
+      <ol style="margin-top:8px;margin-bottom:16px">
+        <li>로그인 후 상단 메뉴 <b>[내 애플리케이션]</b> → <b>[애플리케이션 추가하기]</b> 버튼 클릭</li>
+        <li>아래와 같이 입력합니다:<br>
+          <div style="background:#F8FAFC;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;margin:8px 0;font-size:13px">
+            • <b>앱 이름</b>: 원하는 이름을 자유롭게 입력하세요 (예: <code>전자구역카드</code> 또는 <code>jwcard</code>)<br>
+            • <b>사업자명</b>: 회중 이름이나 본인 이름을 입력해도 됩니다<br>
+            • <b>카테고리</b>: 아무거나 선택해도 됩니다
+          </div>
+        </li>
+        <li><b>[저장]</b> 버튼 클릭 — 애플리케이션이 만들어지면 자동으로 앱 대시보드 화면으로 이동합니다.</li>
+      </ol>
+
+      <b style="font-size:14px;color:var(--blue)">③ 웹 플랫폼 등록하기 ← 반드시 해야 하는 중요한 단계!</b>
+      <div class="warn-box" style="margin:8px 0">
+        ⚠️ 이 단계를 건너뛰면 카카오 공유 기능이 작동하지 않습니다.<br>
+        카카오는 등록된 도메인에서만 공유 기능을 허용하기 때문입니다.
+      </div>
+      <ol style="margin-top:8px;margin-bottom:16px">
+        <li>앱 대시보드 좌측 메뉴에서 <b>[앱 설정] → [플랫폼]</b> 클릭</li>
+        <li><b>[Web 플랫폼 등록]</b> 버튼 클릭</li>
+        <li><b>사이트 도메인</b> 입력창에 Cloudflare에서 발급받은 주소를 입력합니다:<br>
+          <div style="background:#1E293B;color:#e2e8f0;border-radius:8px;padding:10px 14px;margin:8px 0;font-family:'Courier New',monospace;font-size:12px">
+            https://<span style="color:#fbbf24">jwcard</span>.pages.dev
+          </div>
+          <span style="color:var(--gray);font-size:12px">※ 본인 Cloudflare 도메인으로 교체하세요. https://를 꼭 포함해야 합니다.</span>
+        </li>
+        <li><b>[저장]</b> 클릭 — "Web 플랫폼이 등록되었습니다" 메시지 확인</li>
+      </ol>
+
+      <b style="font-size:14px;color:var(--blue)">④ JavaScript 키 복사하기</b>
+      <ol style="margin-top:8px;margin-bottom:16px">
+        <li>좌측 메뉴 <b>[앱 설정] → [앱 키]</b> 클릭</li>
+        <li>4가지 키가 보입니다. 그 중 <b>JavaScript 키</b> 오른쪽에 있는 값을 복사합니다.<br>
+          <div style="background:#F8FAFC;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;margin:8px 0;font-size:13px">
+            <span style="color:var(--gray)">앱 키 종류 안내:</span><br>
+            • REST API 키 — ❌ 이건 아닙니다<br>
+            • <b>JavaScript 키</b> — ✅ 이게 필요한 키입니다! (32자리 영문+숫자)<br>
+            • Admin 키 — ❌ 이건 아닙니다<br>
+            • Native 앱 키 — ❌ 이건 아닙니다
+          </div>
+        </li>
+      </ol>
+
+      <b style="font-size:14px;color:var(--blue)">⑤ config.js 에 입력하기</b>
+      <ol style="margin-top:8px;margin-bottom:16px">
+        <li>메모장으로 <code>config.js</code>를 열어 아래처럼 입력합니다:</li>
+      </ol>
+<div class="code-block"><span class="cm">// config.js</span>
+window.APP_CONFIG = {
+  firebase: { <span class="cm">/* ... 기존 Firebase 값 유지 ... */</span> },
+  naverClientId: <span class="ph">"기존 값 유지"</span>,
+  <span class="ky">kakaoJsKey</span>: <span class="ph">"방금 복사한_32자리_JavaScript_키"</span>  <span class="cm">// ← 여기에 붙여넣기</span>
+};</div>
+      <ol start="2" style="margin-bottom:16px">
+        <li>파일 저장 → Cloudflare에 <b>재배포</b> (STEP 4와 동일한 방법으로 폴더 전체 다시 업로드)</li>
+        <li>앱에서 <b>카카오톡 공유 버튼</b>이 정상 동작하는지 확인합니다.</li>
+      </ol>
+
+      <div class="ok-box">
+        ✅ <b>설정 완료!</b> 이제 전도인이 구역카드에서 주소 오류를 발견하면 카카오톡으로 바로 알릴 수 있고,
+        전시대봉사 인도자는 팀 배정표를 💬 공유 버튼 하나로 팀원들에게 전송할 수 있습니다.
+      </div>
+
+      <!-- 자주 하는 실수 -->
+      <div style="margin-top:16px;background:#FFF7F5;border:1.5px solid #FCA5A5;border-radius:10px;padding:14px 16px">
+        <b style="color:#B91C1C;font-size:13px">🚨 자주 하는 실수 모음</b>
+        <ul style="margin-top:8px;padding-left:18px;font-size:13px;color:var(--text);line-height:2">
+          <li><b>사이트 도메인을 등록하지 않은 경우</b> → 공유 버튼을 누르면 아무 반응이 없습니다. ③번 단계를 다시 확인하세요.</li>
+          <li><b>JavaScript 키 대신 REST API 키를 입력한 경우</b> → 콘솔에 오류가 납니다. 키 종류를 다시 확인하세요.</li>
+          <li><b>config.js 저장 후 Cloudflare 재배포를 안 한 경우</b> → 변경 사항이 반영되지 않습니다.</li>
+          <li><b>https://를 빠뜨리고 도메인만 입력한 경우</b> → 플랫폼 등록이 제대로 되지 않습니다.</li>
+        </ul>
+      </div>
+
     </div>
   </div>
 
@@ -520,7 +605,7 @@ window.APP_CONFIG = {
         <li>초기 비밀번호 <code>1914</code>를 변경했다</li>
         <li>관리자 계정 이름이 등록되었다</li>
         <li>(선택) 네이버 지도 API Client ID가 설정되었다</li>
-        <li>(선택) 카카오 JavaScript 키가 설정되었다</li>
+        <li>(선택) 카카오 JavaScript 키가 설정되었다 — 주소 수정 요청·팀 배정표 카카오톡 공유 활성화</li>
         <li>스마트폰에서 홈 화면에 앱이 추가되었다 (PWA)</li>
       </ul>
     </div>
@@ -549,6 +634,18 @@ window.APP_CONFIG = {
       <div>
         <b>Q. iOS(아이폰)에서도 사용 가능한가요?</b><br>
         A. 네. iOS Safari에서 접속 후 <b>[공유 → 홈 화면에 추가]</b>를 선택하면 앱처럼 설치되어 사용할 수 있습니다.
+      </div>
+      <div>
+        <b>Q. 카카오 키를 설정했는데 공유 버튼을 눌러도 아무 반응이 없어요.</b><br>
+        A. 대부분 <b>사이트 도메인 등록 누락</b>이 원인입니다. 카카오 개발자 사이트 → 내 애플리케이션 → 해당 앱 → <b>[앱 설정] → [플랫폼] → [Web]</b> 에 Cloudflare 배포 주소(<code>https://...</code>)가 등록되어 있는지 확인하세요.
+      </div>
+      <div>
+        <b>Q. 카카오 개발자 사이트에서 어떤 키를 복사해야 하나요?</b><br>
+        A. <b>앱 설정 → 앱 키</b>에 4가지 키가 표시되는데, 그 중 <b>「JavaScript 키」</b>(32자리 영문+숫자)만 필요합니다. REST API 키·Admin 키·Native 앱 키는 이 앱에서 사용하지 않습니다.
+      </div>
+      <div>
+        <b>Q. 카카오 전시대봉사 팀 배정표 공유는 어떻게 사용하나요?</b><br>
+        A. 전시대봉사 앱(<code>cart.html</code>)에서 팀 편성이 완료된 일정 화면을 열면, 팀 배정표 상단에 <b>[💬 공유]</b> 버튼이 표시됩니다. 버튼을 누르면 배정표 이미지가 자동 생성되어 카카오톡 공유 창이 열립니다. 카카오 키 미설정 시에는 이미지를 다운로드해 직접 전송할 수 있습니다.
       </div>
     </div>
   </div>
