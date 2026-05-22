@@ -1504,12 +1504,12 @@ function renderSchedGallery() {
   // 회차 키워드 파싱 ("2회차", "2회", "2차", "5차", "3" 단독 숫자 모두 처리)
   let gParsedCycle = null, gKwRest = rawGq;
   if (rawGq) {
-    const mCyc = rawGq.match(/([1-9])\s*(?:회\s*차?|차)/);
+    const mCyc = rawGq.match(/([1-9]\d*)\s*(?:회\s*차?|차)/);
     if (mCyc) {
       gParsedCycle = parseInt(mCyc[1]);
       gKwRest = rawGq.replace(mCyc[0], '').trim();
-    } else if (/^[1-9]$/.test(rawGq)) {
-      // 단독 숫자 1~9 → 회차로 해석
+    } else if (/^\d+$/.test(rawGq)) {
+      // 단독 숫자 → 회차로 해석
       gParsedCycle = parseInt(rawGq);
       gKwRest = '';
     }
@@ -1652,12 +1652,12 @@ function renderUnallocatedList() {
   // 회차 키워드 파싱 ("2회차", "2회", "2차", "5차", "3" 단독 숫자 모두 처리)
   let parsedCycle = null, kwRest = rawQ;
   if (rawQ) {
-    const mCyc = rawQ.match(/([1-9])\s*(?:회\s*차?|차)/);
+    const mCyc = rawQ.match(/([1-9]\d*)\s*(?:회\s*차?|차)/);
     if (mCyc) {
       parsedCycle = parseInt(mCyc[1]);
       kwRest = rawQ.replace(mCyc[0], '').trim();
-    } else if (/^[1-9]$/.test(rawQ)) {
-      // 단독 숫자 1~9 → 회차로 해석
+    } else if (/^\d+$/.test(rawQ)) {
+      // 단독 숫자 → 회차로 해석
       parsedCycle = parseInt(rawQ);
       kwRest = '';
     }
