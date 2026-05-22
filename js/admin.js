@@ -242,7 +242,7 @@ async function loadAdminConfig() {
       window._naverClientId = _nKey;
       if (_nKey && typeof window._loadNaverMaps === 'function') window._loadNaverMaps(_nKey);
       // 지도 지역 (주소 검색 프리픽스)
-      window._mapRegion = d.mapRegion || (window.APP_CONFIG && window.APP_CONFIG.mapRegion) || '';
+      window._mapRegion = d.mapRegion || (window.APP_CONFIG && window.APP_CONFIG.mapRegion) || '경기도 동두천시';
     } else {
       window._territoryGroups = getDefaultGroups();
     }
@@ -3829,7 +3829,7 @@ window.renderTerritoryTable = function() {
 
   let parsedCycle = null, kwRest = rawKw.toLowerCase();
   if (rawKw) {
-    const mCyc = rawKw.match(/([1-6])\s*회\s*차?/);
+    const mCyc = rawKw.match(/([1-6])\s*(?:회\s*차?|차)/);
     if (mCyc) { parsedCycle = parseInt(mCyc[1]); kwRest = kwRest.replace(mCyc[0].toLowerCase(),'').trim(); }
   }
 
