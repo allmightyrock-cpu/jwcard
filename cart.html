@@ -14,7 +14,7 @@
   --shadow:0 2px 8px rgba(26,79,138,0.08);--radius:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body{font-family:'Noto Sans KR',sans-serif;background-color:var(--bg);background-image:radial-gradient(circle,rgba(26,79,138,0.07) 1px,transparent 1px);background-size:22px 22px;color:var(--text);min-height:100vh;overflow-x:hidden;}
 
 /* HEADER */
 header{background:linear-gradient(135deg,#1a4f8a,#2571c0);padding:14px 18px;
@@ -108,10 +108,7 @@ select:focus,input:focus{border-color:var(--navy);}
 .modal-close{background:var(--surface2);border:none;color:var(--text-dim);
   width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;
   display:flex;align-items:center;justify-content:center;}
-.modal-search{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.modal-search input{width:100%;background:var(--surface2);border:1.5px solid var(--border);
-  border-radius:9px;padding:8px 12px;font-size:14px;
-  font-family:'Noto Sans KR',sans-serif;outline:none;}
+
 .member-list{overflow-y:auto;flex:1;}
 .member-item{padding:12px 14px;cursor:pointer;font-size:14px;
   transition:background .1s;display:flex;align-items:center;justify-content:space-between;
@@ -181,6 +178,13 @@ select:focus,input:focus{border-color:var(--navy);}
 </head>
 <body>
 <script src="/config.js"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
+<script>
+(function(){
+  const _kk=(window.APP_CONFIG&&window.APP_CONFIG.kakaoJsKey)||'YOUR_KAKAO_JAVASCRIPT_KEY';
+  if(typeof Kakao!=='undefined'&&!Kakao.isInitialized()&&_kk){Kakao.init(_kk);}
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -194,7 +198,6 @@ select:focus,input:focus{border-color:var(--navy);}
       <div class="modal-title">봉사자 선택</div>
       <button class="modal-close" id="mclose">×</button>
     </div>
-    <div class="modal-search"><input type="text" id="msearch" placeholder="이름 검색..." /></div>
     <div class="member-list" id="mlist"></div>
   </div>
 </div>
@@ -230,9 +233,12 @@ const TEAM_LABEL = {A:"A팀",B:"B팀",C:"C팀",D:"D팀",E:"E팀",F:"F팀"};
 const WEEKDAYS   = ["월요일","화요일","수요일","목요일","금요일","토요일","일요일"];
 const INTERVALS  = {2:30,3:20,4:15,5:12,6:10};
 const TC = {
-  A:{bg:"#e8f9f3",ac:"#1a9e72"},B:{bg:"#fdecea",ac:"#d63b2b"},
-  C:{bg:"#f0ecfd",ac:"#6b4fcf"},D:{bg:"#fdf6e8",ac:"#d97706"},
-  E:{bg:"#ecfeff",ac:"#0891b2"},F:{bg:"#fdf2f8",ac:"#be185d"},
+  A:{bg:"#F0FDF8",ac:"#0D9367",border:"#6EE7C7",hdr:"#D1FAF0"},
+  B:{bg:"#FFF1F3",ac:"#BE3257",border:"#FCA5B0",hdr:"#FFD7DE"},
+  C:{bg:"#EFF6FF",ac:"#2563EB",border:"#93C5FD",hdr:"#BFDBFE"},
+  D:{bg:"#FFFBEB",ac:"#B45309",border:"#FCD34D",hdr:"#FDE68A"},
+  E:{bg:"#F5F3FF",ac:"#7C3AED",border:"#C4B5FD",hdr:"#EDE9FE"},
+  F:{bg:"#FFF7F5",ac:"#C2410C",border:"#FCA185",hdr:"#FFE0D6"},
 };
 let ADMIN_PW  = null;    // Firestore admin/config.cartAdminPw — 개인 PIN 방식 전시대 암호
 let _congregationName = '';  // Firestore admin/config.congregation
@@ -276,7 +282,7 @@ async function _loadCartConfig() {
   } catch(e) { /* 무시 */ }
   // S.tab이 유효한 탭인지 확인 (__signup은 항상 유효)
   if (S.tab !== '__signup' && !SCHEDULE_TYPES.find(t => t.id === S.tab)) {
-    S.tab = SCHEDULE_TYPES[0]?.id || '';
+    S.tab = '__signup';
   }
   // cart 승인 전도인 목록 로드 (권한 포함)
   const _cartPubMap = {}; // name → {permission, ...}
@@ -320,7 +326,7 @@ _loadCartConfig();
 // ── STATE ──
 const S = {
   screen:"login", role:null,
-  tab: new URLSearchParams(location.search).get('tab') === '__signup' ? '__signup' : 'thu_pm',
+  tab: new URLSearchParams(location.search).get('tab') || '__signup',
   schedules:[], selected:null,
   loading:false, loadErr:null,
   form:null, prevScreen:null,
@@ -499,7 +505,8 @@ function headerHTML(){
   const badge=S.role==="admin"?"<span class=\"admin-badge\">인도자</span>":"";
   let right="";
   if(S.screen!=="list"){
-    right=`<button class="btn btn-sm" id="hback" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.3)">← 목록</button>`;
+    const _hbackLabel=S.tab!=="__signup"?"← 이번 주":"← 목록";
+    right=`<button class="btn btn-sm" id="hback" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.3)">${_hbackLabel}</button>`;
   } else {
     const newBtn=S.role==="admin"?`<button class="btn btn-sm" id="hcreate" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.3)">+ 새 명단</button>`:"";
     const setBtn=S.role==="admin"?`<button class="btn btn-sm" id="hsettings" style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.25)">⚙️</button>`:"";
@@ -519,10 +526,15 @@ function headerHTML(){
 
 function tabsHTML(){
   if(S.screen!=="list") return "";
-  const signupTab=`<div class="tab${S.tab==="__signup"?" active":""}" data-tab="__signup">📋 이번 주</div>`;
-  return `<div class="tabs">${signupTab}${SCHEDULE_TYPES.map(t=>
-    `<div class="tab${S.tab===t.id?" active":""}" data-tab="${t.id}">${t.emoji} ${t.label}</div>`
-  ).join("")}</div>`;
+  // 기존 요일 탭은 탭바에서 숨김 — "팀 편성" 버튼으로만 진입
+  if(S.tab!=="__signup"){
+    const t=SCHEDULE_TYPES.find(x=>x.id===S.tab)||{emoji:"📋",label:"편성 관리"};
+    return `<div style="background:#fff;border-bottom:2px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:10px">
+      <button onclick="_backToSignup()" style="background:var(--navy-dim);border:1.5px solid var(--border);color:var(--navy);font-size:12px;font-weight:700;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:inherit">← 이번 주</button>
+      <span style="font-size:13px;font-weight:700;color:var(--text)">${t.emoji} ${t.label} 편성 관리</span>
+    </div>`;
+  }
+  return `<div class="tabs"><div class="tab active" data-tab="__signup">📋 이번 주</div></div>`;
 }
 
 function mainHTML(){
@@ -672,7 +684,9 @@ function detailHTML(){
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn btn-sm" id="dshare" style="background:rgba(26,79,138,0.1);border:1.5px solid var(--border);color:var(--navy);font-size:12px">📤 공유</button>
+        <button class="btn btn-sm" id="dshare" style="background:#FEE500;border:none;color:#191919;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px">
+          <svg width="15" height="14" viewBox="0 0 18 17" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 0C4.029 0 0 3.164 0 7.07c0 2.52 1.66 4.737 4.163 5.995-.184.683-.663 2.48-.759 2.863-.12.474.173.468.363.34.149-.1 2.36-1.601 3.314-2.252.294.041.594.063.919.063C12.971 14.079 18 10.914 18 7.07 18 3.164 13.971 0 9 0z" fill="#191919"/></svg>
+          카카오 공유</button>
         ${S.role==="member"?`<button class="btn btn-sm" id="dapply" style="background:#1a9e72;color:#fff;border:none;font-size:12px">✋ 참여</button>`:""}
         ${S.role==="admin"?`<button class="btn btn-outline btn-sm" id="dedit">편집</button>`:""}
       </div>
@@ -701,37 +715,42 @@ function detailHTML(){
     const rows=objToRows(t.rows,ns);
     const loc=t.location||"장소 미정";
     const c=TC[k];
-    return `<div style="margin-bottom:18px;border-radius:12px;overflow:hidden;border:2px solid ${c.ac}55;box-shadow:var(--shadow)">
-      <div style="background:${c.ac};padding:10px 16px;display:flex;align-items:center;gap:10px">
-        <span style="font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;color:#fff">${TEAM_LABEL[k]}</span>
-        <span style="font-size:12px;color:rgba(255,255,255,0.85);background:rgba(0,0,0,0.18);padding:2px 9px;border-radius:10px">${ns}개 조 · ${interval}분 간격</span>
-        ${t.cartPerson?`<span style="margin-left:auto;font-size:12px;color:rgba(255,255,255,0.9);display:flex;align-items:center;gap:3px"><svg width="11" height="13" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;flex-shrink:0"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="white"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.15)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="rgba(255,255,255,0.3)" stroke="white" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="white"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="rgba(255,255,255,0.3)" stroke="white" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="white"/></svg>${t.cartPerson}</span>`:""}
+    return `<div style="margin-bottom:18px;border-radius:14px;overflow:hidden;border:1.5px solid ${c.border};box-shadow:0 1px 3px rgba(26,79,138,0.06),0 4px 14px rgba(26,79,138,0.08),0 12px 32px rgba(26,79,138,0.05)">
+      <div style="background:linear-gradient(135deg,${c.hdr},${c.bg});padding:11px 16px;display:flex;align-items:center;gap:10px;border-bottom:1.5px solid ${c.border}">
+        <div style="width:30px;height:30px;border-radius:9px;background:${c.ac};display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 6px ${c.ac}55">
+          <span style="font-family:'Noto Serif KR',serif;font-size:14px;font-weight:700;color:#fff">${k}</span>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:${c.ac}">${TEAM_LABEL[k]}</span>
+          <span style="font-size:11px;color:${c.ac};background:rgba(255,255,255,0.6);padding:2px 9px;border-radius:8px;font-weight:700;border:1px solid ${c.border}">${ns}개 조 · ${interval}분 간격</span>
+        </div>
+        ${t.cartPerson?`<span style="font-size:11px;color:${c.ac};font-weight:600;display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.7);padding:3px 9px;border-radius:8px;border:1px solid ${c.border};flex-shrink:0">🛒 ${t.cartPerson}</span>`:""}
       </div>
-      <div style="background:${c.bg}88;padding:7px 14px;border-bottom:1px solid ${c.ac}22;font-size:12px;display:flex;align-items:center;gap:5px">
+      <div style="background:rgba(255,255,255,0.6);padding:7px 14px;border-bottom:1px solid ${c.border}88;font-size:12px;display:flex;align-items:center;gap:5px">
         <span>📍</span><span style="color:var(--text-dim);font-weight:500">${loc}</span>
       </div>
       <div>
-        <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;background:${c.bg};border-bottom:1.5px solid ${c.ac}22;font-size:11px;font-weight:700;color:${c.ac};text-align:center">
-          <div style="padding:7px 4px;border-right:1px solid ${c.ac}22">봉사 시간</div>
-          <div style="padding:7px 4px;border-right:1px solid ${c.ac}22">① 봉사자</div>
-          <div style="padding:7px 4px;border-right:1px solid ${c.ac}22">② 봉사자</div>
+        <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;background:${c.hdr}77;border-bottom:1.5px solid ${c.border};font-size:11px;font-weight:700;color:${c.ac};text-align:center">
+          <div style="padding:7px 4px;border-right:1px solid ${c.border}88">봉사 시간</div>
+          <div style="padding:7px 4px;border-right:1px solid ${c.border}88">① 봉사자</div>
+          <div style="padding:7px 4px;border-right:1px solid ${c.border}88">② 봉사자</div>
           <div style="padding:7px 4px">③ 추가</div>
         </div>
         ${rows.map((row,ri)=>{
           const rt=s.startHour?calcTime(s.startAmPm,s.startHour,s.startMin||"00",ns,ri):"--:--";
-          return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;border-top:1px solid ${c.ac}22;min-height:48px;align-items:stretch;background:#fff">
-            <div style="padding:8px 4px;border-right:1px solid ${c.ac}22;background:${c.bg}55;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+          return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;border-top:1px solid ${c.border}66;min-height:48px;align-items:stretch;background:rgba(255,255,255,0.50)">
+            <div style="padding:8px 4px;border-right:1px solid ${c.border}66;background:${c.hdr}66;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
               <div style="font-size:12px;font-weight:700;color:${c.ac};font-variant-numeric:tabular-nums;text-align:center">${rt}</div>
               <div style="font-size:9px;color:var(--text-muted)">${interval}분</div>
             </div>
-            ${[0,1,2].map(ci=>`<div style="padding:8px;${ci<2?"border-right:1px solid "+c.ac+"22;":""}display:flex;align-items:center">
+            ${[0,1,2].map(ci=>`<div style="padding:8px;${ci<2?"border-right:1px solid "+c.border+"66;":""}display:flex;align-items:center">
               ${row[ci]
-                ?`<div class="${S.role==="admin"?"d-edit-cell":""}" data-team="${k}" data-row="${ri}" data-col="${ci}" data-name="${row[ci]}" style="display:flex;align-items:center;gap:4px;width:100%;background:${c.bg};border-radius:6px;padding:5px 8px;border:1px solid ${c.ac}33;${S.role==="admin"?"cursor:pointer":""}">
+                ?`<div class="${S.role==="admin"?"d-edit-cell":""}" data-team="${k}" data-row="${ri}" data-col="${ci}" data-name="${row[ci]}" style="display:flex;align-items:center;gap:4px;width:100%;background:${c.bg};border-radius:7px;padding:5px 8px;border:1px solid ${c.border};${S.role==="admin"?"cursor:pointer":""}">
                   <span style="font-size:13px;font-weight:600;color:${c.ac};flex:1">${row[ci]}</span>
-                  ${S.role==="admin"?`<span style="font-size:10px;color:${c.ac}88">✏️</span>`:""}
+                  ${S.role==="admin"?`<span style="font-size:10px;color:${c.ac}99">✏️</span>`:""}
                 </div>`
                 :`${S.role==="admin"
-                  ?`<button class="d-pick" data-team="${k}" data-row="${ri}" data-col="${ci}" style="width:100%;padding:5px 4px;border-radius:6px;border:1.5px ${ci<2?"solid":"dashed"} ${c.ac}44;background:transparent;color:${ci<2?c.ac:"var(--text-muted)"};font-size:11px;cursor:pointer;text-align:center">+ 선택</button>`
+                  ?`<button class="d-pick" data-team="${k}" data-row="${ri}" data-col="${ci}" style="width:100%;padding:5px 4px;border-radius:7px;border:1.5px ${ci<2?"solid":"dashed"} ${c.border};background:transparent;color:${ci<2?c.ac:"var(--text-muted)"};font-size:11px;cursor:pointer;text-align:center">+ 선택</button>`
                   :`<span style="font-size:11px;color:var(--border)">—</span>`}`
               }
             </div>`).join("")}
@@ -808,15 +827,20 @@ function formHTML(){
     const interval=INTERVALS[ns]||Math.round(60/ns);
     const rows=objToRows(t.rows,ns);
     const c=TC[k];
-    return `<div style="margin-bottom:16px;border-radius:12px;overflow:hidden;border:2px solid ${c.ac}55;box-shadow:var(--shadow)">
-      <div style="background:${c.ac};padding:10px 16px;display:flex;align-items:center;gap:10px">
-        <span style="font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;color:#fff">${TEAM_LABEL[k]}</span>
-        <span style="font-size:12px;color:rgba(255,255,255,0.85);background:rgba(0,0,0,0.18);padding:2px 9px;border-radius:10px">${ns}개 조 · ${interval}분 간격</span>
+    return `<div style="margin-bottom:16px;border-radius:14px;overflow:hidden;border:1.5px solid ${c.border};box-shadow:0 1px 3px rgba(26,79,138,0.06),0 4px 14px rgba(26,79,138,0.08),0 12px 32px rgba(26,79,138,0.05)">
+      <div style="background:linear-gradient(135deg,${c.hdr},${c.bg});padding:11px 16px;display:flex;align-items:center;gap:10px;border-bottom:1.5px solid ${c.border}">
+        <div style="width:30px;height:30px;border-radius:9px;background:${c.ac};display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 6px ${c.ac}55">
+          <span style="font-family:'Noto Serif KR',serif;font-size:14px;font-weight:700;color:#fff">${k}</span>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:${c.ac}">${TEAM_LABEL[k]}</span>
+          <span style="font-size:11px;color:${c.ac};background:rgba(255,255,255,0.6);padding:2px 9px;border-radius:8px;font-weight:700;border:1px solid ${c.border}">${ns}개 조 · ${interval}분 간격</span>
+        </div>
       </div>
-      <div style="background:#fff;padding:12px 14px">
+      <div style="background:rgba(255,255,255,0.45);padding:12px 14px">
         <div class="form-row" style="margin-bottom:12px">
           <label style="min-width:36px;font-size:12px">장소</label>
-          <select id="floc${k}" style="border-color:${c.ac}55">
+          <select id="floc${k}" style="border-color:${c.border}">
             <option value="">장소 선택</option>
             ${LOCATIONS.map(l=>`<option${t.location===l?" selected":""}>${l}</option>`).join("")}
           </select>
@@ -825,38 +849,38 @@ function formHTML(){
           <div style="flex:1;min-width:160px">
             <div style="font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:7px">몇 개 조가 돌아갑니까?</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
-              ${[2,3,4,5,6].map(v=>`<button type="button" class="ns-btn" data-team="${k}" data-v="${v}" style="padding:6px 0;width:50px;border-radius:9px;font-size:12px;font-weight:700;text-align:center;line-height:1.4;border:2px solid ${ns===v?c.ac:"var(--border)"};background:${ns===v?c.bg:"#fff"};color:${ns===v?c.ac:"var(--text-muted)"};cursor:pointer">${v}조<br><span style="font-size:10px;font-weight:400">${INTERVALS[v]}분</span></button>`).join("")}
+              ${[2,3,4,5,6].map(v=>`<button type="button" class="ns-btn" data-team="${k}" data-v="${v}" style="padding:6px 0;width:50px;border-radius:9px;font-size:12px;font-weight:700;text-align:center;line-height:1.4;border:2px solid ${ns===v?c.ac:c.border};background:${ns===v?c.hdr:"rgba(255,255,255,0.50)"};color:${ns===v?c.ac:"var(--text-muted)"};cursor:pointer">${v}조<br><span style="font-size:10px;font-weight:400">${INTERVALS[v]}분</span></button>`).join("")}
             </div>
           </div>
           <div style="min-width:130px">
-            <div style="font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:7px;display:flex;align-items:center;gap:4px"><svg width="12" height="14" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;flex-shrink:0"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="#1a4f8a"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="#1a4f8a"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="white" stroke="#1a4f8a" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="#1a4f8a"/></svg> 카트 준비</div>
-            <select id="fcart${k}" style="width:100%;border-radius:8px;border:1.5px solid ${c.ac}55;padding:7px 10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;-webkit-appearance:none;background:#fff">
+            <div style="font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:7px;display:flex;align-items:center;gap:4px"><svg width="12" height="14" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;flex-shrink:0"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="${c.ac}"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="${c.bg}" stroke="${c.ac}" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="${c.ac}"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="${c.bg}" stroke="${c.ac}" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="${c.ac}"/></svg> 카트 준비</div>
+            <select id="fcart${k}" style="width:100%;border-radius:8px;border:1.5px solid ${c.border};padding:7px 10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;-webkit-appearance:none;background:rgba(255,255,255,0.9)">
               <option value="">봉사자 선택</option>
               ${MEMBERS.map(m=>`<option${t.cartPerson===m?" selected":""}>${m}</option>`).join("")}
             </select>
           </div>
         </div>
-        <div style="border:1.5px solid ${c.ac}33;border-radius:9px;overflow:hidden">
-          <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;background:${c.bg};border-bottom:1.5px solid ${c.ac}22;font-size:11px;font-weight:700;color:${c.ac};text-align:center">
-            <div style="padding:7px 4px;border-right:1px solid ${c.ac}22">봉사 시간</div>
-            <div style="padding:7px 4px;border-right:1px solid ${c.ac}22">① 봉사자</div>
-            <div style="padding:7px 4px;border-right:1px solid ${c.ac}22">② 봉사자</div>
+        <div style="border:1.5px solid ${c.border};border-radius:10px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;background:${c.hdr}77;border-bottom:1.5px solid ${c.border};font-size:11px;font-weight:700;color:${c.ac};text-align:center">
+            <div style="padding:7px 4px;border-right:1px solid ${c.border}88">봉사 시간</div>
+            <div style="padding:7px 4px;border-right:1px solid ${c.border}88">① 봉사자</div>
+            <div style="padding:7px 4px;border-right:1px solid ${c.border}88">② 봉사자</div>
             <div style="padding:7px 4px">③ 추가</div>
           </div>
           ${rows.map((row,ri)=>{
             const rt=f.startHour?calcTime(f.startAmPm||"오후",f.startHour,f.startMin||"00",ns,ri):"--:--";
-            return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;border-top:1px solid ${c.ac}22;min-height:48px;align-items:stretch;background:#fff">
-              <div style="padding:8px 4px;border-right:1px solid ${c.ac}22;background:${c.bg}55;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+            return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;border-top:1px solid ${c.border}66;min-height:48px;align-items:stretch;background:rgba(255,255,255,0.50)">
+              <div style="padding:8px 4px;border-right:1px solid ${c.border}66;background:${c.hdr}66;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
                 <div style="font-size:12px;font-weight:700;color:${c.ac};text-align:center;font-variant-numeric:tabular-nums">${rt}</div>
                 <div style="font-size:9px;color:var(--text-muted)">${interval}분</div>
               </div>
-              ${[0,1,2].map(ci=>`<div style="padding:6px;${ci<2?"border-right:1px solid "+c.ac+"22;":""}display:flex;align-items:center">
+              ${[0,1,2].map(ci=>`<div style="padding:6px;${ci<2?"border-right:1px solid "+c.border+"66;":""}display:flex;align-items:center">
                 ${row[ci]
-                  ?`<div style="display:flex;align-items:center;gap:3px;width:100%;background:${c.bg};border-radius:6px;padding:4px 8px;border:1px solid ${c.ac}33;cursor:pointer" class="f-edit-cell" data-team="${k}" data-row="${ri}" data-col="${ci}" data-name="${row[ci]}">
+                  ?`<div style="display:flex;align-items:center;gap:3px;width:100%;background:${c.bg};border-radius:7px;padding:4px 8px;border:1px solid ${c.border};cursor:pointer" class="f-edit-cell" data-team="${k}" data-row="${ri}" data-col="${ci}" data-name="${row[ci]}">
                     <span style="font-size:12px;font-weight:600;color:${c.ac};flex:1">${row[ci]}</span>
-                    <span style="font-size:10px;color:${c.ac}88">✏️</span>
+                    <span style="font-size:10px;color:${c.ac}99">✏️</span>
                   </div>`
-                  :`<button class="f-pick" data-team="${k}" data-row="${ri}" data-col="${ci}" style="width:100%;padding:5px 2px;border-radius:6px;border:1.5px ${ci<2?"solid":"dashed"} ${c.ac}44;background:transparent;color:${ci<2?c.ac:"var(--text-muted)"};font-size:11px;cursor:pointer;text-align:center">+ 선택</button>`
+                  :`<button class="f-pick" data-team="${k}" data-row="${ri}" data-col="${ci}" style="width:100%;padding:5px 2px;border-radius:7px;border:1.5px ${ci<2?"solid":"dashed"} ${c.border};background:transparent;color:${ci<2?c.ac:"var(--text-muted)"};font-size:11px;cursor:pointer;text-align:center">+ 선택</button>`
                 }
               </div>`).join("")}
             </div>`;
@@ -867,7 +891,7 @@ function formHTML(){
   }).join("")}
   <div style="display:flex;gap:8px;margin-bottom:16px;margin-top:4px">
     <button class="btn btn-outline" id="fcancel" style="flex:1">취소</button>
-    <button class="btn btn-navy" id="fsave" style="flex:2">💾 저장</button>
+    <button class="btn btn-navy" id="fsave" style="flex:2;background:linear-gradient(135deg,#1a4f8a,#2571c0);box-shadow:0 3px 12px rgba(26,79,138,0.35);letter-spacing:-0.2px">💾 저장</button>
   </div>
   ${isEdit?`<div style="margin-bottom:32px"><button class="btn btn-danger btn-full" id="fdelete">🗑 이 명단 삭제</button></div>`:""}`;
 }
@@ -1197,6 +1221,8 @@ function _cwApHmTo24(ap,h,m){
   return {h:hr,m:parseInt(m||"0")};
 }
 
+// 주간 기준: 월요일 ~ 일요일 (일요일은 그 주 마지막 날)
+// d=0(일)이면 6일 뺌 → 같은 주의 월요일, d=1(월)이면 0일 뺌 → 당일
 function _cwWeekMonday(){
   const now=new Date(),d=now.getDay();
   const m=new Date(now);
@@ -1207,7 +1233,8 @@ function _cwWeekMonday(){
 
 function _cwBuildWeekSessions(){
   const monday=_cwWeekMonday();
-  const wkStr=monday.toISOString().slice(0,10).replace(/-/g,"");
+  // wkStr: 로컬 날짜 기준 (toISOString은 UTC 변환으로 한국 등 +9 지역에서 하루 밀릴 수 있음)
+  const wkStr=monday.getFullYear()+String(monday.getMonth()+1).padStart(2,"0")+String(monday.getDate()).padStart(2,"0");
   const DOW_KO=["일","월","화","수","목","금","토"];
   const now=new Date();
   const sessions=[];
@@ -1215,6 +1242,7 @@ function _cwBuildWeekSessions(){
     const dow=_cwSchedTypeToDow(t); if(dow<0) return;
     const st=_cwApHmTo24(t.ds?.ap,t.ds?.h,t.ds?.m);
     const et=_cwApHmTo24(t.de?.ap,t.de?.h,t.de?.m);
+    // 일요일(0)은 +6 → 해당 주의 마지막 날(일요일). 다음 주로 넘기지 않음
     const daysFromMon=dow===0?6:dow-1;
     const dt=new Date(monday); dt.setDate(monday.getDate()+daysFromMon); dt.setHours(st.h,st.m,0,0);
     const dtEnd=new Date(monday); dtEnd.setDate(monday.getDate()+daysFromMon); dtEnd.setHours(et.h,et.m,0,0);
@@ -1261,7 +1289,7 @@ function signupWeekHTML(){
       ?signups.map(n=>`<span style="font-size:11px;padding:3px 9px;border-radius:10px;background:#F1F5F9;color:#374151">${n}</span>`).join("")
       :`<span style="font-size:11px;color:var(--text-muted)">신청자 없음</span>`;
     const adminBtn=S.role==="admin"
-      ?`<button class="signup-edit-btn btn btn-navy btn-sm" data-key="${s.key}" style="font-size:11px;padding:6px 14px">${confirmed?"팀 수정":"팀 편성"}</button>`:"";
+      ?`<button class="signup-sched-btn btn btn-navy btn-sm" data-typeid="${s.typeId}" style="font-size:11px;padding:6px 14px">📋 팀 편성</button>`:"";
     return `<div class="schedule-card" ${s.ended?'style="opacity:0.6"':""}>
       <div class="scard-head"><div class="scard-date">${s.emoji} ${s.dateLabel}</div>${statusBadge}</div>
       <div class="scard-body"><span>${fmt12h(s.startStr)} ~ ${fmt12h(s.endStr)}</span><span style="color:var(--navy);font-weight:600">✋ ${signups.length}명 신청</span></div>
@@ -1489,9 +1517,9 @@ function bind(){
       if(S.tab==="__signup") _loadWeekSignups();
       render();
     }));
-  // 이번 주 신청 현황 — 팀 편성 버튼
-  document.querySelectorAll(".signup-edit-btn").forEach(b=>
-    b.addEventListener("click",e=>{e.stopPropagation();_openSignupEditor(b.dataset.key);}));
+  // 이번 주 신청 현황 — 팀 편성 버튼 → 이번 주 해당 명단으로 바로 진입
+  document.querySelectorAll(".signup-sched-btn").forEach(b=>
+    b.addEventListener("click",e=>{e.stopPropagation();_openThisWeekSchedule(b.dataset.typeid);}));
   // 목록
   document.querySelectorAll(".schedule-card").forEach(c=>
     c.addEventListener("click",e=>{
@@ -1641,42 +1669,35 @@ function buildMemberItems(){
   const rows=objToRows(src?.teams?.[k]?.rows,ns);
   const realCur=rows?.[ri]?.[ci]||"";
   const used=getUsedMembers(S.modalTarget);
-  const scheduleId=S.selected?.id||"";
-  const applicants=getApplicants(scheduleId);
-  const q=S.search.toLowerCase();
-  const avail=MEMBERS.filter(m=>!q||m.includes(q)).filter(m=>m===realCur||!used.has(m));
-  const sec1=avail.filter(m=>applicants.includes(m));
-  const sec2=avail.filter(m=>!applicants.includes(m));
-  const ri2=(m,isAp)=>{
+  // 이번 주 신청자만 표시 (cartSessions 기반)
+  const session=_weekSessions.find(s=>s.typeId===S.tab);
+  const sd=session?(_weekSignupData[session.key]||{}):{};
+  let signups=sd.signups||[];
+  // 신청자 없으면 구형 참여자 목록으로 폴백
+  if(!signups.length) signups=getApplicants(S.selected?.id||"");
+  const avail=signups.filter(m=>m===realCur||!used.has(m));
+  const ri2=m=>{
     const sel=m===realCur;
-    return `<div class="member-item${sel?" selected":""}" data-member="${m}" style="background:${isAp?"#f0fdf6":"#fff"};border-bottom:1px solid ${isAp?"#1a9e7218":"var(--border)"}">
-      <div style="display:flex;align-items:center;gap:8px">
-        ${isAp?`<span style="width:7px;height:7px;border-radius:50%;background:#1a9e72;flex-shrink:0;display:inline-block"></span>`:""}
-        <span style="${isAp?"font-weight:600;color:#1a6b4a":"color:var(--text)"}">${m}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        ${isAp?`<span style="font-size:10px;font-weight:700;background:#1a9e72;color:#fff;padding:2px 8px;border-radius:20px">참여</span>`:""}
-        ${sel?`<span style="font-size:14px;color:var(--navy);font-weight:700">✓</span>`:""}
-      </div>
+    return `<div class="member-item${sel?" selected":""}" data-member="${m}"
+      style="background:#fff;border-bottom:1px solid var(--border);padding:14px 16px;
+      display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:15px;font-weight:${sel?"700":"500"};color:${sel?"var(--navy)":"var(--text)"}">
+        ${m}
+      </span>
+      ${sel?`<span style="font-size:16px;color:var(--navy);font-weight:700">✓</span>`:""}
     </div>`;
   };
-  let html="";
-  if(sec1.length){html+=`<div style="padding:8px 14px;font-size:11px;font-weight:700;color:#1a9e72;background:#e8f9f3;display:flex;align-items:center;gap:6px">✋ 참여 등록자 <span style="background:#1a9e72;color:#fff;font-size:10px;padding:1px 7px;border-radius:20px">${sec1.length}명</span></div>`;html+=sec1.map(m=>ri2(m,true)).join("");}
-  if(sec2.length){html+=`<div style="padding:8px 14px;font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface2);${sec1.length?"border-top:2px solid var(--border);":""}">📋 전체 봉사자</div>`;html+=sec2.map(m=>ri2(m,false)).join("");}
-  if(!html) html=`<div style="padding:32px;text-align:center;color:var(--text-muted);font-size:13px">검색 결과가 없습니다</div>`;
-  return html;
+  if(!avail.length) return `<div style="padding:40px 20px;text-align:center;color:var(--text-muted);font-size:13px">이번 주 신청자가 없습니다</div>`;
+  return avail.map(ri2).join("");
 }
 
 // ── ACTIONS ──
 function openModal(k,ri,ci){
-  S.modalTarget=k+":"+ri+":"+ci; S.search=""; S.modal=true;
+  S.modalTarget=k+":"+ri+":"+ci; S.modal=true;
   const mlist=document.getElementById("mlist");
-  const msearch=document.getElementById("msearch");
   if(mlist) mlist.innerHTML=buildMemberItems();
-  if(msearch) msearch.value="";
   document.getElementById("movl")?.classList.add("open");
   _bindModalItems();
-  setTimeout(()=>msearch?.focus(),80);
 }
 function closeModal(){
   document.getElementById("movl")?.classList.remove("open");
@@ -1790,8 +1811,84 @@ async function loadCartNotice(){
 }
 
 function goBack(){
-  if(S.screen==="detail"){S.screen="list";S.selected=null;}
-  else if(S.screen==="create"||S.screen==="edit"){S.screen=S.prevScreen==="detail"?"detail":"list";S.form=null;}
+  if(S.screen==="detail"){
+    S.screen="list";S.selected=null;
+    // 팀 편성 경로(비 __signup)에서 진입한 경우 목록 건너뛰고 이번 주로 복귀
+    if(S.tab!=="__signup"){_backToSignup();return;}
+  } else if(S.screen==="create"||S.screen==="edit"){
+    const _back=S.prevScreen==="detail"?"detail":"list";
+    S.screen=_back;S.form=null;
+    if(_back==="list"&&S.tab!=="__signup"){_backToSignup();return;}
+  }
+  render();
+}
+function _backToSignup(){
+  S.tab="__signup";
+  S.screen="list";
+  S.selected=null;
+  render();
+}
+// 이번 주 해당 요일 명단으로 바로 진입 (있으면 상세, 없으면 자동 생성 → 상세)
+async function _openThisWeekSchedule(typeId){
+  const session=_weekSessions.find(s=>s.typeId===typeId);
+  S.tab=typeId;
+  if(!session){S.screen="list";render();return;}
+  const dt=session.dt;
+  const month=String(dt.getMonth()+1);
+  const day=String(dt.getDate());
+  // 이번 주 날짜와 일치하는 미완료 명단 검색
+  const match=S.schedules.find(s=>
+    s.type===typeId&&String(s.month)===month&&String(s.day)===day&&!s.completed
+  );
+  if(match){S.selected=match;S.screen="detail";render();return;}
+
+  // ▶ 이번 주 명단 없음 → config 기준으로 자동 생성 후 상세로 바로 진입
+  const ti=SCHEDULE_TYPES.find(t=>t.id===typeId)||SCHEDULE_TYPES[0];
+  const DOW_KO=["일","월","화","수","목","금","토"];
+  const mm=month.padStart(2,"0"), dd=day.padStart(2,"0");
+  // 빈 팀 구조 (numSlots=2, 6행 빈 배열 → rows 객체로 변환)
+  const cleanTeams={};
+  TEAMS.forEach(k=>{
+    const emptyRows=Array.from({length:2},()=>["","",""]);
+    cleanTeams[k]={location:"",cartPerson:"",numSlots:2,
+      rows:rowsToObj(emptyRows,2),members:[]};
+  });
+  const autoData={
+    type:typeId,
+    month:parseInt(month),day:parseInt(day),
+    weekday:DOW_KO[dt.getDay()]+"요일",
+    startAmPm:ti.ds.ap, startHour:parseInt(ti.ds.h),
+    startMin:String(ti.ds.m||0).padStart(2,"0"),
+    endAmPm:ti.de.ap,   endHour:parseInt(ti.de.h),
+    endMin:String(ti.de.m||0).padStart(2,"0"),
+    conductor:"",numTeams:1,teams:cleanTeams,
+    date:dt.getFullYear()+"-"+mm+"-"+dd,  // dt 기준 연도 사용 (연말 주간 연도 오류 방지)
+    completed:false,
+    updatedAt:db?firebase.firestore.FieldValue.serverTimestamp():new Date().toISOString()
+  };
+  try{
+    let id="local_"+Date.now();
+    if(db){
+      const ref=await db.collection("cart_witnessing_schedules").add(
+        {...autoData,createdAt:firebase.firestore.FieldValue.serverTimestamp()}
+      );
+      id=ref.id;
+    }
+    const newDoc={id,...autoData};
+    S.schedules.unshift(newDoc);
+    S.selected=newDoc;
+    localStorage.setItem("cw_schedules",JSON.stringify(S.schedules));
+    toast("📋 이번 주 일정이 자동 생성됐습니다",2200);
+    S.screen="detail";
+  }catch(e){
+    // 자동 생성 실패 시 기존 폼 방식으로 fallback
+    toast("자동 생성 실패: "+e.message);
+    S.form={type:typeId,month,day,weekday:DOW_KO[dt.getDay()]+"요일",
+      startAmPm:ti.ds.ap,startHour:ti.ds.h,startMin:ti.ds.m,
+      endAmPm:ti.de.ap,endHour:ti.de.h,endMin:ti.de.m,
+      conductor:"",numTeams:1,teams:emptyTeams()};
+    S.prevScreen="list";S.screen="create";
+  }
   render();
 }
 function openDetail(id){S.selected=S.schedules.find(x=>x.id===id);if(S.selected){S.screen="detail";render();}}
@@ -2031,21 +2128,54 @@ function deleteListItem(tab,idx){
 
 async function shareSchedule(){
   const el=document.querySelector("main");if(!el){toast("공유할 내용이 없습니다");return;}
+  const s=S.selected;
+  const filename="전시대명단_"+(s?.month||"")+"월"+(s?.day||"")+"일.png";
   toast("이미지 생성 중...",3000);
-  try{
-    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#eef3f9"});
-    const s=S.selected;
-    const filename="전시대명단_"+(s?.month||"")+"월"+(s?.day||"")+"일.png";
-    if(navigator.canShare){
-      canvas.toBlob(async blob=>{
-        const file=new File([blob],filename,{type:"image/png"});
-        if(navigator.canShare({files:[file]})){
-          try{await navigator.share({files:[file],title:"전시대 봉사 명단"});return;}catch(e){if(e.name==="AbortError")return;}
-        }
-        downloadImg(canvas.toDataURL("image/png"),filename);
-      },"image/png");
-    }else{downloadImg(canvas.toDataURL("image/png"),filename);}
-  }catch(e){toast("이미지 생성 실패: "+e.message);}
+  let canvas;
+  try{canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#eef3f9"});}
+  catch(e){toast("이미지 생성 실패: "+e.message);return;}
+
+  // ── 카카오 공유 (이미지 업로드 → feed 전송) ──
+  if(typeof Kakao!=='undefined'&&Kakao.isInitialized()&&Kakao.Share?.uploadImage){
+    canvas.toBlob(async blob=>{
+      const file=new File([blob],filename,{type:"image/png"});
+      try{
+        const res=await Kakao.Share.uploadImage({file:[file]});
+        const imgUrl=res.infos.original.url;
+        const n=parseInt(s?.numTeams)||1;
+        const tl=SCHEDULE_TYPES.find(t=>t.id===s?.type)?.label||"";
+        const desc=`${s?.startAmPm} ${s?.startHour}:${pad2(s?.startMin||0)} ~ ${s?.endAmPm} ${s?.endHour}:${pad2(s?.endMin||0)}  ·  ${tl}`;
+        Kakao.Share.sendDefault({
+          objectType:'feed',
+          content:{
+            title:`🛒 전시대봉사 명단 · ${s?.month}월 ${s?.day}일 (${s?.weekday||""})`,
+            description:desc.slice(0,200),
+            imageUrl:imgUrl,
+            link:{mobileWebUrl:location.origin+'/cart.html',webUrl:location.origin+'/cart.html'}
+          }
+        });
+      }catch(e2){
+        console.warn("카카오 업로드 실패, 대체 공유로 전환:",e2.message);
+        _fallbackShare(canvas,filename);
+      }
+    },"image/png");
+    return;
+  }
+
+  // ── 대체: Web Share API 또는 이미지 다운로드 ──
+  _fallbackShare(canvas,filename);
+}
+function _fallbackShare(canvas,filename){
+  if(navigator.canShare){
+    canvas.toBlob(async blob=>{
+      const file=new File([blob],filename,{type:"image/png"});
+      if(navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:"전시대 봉사 명단"});return;}
+        catch(e){if(e.name==="AbortError")return;}
+      }
+      downloadImg(canvas.toDataURL("image/png"),filename);
+    },"image/png");
+  }else{downloadImg(canvas.toDataURL("image/png"),filename);}
 }
 function downloadImg(dataUrl,filename){
   const a=document.createElement("a");a.href=dataUrl;a.download=filename;a.click();
@@ -2128,11 +2258,6 @@ function _initModalOnce(){
     if(e.target.id==="movl") closeModal();
   });
   document.getElementById("mclose")?.addEventListener("click",closeModal);
-  document.getElementById("msearch")?.addEventListener("input",e=>{
-    S.search=e.target.value.trim();
-    const mlist=document.getElementById("mlist");
-    if(mlist){ mlist.innerHTML=buildMemberItems(); _bindModalItems(); }
-  });
   // 모달이 열릴 때 배경 스크롤 방지
   document.getElementById("movl")?.addEventListener("transitionstart",e=>{
     if(e.target.id==="movl" && document.getElementById("movl").classList.contains("open"))

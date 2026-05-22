@@ -10,7 +10,7 @@ async function loadSettingsValues() {
       const caEl = document.getElementById('s-cart-admin-pw');
       if (caEl) caEl.value = data.cartAdminPw || '';
       const mrEl = document.getElementById('s-map-region');
-      if (mrEl) mrEl.value = data.mapRegion || window._mapRegion || '경기도 동두천시';
+      if (mrEl) mrEl.value = data.mapRegion || window._mapRegion || '';
       const clEl = document.getElementById('s-cycle-limit');
       if (clEl) clEl.value = data.cycleLimit || 6;
       window._cycleLimit = data.cycleLimit || 6;
@@ -305,7 +305,7 @@ window.saveMapRegion = async function() {
     msgEl.style.display = 'block';
     setTimeout(function() { msgEl.style.display = 'none'; }, 3500);
   }
-  if (!val) { showMsg('지역명을 입력해 주세요. (예: 경기도 동두천시)', false); return; }
+  if (!val) { showMsg('지역명을 입력해 주세요. (예: 경기도 ○○시)', false); return; }
   try {
     await window._updateDoc(window._doc(window._db, 'admin', 'config'), { mapRegion: val });
     window._mapRegion = val;

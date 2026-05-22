@@ -326,7 +326,7 @@ function _buildAddrQuery(t) {
   var road  = (fu.road  || '').trim();
   var jibun = (fu.jibun || '').trim();
   if (!road && !jibun) return '';
-  var BASE = (window._mapRegion || '경기도 동두천시') + ' ';
+  var BASE = (window._mapRegion || '') + (window._mapRegion ? ' ' : '');
   return (road && jibun) ? BASE + road + ' ' + jibun
        : road             ? BASE + road
        :                    BASE + jibun;
