@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전자구역카드 시스템 — 제품 설계서</title>
+<style>
+  :root {
+    --navy:  #1B3A6B;
+    --navy2: #2B5299;
+    --blue-light: #EEF2FF;
+    --blue-mid:   #BFDBFE;
+    --green: #166534;
+    --green-light: #F0FDF4;
+    --orange: #92400E;
+    --orange-light: #FFFBEB;
+    --red:   #991B1B;
+    --red-light: #FEF2F2;
+    --purple: #5B21B6;
+    --purple-light: #F5F3FF;
+    --gray:  #64748B;
+    --gray2: #94A3B8;
+    --border: #E2E8F0;
+    --text:  #1E293B;
+    --bg:    #F8FAFC;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .page { max-width: 960px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ── 헤더 ── */
+  .doc-header {
+    background: linear-gradient(135deg, #1B3A6B 0%, #2B5299 60%, #1e4a9a 100%);
+    color: #fff;
+    border-radius: 18px;
+    padding: 36px 40px;
+    margin-bottom: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .doc-header::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+  .doc-header::after {
+    content: '';
+    position: absolute; bottom: -30px; right: 120px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .doc-header .tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    padding: 3px 14px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+  }
+  .doc-header h1 { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
+  .doc-header p  { font-size: 13px; opacity: .82; line-height: 1.9; }
+  .doc-meta {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-top: 18px;
+    font-size: 12px; opacity: .75;
+  }
+  .doc-meta span::before { content: '· '; }
+
+  /* ── 섹션 타이틀 ── */
+  .sec-title {
+    font-size: 10px; font-weight: 900;
+    color: var(--gray); letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 40px 0 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sec-title::after {
+    content: '';
+    flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── 카드 ── */
+  .card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    background: var(--blue-light);
+    border-bottom: 1.5px solid var(--border);
+  }
+  .card-icon {
+    width: 34px; height: 34px;
+    background: var(--navy);
+    color: #fff;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .card-title  { font-size: 15px; font-weight: 800; color: var(--navy); }
+  .card-sub    { font-size: 11px; color: var(--gray); margin-top: 1px; }
+  .card-body   { padding: 18px 20px; }
+
+  /* ── 표 ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+  th {
+    background: var(--blue-light); color: var(--navy);
+    font-weight: 700; padding: 7px 12px; text-align: left;
+    border-bottom: 1.5px solid var(--border);
+  }
+  td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFBFF; }
+
+  /* ── 뱃지 ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 9px; border-radius: 99px;
+    font-size: 10px; font-weight: 700; white-space: nowrap;
+  }
+  .badge-blue   { background: var(--blue-light);   color: var(--navy); }
+  .badge-green  { background: var(--green-light);  color: var(--green); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-red    { background: var(--red-light);    color: var(--red); }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+  .badge-gray   { background: #F1F5F9;             color: var(--gray); }
+
+  /* ── 코드 블록 ── */
+  .code {
+    background: #1E293B; color: #e2e8f0;
+    border-radius: 10px; padding: 14px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 11.5px; line-height: 1.9;
+    margin: 10px 0; overflow-x: auto; white-space: pre;
+  }
+  .cm  { color: #94a3b8; }
+  .ky  { color: #7dd3fc; }
+  .val { color: #86efac; }
+  .str { color: #fbbf24; }
+  code {
+    background: #F1F5F9; color: var(--navy);
+    padding: 1px 6px; border-radius: 5px;
+    font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700;
+  }
+
+  /* ── 인포 박스 ── */
+  .info-box  { background: var(--blue-light);   border-left: 4px solid var(--navy);  border-radius: 0 10px 10px 0; padding: 10px 14px; font-size: 12px; margin: 10px 0; color: var(--navy); }
+  .warn-box  { background: var(--orange-light); border-left: 4px solid #D97706;      border-radius: 0 10px 10px 0; padding: 10px 14px; font-size: 12px; margin: 10px 0; color: var(--orange); }
+  .ok-box    { background: var(--green-light);  border-left: 4px solid var(--green); border-radius: 0 10px 10px 0; padding: 10px 14px; font-size: 12px; margin: 10px 0; color: var(--green); }
+
+  /* ── 아키텍처 다이어그램 ── */
+  .arch-box {
+    background: #1E293B; color: #e2e8f0;
+    border-radius: 14px; padding: 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px; line-height: 2;
+    overflow-x: auto;
+  }
+  .arch-box .layer { color: #7dd3fc; font-weight: 700; }
+  .arch-box .comp  { color: #86efac; }
+  .arch-box .api   { color: #fbbf24; }
+  .arch-box .arrow { color: #94a3b8; }
+  .arch-box .note  { color: #94a3b8; font-size: 10px; }
+
+  /* ── 플로우차트 ── */
+  .flow {
+    display: flex; align-items: center; gap: 0;
+    flex-wrap: wrap; margin: 12px 0;
+  }
+  .flow-step {
+    background: var(--blue-light); border: 1.5px solid var(--blue-mid);
+    border-radius: 10px; padding: 8px 14px;
+    font-size: 12px; font-weight: 700; color: var(--navy);
+    white-space: nowrap;
+  }
+  .flow-step.green { background: var(--green-light); border-color: #86efac; color: var(--green); }
+  .flow-step.orange { background: var(--orange-light); border-color: #FCD34D; color: var(--orange); }
+  .flow-step.gray { background: #F1F5F9; border-color: var(--border); color: var(--gray); }
+  .flow-arrow { color: var(--gray2); font-size: 18px; margin: 0 4px; }
+
+  /* ── 역할 그리드 ── */
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px; margin: 10px 0;
+  }
+  .role-card {
+    border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; background: #fff;
+  }
+  .role-card .role-name { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .role-card .role-org  { font-size: 10px; color: var(--gray); margin-bottom: 6px; }
+  .role-card ul { padding-left: 14px; font-size: 11px; color: var(--text); }
+  .role-card ul li { margin-bottom: 2px; }
+
+  /* ── 2컬럼 레이아웃 ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── 인쇄 ── */
+  @media print {
+    body { background: #fff; }
+    .page { padding: 0; }
+    .card { break-inside: avoid; }
+    .no-print { display: none !important; }
+    .sec-title { margin-top: 20px; }
+  }
+
+  /* ── 목차 ── */
+  .toc {
+    background: #fff; border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 20px 24px; margin-bottom: 32px;
+  }
+  .toc h3 { font-size: 12px; font-weight: 800; color: var(--navy); margin-bottom: 12px; }
+  .toc ol { padding-left: 18px; }
+  .toc li { font-size: 12px; padding: 3px 0; color: var(--navy); }
+  .toc li a { color: var(--navy); text-decoration: none; }
+  .toc li a:hover { text-decoration: underline; }
+
+  /* 하단 */
+  .footer {
+    text-align: center; color: var(--gray2);
+    font-size: 11px; margin-top: 56px;
+    padding-top: 24px; border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- 헤더 -->
+<div class="doc-header">
+  <div class="tag">제품 설계서 v1.0</div>
+  <h1>📋 전자구역카드 시스템</h1>
+  <p>
+    종이 구역카드를 완전히 대체하는 웹 기반 구역관리 시스템<br>
+    Firebase Firestore · Cloudflare Pages · Naver Maps · Kakao SDK
+  </p>
+  <div class="doc-meta">
+    <span>최초 작성: 2026-05-23</span>
+    <span>현재 버전: v1.78</span>
+    <span>운영 환경: Cloudflare Workers / Pages</span>
+    <span>DB: Firebase Firestore (asia-northeast3 서울)</span>
+  </div>
+</div>
+
+<!-- 인쇄 버튼 -->
+<div class="no-print" style="text-align:right;margin-bottom:20px">
+  <button onclick="window.print()"
+    style="background:var(--navy);color:#fff;border:none;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">
+    🖨 PDF로 저장 / 인쇄
+  </button>
+</div>
+
+<!-- 목차 -->
+<div class="toc">
+  <h3>📑 목차</h3>
+  <ol>
+    <li><a href="#s1">시스템 개요</a></li>
+    <li><a href="#s2">전체 아키텍처</a></li>
+    <li><a href="#s3">화면(모듈) 구성</a></li>
+    <li><a href="#s4">사용자 역할 체계</a></li>
+    <li><a href="#s5">인증 모델</a></li>
+    <li><a href="#s6">데이터 모델 (Firestore)</a></li>
+    <li><a href="#s7">기능 명세</a></li>
+    <li><a href="#s8">외부 API 연동</a></li>
+    <li><a href="#s9">설정 항목</a></li>
+    <li><a href="#s10">기술 스택</a></li>
+    <li><a href="#s11">배포 구조</a></li>
+    <li><a href="#s12">보안 모델</a></li>
+  </ol>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 1. 시스템 개요 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s1">01 · 시스템 개요</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🎯</div>
+    <div>
+      <div class="card-title">목적 및 배경</div>
+      <div class="card-sub">왜 만들었는가</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p style="margin-bottom:10px">
+      여호와의 증인 회중에서 사용하는 종이 구역카드(S-13 기반)를 디지털화한 웹 앱입니다.
+      기존에는 장로가 종이 카드를 손으로 관리하고 전도인에게 직접 건네주는 방식을 사용했으나,
+      분실·오기·회수 지연·현황 파악 어려움 등의 문제가 있었습니다.
+    </p>
+    <div class="two-col">
+      <div>
+        <b style="font-size:12px;color:var(--navy)">해결한 문제</b>
+        <ul style="padding-left:16px;margin-top:6px;font-size:12px">
+          <li>구역 배정·회수 실시간 동기화</li>
+          <li>방문 기록 디지털 저장</li>
+          <li>S-13 양식 자동 생성·출력</li>
+          <li>전시대봉사 팀 편성·배정표 공유</li>
+          <li>주소 오류 수정 요청 체계화</li>
+          <li>현황 대시보드로 즉각 파악</li>
+        </ul>
+      </div>
+      <div>
+        <b style="font-size:12px;color:var(--navy)">핵심 설계 원칙</b>
+        <ul style="padding-left:16px;margin-top:6px;font-size:12px">
+          <li>월 비용 0원 (Firebase + Cloudflare 무료 한도)</li>
+          <li>설치 불필요 — 브라우저 접속만으로 사용</li>
+          <li>스마트폰 홈 화면 설치 (PWA)</li>
+          <li>오프라인에서도 마지막 상태 유지</li>
+          <li>개인정보 최소 수집 원칙</li>
+          <li>프레임워크 없음 — 순수 HTML/JS</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">👥</div>
+    <div>
+      <div class="card-title">주요 사용자</div>
+      <div class="card-sub">누가 사용하는가</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>사용자</th><th>주요 행위</th><th>사용 화면</th></tr>
+      <tr><td><b>관리자 / 장로</b></td><td>구역 배정·회수, 전도인 관리, 시스템 설정, S-13 출력</td><td><code>admin.html</code></td></tr>
+      <tr><td><b>봉사감독자 / 봉사의 종</b></td><td>구역 배정·회수, 방문내역 확인, 메모 승인</td><td><code>admin.html</code></td></tr>
+      <tr><td><b>구역의 종</b></td><td>구역 배정·회수 (설정·메뉴 일부 제한)</td><td><code>admin.html</code></td></tr>
+      <tr><td><b>인도자 (전시대봉사)</b></td><td>팀 편성, 배정표 공유</td><td><code>cart.html</code></td></tr>
+      <tr><td><b>일반 전도인</b></td><td>배정 구역 확인, 방문 기록, 주소 수정 요청</td><td><code>publisher.html</code></td></tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 2. 전체 아키텍처 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s2">02 · 전체 아키텍처</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="arch-box">
+<span class="layer">┌─────────────────────── 클라이언트 레이어 ───────────────────────────┐</span>
+│                                                                       │
+│  <span class="comp">admin.html</span>          <span class="comp">publisher.html</span>        <span class="comp">cart.html</span>              │
+│  (관리자 앱)          (전도인 앱 · PWA)     (전시대봉사 앱 · PWA)    │
+│                                                                       │
+│  <span class="comp">js/admin.js</span>         <span class="comp">publisher 내장 JS</span>    <span class="comp">cart 내장 JS</span>           │
+│  <span class="comp">js/map-admin.js</span>                                                   │
+│  <span class="comp">js/settings.js</span>      <span class="comp">js/s13.js</span>                                    │
+│                                                                       │
+<span class="layer">└────────────────────────────┬──────────────────────────────────────┘</span>
+                             │ HTTPS
+<span class="layer">┌────────────────────────────┼──────────────────────────────────────┐</span>
+│  <span class="layer">호스팅 레이어</span>              │                                       │
+│                            ↓                                         │
+│  <span class="api">Cloudflare Workers / Pages</span>  (정적 파일 서빙 · CDN · HTTPS 자동)  │
+└────────────────────────────┬──────────────────────────────────────┘
+                             │
+         ┌───────────────────┼─────────────────────────┐
+         ↓                   ↓                          ↓
+<span class="api">Firebase Firestore</span>     <span class="api">Naver Maps API</span>          <span class="api">Kakao JS SDK</span>
+(데이터 저장소)         (지도·지오코딩)          (카카오톡 공유)
+<span class="api">Firebase Auth</span>
+(익명 인증)
+
+<span class="note">* 모든 데이터는 Firestore에 저장. 지도·카카오는 선택적 연동.
+* 서버 사이드 로직 없음 — 100% 클라이언트 사이드 앱 (serverless)</span></div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 3. 화면 구성 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s3">03 · 화면(모듈) 구성</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🖥</div>
+    <div>
+      <div class="card-title">admin.html — 관리자 앱</div>
+      <div class="card-sub">장로·봉사감독자·구역의 종 전용 · PC 최적화</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>탭</th><th>주요 기능</th><th>접근 권한</th></tr>
+      <tr>
+        <td>🗓 봉사일정</td>
+        <td>요일별 구역 배정 캘린더, 자동 배분 패널, 갤러리·캘린더 뷰 전환</td>
+        <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span> <span class="badge badge-blue">구역의 종</span></td>
+      </tr>
+      <tr>
+        <td>🗺 구역관리</td>
+        <td>구역 목록·현황 대시보드, 배정·회수·완료 처리, 엑셀 업로드, 세대 편집, 연체 구역 관리</td>
+        <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span> <span class="badge badge-blue">구역의 종</span></td>
+      </tr>
+      <tr>
+        <td>📍 지도</td>
+        <td>네이버 지도 구역 마커 표시, 배정 상태별 색상 범례, 클릭 시 구역 상세</td>
+        <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span></td>
+      </tr>
+      <tr>
+        <td>👥 전도인관리</td>
+        <td>전도인 등록·수정·승인, 역할 지정, PIN 초기화, 전시대봉사 권한 설정</td>
+        <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span></td>
+      </tr>
+      <tr>
+        <td>📋 방문내역</td>
+        <td>방문 코드별 필터, 기간·전도인별 조회, CSV 내보내기</td>
+        <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span></td>
+      </tr>
+      <tr>
+        <td>💬 메모관리</td>
+        <td>전도인 제출 메모 승인·삭제, 관리자 직접 메모 작성</td>
+        <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span></td>
+      </tr>
+      <tr>
+        <td>📄 S-13</td>
+        <td>공식 S-13 구역배정기록 양식 자동 생성, 기간 필터, 인쇄/PDF 저장</td>
+        <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span> <span class="badge badge-blue">구역의 종</span></td>
+      </tr>
+      <tr>
+        <td>⚙ 설정</td>
+        <td>회중명, 비밀번호, 구역 유형, 인증 방식, API 키 등</td>
+        <td><span class="badge badge-red">관리자 전용</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">📱</div>
+    <div>
+      <div class="card-title">publisher.html — 전도인 앱 (PWA)</div>
+      <div class="card-sub">모바일 최적화 · 홈 화면 설치 가능</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>화면</th><th>내용</th></tr>
+      <tr><td>로그인</td><td>이름 입력 → Firestore 조회 → 동의 화면 → PIN 인증 (첫 방문 시 PIN 설정)</td></tr>
+      <tr><td>이어하기</td><td>localStorage 저장 세션으로 빠른 재접속</td></tr>
+      <tr><td>구역카드</td><td>배정 구역 정보·지도·세대 목록·방문 코드 기록 (도로명·지번·건물명)</td></tr>
+      <tr><td>방문 기록</td><td>세대별 방문 코드 선택 (재방문·부재·거절 등) · 타임스탬프 자동 저장</td></tr>
+      <tr><td>주소 수정 요청</td><td>주소 오류 발견 시 카카오톡 또는 클립보드로 수정 요청 전송</td></tr>
+      <tr><td>전시대봉사 패널</td><td>이번 주 전시대봉사 일정·팀 배정 확인, 팀 배정표 카카오톡 공유</td></tr>
+      <tr><td>메모 제출</td><td>구역 관련 메모 작성 (관리자 승인 후 활성화)</td></tr>
+      <tr><td>네비게이션</td><td>배정된 구역 주소 → 네이버 지도 길찾기 연동</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🛒</div>
+    <div>
+      <div class="card-title">cart.html — 전시대봉사 앱 (PWA)</div>
+      <div class="card-sub">인도자 전용 팀 편성 · 일정 관리</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>화면</th><th>내용</th></tr>
+      <tr><td>인도자 인증</td><td>개인 PIN 또는 공용 암호 입력</td></tr>
+      <tr><td>봉사 유형 선택</td><td>요일·시간별 봉사 유형 탭 (admin에서 설정한 유형)</td></tr>
+      <tr><td>주간 일정 목록</td><td>이번 주 일정 자동 생성 및 이전 일정 조회</td></tr>
+      <tr><td>일정 상세 / 팀 편성</td><td>A·B·C·D·E·F 팀별 조 수 설정, 봉사자 배정, 카트 담당자 지정</td></tr>
+      <tr><td>팀 배정표 공유</td><td>💬 공유 버튼 → 배정표 이미지 생성 → 카카오톡 전송</td></tr>
+      <tr><td>일정 완료 처리</td><td>완료 표시·해제, Firestore 저장</td></tr>
+    </table>
+    <div class="ok-box" style="margin-top:10px">
+      💡 팀 카드는 팀별 파스텔 컬러(6색)와 도트 배경 패턴 적용 · 반투명 디자인
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 4. 사용자 역할 체계 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s4">04 · 사용자 역할 체계</div>
+
+<div class="card">
+  <div class="card-body">
+    <p style="margin-bottom:14px;font-size:12px">사용자는 <b>조직 역할</b>(orgRole)과 <b>시스템 권한</b>(permission) 두 가지를 가집니다.</p>
+
+    <b style="font-size:12px;color:var(--navy)">시스템 권한별 접근 범위</b>
+    <table style="margin-top:8px">
+      <tr>
+        <th>권한</th>
+        <th>봉사일정</th><th>구역관리</th><th>지도</th>
+        <th>전도인관리</th><th>방문내역</th><th>메모</th>
+        <th>S-13</th><th>설정</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-red">관리자</span></td>
+        <td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-orange">봉사감독자</span></td>
+        <td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-purple">구역의 종</span></td>
+        <td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">인도자</span></td>
+        <td colspan="8" style="color:var(--gray)">admin.html 접근 불가 · publisher.html + cart.html 전용</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-gray">일반</span></td>
+        <td colspan="8" style="color:var(--gray)">publisher.html 전용 · 배정 구역 확인·방문 기록만 가능</td>
+      </tr>
+    </table>
+
+    <div style="margin-top:16px">
+      <b style="font-size:12px;color:var(--navy)">전시대봉사 역할 (cartRole)</b>
+      <table style="margin-top:8px">
+        <tr><th>값</th><th>의미</th></tr>
+        <tr><td><code>''</code> (빈값)</td><td>전시대봉사 비허용 — cart.html 링크 표시 안 됨</td></tr>
+        <tr><td><code>member</code></td><td>팀원으로 배정 가능, 일정 조회 가능</td></tr>
+        <tr><td><code>admin</code></td><td>인도자 — 팀 편성·수정 권한</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 5. 인증 모델 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s5">05 · 인증 모델</div>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🔑</div>
+      <div>
+        <div class="card-title">admin.html 로그인</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <b style="font-size:12px;color:var(--navy)">경로 ①  — 이름 없이 관리자 로그인</b>
+      <div class="flow" style="margin:8px 0">
+        <div class="flow-step">비밀번호 입력</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">admin/config.password 비교</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step green">관리자 세션</div>
+      </div>
+      <b style="font-size:12px;color:var(--navy)">경로 ②  — 이름 + PIN 로그인</b>
+      <div class="flow" style="margin:8px 0;flex-direction:column;align-items:flex-start;gap:6px">
+        <div style="display:flex;align-items:center;gap:4px">
+          <div class="flow-step">이름 입력</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">publishers 조회</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">PIN 입력</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div class="flow-arrow" style="margin-left:8px">→</div>
+          <div class="flow-step green">권한별 세션 부여</div>
+        </div>
+      </div>
+      <div class="info-box">세션은 localStorage 저장 · 유효 시간 4시간</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🛒</div>
+      <div>
+        <div class="card-title">cart.html 인도자 인증</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <b style="font-size:12px;color:var(--navy)">설정에서 방식 선택</b>
+      <table style="margin-top:8px">
+        <tr><th>방식</th><th>동작</th></tr>
+        <tr>
+          <td><code>individual</code><br>개인 PIN</td>
+          <td>이름 선택 → PIN 입력 → 추가로 전시대봉사 암호(cartAdminPw) 확인</td>
+        </tr>
+        <tr>
+          <td><code>shared</code><br>공용 암호</td>
+          <td>공용 암호 하나(sharedLeaderPin)로 모든 인도자 인증</td>
+        </tr>
+      </table>
+      <b style="font-size:12px;color:var(--navy);display:block;margin-top:12px">publisher.html 전도인 인증</b>
+      <div class="flow" style="margin:8px 0;flex-wrap:wrap">
+        <div class="flow-step">이름 입력</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">개인정보 동의</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">PIN 설정/입력</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step green">전도인 화면</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 6. 데이터 모델 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s6">06 · 데이터 모델 (Firestore)</div>
+
+<!-- admin/config -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🔥</div>
+    <div>
+      <div class="card-title"><code>admin/{config}</code> — 시스템 설정 문서</div>
+      <div class="card-sub">단일 문서 · 관리자만 쓰기 가능</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>필드</th><th>타입</th><th>설명</th></tr>
+      <tr><td><code>password</code></td><td>string</td><td>관리자 비밀번호 (평문 저장)</td></tr>
+      <tr><td><code>congregation</code></td><td>string</td><td>회중명 — 앱 전체 타이틀에 표시</td></tr>
+      <tr><td><code>cycleLimit</code></td><td>number</td><td>구역 순환 회차 상한 (기본 6)</td></tr>
+      <tr><td><code>visitMode</code></td><td>string</td><td>방문 방식 (호별 등)</td></tr>
+      <tr><td><code>territoryGroups</code></td><td>array&lt;string&gt;</td><td>구역 유형 그룹 목록 (기본 8개)</td></tr>
+      <tr><td><code>naverClientId</code></td><td>string</td><td>네이버 지도 API 키 (Firestore 저장 우선)</td></tr>
+      <tr><td><code>mapRegion</code></td><td>string</td><td>주소 검색 프리픽스 (예: 경기도 ○○시)</td></tr>
+      <tr><td><code>cartAdminPw</code></td><td>string</td><td>전시대봉사 인도자 암호</td></tr>
+      <tr><td><code>passwordChangedAt</code></td><td>timestamp</td><td>비밀번호 마지막 변경일</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- config/auth -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🔐</div>
+    <div>
+      <div class="card-title"><code>config/{auth}</code> — 인증 방식 설정</div>
+      <div class="card-sub">단일 문서</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>필드</th><th>타입</th><th>설명</th></tr>
+      <tr><td><code>leaderAuthMode</code></td><td>string</td><td><code>individual</code> 또는 <code>shared</code></td></tr>
+      <tr><td><code>sharedLeaderPin</code></td><td>string</td><td>공용 인도자 암호</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- publishers -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">👤</div>
+    <div>
+      <div class="card-title"><code>publishers/{id}</code> — 전도인</div>
+      <div class="card-sub">전도인 1명당 1문서</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>필드</th><th>타입</th><th>설명</th></tr>
+      <tr><td><code>name</code></td><td>string</td><td>전도인 이름 (고유 식별자로 사용)</td></tr>
+      <tr><td><code>orgRole</code></td><td>string</td><td>조직 역할: 장로 / 봉사의 종 / 전도인</td></tr>
+      <tr><td><code>permission</code></td><td>string</td><td>시스템 권한: 관리자·봉사감독자·구역의 종·인도자·일반</td></tr>
+      <tr><td><code>approved</code></td><td>boolean</td><td>관리자 승인 여부</td></tr>
+      <tr><td><code>pin</code></td><td>string</td><td>개인 PIN (평문)</td></tr>
+      <tr><td><code>assignedTerritory</code></td><td>string|null</td><td>현재 배정된 구역 ID</td></tr>
+      <tr><td><code>consentGiven</code></td><td>boolean</td><td>개인정보 동의 여부</td></tr>
+      <tr><td><code>cartRole</code></td><td>string</td><td>전시대봉사 역할: '' / member / admin</td></tr>
+      <tr><td><code>cartApproved</code></td><td>boolean</td><td>전시대봉사 허용 여부</td></tr>
+      <tr><td><code>canEditAddress</code></td><td>boolean</td><td>구역 주소 직접 수정 권한</td></tr>
+      <tr><td><code>lastAccess</code></td><td>timestamp</td><td>마지막 접속일</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- territories -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🗺</div>
+    <div>
+      <div class="card-title"><code>territories/{id}</code> — 구역</div>
+      <div class="card-sub">구역 1개당 1문서 · 가장 큰 컬렉션</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="two-col">
+      <table>
+        <tr><th>필드</th><th>설명</th></tr>
+        <tr><td><code>no</code></td><td>구역 번호</td></tr>
+        <tr><td><code>name</code></td><td>구역 이름</td></tr>
+        <tr><td><code>category</code></td><td>구역 유형 (주택·상가 등)</td></tr>
+        <tr><td><code>totalUnits</code></td><td>총 세대 수</td></tr>
+        <tr><td><code>units</code></td><td>세대 배열 (도로명·지번·건물명·호수 등)</td></tr>
+        <tr><td><code>status</code></td><td>미배정 / 진행중 / 완료</td></tr>
+        <tr><td><code>assignedPublishers</code></td><td>배정 전도인 이름 배열</td></tr>
+        <tr><td><code>lastAssignedDate</code></td><td>마지막 배정일</td></tr>
+        <tr><td><code>lastCompletedDate</code></td><td>마지막 완료일</td></tr>
+      </table>
+      <table>
+        <tr><th>필드</th><th>설명</th></tr>
+        <tr><td><code>completionRate</code></td><td>완료율 (%)</td></tr>
+        <tr><td><code>cycle</code></td><td>현재 회차</td></tr>
+        <tr><td><code>cycleHistory</code></td><td>배정 이력 배열 (S-13 데이터 소스)</td></tr>
+        <tr><td><code>visitMap</code></td><td>세대별 방문 기록 {unitKey: {by, code, at}}</td></tr>
+        <tr><td><code>memo</code></td><td>구역 메모</td></tr>
+        <tr><td><code>territoryNotice</code></td><td>구역 공지</td></tr>
+        <tr><td><code>active</code></td><td>활성 구역 여부</td></tr>
+        <tr><td><code>personalAssignee</code></td><td>개인 구역 담당자</td></tr>
+        <tr><td><code>createdAt</code></td><td>생성일</td></tr>
+      </table>
+    </div>
+    <div class="warn-box" style="margin-top:8px">
+      ⚠️ <code>cycleHistory</code> 배열의 각 항목이 S-13 양식의 한 행 데이터가 됩니다.<br>
+      항목 구조: <code>{ assignedAt, completedAt, publishers[], unitVisits{} }</code>
+    </div>
+  </div>
+</div>
+
+<!-- 나머지 컬렉션 요약 -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">📦</div>
+    <div>
+      <div class="card-title">기타 컬렉션 요약</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>컬렉션</th><th>문서 수</th><th>용도</th></tr>
+      <tr><td><code>presence/{이름}</code></td><td>접속자 수</td><td>실시간 접속 현황 (active, lastSeen, territoryNo) · 300분 비활동 시 자동 만료</td></tr>
+      <tr><td><code>weeklySchedule/{0~6}</code></td><td>7</td><td>요일별(인덱스) 구역 배정 일정 관리</td></tr>
+      <tr><td><code>adminNotices/{id}</code></td><td>다수</td><td>관리자 공지사항 (target: all 등)</td></tr>
+      <tr><td><code>addressRequests/{id}</code></td><td>다수</td><td>전도인 주소 수정 요청</td></tr>
+      <tr><td><code>memos/{id}</code></td><td>다수</td><td>전도인·관리자 구역 메모 (status: pending → approved)</td></tr>
+      <tr><td><code>cart_witnessing_schedules/{id}</code></td><td>다수</td><td>전시대봉사 일정 (월-일 주간 단위)</td></tr>
+      <tr><td><code>cartSessions/{id}</code></td><td>다수</td><td>전시대봉사 팀 배정 세션 데이터</td></tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 7. 기능 명세 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s7">07 · 기능 명세</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🗓</div>
+    <div>
+      <div class="card-title">구역 배정·회수 흐름</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="flow" style="flex-wrap:wrap;gap:4px">
+      <div class="flow-step">구역 선택</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">전도인 선택</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">배정 확인</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step green">Firestore 업데이트<br><small>(status: 진행중)</small></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="flow" style="flex-wrap:wrap;gap:4px">
+        <div class="flow-step orange">완료/회수 요청</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">cycleHistory에 기록 추가</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step green">status: 미배정/완료</div>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:10px">
+      💡 배정 이력은 <code>territories.cycleHistory</code>에 누적 저장되므로 과거 기록이 완전히 보존됩니다.
+      회차 제한(<code>cycleLimit</code>) 초과 시 경고 표시.
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">📄</div>
+    <div>
+      <div class="card-title">S-13 구역 배정 기록부 자동 생성</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul style="padding-left:18px;font-size:12px;line-height:2.2">
+      <li>공식 JW S-13-KO 양식(A4 세로, 20행/페이지) — 실제 용지 크기에 맞춰 인쇄됨</li>
+      <li>데이터 소스: <code>territories[*].cycleHistory</code> 배열</li>
+      <li>기간 필터: 날짜 범위 지정 (기본 최근 6개월)</li>
+      <li>봉사연도 자동 계산 — 9월 시작 기준 (예: 2025.9 ~ 2026.8 = 2025/26년도)</li>
+      <li>진행 중인 배정도 포함 (completedDate 칸 공백)</li>
+      <li>단축 날짜 형식: YY.MM.DD</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🛒</div>
+    <div>
+      <div class="card-title">전시대봉사 주간 자동 생성</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul style="padding-left:18px;font-size:12px;line-height:2.2">
+      <li>주간 기준: 월요일~일요일 (일요일은 같은 주 마지막 날로 처리)</li>
+      <li>팀 편성 버튼 클릭 시 해당 주 일정이 없으면 Firestore에 자동 생성</li>
+      <li>주간 키(wkStr): 로컬 날짜 기준 YYYYMMDD (UTC 오프셋 버그 방지)</li>
+      <li>6개 팀(A~F) × 최대 6개 조 × 조당 3명 구성</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 8. 외부 API 연동 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s8">08 · 외부 API 연동</div>
+
+<div class="card">
+  <div class="card-body">
+    <table>
+      <tr><th style="width:18%">API</th><th style="width:20%">키 위치</th><th>사용 목적</th><th style="width:12%">필수 여부</th></tr>
+      <tr>
+        <td><b>Firebase Firestore</b><br><small>v10 모듈 SDK</small></td>
+        <td><code>config.js → firebase{}</code></td>
+        <td>전체 데이터 저장소. 구역·전도인·일정·방문기록·메모·공지·presence 등 모든 데이터</td>
+        <td><span class="badge badge-red">필수</span></td>
+      </tr>
+      <tr>
+        <td><b>Firebase Auth</b><br><small>익명 인증</small></td>
+        <td>자동 (Firestore와 동일 프로젝트)</td>
+        <td>앱 로드 시 <code>signInAnonymously()</code> 호출 → Firestore 보안 규칙 통과용 토큰 획득</td>
+        <td><span class="badge badge-red">필수</span></td>
+      </tr>
+      <tr>
+        <td><b>Naver Maps API</b><br><small>Web Dynamic Map + Geocoding</small></td>
+        <td><code>config.js → naverClientId</code><br>또는 Firestore <code>admin/config</code></td>
+        <td>관리자 지도 탭: 구역 마커 표시, 주소 검색, 지오코딩. publisher.html: 방문 구역 길찾기</td>
+        <td><span class="badge badge-orange">선택</span></td>
+      </tr>
+      <tr>
+        <td><b>Kakao JS SDK</b><br><small>v2.7.2 · Share API</small></td>
+        <td><code>config.js → kakaoJsKey</code></td>
+        <td>① 전도인 주소 수정 요청 카카오톡 전송<br>② 전시대봉사 팀 배정표 이미지(html2canvas) 카카오톡 공유</td>
+        <td><span class="badge badge-green">선택</span></td>
+      </tr>
+      <tr>
+        <td><b>Nominatim</b><br><small>OpenStreetMap</small></td>
+        <td>별도 키 불필요</td>
+        <td>Naver API 미설정 시 주소 → 좌표 변환 폴백 (admin.html 지도 탭)</td>
+        <td><span class="badge badge-green">자동 폴백</span></td>
+      </tr>
+      <tr>
+        <td><b>html2canvas</b><br><small>CDN v1.4.1</small></td>
+        <td>없음</td>
+        <td>전시대봉사 팀 배정표 화면을 PNG 이미지로 변환 (카카오 공유 또는 다운로드)</td>
+        <td><span class="badge badge-orange">카카오 공유 시</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 9. 설정 항목 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s9">09 · 설정 항목</div>
+
+<div class="card">
+  <div class="card-body">
+    <table>
+      <tr><th>항목</th><th>UI 위치</th><th>저장 위치</th><th>기본값</th></tr>
+      <tr><td>회중명</td><td>설정 → 회중</td><td>Firestore <code>admin/config.congregation</code></td><td>—</td></tr>
+      <tr><td>관리자 비밀번호</td><td>설정 → 비밀번호</td><td>Firestore <code>admin/config.password</code></td><td><code>1914</code></td></tr>
+      <tr><td>회차 제한</td><td>설정 → 회차</td><td>Firestore <code>admin/config.cycleLimit</code></td><td><code>6</code></td></tr>
+      <tr><td>방문 방식</td><td>설정 → 방문</td><td>Firestore <code>admin/config.visitMode</code></td><td>호별</td></tr>
+      <tr><td>지도 지역명</td><td>설정 → 지도</td><td>Firestore <code>admin/config.mapRegion</code></td><td>—</td></tr>
+      <tr><td>네이버 Client ID</td><td>설정 → 지도 API</td><td>Firestore 우선 · 없으면 <code>config.js</code> 폴백</td><td>—</td></tr>
+      <tr><td>구역 유형 그룹</td><td>설정 → 구역 그룹</td><td>Firestore <code>admin/config.territoryGroups</code></td><td>기본 8개</td></tr>
+      <tr><td>인도자 인증 방식</td><td>설정 → 인증</td><td>Firestore <code>config/auth.leaderAuthMode</code></td><td>individual</td></tr>
+      <tr><td>공용 인도자 암호</td><td>설정 → 인증</td><td>Firestore <code>config/auth.sharedLeaderPin</code></td><td>—</td></tr>
+      <tr><td>전시대봉사 암호</td><td>설정 → 인증</td><td>Firestore <code>admin/config.cartAdminPw</code></td><td>—</td></tr>
+      <tr><td>Firebase 키</td><td>config.js 파일</td><td>config.js (Cloudflare 배포 시 포함)</td><td>—</td></tr>
+      <tr><td>카카오 JavaScript 키</td><td>config.js 파일</td><td>config.js</td><td>—</td></tr>
+    </table>
+    <div class="info-box" style="margin-top:8px">
+      💡 네이버 Client ID는 Firestore에 저장된 값을 우선 사용하므로,
+      재배포 없이도 설정 탭에서 즉시 변경 가능합니다.
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 10. 기술 스택 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s10">10 · 기술 스택</div>
+
+<div class="card">
+  <div class="card-body">
+    <table>
+      <tr><th>분류</th><th>기술</th><th>선택 이유</th></tr>
+      <tr>
+        <td>UI 프레임워크</td>
+        <td><span class="badge badge-blue">없음 (Vanilla JS)</span></td>
+        <td>의존성 없이 장기 유지 가능. 번들러·빌드 도구 불필요. 임베디드 HTML 단일 파일 배포 가능</td>
+      </tr>
+      <tr>
+        <td>데이터베이스</td>
+        <td><span class="badge badge-orange">Firebase Firestore v10</span></td>
+        <td>실시간 동기화(<code>onSnapshot</code>), 무료 한도 충분, 서버 불필요, 오프라인 지원</td>
+      </tr>
+      <tr>
+        <td>인증</td>
+        <td><span class="badge badge-orange">Firebase Auth 익명</span></td>
+        <td>별도 계정 없이 Firestore 보안 규칙 통과. 역할 제어는 클라이언트 로직으로 처리</td>
+      </tr>
+      <tr>
+        <td>호스팅</td>
+        <td><span class="badge badge-gray">Cloudflare Workers / Pages</span></td>
+        <td>무료 CDN, HTTPS 자동, 글로벌 엣지, 정적 파일 업로드만으로 배포 완료</td>
+      </tr>
+      <tr>
+        <td>지도</td>
+        <td><span class="badge badge-green">Naver Maps API</span></td>
+        <td>한국 주소 정확도, 한글 도로명 검색 지원</td>
+      </tr>
+      <tr>
+        <td>엑셀 처리</td>
+        <td><span class="badge badge-purple">SheetJS (XLSX) + JSZip</span></td>
+        <td>서버 없이 브라우저에서 .xlsx 파싱·생성</td>
+      </tr>
+      <tr>
+        <td>이미지 캡처</td>
+        <td><span class="badge badge-purple">html2canvas v1.4.1</span></td>
+        <td>팀 배정표 DOM → PNG 변환 (카카오 공유용)</td>
+      </tr>
+      <tr>
+        <td>PWA</td>
+        <td><span class="badge badge-blue">Service Worker (sw.js)</span></td>
+        <td>오프라인 캐시, 홈 화면 설치, 업데이트 알림 배너</td>
+      </tr>
+      <tr>
+        <td>카카오 공유</td>
+        <td><span class="badge badge-yellow" style="background:#FEF9C3;color:#713F12">Kakao JS SDK v2.7.2</span></td>
+        <td>카카오톡 피드 공유 (이미지 업로드 → 피드 전송)</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 11. 배포 구조 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s11">11 · 배포 구조</div>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">☁️</div>
+      <div>
+        <div class="card-title">운영 배포 (Cloudflare)</div>
+        <div class="card-sub">jwcard\ 폴더 직접 배포</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <ul style="padding-left:16px;font-size:12px;line-height:2.2">
+        <li>명령어: <code>npx wrangler deploy</code></li>
+        <li>회중 고유 정보 포함 (Firebase 키, API 키, 구역 데이터)</li>
+        <li>URL: <code>jwcard-admin.kingdomhall1305.workers.dev</code></li>
+        <li>Service Worker 버전 관리 (<code>CACHE = 'jwcard-v1.xx'</code>)</li>
+        <li>버전 변경 시 전도인 앱에 업데이트 배너 자동 표시</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🐙</div>
+      <div>
+        <div class="card-title">공개 배포 (GitHub)</div>
+        <div class="card-sub">jwcard-dist\ 폴더 — 범용 템플릿</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <ul style="padding-left:16px;font-size:12px;line-height:2.2">
+        <li>저장소: <code>github.com/allmightyrock-cpu/jwcard</code></li>
+        <li>민감정보 제거: Firebase 키·API 키 → 플레이스홀더</li>
+        <li>회중명·지역명 → 범용 표현으로 교체</li>
+        <li><code>config.js</code>는 .gitignore로 자동 제외</li>
+        <li>설치 안내서(<code>install-guide.html</code>) 포함</li>
+        <li>제품 설계서(<code>design-doc.html</code>) 포함</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🔄</div>
+    <div>
+      <div class="card-title">PWA 업데이트 흐름</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="flow" style="flex-wrap:wrap">
+      <div class="flow-step">sw.js CACHE 버전 업</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Cloudflare 재배포</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">앱이 version.json 감지</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step green">업데이트 배너 표시</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step green">[업데이트] 클릭 → 즉시 적용</div>
+    </div>
+    <div class="info-box" style="margin-top:10px">
+      Service Worker는 SKIP_WAITING 메시지를 받기 전까지 대기합니다.
+      [업데이트] 버튼 클릭 시 postMessage로 SKIP_WAITING 전송 → 즉시 활성화.
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════ -->
+<!-- 12. 보안 모델 -->
+<!-- ════════════════════════════════════ -->
+<div class="sec-title" id="s12">12 · 보안 모델</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="two-col">
+      <div>
+        <b style="font-size:12px;color:var(--navy)">Firestore 보안 규칙</b>
+        <div class="code" style="margin-top:8px"><span class="cm">// 익명 인증된 사용자만 읽기·쓰기 허용</span>
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: <span class="ky">if</span> request.auth != null;
+    }
+  }
+}</div>
+        <div class="info-box">앱 로드 시 자동으로 <code>signInAnonymously()</code>를 호출하여 토큰을 획득합니다. 브라우저 외부에서의 무단 API 접근을 차단합니다.</div>
+      </div>
+      <div>
+        <b style="font-size:12px;color:var(--navy)">역할 기반 접근 제어 (RBAC)</b>
+        <ul style="padding-left:16px;margin-top:8px;font-size:12px;line-height:2.2">
+          <li>Firestore 규칙은 단순 인증만 처리</li>
+          <li>역할별 UI 표시·숨김은 <code>admin.js</code>의 <code>_applyRoleUI()</code>가 담당</li>
+          <li>세션은 localStorage에 저장 (4시간 유효)</li>
+          <li>관리자 비밀번호·PIN은 평문 저장<br><small style="color:var(--gray)">(내부 회중 전용 시스템, 외부 공개 불필요)</small></li>
+        </ul>
+        <b style="font-size:12px;color:var(--navy);display:block;margin-top:10px">개인정보 보호</b>
+        <ul style="padding-left:16px;margin-top:6px;font-size:12px;line-height:2.2">
+          <li>방문 기록: 코드 선택 방식 — 세대주 정보 수집 없음</li>
+          <li>전도인 동의 절차 내장 (consentGiven)</li>
+          <li><code>config.js</code>는 git 제외 (.gitignore)</li>
+          <li>구역 데이터는 회중 전용 서버에만 존재</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warn-box" style="margin-top:10px">
+      ⚠️ Firestore 규칙이 <code>if true</code> (모두 허용)로 설정된 경우 외부 접근이 가능합니다.
+      반드시 <code>if request.auth != null</code>로 설정하고, Firebase Authentication에서 익명 로그인을 활성화하세요.
+    </div>
+  </div>
+</div>
+
+<!-- 하단 -->
+<div class="footer">
+  <p style="font-weight:700;color:var(--navy);margin-bottom:4px">전자구역카드 시스템 제품 설계서</p>
+  <p>이 문서는 실제 코드베이스(v1.78 기준)를 분석하여 역방향으로 작성된 설계 문서입니다.</p>
+  <p style="margin-top:8px;color:#CBD5E1;font-size:11px">
+    이 소프트웨어는 한국 여호와의 증인 회중 전용입니다.
+  </p>
+</div>
+
+</div><!-- /page -->
+</body>
+</html>
