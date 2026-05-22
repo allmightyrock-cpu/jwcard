@@ -3829,7 +3829,7 @@ window.renderTerritoryTable = function() {
 
   let parsedCycle = null, kwRest = rawKw.toLowerCase();
   if (rawKw) {
-    const mCyc = rawKw.match(/([1-6])\s*(?:회\s*차?|차)/);
+    const mCyc = rawKw.match(/([1-9])\s*(?:회\s*차?|차)/);
     if (mCyc) { parsedCycle = parseInt(mCyc[1]); kwRest = kwRest.replace(mCyc[0].toLowerCase(),'').trim(); }
   }
 
