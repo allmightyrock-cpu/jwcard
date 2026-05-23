@@ -55,6 +55,38 @@
     return fmt12h(t.h, t.m);
   }
 
+  // ── 주간 세션 식별 (인도자/신청자 양쪽이 같은 cartSessions 문서를 가리켜야 함) ──
+
+  // 일정 타입 → 요일(0=일~6=토). id 접두사(mon/tue…) 우선, 없으면 label("월요일"…). 못 찾으면 -1
+  function schedTypeToDow(t) {
+    var ID_DOW = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 0 };
+    var prefix = ((t && t.id) || '').split('_')[0].toLowerCase();
+    if (ID_DOW[prefix] !== undefined) return ID_DOW[prefix];
+    var LABEL_DOW = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0 };
+    var lbl = (t && t.label) || '';
+    for (var k in LABEL_DOW) {
+      if (lbl.indexOf(k + '요일') !== -1) return LABEL_DOW[k];
+    }
+    return -1;
+  }
+
+  // 해당 날짜가 속한 주의 월요일(00:00). 일요일은 그 주의 마지막 날로 보고 6일 뺌.
+  function weekMonday(now) {
+    now = now || new Date();
+    var d = now.getDay();
+    var m = new Date(now);
+    m.setHours(0, 0, 0, 0);
+    m.setDate(now.getDate() - (d === 0 ? 6 : d - 1));
+    return m;
+  }
+
+  // 주차 키 "YYYYMMDD" — 로컬 날짜 기준(UTC 변환 시 +9 지역에서 하루 밀림 방지)
+  function weekKey(date) {
+    return date.getFullYear()
+      + String(date.getMonth() + 1).padStart(2, '0')
+      + String(date.getDate()).padStart(2, '0');
+  }
+
   return {
     INTERVALS: INTERVALS,
     interval: interval,
@@ -62,6 +94,9 @@
     slotHM: slotHM,
     fmt12h: fmt12h,
     slotLabel: slotLabel,
-    calcTime: calcTime
+    calcTime: calcTime,
+    schedTypeToDow: schedTypeToDow,
+    weekMonday: weekMonday,
+    weekKey: weekKey
   };
 });

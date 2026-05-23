@@ -1196,39 +1196,14 @@ let _seTeams = [];
 let _seSessionKey = "";
 let _seSessionInfo = {};
 
-function _cwSchedTypeToDow(t){
-  const ID_DOW={mon:1,tue:2,wed:3,thu:4,fri:5,sat:6,sun:0};
-  const prefix=(t.id||"").split("_")[0].toLowerCase();
-  if(ID_DOW[prefix]!==undefined) return ID_DOW[prefix];
-  const LABEL_DOW={"월":1,"화":2,"수":3,"목":4,"금":5,"토":6,"일":0};
-  const lbl=t.label||"";
-  for(const [k,v] of Object.entries(LABEL_DOW)){
-    if(lbl.includes(k+"요일")) return v;
-  }
-  return -1;
-}
-
-function _cwApHmTo24(ap,h,m){
-  let hr=parseInt(h)||0;
-  if(ap==="오후"&&hr!==12) hr+=12;
-  if(ap==="오전"&&hr===12) hr=0;
-  return {h:hr,m:parseInt(m||"0")};
-}
-
-// 주간 기준: 월요일 ~ 일요일 (일요일은 그 주 마지막 날)
-// d=0(일)이면 6일 뺌 → 같은 주의 월요일, d=1(월)이면 0일 뺌 → 당일
-function _cwWeekMonday(){
-  const now=new Date(),d=now.getDay();
-  const m=new Date(now);
-  m.setHours(0,0,0,0);
-  m.setDate(now.getDate()-(d===0?6:d-1));
-  return m;
-}
+// 아래 3개는 공유 모듈(js/schedule-time.js)에 위임 — 인도자/신청자 앱이 같은 주차/요일 계산을 쓰도록
+function _cwSchedTypeToDow(t){ return ScheduleTime.schedTypeToDow(t); }
+function _cwApHmTo24(ap,h,m){ return ScheduleTime.apHmTo24(ap,h,m); }
+function _cwWeekMonday(){ return ScheduleTime.weekMonday(); }
 
 function _cwBuildWeekSessions(){
   const monday=_cwWeekMonday();
-  // wkStr: 로컬 날짜 기준 (toISOString은 UTC 변환으로 한국 등 +9 지역에서 하루 밀릴 수 있음)
-  const wkStr=monday.getFullYear()+String(monday.getMonth()+1).padStart(2,"0")+String(monday.getDate()).padStart(2,"0");
+  const wkStr=ScheduleTime.weekKey(monday);
   const DOW_KO=["일","월","화","수","목","금","토"];
   const now=new Date();
   const sessions=[];

@@ -96,3 +96,49 @@ test('회귀: 같은 배정에서 인도자/신청자 표시 시간이 일치', 
     }
   }
 });
+
+// ── schedTypeToDow : 일정 타입 → 요일(0=일~6=토) ────────────────────
+test('schedTypeToDow: id 접두사 우선', () => {
+  assert.equal(ST.schedTypeToDow({ id: 'thu_1', label: '아무거나' }), 4);
+  assert.equal(ST.schedTypeToDow({ id: 'sun_x' }), 0);
+  assert.equal(ST.schedTypeToDow({ id: 'mon' }), 1);
+});
+
+test('schedTypeToDow: id 없으면 label로 판별', () => {
+  assert.equal(ST.schedTypeToDow({ label: '수요일 오전' }), 3);
+  assert.equal(ST.schedTypeToDow({ label: '토요일' }), 6);
+});
+
+test('schedTypeToDow: 못 찾으면 -1', () => {
+  assert.equal(ST.schedTypeToDow({ id: 'xyz', label: '없음' }), -1);
+  assert.equal(ST.schedTypeToDow({}), -1);
+});
+
+// ── weekMonday / weekKey : 주차 식별 (인도자/신청자 동기화의 핵심) ────
+test('weekMonday: 어떤 날을 줘도 그 주 월요일 00:00 반환', () => {
+  for (let i = 1; i <= 28; i++) {
+    const d = new Date(2026, 4, i, 15, 30);     // 5월 i일 오후 (로컬)
+    const mon = ST.weekMonday(d);
+    assert.equal(mon.getDay(), 1, `${d} → ${mon} (월요일 아님)`);
+    assert.equal(mon.getHours(), 0);
+    assert.equal(mon.getMinutes(), 0);
+  }
+});
+
+test('weekKey: 로컬 날짜 YYYYMMDD 포맷', () => {
+  assert.equal(ST.weekKey(new Date(2026, 4, 4)), '20260504');
+  assert.equal(ST.weekKey(new Date(2026, 11, 31)), '20261231');
+  assert.equal(ST.weekKey(new Date(2026, 0, 1)), '20260101');
+});
+
+// 회귀: 월~일 7일이 모두 같은 주차 키로 묶여야 함
+// (인도자가 쓴 cartSessions 문서를 신청자가 같은 키로 읽어야 배정이 보인다)
+test('회귀: 한 주(월~일)의 모든 날이 동일한 weekKey 로 묶임', () => {
+  const someMon = ST.weekMonday(new Date(2026, 4, 13, 12, 0));
+  const expected = ST.weekKey(someMon);
+  for (let off = 0; off < 7; off++) {
+    const day = new Date(someMon.getFullYear(), someMon.getMonth(), someMon.getDate() + off, 9, 0);
+    assert.equal(ST.weekKey(ST.weekMonday(day)), expected,
+      `off=${off} 요일이 다른 주차로 계산됨`);
+  }
+});
