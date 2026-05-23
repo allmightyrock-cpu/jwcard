@@ -2135,47 +2135,38 @@ async function shareSchedule(){
   try{canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#eef3f9"});}
   catch(e){toast("이미지 생성 실패: "+e.message);return;}
 
-  // ── 카카오 공유 (이미지 업로드 → feed 전송) ──
-  if(typeof Kakao!=='undefined'&&Kakao.isInitialized()&&Kakao.Share?.uploadImage){
-    canvas.toBlob(async blob=>{
-      const file=new File([blob],filename,{type:"image/png"});
-      try{
-        const res=await Kakao.Share.uploadImage({file:[file]});
-        const imgUrl=res.infos.original.url;
-        const n=parseInt(s?.numTeams)||1;
-        const tl=SCHEDULE_TYPES.find(t=>t.id===s?.type)?.label||"";
-        const desc=`${s?.startAmPm} ${s?.startHour}:${pad2(s?.startMin||0)} ~ ${s?.endAmPm} ${s?.endHour}:${pad2(s?.endMin||0)}  ·  ${tl}`;
-        Kakao.Share.sendDefault({
-          objectType:'feed',
-          content:{
-            title:`🛒 전시대봉사 명단 · ${s?.month}월 ${s?.day}일 (${s?.weekday||""})`,
-            description:desc.slice(0,200),
-            imageUrl:imgUrl,
-            link:{mobileWebUrl:location.origin+'/cart.html',webUrl:location.origin+'/cart.html'}
-          }
-        });
-      }catch(e2){
-        console.warn("카카오 업로드 실패, 대체 공유로 전환:",e2.message);
-        _fallbackShare(canvas,filename);
-      }
-    },"image/png");
-    return;
+  const blob=await new Promise(res=>canvas.toBlob(res,"image/png"));
+  const file=blob?new File([blob],filename,{type:"image/png"}):null;
+
+  // ── 1순위: 실제 사진 파일 공유 ──
+  // 세로로 긴 명단도 잘리지 않고 사진 그대로 전송된다 (카카오 피드 카드는 이미지를 가로 배너로 잘라냄)
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:"전시대 봉사 명단"});return;}
+    catch(e){if(e.name==="AbortError")return;}
   }
 
-  // ── 대체: Web Share API 또는 이미지 다운로드 ──
-  _fallbackShare(canvas,filename);
-}
-function _fallbackShare(canvas,filename){
-  if(navigator.canShare){
-    canvas.toBlob(async blob=>{
-      const file=new File([blob],filename,{type:"image/png"});
-      if(navigator.canShare({files:[file]})){
-        try{await navigator.share({files:[file],title:"전시대 봉사 명단"});return;}
-        catch(e){if(e.name==="AbortError")return;}
-      }
-      downloadImg(canvas.toDataURL("image/png"),filename);
-    },"image/png");
-  }else{downloadImg(canvas.toDataURL("image/png"),filename);}
+  // ── 2순위: 카카오 피드 카드 (파일 공유 미지원 환경, 예: PC) ──
+  if(file&&typeof Kakao!=='undefined'&&Kakao.isInitialized()&&Kakao.Share?.uploadImage){
+    try{
+      const res=await Kakao.Share.uploadImage({file:[file]});
+      const imgUrl=res.infos.original.url;
+      const tl=SCHEDULE_TYPES.find(t=>t.id===s?.type)?.label||"";
+      const desc=`${s?.startAmPm} ${s?.startHour}:${pad2(s?.startMin||0)} ~ ${s?.endAmPm} ${s?.endHour}:${pad2(s?.endMin||0)}  ·  ${tl}`;
+      Kakao.Share.sendDefault({
+        objectType:'feed',
+        content:{
+          title:`🛒 전시대봉사 명단 · ${s?.month}월 ${s?.day}일 (${s?.weekday||""})`,
+          description:desc.slice(0,200),
+          imageUrl:imgUrl,
+          link:{mobileWebUrl:location.origin+'/cart.html',webUrl:location.origin+'/cart.html'}
+        }
+      });
+      return;
+    }catch(e2){console.warn("카카오 업로드 실패, 다운로드로 전환:",e2.message);}
+  }
+
+  // ── 3순위: 이미지 다운로드 ──
+  downloadImg(canvas.toDataURL("image/png"),filename);
 }
 function downloadImg(dataUrl,filename){
   const a=document.createElement("a");a.href=dataUrl;a.download=filename;a.click();
