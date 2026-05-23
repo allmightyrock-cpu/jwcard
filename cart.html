@@ -686,7 +686,7 @@ function detailHTML(){
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="btn btn-sm" id="dshare" style="background:#FEE500;border:none;color:#191919;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px">
           <svg width="15" height="14" viewBox="0 0 18 17" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 0C4.029 0 0 3.164 0 7.07c0 2.52 1.66 4.737 4.163 5.995-.184.683-.663 2.48-.759 2.863-.12.474.173.468.363.34.149-.1 2.36-1.601 3.314-2.252.294.041.594.063.919.063C12.971 14.079 18 10.914 18 7.07 18 3.164 13.971 0 9 0z" fill="#191919"/></svg>
-          카카오 공유</button>
+          명단 공유</button>
         ${S.role==="member"?`<button class="btn btn-sm" id="dapply" style="background:#1a9e72;color:#fff;border:none;font-size:12px">✋ 참여</button>`:""}
         ${S.role==="admin"?`<button class="btn btn-outline btn-sm" id="dedit">편집</button>`:""}
       </div>
@@ -726,11 +726,11 @@ function detailHTML(){
         </div>
         ${t.cartPerson?`<span style="font-size:11px;color:${c.ac};font-weight:600;display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.7);padding:3px 9px;border-radius:8px;border:1px solid ${c.border};flex-shrink:0">🛒 ${t.cartPerson}</span>`:""}
       </div>
-      <div style="background:rgba(255,255,255,0.6);padding:7px 14px;border-bottom:1px solid ${c.border}88;font-size:12px;display:flex;align-items:center;gap:5px">
+      <div style="background:rgba(255,255,255,0.18);padding:7px 14px;border-bottom:1px solid ${c.border}88;font-size:12px;display:flex;align-items:center;gap:5px">
         <span>📍</span><span style="color:var(--text-dim);font-weight:500">${loc}</span>
       </div>
       <div>
-        <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;background:${c.hdr}77;border-bottom:1.5px solid ${c.border};font-size:11px;font-weight:700;color:${c.ac};text-align:center">
+        <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;background:${c.hdr}44;border-bottom:1.5px solid ${c.border};font-size:11px;font-weight:700;color:${c.ac};text-align:center">
           <div style="padding:7px 4px;border-right:1px solid ${c.border}88">봉사 시간</div>
           <div style="padding:7px 4px;border-right:1px solid ${c.border}88">① 봉사자</div>
           <div style="padding:7px 4px;border-right:1px solid ${c.border}88">② 봉사자</div>
@@ -837,7 +837,7 @@ function formHTML(){
           <span style="font-size:11px;color:${c.ac};background:rgba(255,255,255,0.6);padding:2px 9px;border-radius:8px;font-weight:700;border:1px solid ${c.border}">${ns}개 조 · ${interval}분 간격</span>
         </div>
       </div>
-      <div style="background:rgba(255,255,255,0.45);padding:12px 14px">
+      <div style="background:rgba(255,255,255,0.06);padding:12px 14px">
         <div class="form-row" style="margin-bottom:12px">
           <label style="min-width:36px;font-size:12px">장소</label>
           <select id="floc${k}" style="border-color:${c.border}">
@@ -849,7 +849,7 @@ function formHTML(){
           <div style="flex:1;min-width:160px">
             <div style="font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:7px">몇 개 조가 돌아갑니까?</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
-              ${[2,3,4,5,6].map(v=>`<button type="button" class="ns-btn" data-team="${k}" data-v="${v}" style="padding:6px 0;width:50px;border-radius:9px;font-size:12px;font-weight:700;text-align:center;line-height:1.4;border:2px solid ${ns===v?c.ac:c.border};background:${ns===v?c.hdr:"rgba(255,255,255,0.50)"};color:${ns===v?c.ac:"var(--text-muted)"};cursor:pointer">${v}조<br><span style="font-size:10px;font-weight:400">${INTERVALS[v]}분</span></button>`).join("")}
+              ${[2,3,4,5,6].map(v=>`<button type="button" class="ns-btn" data-team="${k}" data-v="${v}" style="padding:6px 0;width:50px;border-radius:9px;font-size:12px;font-weight:700;text-align:center;line-height:1.4;border:2px solid ${ns===v?c.ac:c.border};background:${ns===v?c.hdr:"rgba(255,255,255,0.20)"};color:${ns===v?c.ac:"var(--text-muted)"};cursor:pointer">${v}조<br><span style="font-size:10px;font-weight:400">${INTERVALS[v]}분</span></button>`).join("")}
             </div>
           </div>
           <div style="min-width:130px">
@@ -861,7 +861,7 @@ function formHTML(){
           </div>
         </div>
         <div style="border:1.5px solid ${c.border};border-radius:10px;overflow:hidden">
-          <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;background:${c.hdr}77;border-bottom:1.5px solid ${c.border};font-size:11px;font-weight:700;color:${c.ac};text-align:center">
+          <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;background:${c.hdr}44;border-bottom:1.5px solid ${c.border};font-size:11px;font-weight:700;color:${c.ac};text-align:center">
             <div style="padding:7px 4px;border-right:1px solid ${c.border}88">봉사 시간</div>
             <div style="padding:7px 4px;border-right:1px solid ${c.border}88">① 봉사자</div>
             <div style="padding:7px 4px;border-right:1px solid ${c.border}88">② 봉사자</div>
@@ -869,8 +869,8 @@ function formHTML(){
           </div>
           ${rows.map((row,ri)=>{
             const rt=f.startHour?calcTime(f.startAmPm||"오후",f.startHour,f.startMin||"00",ns,ri):"--:--";
-            return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;border-top:1px solid ${c.border}66;min-height:48px;align-items:stretch;background:rgba(255,255,255,0.50)">
-              <div style="padding:8px 4px;border-right:1px solid ${c.border}66;background:${c.hdr}66;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+            return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;border-top:1px solid ${c.border}66;min-height:48px;align-items:stretch;background:rgba(255,255,255,0.15)">
+              <div style="padding:8px 4px;border-right:1px solid ${c.border}66;background:${c.hdr}44;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
                 <div style="font-size:12px;font-weight:700;color:${c.ac};text-align:center;font-variant-numeric:tabular-nums">${rt}</div>
                 <div style="font-size:9px;color:var(--text-muted)">${interval}분</div>
               </div>
@@ -2131,51 +2131,27 @@ async function shareSchedule(){
   const s=S.selected;
   const filename="전시대명단_"+(s?.month||"")+"월"+(s?.day||"")+"일.png";
   toast("이미지 생성 중...",3000);
+  // 폰트가 모두 로드된 뒤 캡처 (텍스트 깨짐 방지)
+  if(document.fonts&&document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
+  // 페이지 스크롤 위치를 보정해 main 전체가 잘리지 않고 캡처되도록 함
+  const sy=window.scrollY||window.pageYOffset||0;
   let canvas;
-  try{canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#eef3f9"});}
+  try{canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#eef3f9",scrollY:-sy});}
   catch(e){toast("이미지 생성 실패: "+e.message);return;}
 
-  // ── 카카오 공유 (이미지 업로드 → feed 전송) ──
-  if(typeof Kakao!=='undefined'&&Kakao.isInitialized()&&Kakao.Share?.uploadImage){
-    canvas.toBlob(async blob=>{
-      const file=new File([blob],filename,{type:"image/png"});
-      try{
-        const res=await Kakao.Share.uploadImage({file:[file]});
-        const imgUrl=res.infos.original.url;
-        const n=parseInt(s?.numTeams)||1;
-        const tl=SCHEDULE_TYPES.find(t=>t.id===s?.type)?.label||"";
-        const desc=`${s?.startAmPm} ${s?.startHour}:${pad2(s?.startMin||0)} ~ ${s?.endAmPm} ${s?.endHour}:${pad2(s?.endMin||0)}  ·  ${tl}`;
-        Kakao.Share.sendDefault({
-          objectType:'feed',
-          content:{
-            title:`🛒 전시대봉사 명단 · ${s?.month}월 ${s?.day}일 (${s?.weekday||""})`,
-            description:desc.slice(0,200),
-            imageUrl:imgUrl,
-            link:{mobileWebUrl:location.origin+'/cart.html',webUrl:location.origin+'/cart.html'}
-          }
-        });
-      }catch(e2){
-        console.warn("카카오 업로드 실패, 대체 공유로 전환:",e2.message);
-        _fallbackShare(canvas,filename);
-      }
-    },"image/png");
-    return;
-  }
-
-  // ── 대체: Web Share API 또는 이미지 다운로드 ──
-  _fallbackShare(canvas,filename);
-}
-function _fallbackShare(canvas,filename){
-  if(navigator.canShare){
-    canvas.toBlob(async blob=>{
-      const file=new File([blob],filename,{type:"image/png"});
-      if(navigator.canShare({files:[file]})){
-        try{await navigator.share({files:[file],title:"전시대 봉사 명단"});return;}
-        catch(e){if(e.name==="AbortError")return;}
-      }
-      downloadImg(canvas.toDataURL("image/png"),filename);
-    },"image/png");
-  }else{downloadImg(canvas.toDataURL("image/png"),filename);}
+  // ── 이미지 파일을 그대로 전송하는 "네이티브 공유"를 우선 사용 ──
+  //    모바일에서 공유 시트 → 카카오톡 선택 시 사진 전체가 그대로 전송됨.
+  //    (카카오 feed 공유는 이미지를 가로 썸네일로 잘라 표시하므로 사용하지 않음)
+  canvas.toBlob(async blob=>{
+    if(!blob){toast("이미지 생성 실패");return;}
+    const file=new File([blob],filename,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:"전시대 봉사 명단",text:`🛒 전시대봉사 명단 · ${s?.month}월 ${s?.day}일 (${s?.weekday||""})`});return;}
+      catch(e){if(e.name==="AbortError")return;/* 그 외 오류 시 다운로드로 폴백 */}
+    }
+    // 공유 미지원(주로 PC) → 이미지 다운로드
+    downloadImg(canvas.toDataURL("image/png"),filename);
+  },"image/png");
 }
 function downloadImg(dataUrl,filename){
   const a=document.createElement("a");a.href=dataUrl;a.download=filename;a.click();
