@@ -178,6 +178,7 @@ select:focus,input:focus{border-color:var(--navy);}
 </head>
 <body>
 <script src="/config.js"></script>
+<script src="/js/schedule-time.js"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
 <script>
 (function(){
@@ -231,7 +232,7 @@ const SCHEDULE_TYPES = [
 const TEAMS      = ["A","B","C","D","E","F"];
 const TEAM_LABEL = {A:"A팀",B:"B팀",C:"C팀",D:"D팀",E:"E팀",F:"F팀"};
 const WEEKDAYS   = ["월요일","화요일","수요일","목요일","금요일","토요일","일요일"];
-const INTERVALS  = {2:30,3:20,4:15,5:12,6:10};
+const INTERVALS  = ScheduleTime.INTERVALS;  // 공유 모듈 (js/schedule-time.js)
 const TC = {
   A:{bg:"#F0FDF8",ac:"#0D9367",border:"#6EE7C7",hdr:"#D1FAF0"},
   B:{bg:"#FFF1F3",ac:"#BE3257",border:"#FCA5B0",hdr:"#FFD7DE"},
@@ -346,14 +347,7 @@ function fmt12h(str){ // "HH:MM" → "오전/오후 H:MM"
   const ap=h<12?"오전":"오후", h12=h===0?12:h>12?h-12:h;
   return `${ap} ${h12}:${String(m).padStart(2,"0")}`;
 }
-function calcTime(ap,h,m,n,idx){
-  const hh=parseInt(h)||0, mm=parseInt(m)||0, nn=parseInt(n)||1;
-  const add=(60/nn)*idx;
-  let abs=(ap==="오후"&&hh!==12)?hh+12:(ap==="오전"&&hh===12?0:hh);
-  let tot=mm+add, fh=abs+Math.floor(tot/60), fm=Math.round(tot%60);
-  fh%=24; const h12=fh%12||12;
-  return `${fh<12?"오전":"오후"} ${h12}:${String(fm).padStart(2,"0")}`;
-}
+function calcTime(ap,h,m,n,idx){ return ScheduleTime.calcTime(ap,h,m,n,idx); }  // 공유 모듈
 function toast(msg,ms=2400){
   const el=document.getElementById("toast");
   el.textContent=msg; el.classList.add("show");
@@ -1338,18 +1332,11 @@ function _renderSignupEditor(){
   const allUsed=new Set();
   _seTeams.forEach(t=>t.rows.slice(0,t.numSlots).forEach(r=>r.forEach(n=>{if(n)allUsed.add(n);})));
   const poolHtml=signups.map(n=>`<div style="padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid ${allUsed.has(n)?"#1B3A6B":"#E2E8F0"};background:${allUsed.has(n)?"#1B3A6B":"#fff"};color:${allUsed.has(n)?"#fff":"#374151"};opacity:${allUsed.has(n)?".5":"1"}">${n}${CONDUCTORS.includes(n)?` <span style="font-size:9px;opacity:.7">인도자</span>`:""}</div>`).join("");
-  const [startH,startM]=s.startStr.split(":").map(Number);
-  function calcT(ti,ns){
-    const intv=INTERVALS[ns]||Math.round(120/ns);
-    const tot=startH*60+startM+intv*ti;
-    const h=Math.floor(tot/60)%24,m=tot%60;
-    const ap=h<12?"오전":"오후",h12=h===0?12:h>12?h-12:h;
-    return `${ap} ${h12}:${String(m).padStart(2,"0")}`;
-  }
+  const calcT=(ti,ns)=>ScheduleTime.slotLabel(s.startStr,ns,ti);  // 공유 모듈
   const teamsHtml=_seTeams.map((t,ti)=>{
     const c=_SE_COLORS[ti%_SE_COLORS.length];
     const ns=t.numSlots;
-    const intv=INTERVALS[ns]||Math.round(120/ns);
+    const intv=ScheduleTime.interval(ns);  // 공유 모듈
     const slotBtns=[2,3,4,5,6].map(v=>`<button onclick="_seSetSlots(${ti},${v})" style="width:36px;height:36px;border-radius:8px;font-size:11px;font-weight:700;border:2px solid ${v===ns?c.ac:"#E2E8F0"};background:${v===ns?c.bg:"#fff"};color:${v===ns?c.ac:"#94A3B8"};cursor:pointer;font-family:inherit">${v}조<br><span style="font-size:9px;font-weight:400">${INTERVALS[v]}분</span></button>`).join("");
     const gridRows=Array.from({length:ns},(_,si)=>{
       const time=calcT(si,ns);

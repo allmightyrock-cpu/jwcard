@@ -1,0 +1,9 @@
+{
+  "name": "jwcard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "전자구역카드 시스템 — 개발용 테스트 하니스 (앱 자체는 빌드 불필요)",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\""
+  }
+}

@@ -968,6 +968,7 @@ body.nav-mode-active #nav-footer-bar{display:flex}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Barlow:wght@600;900&display=swap" rel="stylesheet">
 <script src="/config.js"></script>
+<script src="/js/schedule-time.js"></script>
 <script>
 window._naverMapsLoaded = false;
 // Firebase 동적 로드용 (geocoder 없이 — document.write 차단 우회)
@@ -6652,16 +6653,11 @@ function _renderCartSessions(sessions, signupsData, listEl) {
     // 내 배정 슬롯 찾기 (팀 확정 후)
     let mySlotHtml = '';
     if (sd.confirmed && sd.teams && _cartMyName) {
-      const INTERVALS = {1:60,2:30,3:20,4:15,5:12,6:10}; // 1시간 안 n등분(매시간 반복) — cart.html과 동일
       for (const [teamKey, team] of Object.entries(sd.teams)) {
         const rows = team.rows || [];
         const slotIdx = rows.findIndex(r => Array.isArray(r) && r.includes(_cartMyName));
         if (slotIdx >= 0) {
-          const [sh, sm] = s.startStr.split(':').map(Number);
-          const intv = INTERVALS[team.numSlots] || Math.round(60 / (team.numSlots || 1));
-          const tot = sh * 60 + sm + intv * slotIdx;
-          const h = Math.floor(tot / 60) % 24, m = tot % 60;
-          const slotTime = _fmt12h((h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m);
+          const slotTime = ScheduleTime.slotLabel(s.startStr, team.numSlots, slotIdx); // 공유 모듈
           const partner = (rows[slotIdx] || []).filter(n => n && n !== _cartMyName)[0] || '';
           const loc = team.loc ? ` · ${team.loc}` : '';
           mySlotHtml = `<div onclick="window._cartShowTeamSheet('${s.key}')" style="cursor:pointer;margin-top:7px;padding:7px 10px;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(5,150,105,0.07));border:1px solid rgba(16,185,129,0.30);border-radius:9px;font-size:11px;color:#065F46;-webkit-tap-highlight-color:transparent;transition:opacity .15s" onpointerdown="this.style.opacity='.75'" onpointerup="this.style.opacity='1'" onpointerleave="this.style.opacity='1'">
@@ -6732,7 +6728,6 @@ async function _cartDoToggle(sessionKey) {
 const _TEAM_SHEET_COLORS = {
   A:'#1B3A6B', B:'#7C3AED', C:'#B45309', D:'#047857', E:'#B91C1C', F:'#0369A1'
 };
-const _TEAM_SHEET_INTERVALS = {1:60, 2:30, 3:20, 4:15, 5:12, 6:10}; // 1시간 안 n등분(매시간 반복) — cart.html과 동일
 
 function _cartShowTeamSheet(key) {
   const s  = _cartLastSessions.find(x => x.key === key);
@@ -6759,12 +6754,10 @@ function _cartShowTeamSheet(key) {
     </div>`;
 
   // 팀별 시간표
-  const [sh, sm] = s.startStr.split(':').map(Number);
   let html = '';
   const teamEntries = Object.entries(sd.teams);
   teamEntries.forEach(([teamKey, team]) => {
     const ns   = parseInt(team.numSlots) || 2;
-    const intv = _TEAM_SHEET_INTERVALS[ns] || Math.round(60 / ns);
     const rows = team.rows || [];
     const col  = _TEAM_SHEET_COLORS[teamKey] || '#1B3A6B';
     html += `<div style="margin-bottom:18px">
@@ -6777,9 +6770,7 @@ function _cartShowTeamSheet(key) {
       </div>
       <div style="border:1.5px solid ${col}22;border-radius:10px;overflow:hidden">`;
     for (let i = 0; i < ns; i++) {
-      const tot = sh * 60 + sm + intv * i;
-      const hh  = Math.floor(tot / 60) % 24, mm = tot % 60;
-      const timeStr = _fmt12h((hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm);
+      const timeStr = ScheduleTime.slotLabel(s.startStr, ns, i); // 공유 모듈
       const rowArr  = rows[i] || [];
       const isMyRow = rowArr.includes(_cartMyName);
       html += `<div style="display:flex;align-items:center;padding:8px 10px;background:${isMyRow ? `linear-gradient(90deg,${col}14,${col}07)` : i%2===0 ? '#fff' : '#FAFBFD'};border-bottom:${i < ns-1 ? `1px solid ${col}18` : 'none'}">

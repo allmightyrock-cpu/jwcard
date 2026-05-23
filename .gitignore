@@ -12,6 +12,9 @@ settings.local.json
 # 개인정보 포함 가능 파일
 *.json.local
 
+# 개발용 (테스트 하니스)
+node_modules/
+
 # 시스템 파일
 .DS_Store
 Thumbs.db
