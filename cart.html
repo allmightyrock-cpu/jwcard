@@ -686,7 +686,7 @@ function detailHTML(){
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="btn btn-sm" id="dshare" style="background:#FEE500;border:none;color:#191919;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px">
           <svg width="15" height="14" viewBox="0 0 18 17" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 0C4.029 0 0 3.164 0 7.07c0 2.52 1.66 4.737 4.163 5.995-.184.683-.663 2.48-.759 2.863-.12.474.173.468.363.34.149-.1 2.36-1.601 3.314-2.252.294.041.594.063.919.063C12.971 14.079 18 10.914 18 7.07 18 3.164 13.971 0 9 0z" fill="#191919"/></svg>
-          카카오 공유</button>
+          공유</button>
         ${S.role==="member"?`<button class="btn btn-sm" id="dapply" style="background:#1a9e72;color:#fff;border:none;font-size:12px">✋ 참여</button>`:""}
         ${S.role==="admin"?`<button class="btn btn-outline btn-sm" id="dedit">편집</button>`:""}
       </div>
@@ -2131,46 +2131,43 @@ async function shareSchedule(){
   const s=S.selected;
   const filename="전시대명단_"+(s?.month||"")+"월"+(s?.day||"")+"일.png";
   toast("이미지 생성 중...",3000);
+
+  // 공유 이미지에는 명단 내용만 담는다 — 버튼/뒤로가기 등 조작 UI는 잠시 숨김
+  const hidden=[];
+  el.querySelectorAll("#dback,#dshare,#dedit,#dapply").forEach(n=>{
+    hidden.push([n,n.style.display]);n.style.display="none";
+  });
+
   let canvas;
-  try{canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#eef3f9"});}
-  catch(e){toast("이미지 생성 실패: "+e.message);return;}
+  try{
+    // width/height 를 전체 콘텐츠 크기로 명시해 화면 밖 영역까지 빠짐없이 캡처
+    canvas=await html2canvas(el,{
+      scale:2,useCORS:true,backgroundColor:"#eef3f9",
+      width:el.scrollWidth,height:el.scrollHeight,
+      windowWidth:el.scrollWidth,windowHeight:el.scrollHeight,
+      scrollX:0,scrollY:0
+    });
+  }catch(e){toast("이미지 생성 실패: "+e.message);return;}
+  finally{hidden.forEach(([n,d])=>{n.style.display=d;});}
 
   const blob=await new Promise(res=>canvas.toBlob(res,"image/png"));
   const file=blob?new File([blob],filename,{type:"image/png"}):null;
 
-  // ── 1순위: 실제 사진 파일 공유 ──
-  // 세로로 긴 명단도 잘리지 않고 사진 그대로 전송된다 (카카오 피드 카드는 이미지를 가로 배너로 잘라냄)
+  // ── 1순위: 실제 사진 파일 공유 (모바일) ──
+  // 세로로 긴 명단도 잘리지 않고 사진 그대로 전송된다.
+  // (카카오 '피드' 카드는 이미지를 가로 배너 비율로 잘라내므로 사용하지 않는다)
   if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{await navigator.share({files:[file],title:"전시대 봉사 명단"});return;}
     catch(e){if(e.name==="AbortError")return;}
   }
 
-  // ── 2순위: 카카오 피드 카드 (파일 공유 미지원 환경, 예: PC) ──
-  if(file&&typeof Kakao!=='undefined'&&Kakao.isInitialized()&&Kakao.Share?.uploadImage){
-    try{
-      const res=await Kakao.Share.uploadImage({file:[file]});
-      const imgUrl=res.infos.original.url;
-      const tl=SCHEDULE_TYPES.find(t=>t.id===s?.type)?.label||"";
-      const desc=`${s?.startAmPm} ${s?.startHour}:${pad2(s?.startMin||0)} ~ ${s?.endAmPm} ${s?.endHour}:${pad2(s?.endMin||0)}  ·  ${tl}`;
-      Kakao.Share.sendDefault({
-        objectType:'feed',
-        content:{
-          title:`🛒 전시대봉사 명단 · ${s?.month}월 ${s?.day}일 (${s?.weekday||""})`,
-          description:desc.slice(0,200),
-          imageUrl:imgUrl,
-          link:{mobileWebUrl:location.origin+'/cart.html',webUrl:location.origin+'/cart.html'}
-        }
-      });
-      return;
-    }catch(e2){console.warn("카카오 업로드 실패, 다운로드로 전환:",e2.message);}
-  }
-
-  // ── 3순위: 이미지 다운로드 ──
+  // ── 2순위: 이미지 다운로드 (PC 등 파일 공유 미지원 환경) ──
+  // 전체 명단이 담긴 이미지를 저장한 뒤 카카오톡 대화창에 직접 첨부.
   downloadImg(canvas.toDataURL("image/png"),filename);
+  toast("✅ 이미지를 저장했습니다. 카카오톡 대화창에 첨부해 보내세요.",4000);
 }
 function downloadImg(dataUrl,filename){
   const a=document.createElement("a");a.href=dataUrl;a.download=filename;a.click();
-  toast("✅ 이미지가 저장되었습니다");
 }
 
 // ── SW 업데이트 감지 ──
