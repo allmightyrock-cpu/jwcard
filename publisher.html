@@ -6652,13 +6652,13 @@ function _renderCartSessions(sessions, signupsData, listEl) {
     // 내 배정 슬롯 찾기 (팀 확정 후)
     let mySlotHtml = '';
     if (sd.confirmed && sd.teams && _cartMyName) {
-      const INTERVALS = {1:120,2:60,3:40,4:30,5:24,6:20};
+      const INTERVALS = {1:60,2:30,3:20,4:15,5:12,6:10}; // 1시간 안 n등분(매시간 반복) — cart.html과 동일
       for (const [teamKey, team] of Object.entries(sd.teams)) {
         const rows = team.rows || [];
         const slotIdx = rows.findIndex(r => Array.isArray(r) && r.includes(_cartMyName));
         if (slotIdx >= 0) {
           const [sh, sm] = s.startStr.split(':').map(Number);
-          const intv = INTERVALS[team.numSlots] || Math.round(120 / (team.numSlots || 1));
+          const intv = INTERVALS[team.numSlots] || Math.round(60 / (team.numSlots || 1));
           const tot = sh * 60 + sm + intv * slotIdx;
           const h = Math.floor(tot / 60) % 24, m = tot % 60;
           const slotTime = _fmt12h((h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m);
@@ -6732,7 +6732,7 @@ async function _cartDoToggle(sessionKey) {
 const _TEAM_SHEET_COLORS = {
   A:'#1B3A6B', B:'#7C3AED', C:'#B45309', D:'#047857', E:'#B91C1C', F:'#0369A1'
 };
-const _TEAM_SHEET_INTERVALS = {1:120, 2:60, 3:40, 4:30, 5:24, 6:20};
+const _TEAM_SHEET_INTERVALS = {1:60, 2:30, 3:20, 4:15, 5:12, 6:10}; // 1시간 안 n등분(매시간 반복) — cart.html과 동일
 
 function _cartShowTeamSheet(key) {
   const s  = _cartLastSessions.find(x => x.key === key);
@@ -6764,7 +6764,7 @@ function _cartShowTeamSheet(key) {
   const teamEntries = Object.entries(sd.teams);
   teamEntries.forEach(([teamKey, team]) => {
     const ns   = parseInt(team.numSlots) || 2;
-    const intv = _TEAM_SHEET_INTERVALS[ns] || Math.round(120 / ns);
+    const intv = _TEAM_SHEET_INTERVALS[ns] || Math.round(60 / ns);
     const rows = team.rows || [];
     const col  = _TEAM_SHEET_COLORS[teamKey] || '#1B3A6B';
     html += `<div style="margin-bottom:18px">
