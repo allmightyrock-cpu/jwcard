@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전자구역카드 — 설치 마법사 (config.js 만들기)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --navy:#1B3A6B; --blue:#2563eb; --bg:#0f172a; --line:#e2e8f0; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans KR',sans-serif;background:#f1f5f9;color:#0f172a;line-height:1.6}
+  .top{background:linear-gradient(135deg,#1B3A6B,#2563eb);color:#fff;padding:26px 20px}
+  .wrap{max-width:680px;margin:0 auto;padding:18px 16px 60px}
+  h1{font-size:20px;margin:0 0 4px;font-weight:800}
+  .top .sub{font-size:13px;opacity:.9;margin:0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .step-tag{display:inline-block;background:var(--navy);color:#fff;font-size:12px;font-weight:700;border-radius:20px;padding:3px 12px;margin-bottom:10px}
+  .card h2{font-size:15px;margin:0 0 6px;font-weight:800}
+  .hint{font-size:12.5px;color:#64748b;margin:0 0 12px}
+  textarea,input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;background:#f8fafc}
+  textarea{min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace}
+  textarea:focus,input:focus{border-color:var(--blue);background:#fff}
+  label{display:block;font-size:12px;font-weight:700;color:#475569;margin:10px 0 4px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:520px){.grid2{grid-template-columns:1fr}}
+  .ok{color:#16a34a} .bad{color:#dc2626}
+  .status{font-size:13px;font-weight:700;margin:12px 0;padding:10px 12px;border-radius:10px}
+  .status.good{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+  .status.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px;font-size:12.5px;overflow-x:auto;font-family:ui-monospace,Menlo,Consolas,monospace;margin:0}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-main{background:var(--navy);color:#fff}
+  .btn-main:disabled{background:#cbd5e1;cursor:not-allowed}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line);color:#475569}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  ol{margin:6px 0 0;padding-left:20px} ol li{margin-bottom:8px;font-size:13.5px}
+  code{background:#eef2f9;color:#1e3a8a;border-radius:5px;padding:1px 6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+  .warn-inline{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#b91c1c;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="wrap" style="padding-bottom:0">
+    <h1>⚙️ 전자구역카드 설치 마법사</h1>
+    <p class="sub">코딩을 몰라도 OK — 값을 붙여넣으면 <b>config.js</b>를 자동으로 만들어 드립니다.</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- STEP 1 -->
+  <div class="card">
+    <span class="step-tag">STEP 1 · 붙여넣기</span>
+    <h2>Firebase 설정값 붙여넣기</h2>
+    <p class="hint">Firebase 콘솔 → ⚙ 프로젝트 설정 → 일반 → 내 앱 → <b>SDK 설정</b>에서 보이는 내용을
+      <b>그대로 복사해 아래에 붙여넣으세요.</b> (<code>import…</code>, <code>const firebaseConfig…</code>가 섞여 있어도 괜찮아요 — 알아서 값만 골라냅니다.)</p>
+    <textarea id="paste" placeholder='예) const firebaseConfig = {
+  apiKey: "AIza...",
+  authDomain: "myproj.firebaseapp.com",
+  projectId: "myproj",
+  ...
+};'></textarea>
+    <div class="warn-inline">붙여넣은 코드는 <b>저장만 자동으로 골라낼 뿐</b>, 그대로 config.js에 들어가지 않습니다. 안심하고 통째로 붙여넣으세요.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="card">
+    <span class="step-tag">STEP 2 · 확인 / 보완</span>
+    <h2>값이 잘 들어왔는지 확인</h2>
+    <p class="hint">위에서 자동으로 채워집니다. 빈 칸이 있으면 직접 채워주세요.</p>
+    <div class="grid2">
+      <div><label>apiKey *</label><input id="f_apiKey" placeholder="AIza..."></div>
+      <div><label>authDomain *</label><input id="f_authDomain" placeholder="프로젝트ID.firebaseapp.com"></div>
+      <div><label>projectId *</label><input id="f_projectId" placeholder="프로젝트ID"></div>
+      <div><label>storageBucket *</label><input id="f_storageBucket" placeholder="프로젝트ID.firebasestorage.app"></div>
+      <div><label>messagingSenderId *</label><input id="f_messagingSenderId" placeholder="숫자"></div>
+      <div><label>appId *</label><input id="f_appId" placeholder="1:숫자:web:..."></div>
+    </div>
+    <label style="margin-top:14px">네이버 지도 Client ID <span style="font-weight:400;color:#94a3b8">(선택 — 지도 기능)</span></label>
+    <input id="f_naver" placeholder="비워둬도 됩니다">
+    <label>카카오 JavaScript 키 <span style="font-weight:400;color:#94a3b8">(선택 — 카톡 공유)</span></label>
+    <input id="f_kakao" placeholder="비워둬도 됩니다">
+    <div id="status" class="status warn">⚠️ 필수 값(*)을 모두 채워주세요.</div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="card">
+    <span class="step-tag">STEP 3 · 생성 / 다운로드</span>
+    <h2>config.js 미리보기</h2>
+    <p class="hint">아래가 자동 생성된 config.js입니다. 버튼으로 파일을 받거나 복사하세요.</p>
+    <pre id="preview"></pre>
+    <div class="btnrow">
+      <button id="dl" class="btn btn-main" disabled>⬇️ config.js 다운로드</button>
+      <button id="cp" class="btn btn-ghost" disabled>📋 내용 복사</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="card">
+    <span class="step-tag">STEP 4 · 적용</span>
+    <h2>받은 config.js 넣기</h2>
+    <ol>
+      <li>다운로드된 <code>config.js</code> 파일을 <b>배포 폴더 안</b>에 넣습니다 (기존 <code>config.js</code>가 있으면 덮어쓰기).</li>
+      <li>Cloudflare Pages에서 그 폴더를 <b>다시 업로드(재배포)</b>합니다.</li>
+      <li>배포 주소 뒤에 <code>/admin.html</code>을 붙여 접속 → 최초 접속 시 관리자 비밀번호를 직접 설정하면 끝!</li>
+    </ol>
+    <div class="warn-inline">🔒 <code>config.js</code>에는 본인 Firebase 키가 들어있습니다. GitHub·카카오톡 등에 공유하지 마세요.</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const FIELDS = ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'];
+  const $ = id => document.getElementById(id);
+  const paste = $('paste');
+
+  function grab(text, key){
+    const re = new RegExp(key + '\\s*[:=]\\s*["\\\'`]([^"\\\'`]+)["\\\'`]', 'i');
+    const m = text.match(re);
+    return m ? m[1].trim() : '';
+  }
+  function esc(v){ return String(v||'').replace(/\\/g,'\\\\').replace(/"/g,'\\"'); }
+
+  // 붙여넣기 → 자동 추출
+  paste.addEventListener('input', () => {
+    const t = paste.value;
+    if (!t.trim()) return;
+    FIELDS.forEach(k => { const v = grab(t, k); if (v) $('f_'+k).value = v; });
+    const nv = grab(t,'naverClientId') || grab(t,'ncpKeyId'); if (nv) $('f_naver').value = nv;
+    const kk = grab(t,'kakaoJsKey'); if (kk) $('f_kakao').value = kk;
+    render();
+  });
+
+  function buildConfig(){
+    const fb = {};
+    FIELDS.forEach(k => fb[k] = $('f_'+k).value.trim());
+    const naver = $('f_naver').value.trim();
+    const kakao = $('f_kakao').value.trim();
+    let s = '// ═══════════════════════════════════════════════════════════\n';
+    s += '//  전자구역카드 시스템 — 설정 파일 (설치 마법사가 생성)\n';
+    s += '//  ★ 이 파일은 절대 GitHub·카카오톡 등에 공유하지 마세요.\n';
+    s += '// ═══════════════════════════════════════════════════════════\n\n';
+    s += 'window.APP_CONFIG = {\n';
+    s += '  firebase: {\n';
+    s += FIELDS.map(k => '    ' + k + ': "' + esc(fb[k]) + '"').join(',\n') + '\n';
+    s += '  },\n';
+    s += '  naverClientId: "' + esc(naver) + '",\n';
+    s += '  kakaoJsKey: "' + esc(kakao) + '"\n';
+    s += '};\n';
+    return s;
+  }
+
+  function allFilled(){ return FIELDS.every(k => $('f_'+k).value.trim().length > 0); }
+
+  function render(){
+    const cfg = buildConfig();
+    $('preview').textContent = cfg;
+    const ok = allFilled();
+    const st = $('status');
+    if (ok){ st.className = 'status good'; st.textContent = '✅ 준비 완료! 아래에서 config.js를 받으세요.'; }
+    else   { st.className = 'status warn'; st.textContent = '⚠️ 필수 값(*)을 모두 채워주세요.'; }
+    $('dl').disabled = !ok;
+    $('cp').disabled = !ok;
+    return cfg;
+  }
+
+  // 입력 변화 → 미리보기 갱신
+  FIELDS.concat(['naver','kakao']).forEach(k => $('f_'+k).addEventListener('input', render));
+
+  $('dl').addEventListener('click', () => {
+    const blob = new Blob([buildConfig()], {type:'application/javascript;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'config.js'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  });
+  $('cp').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(buildConfig()); $('cp').textContent = '✅ 복사됨'; setTimeout(()=>$('cp').textContent='📋 내용 복사',1500); }
+    catch(e){ alert('복사 실패 — 미리보기 내용을 직접 선택해 복사하세요.'); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
