@@ -329,7 +329,8 @@ service cloud.firestore {
       <ol style="margin-top:8px">
         <li>좌측 ⚙ <b>프로젝트 설정 → 일반</b> 탭 → 하단 <b>내 앱</b> → <code>&lt;/&gt;</code> (웹) 클릭</li>
         <li>앱 닉네임 입력 → <b>앱 등록</b></li>
-        <li><b>SDK 설정 → 구성</b> 선택 → 표시되는 값들을 복사해 둡니다</li>
+        <li><b>SDK 설정 →</b> 반드시 <b>'구성(Config)'</b>을 선택 → 표시되는 값들을 복사해 둡니다
+          <br><small style="color:#b91c1c">⚠️ 'npm'이나 코드 스니펫(<code>import…</code>, <code>const firebaseConfig…</code>)이 아니라 <b>'구성(Config)'</b> 쪽 값만 필요합니다.</small></li>
       </ol>
       <div class="ok-box">✅ 이 단계에서 <b>apiKey, projectId, appId</b> 등의 값을 얻게 됩니다.</div>
     </div>
@@ -363,6 +364,18 @@ window.APP_CONFIG = {
   <span class="ky">naverClientId</span>: <span class="ph">"네이버 Client ID"</span>,   <span class="cm">// STEP 5 참고 (선택)</span>
   <span class="ky">kakaoJsKey</span>:    <span class="ph">"카카오 JavaScript 키"</span>  <span class="cm">// STEP 6 참고 (선택)</span>
 };</div>
+      <div class="warn-box">
+        🚫 <b>가장 흔한 설치 실패 원인 — 꼭 읽어주세요!</b><br>
+        Firebase 콘솔의 <b>코드 스니펫을 통째로 붙여넣으면 안 됩니다.</b> 아래 줄들은 <b>넣지 마세요</b>:
+        <div style="font-family:monospace;font-size:12px;background:#fff;border:1px solid #f5c6c0;border-radius:6px;padding:8px 10px;margin:6px 0;color:#b91c1c">
+          import { initializeApp } from "firebase/app";<br>
+          const firebaseConfig = { … };<br>
+          const app = initializeApp(firebaseConfig);
+        </div>
+        이 코드를 넣으면 <code>config.js</code>가 깨져 앱이 <b>전혀 작동하지 않습니다.</b>
+        위 예시처럼 <code>window.APP_CONFIG = { … };</code> <b>하나만</b> 두고, <code>firebase: { }</code> 안에 <b>값 6개만</b> 채우세요.
+        (초기화 코드는 앱이 알아서 처리합니다.)
+      </div>
       <div class="warn-box">
         ⚠️ <code>config.js</code>에는 본인 Firebase 키가 들어있습니다.
         <b>절대 GitHub이나 카카오톡 등에 공유하지 마세요.</b>

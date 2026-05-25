@@ -9,7 +9,16 @@ window.APP_CONFIG = {
 
   // ┌─ Firebase 프로젝트 설정 ─────────────────────────────────────────────
   // │  Firebase 콘솔(console.firebase.google.com)
-  // │  → ⚙ 프로젝트 설정 → 일반 탭 → 내 앱 → SDK 설정 → '구성' 에서 복사
+  // │  → ⚙ 프로젝트 설정 → 일반 탭 → 내 앱 → SDK 설정 → '구성(Config)' 선택 → 복사
+  // │
+  // │  ⚠ 매우 중요 — 흔한 실수 주의!
+  // │     콘솔의 "npm" 또는 코드 스니펫(아래 같은 코드)을 통째로 붙여넣지 마세요:
+  // │        import { initializeApp } from "firebase/app";   ← 넣지 말 것
+  // │        const firebaseConfig = { ... };                 ← 넣지 말 것
+  // │        const app = initializeApp(firebaseConfig);      ← 넣지 말 것
+  // │     이 코드를 넣으면 config.js가 깨져 앱이 전혀 작동하지 않습니다.
+  // │     아래 firebase: { } 안에 "값 6개"만 채우면 됩니다 (앱이 알아서 초기화함).
+  // │     config.js 에는 'window.APP_CONFIG = { ... };' 하나만 있어야 합니다.
   firebase: {
     apiKey:            "YOUR_API_KEY",
     authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
