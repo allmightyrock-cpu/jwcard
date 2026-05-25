@@ -1,11 +1,12 @@
-// ?�?� 구역카드 Service Worker ?�?�
+// ══ 전자구역카드 Service Worker ══
 //
-// ???�일 배포 ??반드??CACHE 버전???�려 주세????//   ?? 'jwcard-v10' ??'jwcard-v11'
-//   버전??바뀌면 모든 모바??PWA???�데?�트 배너가 ?�니??
+// ⚠ 새 파일 배포 시 반드시 CACHE 버전을 올려 주세요.
+//   예: 'jwcard-v1.73' → 'jwcard-v1.74'
+//   버전이 바뀌면 모든 모바일 PWA에 업데이트 배너가 뜹니다.
 //
-const CACHE = 'jwcard-v1.73'; // ??MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편  (최근 업데이트: 2026-05-22)
+const CACHE = 'jwcard-v1.74'; // MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편
 
-// ?�프?�인 ?�비용?�로�?캐시 (?�제 ?�빙?� Network First)
+// 오프라인 대비용으로만 캐시 (실제 서빙은 Network First)
 const STATIC = [
   '/config.js',
   '/publisher.html',
@@ -15,35 +16,40 @@ const STATIC = [
   '/icon-512.png',
   '/css/admin.css',
   '/js/settings.js',
-  '/js/s13.js'
+  '/js/s13.js',
+  '/js/config-check.js'
 ];
 
-// ?�?� Network First ?�???�턴 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
-// ??목록???�당?�는 ?�일?� ??�� ?�버?�서 먼�? 받고, ?�패 ?�에�?캐시 ?�용
+// 항상 Network First 패턴 — 서버 우선, 실패 시에만 캐시 사용
 const NETWORK_FIRST_PATTERNS = [
   'publisher.html',
   'cart.html',
-  'config.js',        // ???�정 ?�일 ????�� 최신 ?�요
-  'js/settings.js',   // ???�정 JS  ????�� 최신 ?�요
-  'js/s13.js',        // ??S13 JS   ????�� 최신 ?�요
-  'version.json',     // ??버전 ?�일 ????�� 최신 ?�요
+  'js/config-check.js', // 설정 감지 스크립트 — 항상 최신 필요
+  'config.js',          // 설정 파일 → 항상 최신 필요
+  'js/settings.js',     // 설정 JS  → 항상 최신 필요
+  'js/s13.js',          // S13 JS   → 항상 최신 필요
+  'version.json',       // 버전 파일 → 항상 최신 필요
 ];
 
-// ?�이지?�서 SKIP_WAITING 메시지 ?�신 ??즉시 ?�성??self.addEventListener('message', e => {
+// 페이지에서 SKIP_WAITING 메시지 수신 시 즉시 활성화
+self.addEventListener('message', e => {
   if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// ?�치: ?�적 ?�일 캐시 (?�프?�인 ?�백??
-// ??skipWaiting???�기???�출?��? ?�음 ???�용?��? '지�??�데?�트' 버튼???�러?�만 ?�성??//   (install?�서 즉시 skipWaiting?�면 reg.waiting??null???�어 배너가 ?��? ?�음)
+// 설치: 정적 파일 캐시 (오프라인 폴백)
+// skipWaiting을 여기서 호출하지 않는 이유:
+//   '지금 업데이트' 버튼을 눌러야만 활성화되도록 하기 위함
+//   (install에서 즉시 skipWaiting하면 reg.waiting이 null이 되어 배너가 뜨지 않음)
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c =>
       Promise.allSettled(STATIC.map(url => c.add(url).catch(() => null)))
     )
   );
-  // self.skipWaiting() ???�거: SKIP_WAITING 메시지로만 ?�성??});
+  // self.skipWaiting() 제거: SKIP_WAITING 메시지로만 활성화
+});
 
-// ?�성?? 구버??캐시 ?��? ??��
+// 활성화: 구버전 캐시 삭제 후 즉시 클레임
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -53,11 +59,11 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// ?�청 처리
+// 요청 처리
 self.addEventListener('fetch', e => {
   const url = e.request.url;
 
-  // admin ?�이지 �?관??JS/CSS ????�� ?�트?�크 (배포 즉시 반영)
+  // admin 페이지 및 관련 JS/CSS → 항상 네트워크 (배포 즉시 반영)
   if (url.includes('/admin') ||
       url.includes('js/admin') ||
       url.includes('js/map-admin') ||
@@ -65,7 +71,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Firebase / Google API / Naver ????�� ?�트?�크
+  // Firebase / Google API / Naver → 항상 네트워크
   if (url.includes('firestore') ||
       url.includes('firebase') ||
       url.includes('googleapis') ||
@@ -75,7 +81,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Network First ?�??????�� ?�버 ?�선, ?�패 ??캐시 ?�백
+  // Network First: 서버 우선, 실패 시 캐시 폴백
   const isNetworkFirst =
     NETWORK_FIRST_PATTERNS.some(p => url.includes(p)) ||
     url.endsWith('/') ||
@@ -97,7 +103,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // ?�머지 ?�적 ?�산(?�이�? manifest ?? ??캐시 ?�선
+  // 나머지 정적 자산(이미지, manifest 등) → 캐시 우선
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
