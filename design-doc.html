@@ -177,6 +177,21 @@
   .arch-box .arrow { color: #94a3b8; }
   .arch-box .note  { color: #94a3b8; font-size: 10px; }
 
+  /* 정리된 아키텍처 다이어그램 */
+  .arch2 { background:#1E293B; border-radius:14px; padding:20px; }
+  .arch2 .lyr { border:1px solid #334155; border-radius:12px; padding:14px 16px; background:#0f172a; }
+  .arch2 .lyr-t { font-size:12px; font-weight:800; color:#7dd3fc; letter-spacing:.5px; margin-bottom:12px; }
+  .arch2 .lyr-t small { font-weight:400; color:#94a3b8; margin-left:6px; }
+  .arch2 .row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .arch2 .box { background:#1E293B; border:1px solid #334155; border-radius:10px; padding:11px 12px; }
+  .arch2 .box .n { font-size:13px; font-weight:800; color:#86efac; }
+  .arch2 .box .s { font-size:11px; color:#cbd5e1; margin-top:3px; line-height:1.6; }
+  .arch2 .box .f { font-size:10.5px; color:#94a3b8; margin-top:7px; line-height:1.7; }
+  .arch2 .box.svc .n { color:#fbbf24; }
+  .arch2 .arrow { text-align:center; color:#94a3b8; font-size:12px; font-weight:700; margin:9px 0; }
+  .arch2 .note { color:#94a3b8; font-size:11px; line-height:1.8; margin-top:14px; border-top:1px solid #334155; padding-top:12px; }
+  @media (max-width:560px){ .arch2 .row { grid-template-columns:1fr; } }
+
   /* ── 플로우차트 ── */
   .flow {
     display: flex; align-items: center; gap: 0;
@@ -361,33 +376,60 @@
 
 <div class="card">
   <div class="card-body">
-    <div class="arch-box">
-<span class="layer">┌─────────────────────── 클라이언트 레이어 ───────────────────────────┐</span>
-│                                                                       │
-│  <span class="comp">admin.html</span>          <span class="comp">publisher.html</span>        <span class="comp">cart.html</span>              │
-│  (관리자 앱)          (전도인 앱 · PWA)     (전시대봉사 앱 · PWA)    │
-│                                                                       │
-│  <span class="comp">js/admin.js</span>         <span class="comp">publisher 내장 JS</span>    <span class="comp">cart 내장 JS</span>           │
-│  <span class="comp">js/map-admin.js</span>                                                   │
-│  <span class="comp">js/settings.js</span>      <span class="comp">js/s13.js</span>                                    │
-│                                                                       │
-<span class="layer">└────────────────────────────┬──────────────────────────────────────┘</span>
-                             │ HTTPS
-<span class="layer">┌────────────────────────────┼──────────────────────────────────────┐</span>
-│  <span class="layer">호스팅 레이어</span>              │                                       │
-│                            ↓                                         │
-│  <span class="api">Cloudflare Workers / Pages</span>  (정적 파일 서빙 · CDN · HTTPS 자동)  │
-└────────────────────────────┬──────────────────────────────────────┘
-                             │
-         ┌───────────────────┼─────────────────────────┐
-         ↓                   ↓                          ↓
-<span class="api">Firebase Firestore</span>     <span class="api">Naver Maps API</span>          <span class="api">Kakao JS SDK</span>
-(데이터 저장소)         (지도·지오코딩)          (카카오톡 공유)
-<span class="api">Firebase Auth</span>
-(익명 인증)
+    <div class="arch2">
+      <div class="lyr">
+        <div class="lyr-t">① 클라이언트 레이어 <small>사용자 브라우저</small></div>
+        <div class="row">
+          <div class="box">
+            <div class="n">admin.html</div>
+            <div class="s">관리자 앱 · PC</div>
+            <div class="f">js/admin.js · js/map-admin.js<br>js/settings.js · js/s13.js</div>
+          </div>
+          <div class="box">
+            <div class="n">publisher.html</div>
+            <div class="s">전도인 앱 · PWA</div>
+            <div class="f">내장 JS</div>
+          </div>
+          <div class="box">
+            <div class="n">cart.html</div>
+            <div class="s">전시대봉사 앱 · PWA</div>
+            <div class="f">내장 JS</div>
+          </div>
+        </div>
+      </div>
 
-<span class="note">* 모든 데이터는 Firestore에 저장. 지도·카카오는 선택적 연동.
-* 서버 사이드 로직 없음 — 100% 클라이언트 사이드 앱 (serverless)</span></div>
+      <div class="arrow">↓ HTTPS</div>
+
+      <div class="lyr">
+        <div class="lyr-t">② 호스팅 레이어</div>
+        <div class="box" style="border-color:#475569">
+          <div class="n" style="color:#7dd3fc">Cloudflare Workers / Pages</div>
+          <div class="s">정적 파일 서빙 · CDN · HTTPS 자동</div>
+        </div>
+      </div>
+
+      <div class="arrow">↓</div>
+
+      <div class="lyr">
+        <div class="lyr-t">③ 외부 서비스 <small>데이터 · 지도 · 공유</small></div>
+        <div class="row">
+          <div class="box svc">
+            <div class="n">Firebase</div>
+            <div class="s">Firestore — 데이터 저장소<br>Auth — 익명 인증</div>
+          </div>
+          <div class="box svc">
+            <div class="n">Naver Maps API</div>
+            <div class="s">지도 · 지오코딩</div>
+          </div>
+          <div class="box svc">
+            <div class="n">Kakao JS SDK</div>
+            <div class="s">카카오톡 공유</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">• 서버 사이드 로직 없음 — 100% 클라이언트 사이드 앱(serverless)<br>• 모든 데이터는 Firestore에 저장 · 지도/카카오는 선택적 연동</div>
+    </div>
   </div>
 </div>
 
