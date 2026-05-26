@@ -971,7 +971,7 @@ body.nav-mode-active #nav-footer-bar{display:flex}
 <script src="/js/config-check.js"></script>
 <script>
 window._naverMapsLoaded = false;
-// Firebase 동적 로드용 (geocoder 없이 — document.write 차단 우회)
+// 관리자 설정(Firestore) 키 동적 로드 — geocoder submodule 포함(위치 표시에 필수)
 window._loadNaverMaps = function(key) {
   if (!key || key.indexOf('YOUR_') === 0) return;
   if (window._naverMapsLoaded) return;
@@ -979,8 +979,8 @@ window._loadNaverMaps = function(key) {
   window._naverMapsLoaded = true;
   var s = document.createElement('script');
   s.type = 'text/javascript';
-  // 비동기 로드 시 geocoder submodule은 document.write 오류로 사용 불가 → 제외
-  s.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=' + encodeURIComponent(key);
+  // geocoder를 포함해야 주소→좌표 변환(위치 표시)이 동작함. (v3 maps.js는 비동기 로드에서도 submodule 지원)
+  s.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=' + encodeURIComponent(key) + '&submodules=geocoder';
   s.onerror = function() { window._naverMapsLoaded = false; };
   document.head.appendChild(s);
 };
