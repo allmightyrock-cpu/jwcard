@@ -141,6 +141,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       </div>
       <span class="admin-badge">관리자</span>
     </div>
+
+    <!-- ══ 업데이트 알림 배너 ══ -->
+    <div id="update-banner" style="display:none;align-items:center;gap:10px;background:#fef3c7;border-bottom:1.5px solid #fbbf24;padding:10px 16px;font-size:13px;flex-wrap:wrap">
+      <span style="font-size:16px">🔔</span>
+      <span id="update-banner-msg" style="flex:1;min-width:200px;color:#78350f;font-weight:600"></span>
+      <a id="update-banner-link" href="#" onclick="switchTab('manual',document.querySelector('.nav-item:last-child'));dismissUpdateBanner();return false;" style="color:#1d4ed8;font-weight:700;text-decoration:none;white-space:nowrap">업데이트 방법 보기 →</a>
+      <button onclick="dismissUpdateBanner()" style="border:none;background:none;cursor:pointer;font-size:16px;color:#92400e;padding:0 4px" title="닫기">✕</button>
+    </div>
+
     <div class="content">
 
       <!-- 구역관리 -->
@@ -3356,5 +3365,44 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <!-- Icons by <a href="https://www.flaticon.com" title="Flaticon">Flaticon</a> -->
+<script>
+// ══ 원격 버전 체크 (GitHub 최신 version.json 비교) ══
+function dismissUpdateBanner(){
+  sessionStorage.setItem('upd-dismissed','1');
+  var b = document.getElementById('update-banner');
+  if (b) b.style.display = 'none';
+}
+function _versionGt(a, b){
+  var av = String(a).split('.').map(Number);
+  var bv = String(b).split('.').map(Number);
+  for (var i = 0; i < Math.max(av.length, bv.length); i++){
+    var ai = av[i] || 0, bi = bv[i] || 0;
+    if (ai > bi) return true;
+    if (ai < bi) return false;
+  }
+  return false;
+}
+function _showUpdateBanner(cur, next){
+  var b = document.getElementById('update-banner');
+  var m = document.getElementById('update-banner-msg');
+  if (!b || !m) return;
+  m.textContent = '새 버전 v' + next + ' 업데이트 가능 (현재 v' + cur + ') — GitHub에서 최신 파일을 받아 재배포하세요.';
+  b.style.display = 'flex';
+}
+(function checkRemoteVersion(){
+  if (sessionStorage.getItem('upd-dismissed')) return;
+  fetch('version.json?_=' + Date.now())
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(local){
+      if (!local || !local.v) return;
+      fetch('https://raw.githubusercontent.com/allmightyrock-cpu/jwcard/main/version.json?_=' + Date.now())
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(remote){
+          if (!remote || !remote.v) return;
+          if (_versionGt(remote.v, local.v)) _showUpdateBanner(local.v, remote.v);
+        }).catch(function(){});
+    }).catch(function(){});
+})();
+</script>
 </body>
 </html>
