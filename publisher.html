@@ -3933,9 +3933,29 @@ function stopTerritoryListener() {
   if (_terrUnsub) { _terrUnsub(); _terrUnsub = null; }
 }
 
+// 도로명 칸에 번지가 붙어 저장된 경우 분리 (번지 칸이 비어 있을 때만, 표시·지도용)
+//   "은하수로465" → 도로명 "은하수로" + 번지 "465"
+//   "은하수로345번길465" → 도로명 "은하수로345번길" + 번지 "465"  (마지막 로/길/가/대로 뒤 끝숫자만)
+function _normalizeUnitAddr(u) {
+  if (!u) return u;
+  var road = (u.road || '').trim();
+  var jibun = (u.jibun || '').trim();
+  if (!jibun && road) {
+    var m = road.match(/^(.*(?:대로|로|길|가))\s*(\d+(?:-\d+)?)$/);
+    if (m) { u.road = m[1].trim(); u.jibun = m[2]; }
+  }
+  return u;
+}
+function _normalizeUnitsAddr(units) {
+  if (Array.isArray(units)) units.forEach(_normalizeUnitAddr);
+  return units;
+}
+
 function enterCard() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('consent-screen').style.display = 'none';
+  // 주소 보정: 도로명에 번지가 붙어 올라온 데이터를 분리 (재업로드 없이 표시 교정)
+  if (_territory && Array.isArray(_territory.units)) _normalizeUnitsAddr(_territory.units);
 
   // 구역별 공지사항 표시
   const _tnBanner = document.getElementById('territory-notice-banner');
