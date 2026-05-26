@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>전자구역카드 — 설치 점검(자동 진단)</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
-<script src="/config.js"></script>
+<script src="config.js"></script>
 <style>
   :root{ --navy:#1B3A6B; --blue:#2563eb; }
   *{box-sizing:border-box}
@@ -54,9 +54,9 @@
   <textarea id="report" readonly></textarea>
 
   <div class="links">
-    <a href="/setup.html">⚙️ 간편 설치 도우미</a> ·
-    <a href="/faq.html">❓ 자주 묻는 질문</a> ·
-    <a href="/install-guide.html">📖 설치 안내서</a>
+    <a href="setup.html">⚙️ 간편 설치 도우미</a> ·
+    <a href="faq.html">❓ 자주 묻는 질문</a> ·
+    <a href="install-guide.html">📖 설치 안내서</a>
   </div>
 </div>
 
@@ -86,7 +86,7 @@ function checkConfig(){
   var c = window.APP_CONFIG, fb = c && c.firebase;
   if (!fb || ph(fb.apiKey) || ph(fb.projectId)){
     setItem('config','설정 파일(config.js)','bad','Firebase 설정이 비어 있거나 예시값(YOUR_…) 그대로입니다.',
-      '<a href="/setup.html">간편 설치 도우미</a>로 config.js를 만들어 적용하세요.');
+      '<a href="setup.html">간편 설치 도우미</a>로 config.js를 만들어 적용하세요.');
     return false;
   }
   setItem('config','설정 파일(config.js)','ok','프로젝트: '+fb.projectId);
@@ -111,7 +111,7 @@ function checkPWA(){
 
 // ── 6. 버전 ──
 function checkVersion(){
-  fetch('/version.json?_=' + Date.now()).then(function(r){ return r.ok ? r.json() : null; })
+  fetch('version.json?_=' + Date.now()).then(function(r){ return r.ok ? r.json() : null; })
     .then(function(j){ setItem('version','앱 버전','ok', j && j.v ? ('v' + j.v + (j.updated ? ' · ' + j.updated : '')) : '버전 정보 확인'); })
     .catch(function(){ setItem('version','앱 버전','warn','version.json을 불러오지 못했습니다.'); });
 }
@@ -119,11 +119,11 @@ function checkVersion(){
 // ── 3. 네이버 지도 (핵심: 인증 실패/지오코딩 자동 판별) ──
 window.navermap_authFailure = function(){
   setItem('naver','네이버 지도','bad','네이버 인증 실패 — 키가 잘못됐거나, 배포 도메인이 등록되지 않았습니다.',
-    'NCP 콘솔 → Maps 애플리케이션 → <b>Web 서비스 URL</b>에 현재 배포 주소(<code>'+location.origin+'</code>)를 등록하세요. <a href="/faq.html#naver">자세히</a>');
+    'NCP 콘솔 → Maps 애플리케이션 → <b>Web 서비스 URL</b>에 현재 배포 주소(<code>'+location.origin+'</code>)를 등록하세요. <a href="faq.html#naver">자세히</a>');
 };
 function checkNaver(){
   var key = window.APP_CONFIG && window.APP_CONFIG.naverClientId;
-  if (ph(key)){ setItem('naver','네이버 지도','warn','config.js에 네이버 키가 없습니다. (관리자 설정에만 넣은 경우 이 페이지에선 검사되지 않습니다)','<a href="/setup.html">설치 도우미</a>에서 네이버 Client ID를 넣어보세요.'); return; }
+  if (ph(key)){ setItem('naver','네이버 지도','warn','config.js에 네이버 키가 없습니다. (관리자 설정에만 넣은 경우 이 페이지에선 검사되지 않습니다)','<a href="setup.html">설치 도우미</a>에서 네이버 Client ID를 넣어보세요.'); return; }
   setItem('naver','네이버 지도','run','지도 SDK 로딩 중…');
   var done = false;
   var s = document.createElement('script');
@@ -139,7 +139,7 @@ function checkNaver(){
         if (done) return; done=true;
         if (status === naver.maps.Service.Status.ERROR){
           setItem('naver','네이버 지도','bad','지도는 뜨지만 <b>주소→좌표 변환(Geocoding)이 실패</b>합니다.',
-            'NCP 콘솔에서 해당 애플리케이션에 <b>Geocoding</b> API가 이용 신청/활성화됐는지 확인하세요. <a href="/faq.html#naver">자세히</a>');
+            'NCP 콘솔에서 해당 애플리케이션에 <b>Geocoding</b> API가 이용 신청/활성화됐는지 확인하세요. <a href="faq.html#naver">자세히</a>');
         } else {
           setItem('naver','네이버 지도','ok','지도·주소 변환 모두 정상입니다.');
         }
@@ -181,7 +181,7 @@ function startModuleChecks(){
           : /auth|configuration|api-key|invalid/i.test(c)
           ? 'Firebase 익명 로그인 활성화 / config.js 키를 확인하세요.'
           : '네트워크 또는 Firebase 설정을 확인하세요.';
-        setItem('firebase','Firebase 연결','bad','연결 실패: ' + c, hint + ' <a href="/faq.html#firebase">자세히</a>');
+        setItem('firebase','Firebase 연결','bad','연결 실패: ' + c, hint + ' <a href="faq.html#firebase">자세히</a>');
       }
       afterChecks();
     } else if (tries > 40){ clearInterval(iv); setItem('firebase','Firebase 연결','warn','응답이 없습니다(시간 초과). 네트워크를 확인하세요.'); afterChecks(); }
