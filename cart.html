@@ -2069,15 +2069,17 @@ async function saveSchedule(){
       toast("✅ 명단이 등록되었습니다");S.screen="detail";
     }
     // cartSessions 동기화: 팀 배정 내용을 전도인 뱃지(publisher.html)에 노출
+    // weekKey는 세션 날짜가 아니라 해당 주 월요일 날짜(YYYYMMDD) — publisher와 동일한 방식
     if(db&&f.type){
-      const sessionKey=yr+mm+dd+"_"+f.type;
+      const monday=ScheduleTime.weekMonday(new Date(yr,parseInt(mm)-1,parseInt(dd)));
+      const wkStr=ScheduleTime.weekKey(monday);
+      const sessionKey=wkStr+"_"+f.type;
       const sessRef=db.collection("cartSessions").doc(sessionKey);
       const sessSnap=await sessRef.get();
-      const sessUpdate={teams:sessionTeams,confirmed:true};
       if(sessSnap.exists()){
-        await sessRef.update(sessUpdate);
+        await sessRef.update({teams:sessionTeams,confirmed:true});
       }else{
-        await sessRef.set({weekKey:yr+mm+dd,typeId:f.type,signups:[],confirmed:true,teams:sessionTeams,
+        await sessRef.set({weekKey:wkStr,typeId:f.type,signups:[],confirmed:true,teams:sessionTeams,
           createdAt:firebase.firestore.FieldValue.serverTimestamp()});
       }
     }
@@ -2106,17 +2108,18 @@ async function saveDetailLive(){
     const idx=S.schedules.findIndex(x=>x.id===S.selected.id);
     if(idx>=0) S.schedules[idx]={...S.selected};
     localStorage.setItem("cw_schedules",JSON.stringify(S.schedules));
-    // cartSessions 동기화
+    // cartSessions 동기화 — weekKey는 해당 주 월요일 날짜
     if(S.selected.date&&S.selected.type){
-      const dk=S.selected.date.replace(/-/g,"");
-      const sessionKey=dk+"_"+S.selected.type;
+      const parts=S.selected.date.split("-").map(Number);
+      const monday=ScheduleTime.weekMonday(new Date(parts[0],parts[1]-1,parts[2]));
+      const wkStr=ScheduleTime.weekKey(monday);
+      const sessionKey=wkStr+"_"+S.selected.type;
       const sessRef=db.collection("cartSessions").doc(sessionKey);
       const sessSnap=await sessRef.get();
       if(sessSnap.exists()){
         await sessRef.update({teams:sessionTeams,confirmed:true});
       }else{
-        const wk=S.selected.date.substring(0,10).replace(/-/g,"");
-        await sessRef.set({weekKey:wk,typeId:S.selected.type,signups:[],confirmed:true,teams:sessionTeams,
+        await sessRef.set({weekKey:wkStr,typeId:S.selected.type,signups:[],confirmed:true,teams:sessionTeams,
           createdAt:firebase.firestore.FieldValue.serverTimestamp()});
       }
     }
