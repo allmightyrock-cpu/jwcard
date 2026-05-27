@@ -242,7 +242,7 @@ async function loadAdminConfig() {
       window._naverClientId = _nKey;
       if (_nKey && typeof window._loadNaverMaps === 'function') window._loadNaverMaps(_nKey);
       // 지도 지역 (주소 검색 프리픽스)
-      window._mapRegion = d.mapRegion || (window.APP_CONFIG && window.APP_CONFIG.mapRegion) || '경기도 동두천시';
+      window._mapRegion = d.mapRegion || (window.APP_CONFIG && window.APP_CONFIG.mapRegion) || '';
     } else {
       window._territoryGroups = getDefaultGroups();
     }
@@ -2413,6 +2413,8 @@ async function resetAllTerritories() {
         status: '미배정',
         completionRate: 0,
         assignedPublishers: [],
+        visitMap: {},
+        sectionStatus: {},
         lastCompletedDate: serverTimestamp(),
         lastAssignedDate: serverTimestamp(),
         cycleHistory: [...(t.cycleHistory || []), historyEntry]
@@ -2421,6 +2423,8 @@ async function resetAllTerritories() {
       t.status = '미배정';
       t.completionRate = 0;
       t.assignedPublishers = [];
+      t.visitMap = {};
+      t.sectionStatus = {};
     }
     renderTerritoryTable();
     updateTerritoryStats();
@@ -2729,6 +2733,7 @@ window.completeTerritory = async function(id, name) {
       completionStatus:   null,
       assignedPublishers: [],
       visitMap:           {},           // 다음 회차를 위해 초기화
+      sectionStatus:      {},           // 다음 회차를 위해 초기화
       lastCompletedDate:  serverTimestamp(),
       lastAssignedDate:   serverTimestamp(),
       cycleHistory:       [...(t.cycleHistory || []), historyEntry]
@@ -2739,6 +2744,7 @@ window.completeTerritory = async function(id, name) {
     t.completionStatus = null;
     t.assignedPublishers = [];
     t.visitMap = {};
+    t.sectionStatus = {};
     t.cycleHistory = [...(t.cycleHistory || []), historyEntry];
     renderTerritoryTable();
     updateTerritoryStats();
@@ -3122,9 +3128,15 @@ window.saveBasicInfo = async function() {
   const cycle = Math.max(1, parseInt(document.getElementById('edit-cycle').value) || 1);
   if (!no || !name) { alert('번호와 이름을 입력해 주세요.'); return; }
   try {
-    await updateDoc(doc(db, 'territories', _editTargetId), { no, name, category, cycle });
     const t = window._territories.find(t => t.id === _editTargetId);
-    if (t) { t.no = no; t.name = name; t.category = category; t.cycle = cycle; }
+    const cycleChanged = t && (t.cycle || 1) !== cycle;
+    const updateData = { no, name, category, cycle };
+    if (cycleChanged) { updateData.visitMap = {}; updateData.sectionStatus = {}; }
+    await updateDoc(doc(db, 'territories', _editTargetId), updateData);
+    if (t) {
+      t.no = no; t.name = name; t.category = category; t.cycle = cycle;
+      if (cycleChanged) { t.visitMap = {}; t.sectionStatus = {}; }
+    }
     closeModal('edit-modal');
     renderTerritoryTable();
     alert('기본정보 저장 완료!');
@@ -3171,8 +3183,8 @@ window.cycleImport = async function(data) {
     const t = window._territories.find(t => String(t.no) === String(no));
     if (!t) { console.warn(`  ⚠ 구역 ${no}번 없음`); notFound++; continue; }
     try {
-      await updateDoc(doc(db, 'territories', t.id), { cycle: parseInt(cycle) || 1 });
-      t.cycle = parseInt(cycle) || 1;
+      await updateDoc(doc(db, 'territories', t.id), { cycle: parseInt(cycle) || 1, visitMap: {}, sectionStatus: {} });
+      t.cycle = parseInt(cycle) || 1; t.visitMap = {}; t.sectionStatus = {};
       ok++;
     } catch(e) { console.error(`  ❌ 구역 ${no}번 실패:`, e.message); fail++; }
   }
@@ -3197,8 +3209,8 @@ window.bulkSetCycle = async function() {
   let ok = 0, fail = 0;
   for (const t of targets) {
     try {
-      await updateDoc(doc(db, 'territories', t.id), { cycle: cycleVal });
-      t.cycle = cycleVal;
+      await updateDoc(doc(db, 'territories', t.id), { cycle: cycleVal, visitMap: {}, sectionStatus: {} });
+      t.cycle = cycleVal; t.visitMap = {}; t.sectionStatus = {};
       ok++;
     } catch(e) { fail++; }
   }
@@ -3454,8 +3466,8 @@ function renderTerritoryDashboard() {
   // ④ 바 차트 HTML
   const bars = sortedCycles.map(([cycle, count]) => {
     const pct = Math.round(count / maxCount * 100);
-    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
-      <div style="width:40px;text-align:right;font-size:12px;color:#64748b;font-weight:600;flex-shrink:0">${cycle}회차</div>
+    return `<div onclick="window.filterByCycle(${cycle})" title="클릭하면 ${cycle}회차 구역만 목록에 표시됩니다" style="display:flex;align-items:center;gap:10px;margin-bottom:9px;cursor:pointer;border-radius:6px;padding:2px 3px;transition:background .12s" onmouseover="this.style.background='#eef2f9'" onmouseout="this.style.background=''">
+      <div style="width:44px;text-align:right;font-size:12px;color:#2563eb;font-weight:700;flex-shrink:0;text-decoration:underline;text-underline-offset:2px">${cycle}회차</div>
       <div style="flex:1;background:#f1f5f9;border-radius:6px;height:20px;position:relative;overflow:hidden">
         <div style="width:${pct}%;background:linear-gradient(90deg,#1B3A6B 0%,#2563eb 100%);height:100%;border-radius:6px"></div>
       </div>
@@ -3463,7 +3475,7 @@ function renderTerritoryDashboard() {
     </div>`;
   }).join('');
 
-  // ⑤ 원형 통계 SVG
+  // ⑤ 원형 통계 SVG (단일 지표용)
   function circleStat(pct, label, num, den) {
     const r = 28, circ = +(2 * Math.PI * r).toFixed(2);
     const fill = Math.min(pct, 100);
@@ -3482,19 +3494,65 @@ function renderTerritoryDashboard() {
     </div>`;
   }
 
+  // ⑥ 도넛 차트 (구역 현황 비율)
+  const cntActive = T.filter(x => x.status === '진행중').length;
+  const cntDone   = T.filter(x => x.status === '완료').length;
+  const cntOther  = T.length - cntActive - cntDone;
+  const donutSegs = [
+    { val: cntActive, color: '#2563EB', label: '진행 중' },
+    { val: cntDone,   color: '#16A34A', label: '완료'   },
+    { val: cntOther,  color: '#F59E0B', label: '미배정' },
+  ].filter(s => s.val > 0);
+  const _dr = 50, _dcx = 64, _dcy = 64, _dsw = 16, _dcirc = 2 * Math.PI * _dr;
+  let _dacc = 0;
+  const donutCircles = donutSegs.map(seg => {
+    const len = _dcirc * seg.val / T.length;
+    const gap = _dcirc - len;
+    const rot = -90 + (_dacc / _dcirc * 360);
+    _dacc += len;
+    return `<circle cx="${_dcx}" cy="${_dcy}" r="${_dr}" fill="none" stroke="${seg.color}" stroke-width="${_dsw}" stroke-dasharray="${len.toFixed(2)} ${gap.toFixed(2)}" transform="rotate(${rot.toFixed(2)} ${_dcx} ${_dcy})"/>`;
+  }).join('');
+  const donutSvg = `<svg width="128" height="128" viewBox="0 0 128 128">
+    <circle cx="${_dcx}" cy="${_dcy}" r="${_dr}" fill="none" stroke="#f1f5f9" stroke-width="${_dsw}"/>
+    ${donutCircles}
+    <text x="${_dcx}" y="${_dcy - 4}" text-anchor="middle" font-size="20" font-weight="700" fill="#1B3A6B">${T.length}</text>
+    <text x="${_dcx}" y="${_dcy + 13}" text-anchor="middle" font-size="11" fill="#94a3b8">전체구역</text>
+  </svg>`;
+  const legendHtml = donutSegs.map(s => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="width:11px;height:11px;border-radius:3px;background:${s.color};flex-shrink:0"></div>
+      <span style="font-size:12px;color:#475569;flex:1">${s.label}</span>
+      <span style="font-size:13px;font-weight:700;color:#1e293b">${s.val}</span>
+      <span style="font-size:11px;color:#94a3b8">&nbsp;${T.length ? Math.round(s.val / T.length * 100) : 0}%</span>
+    </div>`).join('');
+
   el.innerHTML = `
-    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
-      <div style="flex:1;min-width:200px">
-        <div style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.5px;margin-bottom:12px;text-transform:uppercase">회차별 구역 수</div>
-        ${bars}
-        <div style="font-size:10px;color:#94a3b8;margin-top:6px">전체 ${T.length}개 구역 기준</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:18px;padding-bottom:16px;border-bottom:1.5px solid #f1f5f9">
+      <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
+        ${donutSvg}
+        <div style="min-width:110px">${legendHtml}</div>
       </div>
-      <div style="display:flex;gap:0;align-items:center;border-left:1.5px solid #f1f5f9;padding-left:16px;flex-shrink:0">
+      <div style="display:flex;gap:0;align-items:center;border-left:1.5px solid #f1f5f9;padding-left:18px;flex-shrink:0;margin-left:auto">
         ${circleStat(visitRate, '6개월 방문율', done6m, T.length)}
         ${circleStat(absRate,  '1년 부재율',   absCnt, visCnt)}
       </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.5px;margin-bottom:12px;text-transform:uppercase">회차별 구역 수</div>
+      ${bars}
+      <div style="font-size:10px;color:#94a3b8;margin-top:6px">전체 ${T.length}개 구역 기준</div>
     </div>`;
 }
+
+// 회차 그래프 라벨 클릭 → 해당 회차 구역만 목록에 표시 (구역 검색 "N회차" 재사용)
+window.filterByCycle = function(cycle) {
+  const inp = document.getElementById('terr-search');
+  if (inp) inp.value = cycle + '회차';
+  if (window.renderTerritoryTable) window.renderTerritoryTable();
+  // 목록으로 부드럽게 스크롤 (검색창이 목록 상단)
+  const target = document.getElementById('terr-search') || document.getElementById('territory-table-wrap');
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
 
 // ── 주소 수정 요청 패널 ──────────────────────────────────────────────
 window.toggleAddrReqPanel = function() {
