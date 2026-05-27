@@ -178,15 +178,17 @@ select:focus,input:focus{border-color:var(--navy);}
 </head>
 <body>
 <script src="/config.js"></script>
-<script src="/js/config-check.js"></script>
+<script src="/js/schedule-time.js"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
 <script>
 (function(){
-  const _kk=(window.APP_CONFIG&&window.APP_CONFIG.kakaoJsKey)||'YOUR_KAKAO_JAVASCRIPT_KEY';
+  const _kk=(window.APP_CONFIG&&window.APP_CONFIG.kakaoJsKey)||'b4e8f17ccc0d414d0db102892634edf0';
   if(typeof Kakao!=='undefined'&&!Kakao.isInitialized()&&_kk){Kakao.init(_kk);}
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js"></script>
+<script src="/js/share-card.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -224,6 +226,7 @@ try {
 const MEMBERS    = [];   // cartApproved 전도인 목록 (동적 로드)
 const CONDUCTORS = [];   // MEMBERS와 동일 (동적 로드)
 const LOCATIONS  = [];   // admin/cartConfig 에서 로드
+let _cwPubPerm = {};     // 이름 → permission('인도자'/'봉사감독자'/'관리자'…) — 취소 권한 override 판별용
 const SCHEDULE_TYPES = [
   {id:"thu_pm",label:"목요일 저녁",emoji:"🌙",ds:{ap:"오후",h:7,m:"00"},de:{ap:"오후",h:9,m:"00"}},
   {id:"fri_pm",label:"금요일 저녁",emoji:"🌙",ds:{ap:"오후",h:7,m:"00"},de:{ap:"오후",h:9,m:"00"}},
@@ -232,7 +235,7 @@ const SCHEDULE_TYPES = [
 const TEAMS      = ["A","B","C","D","E","F"];
 const TEAM_LABEL = {A:"A팀",B:"B팀",C:"C팀",D:"D팀",E:"E팀",F:"F팀"};
 const WEEKDAYS   = ["월요일","화요일","수요일","목요일","금요일","토요일","일요일"];
-const INTERVALS  = {2:30,3:20,4:15,5:12,6:10};
+const INTERVALS  = ScheduleTime.INTERVALS;  // 공유 모듈 (js/schedule-time.js)
 const TC = {
   A:{bg:"#F0FDF8",ac:"#0D9367",border:"#6EE7C7",hdr:"#D1FAF0"},
   B:{bg:"#FFF1F3",ac:"#BE3257",border:"#FCA5B0",hdr:"#FFD7DE"},
@@ -294,6 +297,7 @@ async function _loadCartConfig() {
       const data = d.data();
       const role = data.cartRole || (data.cartApproved ? 'member' : null);
       if (data.name && role) _cartPubMap[data.name] = { ...data, _cartRole: role };
+      if (data.name) _cwPubPerm[data.name] = data.permission || '';
     });
     // 역할별 분리: 봉사자=모든 cart승인 전도인, 인도자=cartRole 'admin' 만
     const allNames = Object.keys(_cartPubMap).sort();
@@ -347,14 +351,7 @@ function fmt12h(str){ // "HH:MM" → "오전/오후 H:MM"
   const ap=h<12?"오전":"오후", h12=h===0?12:h>12?h-12:h;
   return `${ap} ${h12}:${String(m).padStart(2,"0")}`;
 }
-function calcTime(ap,h,m,n,idx){
-  const hh=parseInt(h)||0, mm=parseInt(m)||0, nn=parseInt(n)||1;
-  const add=(60/nn)*idx;
-  let abs=(ap==="오후"&&hh!==12)?hh+12:(ap==="오전"&&hh===12?0:hh);
-  let tot=mm+add, fh=abs+Math.floor(tot/60), fm=Math.round(tot%60);
-  fh%=24; const h12=fh%12||12;
-  return `${fh<12?"오전":"오후"} ${h12}:${String(fm).padStart(2,"0")}`;
-}
+function calcTime(ap,h,m,n,idx){ return ScheduleTime.calcTime(ap,h,m,n,idx); }  // 공유 모듈
 function toast(msg,ms=2400){
   const el=document.getElementById("toast");
   el.textContent=msg; el.classList.add("show");
@@ -725,7 +722,7 @@ function detailHTML(){
           <span style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:${c.ac}">${TEAM_LABEL[k]}</span>
           <span style="font-size:11px;color:${c.ac};background:rgba(255,255,255,0.6);padding:2px 9px;border-radius:8px;font-weight:700;border:1px solid ${c.border}">${ns}개 조 · ${interval}분 간격</span>
         </div>
-        ${t.cartPerson?`<span style="font-size:11px;color:${c.ac};font-weight:600;display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.7);padding:3px 9px;border-radius:8px;border:1px solid ${c.border};flex-shrink:0">🛒 ${t.cartPerson}</span>`:""}
+        ${t.cartPerson?`<span style="font-size:11px;color:${c.ac};font-weight:600;display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.7);padding:3px 9px;border-radius:8px;border:1px solid ${c.border};flex-shrink:0">전시대 준비: ${t.cartPerson}</span>`:""}
       </div>
       <div style="background:rgba(255,255,255,0.18);padding:7px 14px;border-bottom:1px solid ${c.border}88;font-size:12px;display:flex;align-items:center;gap:5px">
         <span>📍</span><span style="color:var(--text-dim);font-weight:500">${loc}</span>
@@ -760,6 +757,14 @@ function detailHTML(){
       </div>
     </div>`;
   }).join("")}`;
+}
+
+// 전시대 준비 담당 후보 = 인도자(CONDUCTORS)로 한정.
+// 단, 이미 지정된 담당(current)이 인도자 목록에 없으면(예외/과거 데이터) 유지되도록 앞에 추가.
+function _cartPersonOptions(current){
+  const list=CONDUCTORS.slice();
+  if(current && !list.includes(current)) list.unshift(current);
+  return list;
 }
 
 // ── FORM ──
@@ -854,10 +859,10 @@ function formHTML(){
             </div>
           </div>
           <div style="min-width:130px">
-            <div style="font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:7px;display:flex;align-items:center;gap:4px"><svg width="12" height="14" viewBox="0 0 80 90" fill="none" style="vertical-align:middle;flex-shrink:0"><rect x="14" y="3" width="52" height="62" rx="2.5" fill="${c.ac}"/><rect x="18.5" y="7.5" width="43" height="28" rx="2" fill="rgba(255,255,255,0.3)"/><ellipse cx="14" cy="76" rx="10" ry="14" fill="${c.bg}" stroke="${c.ac}" stroke-width="2.8"/><circle cx="14" cy="76" r="3.5" fill="${c.ac}"/><ellipse cx="66" cy="76" rx="10" ry="14" fill="${c.bg}" stroke="${c.ac}" stroke-width="2.8"/><circle cx="66" cy="76" r="3.5" fill="${c.ac}"/></svg> 카트 준비</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:7px">전시대 준비</div>
             <select id="fcart${k}" style="width:100%;border-radius:8px;border:1.5px solid ${c.border};padding:7px 10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;-webkit-appearance:none;background:rgba(255,255,255,0.9)">
-              <option value="">봉사자 선택</option>
-              ${MEMBERS.map(m=>`<option${t.cartPerson===m?" selected":""}>${m}</option>`).join("")}
+              <option value="">인도자 선택</option>
+              ${_cartPersonOptions(t.cartPerson).map(m=>`<option${t.cartPerson===m?" selected":""}>${m}</option>`).join("")}
             </select>
           </div>
         </div>
@@ -1048,6 +1053,13 @@ function settingsModalHTML(){
               <option value="00"${String(t.de.m)==="00"?" selected":""}>00분</option><option value="30"${String(t.de.m)==="30"?" selected":""}>30분</option>
             </select>
           </div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
+            <span style="font-size:12px;color:var(--text-dim);min-width:30px">담당</span>
+            <select id="ste-cond" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;outline:none;background:#fff;font-family:inherit">
+              <option value="">기본 담당 인도자 — 선택</option>
+              ${_cartPersonOptions(t.conductor||"").map(m=>`<option${m===(t.conductor||"")?" selected":""}>${m}</option>`).join("")}
+            </select>
+          </div>
           <div style="display:flex;gap:7px">
             <button id="ste-save" data-idx="${idx}" style="flex:1;padding:8px;border-radius:9px;border:none;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">저장</button>
             <button id="ste-cancel" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--border);background:#fff;color:var(--text-dim);font-size:13px;cursor:pointer;font-family:inherit">취소</button>
@@ -1060,7 +1072,7 @@ function settingsModalHTML(){
             <button class="st-sch-dn" data-idx="${idx}" ${idx===schLen-1?"disabled":""} style="width:22px;height:22px;border-radius:5px;border:1.5px solid ${idx===schLen-1?"#e2e8f0":"var(--border)"};background:${idx===schLen-1?"#f8fafc":"#fff"};color:${idx===schLen-1?"#cbd5e1":"var(--text-dim)"};cursor:${idx===schLen-1?"not-allowed":"pointer"};font-size:11px;line-height:1;padding:0">&#9660;</button>
           </div>
           <span style="min-width:110px;font-weight:600">${t.emoji} ${t.label}</span>
-          <span style="font-size:12px;color:var(--text-muted);flex:1">${t.ds.ap} ${t.ds.h}:${String(t.ds.m).padStart(2,"0")} – ${t.de.ap} ${t.de.h}:${String(t.de.m).padStart(2,"0")}</span>
+          <span style="font-size:12px;color:var(--text-muted);flex:1">${t.ds.ap} ${t.ds.h}:${String(t.ds.m).padStart(2,"0")} – ${t.de.ap} ${t.de.h}:${String(t.de.m).padStart(2,"0")}${t.conductor?`<br><span style="font-size:11px;color:#1B3A6B">🎤 ${t.conductor}</span>`:""}</span>
           <button class="st-sch-edit" data-idx="${idx}" title="시간 수정" style="flex-shrink:0;width:26px;height:26px;border-radius:7px;border:1.5px solid var(--border);background:#fff;color:var(--navy);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">✏</button>
           <button class="st-sch-del" data-idx="${idx}" ${schLen<=1?"disabled":""} style="flex-shrink:0;width:24px;height:24px;border-radius:50%;border:none;background:${schLen<=1?"#eee":"#ffe8e5"};color:${schLen<=1?"#aaa":"var(--red)"};cursor:${schLen<=1?"not-allowed":"pointer"};font-size:12px">&#215;</button>
         </div>`;
@@ -1202,40 +1214,16 @@ let _sePicker = null;
 let _seTeams = [];
 let _seSessionKey = "";
 let _seSessionInfo = {};
+let _seConductorWeek = "";   // 이번 주 담당 인도자 (요일 기본값 override)
 
-function _cwSchedTypeToDow(t){
-  const ID_DOW={mon:1,tue:2,wed:3,thu:4,fri:5,sat:6,sun:0};
-  const prefix=(t.id||"").split("_")[0].toLowerCase();
-  if(ID_DOW[prefix]!==undefined) return ID_DOW[prefix];
-  const LABEL_DOW={"월":1,"화":2,"수":3,"목":4,"금":5,"토":6,"일":0};
-  const lbl=t.label||"";
-  for(const [k,v] of Object.entries(LABEL_DOW)){
-    if(lbl.includes(k+"요일")) return v;
-  }
-  return -1;
-}
-
-function _cwApHmTo24(ap,h,m){
-  let hr=parseInt(h)||0;
-  if(ap==="오후"&&hr!==12) hr+=12;
-  if(ap==="오전"&&hr===12) hr=0;
-  return {h:hr,m:parseInt(m||"0")};
-}
-
-// 주간 기준: 월요일 ~ 일요일 (일요일은 그 주 마지막 날)
-// d=0(일)이면 6일 뺌 → 같은 주의 월요일, d=1(월)이면 0일 뺌 → 당일
-function _cwWeekMonday(){
-  const now=new Date(),d=now.getDay();
-  const m=new Date(now);
-  m.setHours(0,0,0,0);
-  m.setDate(now.getDate()-(d===0?6:d-1));
-  return m;
-}
+// 아래 3개는 공유 모듈(js/schedule-time.js)에 위임 — 인도자/신청자 앱이 같은 주차/요일 계산을 쓰도록
+function _cwSchedTypeToDow(t){ return ScheduleTime.schedTypeToDow(t); }
+function _cwApHmTo24(ap,h,m){ return ScheduleTime.apHmTo24(ap,h,m); }
+function _cwWeekMonday(){ return ScheduleTime.weekMonday(); }
 
 function _cwBuildWeekSessions(){
   const monday=_cwWeekMonday();
-  // wkStr: 로컬 날짜 기준 (toISOString은 UTC 변환으로 한국 등 +9 지역에서 하루 밀릴 수 있음)
-  const wkStr=monday.getFullYear()+String(monday.getMonth()+1).padStart(2,"0")+String(monday.getDate()).padStart(2,"0");
+  const wkStr=ScheduleTime.weekKey(monday);
   const DOW_KO=["일","월","화","수","목","금","토"];
   const now=new Date();
   const sessions=[];
@@ -1273,6 +1261,20 @@ function _loadWeekSignups(){
     },err=>console.warn("signups load:",err.message));
 }
 
+// ── 전시대봉사 담당 인도자 / 취소 권한 ──
+function _cwMyName(){ return localStorage.getItem("cw_myname")||localStorage.getItem("jwcard_name")||""; }
+// 봉사감독자·관리자는 어느 요일이든 override 가능
+function _cwIsOverride(){ const p=_cwPubPerm[_cwMyName()]||""; return p==="봉사감독자"||p==="관리자"; }
+// 유효 담당 인도자 = 그 주 지정(conductorWeek) → 없으면 요일 기본 담당(type.conductor)
+function _cwEffectiveConductor(s,sd){
+  return (sd&&sd.conductorWeek)||(SCHEDULE_TYPES.find(t=>t.id===s.typeId)||{}).conductor||"";
+}
+// 취소/해제 권한: 유효 담당 본인 또는 봉사감독/관리자
+function _cwCanCancel(s,sd){
+  const me=_cwMyName();
+  return _cwIsOverride()||(!!me&&me===_cwEffectiveConductor(s,sd));
+}
+
 function signupWeekHTML(){
   if(!_weekSessions.length){
     return `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">설정에서 전시대 봉사 요일을 추가하세요</div></div>`;
@@ -1281,7 +1283,12 @@ function signupWeekHTML(){
     const sd=_weekSignupData[s.key]||{};
     const signups=sd.signups||[];
     const confirmed=sd.confirmed||false;
-    const statusBadge=confirmed
+    const cancelled=sd.cancelled||false;
+    const canCancel=_cwCanCancel(s,sd);
+    const effCond=_cwEffectiveConductor(s,sd);
+    const statusBadge=cancelled
+      ?`<span class="scard-badge" style="background:#FEE2E2;color:#B91C1C">🚫 취소됨</span>`
+      :confirmed
       ?`<span class="scard-badge" style="background:#DCFCE7;color:#166534">✅ 팀 확정</span>`
       :s.ended
         ?`<span class="scard-badge" style="background:#F1F5F9;color:#94A3B8">봉사 종료</span>`
@@ -1289,15 +1296,58 @@ function signupWeekHTML(){
     const chips=signups.length
       ?signups.map(n=>`<span style="font-size:11px;padding:3px 9px;border-radius:10px;background:#F1F5F9;color:#374151">${n}</span>`).join("")
       :`<span style="font-size:11px;color:var(--text-muted)">신청자 없음</span>`;
-    const adminBtn=S.role==="admin"
+    // 취소되면 편성·공유 버튼 숨김
+    const adminBtn=(S.role==="admin"&&!cancelled)
       ?`<button class="signup-sched-btn btn btn-navy btn-sm" data-typeid="${s.typeId}" style="font-size:11px;padding:6px 14px">📋 팀 편성</button>`:"";
-    return `<div class="schedule-card" ${s.ended?'style="opacity:0.6"':""}>
+    const shareBtn=(confirmed&&!cancelled)
+      ?`<button class="week-share-btn btn btn-sm" data-key="${s.key}" style="background:#FEE500;border:none;color:#191919;font-size:11px;padding:6px 12px;font-weight:700;display:flex;align-items:center;gap:4px">📷 명단 공유</button>`:"";
+    // 취소/해제 버튼 — 유효 담당 인도자 또는 봉사감독/관리자만
+    let cancelBtn="";
+    if(canCancel){
+      if(cancelled) cancelBtn=`<button class="week-uncancel-btn btn btn-sm" data-key="${s.key}" style="background:#fff;border:1.5px solid #BBF7D0;color:#166534;font-size:11px;padding:6px 12px;font-weight:600">↩️ 취소 해제</button>`;
+      else if(!s.ended) cancelBtn=`<button class="week-cancel-btn btn btn-sm" data-key="${s.key}" style="background:#fff5f5;border:1.5px solid #f5c6c0;color:var(--red);font-size:11px;padding:6px 12px;font-weight:600">🚫 계획 취소</button>`;
+    }
+    const footer=(adminBtn||shareBtn||cancelBtn)
+      ?`<div style="padding:4px 14px 12px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">${shareBtn}${adminBtn}${cancelBtn}</div>`:"";
+    // 확정 시 카트 준비 담당을 계획표에도 표시 (취소 시 숨김)
+    const cartLine=(confirmed&&!cancelled&&sd.teams)
+      ?Object.entries(sd.teams).map(([k,t])=>t.cartPerson?`${k} ${t.cartPerson}`:null).filter(Boolean).join(" · ")
+      :"";
+    return `<div class="schedule-card" ${(s.ended||cancelled)?'style="opacity:0.65"':""}>
       <div class="scard-head"><div class="scard-date">${s.emoji} ${s.dateLabel}</div>${statusBadge}</div>
       <div class="scard-body"><span>${fmt12h(s.startStr)} ~ ${fmt12h(s.endStr)}</span><span style="color:var(--navy);font-weight:600">✋ ${signups.length}명 신청</span></div>
+      ${effCond?`<div style="padding:0 14px 4px;font-size:11px;color:#64748B">🎤 담당 인도자: <b style="color:#1B3A6B">${effCond}</b></div>`:""}
+      ${cancelled?`<div style="padding:0 14px 8px;font-size:11px;color:#B91C1C;font-weight:700">⚠️ 이 날짜 전시대봉사가 취소되었습니다</div>`:""}
       <div style="padding:6px 14px 8px;display:flex;flex-wrap:wrap;gap:4px">${chips}</div>
-      ${S.role==="admin"?`<div style="padding:4px 14px 12px;display:flex;justify-content:flex-end">${adminBtn}</div>`:""}
+      ${cartLine?`<div style="padding:0 14px 8px;font-size:11px;color:#B45309;font-weight:600">전시대 준비: ${cartLine}</div>`:""}
+      ${footer}
     </div>`;
   }).join("");
+}
+
+// 계획 취소 / 해제 (권한자만) — cartSessions 문서에 cancelled 플래그 기록
+async function _cancelWeekSession(key){
+  const s=_weekSessions.find(x=>x.key===key); if(!s) return;
+  const sd=_weekSignupData[key]||{};
+  if(!_cwCanCancel(s,sd)){toast("취소 권한이 없습니다 (담당 인도자/봉사감독자만 가능)");return;}
+  if(!confirm(`${s.dateLabel} 전시대봉사 계획을 취소할까요?\n전도인 화면에 "취소됨"으로 공지되고 신청이 막힙니다.`)) return;
+  const wkStr=key.substring(0,8), typeId=key.substring(9);
+  try{
+    const ref=db.collection("cartSessions").doc(key);
+    const snap=await ref.get();
+    if(snap.exists()) await ref.update({cancelled:true});
+    else await ref.set({weekKey:wkStr,typeId,signups:[],confirmed:false,cancelled:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    toast("계획이 취소되었습니다");
+  }catch(e){toast("취소 실패: "+e.message);}
+}
+async function _uncancelWeekSession(key){
+  const s=_weekSessions.find(x=>x.key===key); if(!s) return;
+  const sd=_weekSignupData[key]||{};
+  if(!_cwCanCancel(s,sd)){toast("권한이 없습니다");return;}
+  try{
+    await db.collection("cartSessions").doc(key).update({cancelled:false});
+    toast("취소가 해제되었습니다");
+  }catch(e){toast("해제 실패: "+e.message);}
 }
 
 // ──── 신청 기반 팀 편성 에디터 ────
@@ -1314,6 +1364,8 @@ function _openSignupEditor(sessionKey){
   const s=_weekSessions.find(x=>x.key===sessionKey); if(!s) return;
   _seSessionKey=sessionKey;
   _seSessionInfo=s;
+  // 이번 주 담당 인도자: 저장된 주간 지정 → 없으면 요일 기본 담당
+  _seConductorWeek=sd.conductorWeek||(SCHEDULE_TYPES.find(t=>t.id===s.typeId)||{}).conductor||"";
   const saved=sd.teams||{};
   _seTeams=[];
   const teamKeys=Object.keys(saved);
@@ -1339,18 +1391,11 @@ function _renderSignupEditor(){
   const allUsed=new Set();
   _seTeams.forEach(t=>t.rows.slice(0,t.numSlots).forEach(r=>r.forEach(n=>{if(n)allUsed.add(n);})));
   const poolHtml=signups.map(n=>`<div style="padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid ${allUsed.has(n)?"#1B3A6B":"#E2E8F0"};background:${allUsed.has(n)?"#1B3A6B":"#fff"};color:${allUsed.has(n)?"#fff":"#374151"};opacity:${allUsed.has(n)?".5":"1"}">${n}${CONDUCTORS.includes(n)?` <span style="font-size:9px;opacity:.7">인도자</span>`:""}</div>`).join("");
-  const [startH,startM]=s.startStr.split(":").map(Number);
-  function calcT(ti,ns){
-    const intv=INTERVALS[ns]||Math.round(120/ns);
-    const tot=startH*60+startM+intv*ti;
-    const h=Math.floor(tot/60)%24,m=tot%60;
-    const ap=h<12?"오전":"오후",h12=h===0?12:h>12?h-12:h;
-    return `${ap} ${h12}:${String(m).padStart(2,"0")}`;
-  }
+  const calcT=(ti,ns)=>ScheduleTime.slotLabel(s.startStr,ns,ti);  // 공유 모듈
   const teamsHtml=_seTeams.map((t,ti)=>{
     const c=_SE_COLORS[ti%_SE_COLORS.length];
     const ns=t.numSlots;
-    const intv=INTERVALS[ns]||Math.round(120/ns);
+    const intv=ScheduleTime.interval(ns);  // 공유 모듈
     const slotBtns=[2,3,4,5,6].map(v=>`<button onclick="_seSetSlots(${ti},${v})" style="width:36px;height:36px;border-radius:8px;font-size:11px;font-weight:700;border:2px solid ${v===ns?c.ac:"#E2E8F0"};background:${v===ns?c.bg:"#fff"};color:${v===ns?c.ac:"#94A3B8"};cursor:pointer;font-family:inherit">${v}조<br><span style="font-size:9px;font-weight:400">${INTERVALS[v]}분</span></button>`).join("");
     const gridRows=Array.from({length:ns},(_,si)=>{
       const time=calcT(si,ns);
@@ -1366,7 +1411,7 @@ function _renderSignupEditor(){
         ${cells}</div>`;
     }).join("");
     const locOpts=LOCATIONS.map(l=>`<option${l===t.loc?" selected":""}>${l}</option>`).join("");
-    const cartOpts=`<option value="">— 선택 —</option>`+signups.map(m=>`<option${m===t.cartPerson?" selected":""}>${m}</option>`).join("");
+    const cartOpts=`<option value="">— 선택 —</option>`+_cartPersonOptions(t.cartPerson).map(m=>`<option${m===t.cartPerson?" selected":""}>${m}</option>`).join("");
     return `<div style="margin-bottom:12px;border-radius:12px;overflow:hidden;border:2px solid ${c.ac}55">
       <div style="padding:10px 14px;background:${c.ac};display:flex;align-items:center;gap:8px">
         <span style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:#fff">${_SE_NAMES[ti]}</span>
@@ -1380,7 +1425,7 @@ function _renderSignupEditor(){
           <div><label style="font-size:10px;color:#64748B;font-weight:600;display:block;margin-bottom:4px">몇 개 조?</label>
             <div style="display:flex;gap:4px">${slotBtns}</div></div>
         </div>
-        <div style="margin-bottom:10px"><label style="font-size:10px;color:#64748B;font-weight:600;display:block;margin-bottom:4px">🛒 카트 준비</label>
+        <div style="margin-bottom:10px"><label style="font-size:10px;color:#64748B;font-weight:600;display:block;margin-bottom:4px">전시대 준비</label>
           <select onchange="_seSetCart(${ti},this.value)" style="width:100%;background:#FFF7ED;border:1.5px solid ${c.border};border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#1E293B;outline:none">${cartOpts}</select></div>
         <div style="border:1.5px solid ${c.ac}44;border-radius:9px;overflow:hidden">
           <div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr;background:${c.bg};color:${c.ac};font-size:10px;font-weight:700;text-align:center">
@@ -1398,6 +1443,13 @@ function _renderSignupEditor(){
       <div style="flex:1"><div style="font-size:13px;font-weight:700">${s.emoji} ${s.dateLabel}</div><div style="font-size:10px;opacity:.75">${fmt12h(s.startStr)} ~ ${fmt12h(s.endStr)} · 팀 편성</div></div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:12px 14px;background:#F8FAFC">
+      <div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;padding:10px 12px;margin-bottom:12px">
+        <label style="font-size:10px;font-weight:700;color:#64748B;display:block;margin-bottom:6px">🎤 이번 주 담당 인도자 <span style="font-weight:400;color:#94A3B8">(요일 기본값에서 바꾸면 이번 주만 적용)</span></label>
+        <select onchange="_seSetConductor(this.value)" style="width:100%;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#1E293B;outline:none">
+          <option value="">— 선택 —</option>
+          ${_cartPersonOptions(_seConductorWeek).map(m=>`<option${m===_seConductorWeek?" selected":""}>${m}</option>`).join("")}
+        </select>
+      </div>
       <div style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;padding:10px 12px;margin-bottom:14px">
         <div style="font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">신청자 — 셀 탭해서 배치</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">${poolHtml||'<span style="font-size:11px;color:#94A3B8">신청자 없음</span>'}</div>
@@ -1442,6 +1494,7 @@ function _seDelTeam(idx){
 function _seSetSlots(ti,ns){_seTeams[ti].numSlots=ns;_renderSignupEditor();}
 function _seSetLoc(ti,v){_seTeams[ti].loc=v;}
 function _seSetCart(ti,v){_seTeams[ti].cartPerson=v;}
+function _seSetConductor(v){_seConductorWeek=v;}
 
 function _seClearCell(ti,si,ci){
   if(!_seTeams[ti]) return;
@@ -1494,14 +1547,46 @@ async function _seConfirm(){
     const ref=db.collection("cartSessions").doc(_seSessionKey);
     const snap=await ref.get();
     if(snap.exists()){
-      await ref.update({teams:teamsData,confirmed:true});
+      await ref.update({teams:teamsData,confirmed:true,conductorWeek:_seConductorWeek||""});
     } else {
-      await ref.set({weekKey:wkStr,typeId,signups:[],confirmed:true,teams:teamsData,
+      await ref.set({weekKey:wkStr,typeId,signups:[],confirmed:true,teams:teamsData,conductorWeek:_seConductorWeek||"",
         createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     }
     toast("팀이 확정되었습니다");
     _closeSignupEditor();
   }catch(e){toast("저장 실패: "+e.message);}
+}
+
+// 확정된 주간 세션(cartSessions) → 공유 카드 모델 (카트 담당 포함)
+function _buildWeekShareModel(s,sd){
+  const teams=Object.entries(sd.teams||{}).map(([k,team])=>({
+    key:k,
+    label:TEAM_LABEL[k]||k+"팀",
+    loc:team.loc||"장소 미정",
+    cartPerson:team.cartPerson||"",
+    numSlots:parseInt(team.numSlots)||2,
+    rows:team.rows||[]
+  }));
+  return {
+    dateLabel:`${s.emoji?s.emoji+" ":""}${s.dateLabel}`,
+    timeRange:`${fmt12h(s.startStr)} ~ ${fmt12h(s.endStr)}`,
+    conductor:"",
+    startStr:s.startStr,
+    teams,cols:3
+  };
+}
+
+// 확정된 주간 팀 편성(카트 담당 포함)을 이미지로 공유
+async function _shareWeekSession(key){
+  const s=_weekSessions.find(x=>x.key===key);
+  const sd=_weekSignupData[key]||{};
+  if(!s||!sd.teams){toast("확정된 팀 편성이 없습니다");return;}
+  if(typeof ShareCard==="undefined"){toast("공유 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.");return;}
+  toast("이미지 생성 중...",3000);
+  try{
+    const method=await ShareCard.share(_buildWeekShareModel(s,sd),`전시대명단_${s.dateLabel}.png`,"전시대 봉사 명단");
+    if(method==="downloaded") toast("✅ 이미지를 저장했습니다. 카카오톡 대화창에 첨부해 보내세요.",4000);
+  }catch(e){toast("이미지 생성 실패: "+(e?.message||e));}
 }
 
 // ── BIND: MAIN ──
@@ -1521,6 +1606,14 @@ function bind(){
   // 이번 주 신청 현황 — 팀 편성 버튼 → 이번 주 해당 명단으로 바로 진입
   document.querySelectorAll(".signup-sched-btn").forEach(b=>
     b.addEventListener("click",e=>{e.stopPropagation();_openThisWeekSchedule(b.dataset.typeid);}));
+  // 확정된 주간 세션 — 명단(카트 담당 포함) 이미지 공유
+  document.querySelectorAll(".week-share-btn").forEach(b=>
+    b.addEventListener("click",e=>{e.stopPropagation();_shareWeekSession(b.dataset.key);}));
+  // 계획 취소 / 취소 해제 (담당 인도자·봉사감독/관리자)
+  document.querySelectorAll(".week-cancel-btn").forEach(b=>
+    b.addEventListener("click",e=>{e.stopPropagation();_cancelWeekSession(b.dataset.key);}));
+  document.querySelectorAll(".week-uncancel-btn").forEach(b=>
+    b.addEventListener("click",e=>{e.stopPropagation();_uncancelWeekSession(b.dataset.key);}));
   // 목록
   document.querySelectorAll(".schedule-card").forEach(c=>
     c.addEventListener("click",e=>{
@@ -1945,17 +2038,20 @@ async function saveSchedule(){
   if(!f.startHour){toast("시작 시간을 입력해 주세요");return;}
   const mm=String(f.month).padStart(2,"0"),dd=String(f.day).padStart(2,"0");
   const cleanTeams={};
+  const sessionTeams={};
   TEAMS.forEach(k=>{
     const t=f.teams[k]||{};
     const ns=parseInt(t.numSlots)||2;
     const rows=objToRows(t.rows,ns);
     cleanTeams[k]={location:t.location||"",cartPerson:t.cartPerson||"",numSlots:ns,rows:rowsToObj(rows,ns),members:rows.flat().filter(Boolean)};
+    sessionTeams[k]={loc:t.location||"",numSlots:ns,cartPerson:t.cartPerson||"",rows:rows.slice(0,ns)};
   });
+  const yr=new Date().getFullYear();
   const data={type:f.type,month:parseInt(f.month),day:parseInt(f.day),weekday:f.weekday,
     startAmPm:f.startAmPm,startHour:parseInt(f.startHour),startMin:f.startMin||"00",
     endAmPm:f.endAmPm,endHour:parseInt(f.endHour),endMin:f.endMin||"00",
     conductor:f.conductor,numTeams:parseInt(f.numTeams),teams:cleanTeams,
-    date:new Date().getFullYear()+"-"+mm+"-"+dd,completed:false,
+    date:yr+"-"+mm+"-"+dd,completed:false,
     updatedAt:db?firebase.firestore.FieldValue.serverTimestamp():new Date().toISOString()};
   const btn=document.getElementById("fsave");
   if(btn){btn.disabled=true;btn.textContent="저장 중...";}
@@ -1972,6 +2068,19 @@ async function saveSchedule(){
       const newDoc={id,...data};S.schedules.unshift(newDoc);S.selected=newDoc;
       toast("✅ 명단이 등록되었습니다");S.screen="detail";
     }
+    // cartSessions 동기화: 팀 배정 내용을 전도인 뱃지(publisher.html)에 노출
+    if(db&&f.type){
+      const sessionKey=yr+mm+dd+"_"+f.type;
+      const sessRef=db.collection("cartSessions").doc(sessionKey);
+      const sessSnap=await sessRef.get();
+      const sessUpdate={teams:sessionTeams,confirmed:true};
+      if(sessSnap.exists()){
+        await sessRef.update(sessUpdate);
+      }else{
+        await sessRef.set({weekKey:yr+mm+dd,typeId:f.type,signups:[],confirmed:true,teams:sessionTeams,
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+    }
     localStorage.setItem("cw_schedules",JSON.stringify(S.schedules));
     S.form=null;render();
   }catch(e){
@@ -1984,17 +2093,33 @@ async function saveDetailLive(){
   if(!db||!S.selected?.id) return;
   try{
     const cleanTeams={};
+    const sessionTeams={};
     TEAMS.forEach(k=>{
       const t=S.selected.teams[k]||{};
       const ns=parseInt(t.numSlots)||2;
       const rows=objToRows(t.rows,ns);
       cleanTeams[k]={...t,rows:rowsToObj(rows,ns),members:rows.flat().filter(Boolean)};
+      sessionTeams[k]={loc:t.location||"",numSlots:ns,cartPerson:t.cartPerson||"",rows:rows.slice(0,ns)};
     });
     await db.collection("cart_witnessing_schedules").doc(S.selected.id).update({teams:cleanTeams});
     S.selected.teams=cleanTeams;
     const idx=S.schedules.findIndex(x=>x.id===S.selected.id);
     if(idx>=0) S.schedules[idx]={...S.selected};
     localStorage.setItem("cw_schedules",JSON.stringify(S.schedules));
+    // cartSessions 동기화
+    if(S.selected.date&&S.selected.type){
+      const dk=S.selected.date.replace(/-/g,"");
+      const sessionKey=dk+"_"+S.selected.type;
+      const sessRef=db.collection("cartSessions").doc(sessionKey);
+      const sessSnap=await sessRef.get();
+      if(sessSnap.exists()){
+        await sessRef.update({teams:sessionTeams,confirmed:true});
+      }else{
+        const wk=S.selected.date.substring(0,10).replace(/-/g,"");
+        await sessRef.set({weekKey:wk,typeId:S.selected.type,signups:[],confirmed:true,teams:sessionTeams,
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+    }
   }catch(e){toast("저장 실패: "+e.message);}
 }
 
@@ -2078,7 +2203,8 @@ async function saveScheduleTypeEdit(idx){
   const eap=document.getElementById("ste-eap")?.value||t.de.ap;
   const eh=parseInt(document.getElementById("ste-eh")?.value)||t.de.h;
   const em=document.getElementById("ste-em")?.value||String(t.de.m);
-  SCHEDULE_TYPES[idx]={...t, ds:{ap:sap,h:sh,m:sm}, de:{ap:eap,h:eh,m:em}};
+  const cond=document.getElementById("ste-cond")?.value||"";
+  SCHEDULE_TYPES[idx]={...t, ds:{ap:sap,h:sh,m:sm}, de:{ap:eap,h:eh,m:em}, conductor:cond};
   _stEditIdx=null;
   await saveScheduleTypes("✅ 시간이 수정되었습니다");
 }
@@ -2127,36 +2253,35 @@ function deleteListItem(tab,idx){
   applyCustomLists();render();toast("삭제되었습니다");
 }
 
-async function shareSchedule(){
-  const el=document.querySelector("main");if(!el){toast("공유할 내용이 없습니다");return;}
+// 공유 전용 카드 모델 생성 (S.selected → ShareCard 모델)
+function _buildShareModel(){
   const s=S.selected;
+  const n=parseInt(s.numTeams)||1;
+  const tl=SCHEDULE_TYPES.find(t=>t.id===s.type)?.label||"";
+  const st=ScheduleTime.apHmTo24(s.startAmPm,s.startHour,s.startMin);
+  const startStr=pad2(st.h)+":"+pad2(st.m);
+  const teams=TEAMS.slice(0,n).map(k=>{
+    const t=s.teams?.[k]||{};
+    const ns=parseInt(t.numSlots)||2;
+    return {key:k,label:TEAM_LABEL[k],loc:t.location||"장소 미정",cartPerson:t.cartPerson||"",numSlots:ns,rows:objToRows(t.rows,ns)};
+  });
+  return {
+    dateLabel:`${s.month}월 ${s.day}일 ${s.weekday?"("+s.weekday+")":""}`,
+    timeRange:`${s.startAmPm} ${s.startHour}:${pad2(s.startMin)} ~ ${s.endAmPm} ${s.endHour}:${pad2(s.endMin)} · ${tl}`,
+    conductor:s.conductor||"",
+    startStr,teams,cols:3
+  };
+}
+
+async function shareSchedule(){
+  const s=S.selected;if(!s){toast("공유할 내용이 없습니다");return;}
   const filename="전시대명단_"+(s?.month||"")+"월"+(s?.day||"")+"일.png";
   toast("이미지 생성 중...",3000);
-  // 폰트가 모두 로드된 뒤 캡처 (텍스트 깨짐 방지)
-  if(document.fonts&&document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
-  // 페이지 스크롤 위치를 보정해 main 전체가 잘리지 않고 캡처되도록 함
-  const sy=window.scrollY||window.pageYOffset||0;
-  let canvas;
-  try{canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#eef3f9",scrollY:-sy});}
-  catch(e){toast("이미지 생성 실패: "+e.message);return;}
-
-  // ── 이미지 파일을 그대로 전송하는 "네이티브 공유"를 우선 사용 ──
-  //    모바일에서 공유 시트 → 카카오톡 선택 시 사진 전체가 그대로 전송됨.
-  //    (카카오 feed 공유는 이미지를 가로 썸네일로 잘라 표시하므로 사용하지 않음)
-  canvas.toBlob(async blob=>{
-    if(!blob){toast("이미지 생성 실패");return;}
-    const file=new File([blob],filename,{type:"image/png"});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:"전시대 봉사 명단",text:`🛒 전시대봉사 명단 · ${s?.month}월 ${s?.day}일 (${s?.weekday||""})`});return;}
-      catch(e){if(e.name==="AbortError")return;/* 그 외 오류 시 다운로드로 폴백 */}
-    }
-    // 공유 미지원(주로 PC) → 이미지 다운로드
-    downloadImg(canvas.toDataURL("image/png"),filename);
-  },"image/png");
-}
-function downloadImg(dataUrl,filename){
-  const a=document.createElement("a");a.href=dataUrl;a.download=filename;a.click();
-  toast("✅ 이미지가 저장되었습니다");
+  try{
+    // 공유 전용 카드(필요한 내용만, 큰 글자)를 그려서 이미지로 공유 → 카톡 재압축에도 또렷
+    const method=await ShareCard.share(_buildShareModel(),filename,"전시대 봉사 명단");
+    if(method==="downloaded") toast("✅ 이미지를 저장했습니다. 카카오톡 대화창에 첨부해 보내세요.",4000);
+  }catch(e){toast("이미지 생성 실패: "+(e?.message||e));}
 }
 
 // ── SW 업데이트 감지 ──
