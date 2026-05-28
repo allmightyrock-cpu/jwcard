@@ -1310,20 +1310,26 @@ function signupWeekHTML(){
   return _weekSessions.map(s=>{
     const sd=_weekSignupData[s.key]||{};
     const signups=sd.signups||[];
+    const cancelRequests=sd.cancelRequests||[];
     const confirmed=sd.confirmed||false;
     const cancelled=sd.cancelled||false;
     const canCancel=_cwCanCancel(s,sd);
     const effCond=_cwEffectiveConductor(s,sd);
     const statusBadge=cancelled
-      ?`<span class="scard-badge" style="background:#FEE2E2;color:#B91C1C">🚫 취소됨</span>`
+      ?`<span class="scard-badge" style="background:#FEE2E2;color:#B91C1C">\ud83d\udeab \ucde8\uc18c\ub428</span>`
+      :confirmed&&cancelRequests.length
+      ?`<span class="scard-badge" style="background:#FEF3C7;color:#B45309">\u26a0\ufe0f \uc7ac\ud3b8\uc131 \ud544\uc694</span>`
       :confirmed
-      ?`<span class="scard-badge" style="background:#DCFCE7;color:#166534">✅ 팀 확정</span>`
+      ?`<span class="scard-badge" style="background:#DCFCE7;color:#166534">\u2705 \ud300 \ud655\uc815</span>`
       :s.ended
         ?`<span class="scard-badge" style="background:#F1F5F9;color:#94A3B8">봉사 종료</span>`
         :`<span class="scard-badge" style="background:#DBEAFE;color:#1D4ED8">신청 접수중</span>`;
     const chips=signups.length
-      ?signups.map(n=>`<span style="font-size:11px;padding:3px 9px;border-radius:10px;background:#F1F5F9;color:#374151">${n}</span>`).join("")
-      :`<span style="font-size:11px;color:var(--text-muted)">신청자 없음</span>`;
+      ?signups.map(n=>{
+        const req=cancelRequests.includes(n);
+        return `<span style="font-size:11px;padding:3px 9px;border-radius:10px;background:${req?"#FEE2E2":"#F1F5F9"};color:${req?"#B91C1C":"#374151"};font-weight:${req?"700":"500"}">${n}${req?" · \ucde8\uc18c \uc694\uccad":""}</span>`;
+      }).join("")
+      :`<span style="font-size:11px;color:var(--text-muted)">\uc2e0\uccad\uc790 \uc5c6\uc74c</span>`;
     // 취소되면 편성·공유 버튼 숨김
     const adminBtn=(S.role==="admin"&&!cancelled)
       ?`<button class="signup-sched-btn btn btn-navy btn-sm" data-typeid="${s.typeId}" style="font-size:11px;padding:6px 14px">📋 팀 편성</button>`:"";
@@ -1345,7 +1351,8 @@ function signupWeekHTML(){
       <div class="scard-head"><div class="scard-date">${s.emoji} ${s.dateLabel}</div>${statusBadge}</div>
       <div class="scard-body"><span>${fmt12h(s.startStr)} ~ ${fmt12h(s.endStr)}</span><span style="color:var(--navy);font-weight:600">✋ ${signups.length}명 신청</span></div>
       ${effCond?`<div style="padding:0 14px 4px;font-size:11px;color:#64748B">🎤 담당 인도자: <b style="color:#1B3A6B">${effCond}</b></div>`:""}
-      ${cancelled?`<div style="padding:0 14px 8px;font-size:11px;color:#B91C1C;font-weight:700">⚠️ 이 날짜 전시대봉사가 취소되었습니다</div>`:""}
+      ${cancelled?`<div style="padding:0 14px 8px;font-size:11px;color:#B91C1C;font-weight:700">\u26a0\ufe0f \uc774 \ub0a0\uc9dc \uc804\uc2dc\ub300\ubd09\uc0ac\uac00 \ucde8\uc18c\ub418\uc5c8\uc2b5\ub2c8\ub2e4</div>`:""}
+      ${confirmed&&!cancelled&&cancelRequests.length?`<div style="margin:0 14px 8px;padding:7px 9px;border-radius:9px;background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;font-size:11px;font-weight:700">\u26a0\ufe0f \ucde8\uc18c \uc694\uccad: ${cancelRequests.join(", ")} · \ud300 \ud3b8\uc131\uc744 \ub2e4\uc2dc \uc800\uc7a5\ud574 \uc8fc\uc138\uc694</div>`:""}
       <div style="padding:6px 14px 8px;display:flex;flex-wrap:wrap;gap:4px">${chips}</div>
       ${cartLine?`<div style="padding:0 14px 8px;font-size:11px;color:#B45309;font-weight:600">전시대 준비: ${cartLine}</div>`:""}
       ${footer}
@@ -1416,9 +1423,13 @@ function _renderSignupEditor(){
   const s=_seSessionInfo;
   const sd=_weekSignupData[_seSessionKey]||{};
   const signups=sd.signups||[];
+  const cancelRequests=sd.cancelRequests||[];
   const allUsed=new Set();
   _seTeams.forEach(t=>t.rows.slice(0,t.numSlots).forEach(r=>r.forEach(n=>{if(n)allUsed.add(n);})));
-  const poolHtml=signups.map(n=>`<div style="padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid ${allUsed.has(n)?"#1B3A6B":"#E2E8F0"};background:${allUsed.has(n)?"#1B3A6B":"#fff"};color:${allUsed.has(n)?"#fff":"#374151"};opacity:${allUsed.has(n)?".5":"1"}">${n}${CONDUCTORS.includes(n)?` <span style="font-size:9px;opacity:.7">인도자</span>`:""}</div>`).join("");
+  const poolHtml=signups.map(n=>{
+    const req=cancelRequests.includes(n);
+    return `<div style="padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid ${req?"#FCA5A5":allUsed.has(n)?"#1B3A6B":"#E2E8F0"};background:${req?"#FEE2E2":allUsed.has(n)?"#1B3A6B":"#fff"};color:${req?"#B91C1C":allUsed.has(n)?"#fff":"#374151"};opacity:${allUsed.has(n)&&!req?".5":"1"}">${n}${req?` <span style="font-size:9px;font-weight:800">\ucde8\uc18c \uc694\uccad</span>`:CONDUCTORS.includes(n)?` <span style="font-size:9px;opacity:.7">\uc778\ub3c4\uc790</span>`:""}</div>`;
+  }).join("");
   const calcT=(ti,ns)=>ScheduleTime.slotLabel(s.startStr,ns,ti);  // 공유 모듈
   const teamsHtml=_seTeams.map((t,ti)=>{
     const c=_SE_COLORS[ti%_SE_COLORS.length];
@@ -1480,8 +1491,9 @@ function _renderSignupEditor(){
       </div>
       <div style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;padding:10px 12px;margin-bottom:14px">
         <div style="font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">신청자 — 셀 탭해서 배치</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">${poolHtml||'<span style="font-size:11px;color:#94A3B8">신청자 없음</span>'}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${poolHtml||'<span style="font-size:11px;color:#94A3B8">\uc2e0\uccad\uc790 \uc5c6\uc74c</span>'}</div>
       </div>
+      ${cancelRequests.length?`<div style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:12px;padding:10px 12px;margin-bottom:12px;color:#92400E;font-size:11px;font-weight:700;line-height:1.55">\u26a0\ufe0f \ucde8\uc18c \uc694\uccad: ${cancelRequests.join(", ")}<br><span style="font-weight:500">\ud544\uc694\ud558\uba74 \ud574\ub2f9 \ubd09\uc0ac\uc790\ub97c \ud3b8\uc131\ud45c\uc5d0\uc11c \ube7c\uace0 \ub300\uccb4 \uc778\uc6d0\uc744 \ubc30\uce58\ud55c \ub4a4 \ub2e4\uc2dc \uc800\uc7a5\ud558\uc138\uc694.</span></div>`:""}
       ${teamsHtml}
       <button onclick="_seAddTeam()" style="width:100%;padding:9px;border:2px dashed #BFDBFE;border-radius:10px;background:#F8FBFF;color:#2563EB;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px">+ 팀 추가</button>
     </div>
@@ -1578,9 +1590,9 @@ async function _seConfirm(){
     const ref=db.collection("cartSessions").doc(_seSessionKey);
     const snap=await ref.get();
     if(snap.exists){
-      await ref.update({teams:teamsData,confirmed:true,conductorWeek:_seConductorWeek||""});
+      await ref.update({teams:teamsData,confirmed:true,conductorWeek:_seConductorWeek||"",cancelRequests:[]});
     } else {
-      await ref.set({weekKey:wkStr,typeId,signups:[],confirmed:true,teams:teamsData,conductorWeek:_seConductorWeek||"",
+      await ref.set({weekKey:wkStr,typeId,signups:[],confirmed:true,teams:teamsData,conductorWeek:_seConductorWeek||"",cancelRequests:[],
         createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     }
     toast("팀이 확정되었습니다");

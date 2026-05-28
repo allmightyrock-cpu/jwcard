@@ -6765,15 +6765,18 @@ function _renderCartSessions(sessions, signupsData, listEl) {
   const rows = sessions.map(s => {
     const sd = signupsData[s.key] || {};
     const signups = sd.signups || [];
+    const cancelRequests = sd.cancelRequests || [];
     const count = signups.length;
     const iSignedUp = signups.includes(_cartMyName);
+    const iCancelRequested = cancelRequests.includes(_cartMyName);
     const cancelled = sd.cancelled || false;
     const ended = s.ended;
-    const open = !cancelled && !ended && (Date.now() < s.dt.getTime() - _CART_CUTOFF_H * 3600000);
+    const open = !cancelled && !ended && !sd.confirmed && (Date.now() < s.dt.getTime() - _CART_CUTOFF_H * 3600000);
     const msLeft = s.dt.getTime() - _CART_CUTOFF_H * 3600000 - now.getTime();
     let timeTag = '';
     if (ended) timeTag = '<span style="font-size:10px;color:#94A3B8;font-weight:600"> · 봉사 종료</span>';
-    else if (!open) timeTag = '<span style="font-size:10px;color:#EF4444;font-weight:700"> · 신청 마감</span>';
+    else if (sd.confirmed) timeTag = '<span style="font-size:10px;color:#16A34A;font-weight:700"> · \ud3b8\uc131 \ud655\uc815</span>';
+    else if (!open) timeTag = '<span style="font-size:10px;color:#EF4444;font-weight:700"> · \uc2e0\uccad \ub9c8\uac10</span>';
     else if (msLeft < 6 * 3600000) {
       const dh = Math.floor(msLeft / 3600000), dm = Math.floor((msLeft % 3600000) / 60000);
       timeTag = `<span style="font-size:10px;color:#F59E0B;font-weight:600"> · ${dh>0?dh+'시간 '+dm+'분':dm+'분'} 후 마감</span>`;
@@ -6809,12 +6812,24 @@ function _renderCartSessions(sessions, signupsData, listEl) {
       toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <div style="width:44px;height:24px;border-radius:12px;background:#FECACA;position:relative;opacity:0.5"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
         <div style="font-size:9px;font-weight:700;color:#B91C1C">취소</div></div>`;
+    } else if (sd.confirmed && iSignedUp && !ended) {
+      toggleHtml = iCancelRequested
+        ? `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
+          <div style="width:44px;height:24px;border-radius:12px;background:#FBBF24;position:relative;opacity:.75"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+          <div style="font-size:9px;font-weight:800;color:#B45309">\uc694\uccad \ucca0\ud68c</div></div>`
+        : `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
+          <div style="width:44px;height:24px;border-radius:12px;background:#16A34A;position:relative;transition:background .2s"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+          <div style="font-size:9px;font-weight:800;color:#B91C1C">\ucde8\uc18c \uc694\uccad</div></div>`;
+    } else if (sd.confirmed) {
+      toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:44px;height:24px;border-radius:12px;background:#DCFCE7;position:relative;opacity:.45"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+        <div style="font-size:9px;font-weight:700;color:#16A34A">\ud655\uc815\ub428</div></div>`;
     } else if (open) {
       toggleHtml = `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
         <div style="width:44px;height:24px;border-radius:12px;background:${iSignedUp?'#16A34A':'#E2E8F0'};position:relative;transition:background .2s">
           <div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:${iSignedUp?'23':'3'}px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
         </div>
-        <div style="font-size:9px;font-weight:700;color:${iSignedUp?'#16A34A':'#94A3B8'}">${iSignedUp?'신청됨':'미신청'}</div>
+        <div style="font-size:9px;font-weight:700;color:${iSignedUp?'#16A34A':'#94A3B8'}">${iSignedUp?'\uc2e0\uccad\ub428':'\ubbf8\uc2e0\uccad'}</div>
       </div>`;
     } else if (ended) {
       toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
@@ -6827,7 +6842,7 @@ function _renderCartSessions(sessions, signupsData, listEl) {
     }
     const cardBg = cancelled?'rgba(254,242,242,0.7)':mySlotHtml?'linear-gradient(135deg,rgba(209,250,229,0.6),rgba(167,243,208,0.35))':iSignedUp?'linear-gradient(135deg,rgba(220,252,231,0.7),rgba(187,247,208,0.45))':ended?'rgba(241,245,249,0.5)':'rgba(248,250,255,0.6)';
     const cardBorder = cancelled?'rgba(248,113,113,0.4)':mySlotHtml?'rgba(16,185,129,0.35)':iSignedUp?'rgba(34,197,94,0.25)':ended?'rgba(226,232,240,0.6)':'rgba(219,228,255,0.5)';
-    const cancelNotice = cancelled?`<div style="margin-top:6px;padding:6px 9px;background:rgba(254,226,226,0.7);border:1px solid rgba(248,113,113,0.35);border-radius:8px;font-size:11px;color:#B91C1C;font-weight:600">⚠️ 이 날짜 전시대봉사가 취소되었습니다</div>`:'';
+    const cancelNotice = cancelled?`<div style="margin-top:6px;padding:6px 9px;background:rgba(254,226,226,0.7);border:1px solid rgba(248,113,113,0.35);border-radius:8px;font-size:11px;color:#B91C1C;font-weight:600">\u26a0\ufe0f \uc774 \ub0a0\uc9dc \uc804\uc2dc\ub300\ubd09\uc0ac\uac00 \ucde8\uc18c\ub418\uc5c8\uc2b5\ub2c8\ub2e4</div>`:iCancelRequested?`<div style="margin-top:6px;padding:6px 9px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;font-size:11px;color:#92400E;font-weight:700">\u26a0\ufe0f \ucde8\uc18c \uc694\uccad\uc774 \uc778\ub3c4\uc790\uc5d0\uac8c \uc804\ub2ec\ub410\uc2b5\ub2c8\ub2e4</div>`:'';
     return `<div style="padding:10px 11px;border-radius:12px;margin-bottom:6px;background:${cardBg};border:1px solid ${cardBorder};${(ended&&!cancelled)?'opacity:0.55':''}">
       <div style="display:flex;align-items:center;gap:11px">
         <div style="flex:1;min-width:0">
@@ -6853,14 +6868,34 @@ async function _cartDoToggle(sessionKey) {
   try {
     const snap = await getDoc(sessionRef);
     if (snap.exists()) {
-      const signups = snap.data().signups || [];
+      const data = snap.data();
+      const signups = data.signups || [];
+      const cancelRequests = data.cancelRequests || [];
       if (signups.includes(_cartMyName)) {
-        await updateDoc(sessionRef, { signups: arrayRemove(_cartMyName) });
+        if (data.confirmed) {
+          if (cancelRequests.includes(_cartMyName)) {
+            const ok = confirm('\ucde8\uc18c \uc694\uccad\uc744 \ucca0\ud68c\ud560\uae4c\uc694?\n\uae30\uc874 \uc2e0\uccad\uacfc \ubc30\uc815\uc740 \uc720\uc9c0\ub429\ub2c8\ub2e4.');
+            if (!ok) return;
+            await updateDoc(sessionRef, { cancelRequests: arrayRemove(_cartMyName) });
+            return;
+          }
+          const ok = confirm('\uc774\ubbf8 \ud300\uc774 \ud655\uc815\ub418\uc5c8\uc2b5\ub2c8\ub2e4.\n\uc2e0\uccad \ucde8\uc18c\ub97c \uc694\uccad\ud558\uba74 \uc778\ub3c4\uc790\uac00 \ud300\uc744 \ub2e4\uc2dc \ud3b8\uc131\ud574\uc57c \ud569\ub2c8\ub2e4.\n\n\ucde8\uc18c \uc694\uccad\uc744 \ubcf4\ub0bc\uae4c\uc694?');
+          if (!ok) return;
+          await updateDoc(sessionRef, { cancelRequests: arrayUnion(_cartMyName) });
+        } else {
+          const ok = confirm('\uc804\uc2dc\ub300\ubd09\uc0ac \uc2e0\uccad\uc744 \ucde8\uc18c\ud560\uae4c\uc694?');
+          if (!ok) return;
+          await updateDoc(sessionRef, { signups: arrayRemove(_cartMyName), cancelRequests: arrayRemove(_cartMyName) });
+        }
       } else {
-        await updateDoc(sessionRef, { signups: arrayUnion(_cartMyName) });
+        if (data.confirmed) {
+          alert('\uc774\ubbf8 \ud300 \ud3b8\uc131\uc774 \ud655\uc815\ub418\uc5b4 \uc2e0\uccad\uc744 \ubcc0\uacbd\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.');
+          return;
+        }
+        await updateDoc(sessionRef, { signups: arrayUnion(_cartMyName), cancelRequests: arrayRemove(_cartMyName) });
       }
     } else {
-      await setDoc(sessionRef, { weekKey: wkStr, typeId, signups: [_cartMyName], confirmed: false, createdAt: serverTimestamp() });
+      await setDoc(sessionRef, { weekKey: wkStr, typeId, signups: [_cartMyName], cancelRequests: [], confirmed: false, createdAt: serverTimestamp() });
     }
   } catch (e) { console.warn('전시대 신청 오류:', e.message); }
 }
