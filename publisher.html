@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>구역카드</title>
+<title>구역카드 — 우리 회중</title>
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1355,7 +1355,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
     <div class="consent-section">
       <h3>제3자 제공</h3>
-      <p class="consent-text">수집된 정보는 봉사감독자의 S-13 기록 관리 목적으로만 사용되며, 외부에 제공되지 않습니다.</p>
+      <p class="consent-text">수집된 정보는 우리 회중 봉사감독자의 S-13 기록 관리 목적으로만 사용되며, 외부에 제공되지 않습니다.</p>
     </div>
     <div class="consent-section">
       <h3>귀하의 권리</h3>
@@ -2603,7 +2603,7 @@ function tryNominatimGeocode(queries, idx, label, count) {
           + '?format=json&limit=1&accept-language=ko'
           + '&q=' + encodeURIComponent(q)
           + '&countrycodes=kr';
-  fetch(url, { headers: { 'User-Agent': 'JWCard/1.0' } })
+  fetch(url, { headers: { 'User-Agent': 'JWCard/1.0 (your-worker.example.workers.dev)' } })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data && data.length > 0) {
@@ -4509,7 +4509,7 @@ window.moveTerritoryMap = function moveTerritoryMap() {
   // ── 참조 코드 방식: road + jibun 공백 없이 붙임 ──
   // 참조앱: $(".road_name").text() + $(".tr_no").text()
   // → "행선로" + "123-19" = "행선로123-19"
-  const BASE = (window._mapRegion ? window._mapRegion + ' ' : '');
+  const BASE = '지역명 ';
   const queries = [];
 
   // ① 참조 코드와 동일: road+jibun 공백 없이 결합 (최우선)
@@ -4555,7 +4555,7 @@ window.openMapSearch = function() {
   const firstUnit = units.find(u => u.road || u.jibun) || {};
   const query = [firstUnit.road, firstUnit.jibun, firstUnit.building]
     .filter(Boolean).join(' ') || _territory.name;
-  const encoded = encodeURIComponent(query + (window._mapRegion ? ' ' + window._mapRegion : ''));
+  const encoded = encodeURIComponent(query + ' 지역명');
   window.open('https://map.naver.com/v5/search/' + encoded, '_blank');
 };
 
@@ -4888,8 +4888,8 @@ window.showUnitFixRequest = function() {
           objectType: 'text',
           text: msg,
           link: {
-            mobileWebUrl: window.location.origin,
-            webUrl: window.location.origin
+            mobileWebUrl: 'https://jwcard-admin.your-worker.example.workers.dev',
+            webUrl: 'https://jwcard-admin.your-worker.example.workers.dev'
           }
         });
         el.remove();
@@ -6130,7 +6130,7 @@ function _navBuildLinks(coords, name, addr, walk) {
 // ── 인덱스로 주소/섹션 정보 추출 ─────────────────────────────
 function _navAddrInfo(idx) {
   var sec    = _navSectionOf(idx);
-  var region = (window._mapRegion || '') + ' ';
+  var region = (window._mapRegion || '지역명') + ' ';
   var road   = (sec && sec.road)     || '';
   var jibun  = (sec && sec.jibun)    || '';
   var bldg   = (sec && sec.building) || '';
@@ -6276,7 +6276,7 @@ function _navPrefetchCoords(idx) {
     var sec    = _navSectionOf(i);
     var secKey = (sec && sec.key) || ('idx_' + i);
     if (_navCoordCache[secKey]) return;
-    var region = (window._mapRegion || '') + ' ';
+    var region = (window._mapRegion || '지역명') + ' ';
     var road   = (sec && sec.road)     || '';
     var jibun  = (sec && sec.jibun)    || '';
     var bldg   = (sec && sec.building) || '';
@@ -6316,7 +6316,7 @@ function _renderNavNextCard() {
 
   var u   = units[_navIdx];
   var sec = _navSectionOf(_navIdx);
-  var region   = (window._mapRegion || '') + ' ';
+  var region   = (window._mapRegion || '지역명') + ' ';
   var road     = (sec && sec.road)     || '';
   var jibun    = (sec && sec.jibun)    || '';
   var bldg     = (sec && sec.building) || '';
@@ -6577,6 +6577,90 @@ let _cartMyRole = '';   // 'admin' | 'member' | ''
 let _cartSignupListener = null;
 let _cartLastSessions = [];       // 마지막 렌더 세션 목록 (바텀 시트용)
 let _cartLastSignupsData = {};    // 마지막 렌더 세션 데이터 (바텀 시트용)
+function _cartRowToArr(row) {
+  if (Array.isArray(row)) return [row[0] || '', row[1] || '', row[2] || ''];
+  if (row && typeof row === 'object') return [row.s0 || '', row.s1 || '', row.s2 || ''];
+  return ['', '', ''];
+}
+function _cartRowsToArrays(rows, numSlots) {
+  return Array.from({ length: parseInt(numSlots) || 2 }, (_, i) => {
+    const row = Array.isArray(rows) ? rows[i] : (rows ? rows['r' + i] : null);
+    return _cartRowToArr(row);
+  });
+}
+function _cartTeamOrderIndex(key) {
+  const order = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const i = order.indexOf(key);
+  return i < 0 ? 999 : i;
+}
+function _cartSortedTeamEntries(teams) {
+  return Object.entries(teams || {}).sort(([a], [b]) => _cartTeamOrderIndex(a) - _cartTeamOrderIndex(b) || String(a).localeCompare(String(b)));
+}
+function _cartTeamHasAssigned(team) {
+  return _cartRowsToArrays(team?.rows, team?.numSlots).some(row => row.some(v => String(v || '').trim()));
+}
+function _cartActiveTeamEntries(teams) {
+  return _cartSortedTeamEntries(teams).filter(([, team]) => _cartTeamHasAssigned(team) || String(team?.cartPerson || '').trim());
+}
+function _cartScheduleTeamsToSessionTeams(teams) {
+  const out = {};
+  Object.entries(teams || {}).forEach(([key, team]) => {
+    const numSlots = parseInt(team.numSlots) || 2;
+    const rows = _cartRowsToArrays(team.rows, numSlots)
+      .map(row => ({ s0: row[0] || '', s1: row[1] || '', s2: row[2] || '' }));
+    out[key] = {
+      loc: team.loc || team.location || '',
+      cartPerson: team.cartPerson || '',
+      numSlots,
+      rows
+    };
+  });
+  return out;
+}
+function _cartHasAssignedTeams(teams) {
+  return Object.values(teams || {}).some(team =>
+    _cartRowsToArrays(team.rows, team.numSlots).some(row => row.some(Boolean))
+  );
+}
+function _cartDateKey(date) {
+  return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+}
+async function _cartLoadScheduleFallbacks(sessions) {
+  const fallback = {};
+  await Promise.all(sessions.map(async s => {
+    try {
+      const snap = await getDocs(query(
+        collection(db, 'cart_witnessing_schedules'),
+        where('date', '==', _cartDateKey(s.dt)),
+        where('type', '==', s.typeId)
+      ));
+      snap.forEach(d => {
+        const data = d.data();
+        if (!data.completed && _cartHasAssignedTeams(data.teams)) {
+          fallback[s.key] = {
+            confirmed: true,
+            teams: _cartScheduleTeamsToSessionTeams(data.teams),
+            conductorWeek: data.conductor || ''
+          };
+        }
+      });
+    } catch (e) {
+      console.warn('전시대 편성 백업 조회 오류:', e.message);
+    }
+  }));
+  return fallback;
+}
+function _cartMergeSessionFallbacks(sessionData, fallbackData) {
+  const merged = { ...(sessionData || {}) };
+  Object.entries(fallbackData || {}).forEach(([key, fb]) => {
+    const cur = merged[key] || {};
+    if (!cur.confirmed || !cur.teams || !_cartHasAssignedTeams(cur.teams)) {
+      merged[key] = { ...cur, ...fb, signups: cur.signups || [] };
+    }
+  });
+  return merged;
+}
+
 const _CART_CUTOFF_H = 3;
 const _CART_DOW_KO = ['일','월','화','수','목','금','토'];
 
@@ -6654,13 +6738,18 @@ async function _loadCartSessions() {
     if (_cartSignupListener) { _cartSignupListener(); _cartSignupListener = null; }
     _cartSignupListener = onSnapshot(
       query(collection(db, 'cartSessions'), where('weekKey', '==', wkStr)),
-      snap => {
+      async snap => {
         const data = {};
         snap.forEach(d => { data[d.id] = d.data(); });
-        _renderCartSessions(sessions, data, listEl);
+        const fallback = await _cartLoadScheduleFallbacks(sessions);
+        const merged = _cartMergeSessionFallbacks(data, fallback);
+        // listEl이 DOM에서 분리됐을 경우 재조회
+        const el = document.getElementById('cart-sessions-list') || listEl;
+        _renderCartSessions(sessions, merged, el);
       },
       err => {
-        if (listEl) listEl.innerHTML = `<div style="text-align:center;padding:20px;color:#EF4444;font-size:12px">로드 오류: ${err.message}</div>`;
+        const el = document.getElementById('cart-sessions-list') || listEl;
+        if (el) el.innerHTML = `<div style="text-align:center;padding:20px;color:#EF4444;font-size:12px">로드 오류: ${err.message}</div>`;
       }
     );
   } catch (e) {
@@ -6694,19 +6783,21 @@ function _renderCartSessions(sessions, signupsData, listEl) {
       : sd.confirmed ? '<span style="font-size:9px;background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:5px;font-weight:700;margin-left:4px">팀 확정</span>' : '';
 
     // 내 배정 슬롯 찾기 (팀 확정 후, 취소되지 않은 경우만)
+    // Firestore는 nested array를 map으로 변환하므로 배열/객체 양쪽 처리
     let mySlotHtml = '';
     if (!cancelled && sd.confirmed && sd.teams && _cartMyName) {
-      for (const [teamKey, team] of Object.entries(sd.teams)) {
-        const rows = team.rows || [];
-        const slotIdx = rows.findIndex(r => Array.isArray(r) && r.includes(_cartMyName));
+      for (const [teamKey, team] of _cartSortedTeamEntries(sd.teams)) {
+        const rows = _cartRowsToArrays(team.rows, team.numSlots);
+        const slotIdx = rows.findIndex(r => r.includes(_cartMyName));
         if (slotIdx >= 0) {
           const slotTime = ScheduleTime.slotLabel(s.startStr, team.numSlots, slotIdx); // 공유 모듈
-          const partner = (rows[slotIdx] || []).filter(n => n && n !== _cartMyName)[0] || '';
-          const loc = team.loc ? ` · ${team.loc}` : '';
+          const partner = rows[slotIdx].filter(n => n && n !== _cartMyName)[0] || '';
+          const locHtml = team.loc ? ` <span style="white-space:nowrap">· ${team.loc}</span>` : '';
+          const partnerHtml = partner ? ` <span style="white-space:nowrap">· \ub3d9\ubc18: ${partner}</span>` : '';
           mySlotHtml = `<div onclick="window._cartShowTeamSheet('${s.key}')" style="cursor:pointer;margin-top:7px;padding:7px 10px;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(5,150,105,0.07));border:1px solid rgba(16,185,129,0.30);border-radius:9px;font-size:11px;color:#065F46;-webkit-tap-highlight-color:transparent;transition:opacity .15s" onpointerdown="this.style.opacity='.75'" onpointerup="this.style.opacity='1'" onpointerleave="this.style.opacity='1'">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-              <span><b style="color:#047857">📌 내 배정:</b> 팀 ${teamKey} · ${slotTime}${loc}${partner ? ` · 동반: ${partner}` : ''}</span>
-              <span style="font-size:10px;color:#10B981;font-weight:700;flex-shrink:0">전체 보기 ›</span>
+              <span style="min-width:0;line-height:1.45;word-break:keep-all;overflow-wrap:normal"><b style="color:#047857">\ud83d\udccc \ub0b4 \ubc30\uc815:</b> <span style="white-space:nowrap">\ud300 ${teamKey}</span> <span style="white-space:nowrap">· ${slotTime}</span>${locHtml}${partnerHtml}</span>
+              <span style="font-size:10px;color:#10B981;font-weight:700;flex-shrink:0">\uc804\uccb4 \ubcf4\uae30 ›</span>
             </div>
           </div>`;
           break;
@@ -6825,21 +6916,24 @@ function _cartCloseTeamSheet() {
 // ── 팀 배정 공유 (공유 전용 카드 이미지) ─────────────────────────
 // 공유 모델 생성 (세션 + 확정 팀 데이터 → ShareCard 모델)
 function _cartBuildShareModel(s, sd) {
-  const teams = Object.entries(sd.teams || {}).map(([k, team]) => ({
-    key: k,
-    label: k + '팀',
-    loc: team.loc || '장소 미정',
-    cartPerson: team.cartPerson || '',
-    numSlots: parseInt(team.numSlots) || 2,
-    rows: team.rows || []
-  }));
+  const teams = _cartActiveTeamEntries(sd.teams)
+    .filter(([, team]) => _cartTeamHasAssigned(team))
+    .map(([k, team]) => ({
+      key: k,
+      label: k + '팀',
+      loc: team.loc || '장소 미정',
+      cartPerson: team.cartPerson || '',
+      numSlots: parseInt(team.numSlots) || 2,
+      rows: _cartRowsToArrays(team.rows, team.numSlots)
+    }));
+  const cols = teams.some(t => t.rows.some(r => (r[2] || '').trim())) ? 3 : 2;
   return {
     dateLabel: (s.emoji ? s.emoji + ' ' : '') + s.dateLabel,
     timeRange: `${_fmt12h(s.startStr)} ~ ${_fmt12h(s.endStr)}`,
     conductor: '',
     startStr: s.startStr,
     teams,
-    cols: 2
+    cols
   };
 }
 

@@ -1,12 +1,12 @@
-// ══ 전자구역카드 Service Worker ══
+// ?꾩옄?�ъ뿭移�?�?Service Worker ??�젙
 //
-// ⚠ 새 파일 배포 시 반드시 CACHE 버전을 올려 주세요.
-//   예: 'jwcard-v1.73' → 'jwcard-v1.74'
-//   버전이 바뀌면 모든 모바일 PWA에 업데이트 배너가 뜹니다.
+// ?????�� 諛고�???諛섎�??CACHE 踰꾩???????二쇱�??
+//   ?? 'jwcard-v1.95' ??'jwcard-v1.95'
+//   踰꾩???諛붾???�� 紐⑤�?紐⑤�??PWA????�뜲??�듃 諛곕꼫媛? ?밸땲??
 //
-const CACHE = 'jwcard-v1.74'; // MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편
+const CACHE = 'jwcard-v1.95'; // MINOR(+0.1): 湲곕?�異�?쨌踰꾧렇??�젙 / MAJOR(+1.0): ?붾㈃媛쒗?? (理쒓????�뜲??�듃: 2026-05-24)
 
-// 오프라인 대비용으로만 캐시 (실제 서빙은 Network First)
+// ??�봽??�씤 ????��???�줈�?�?��??(??�젣 ??�튃?? Network First)
 const STATIC = [
   '/config.js',
   '/publisher.html',
@@ -17,40 +17,39 @@ const STATIC = [
   '/css/admin.css',
   '/js/settings.js',
   '/js/s13.js',
-  '/js/config-check.js'
+  '/js/schedule-time.js',
+  '/js/share-card.js'
 ];
 
-// 항상 Network First 패턴 — 서버 우선, 실패 시에만 캐시 사용
+// ??�?Network First ???�� ????�쾭 ?곗꽑, ??�뙣 ??�뿉�?�?��??????// ?꾨옒 紐⑸�????�???�뒗 ???��?? 留ㅻ�???�쾭?�?�� ?�쇱? 諛쏄?? ??�뙣 ??�뿉�?�?��????�슜
 const NETWORK_FIRST_PATTERNS = [
   'publisher.html',
   'cart.html',
-  'js/config-check.js', // 설정 감지 스크립트 — 항상 최신 필요
-  'config.js',          // 설정 파일 → 항상 최신 필요
-  'js/settings.js',     // 설정 JS  → 항상 최신 필요
-  'js/s13.js',          // S13 JS   → 항상 최신 필요
-  'version.json',       // 버전 파일 → 항상 최신 필요
+  'js/schedule-time.js', // ?꾩떆???�됱�???�컙 ?�꾩�?紐⑤�???HTML????�?媛숈? 理쒖?�蹂??�?
+  'js/share-card.js',    // ?꾩떆???�됱�??�듭?� 移�?�?紐⑤�???HTML????�?媛숈? 理쒖?�蹂??�?
+  'config.js',           // ??�젙 ???�� ????�?理쒖???꾩슂
+  'js/settings.js',      // ??�젙 JS  ????�?理쒖???꾩슂
+  'js/s13.js',           // S13 JS   ????�?理쒖???꾩슂
+  'version.json',        // 踰꾩?????�� ????�?理쒖???꾩슂
 ];
 
-// 페이지에서 SKIP_WAITING 메시지 수신 시 즉시 활성화
-self.addEventListener('message', e => {
+// ??�씠吏?�?�� SKIP_WAITING 硫붿?�吏? ??�떊 ??利됱????�꽦??self.addEventListener('message', e => {
   if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// 설치: 정적 파일 캐시 (오프라인 폴백)
-// skipWaiting을 여기서 호출하지 않는 이유:
-//   '지금 업데이트' 버튼을 눌러야만 활성화되도록 하기 위함
-//   (install에서 즉시 skipWaiting하면 reg.waiting이 null이 되어 배너가 뜨지 않음)
+// ??�튂: ?뺤쟻 ???�� �?��??(??�봽??�씤 ??��?
+// skipWaiting????�???몄텧??? ??�뒗 ??��?:
+//   '吏�???�뜲??�듃' 踰꾪??????��??�쭔 ??�꽦?붾릺?꾨줉 ??�린 ?꾪븿
+//   (install?�?�� 利됱??skipWaiting??�㈃ reg.waiting??null????�뼱 諛곕꼫媛? ??? ??�쓬)
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c =>
       Promise.allSettled(STATIC.map(url => c.add(url).catch(() => null)))
     )
   );
-  // self.skipWaiting() 제거: SKIP_WAITING 메시지로만 활성화
-});
+  // self.skipWaiting() ??�굅: SKIP_WAITING 硫붿?�吏?濡쒕�???�꽦??});
 
-// 활성화: 구버전 캐시 삭제 후 즉시 클레임
-self.addEventListener('activate', e => {
+// ??�꽦?? ?�щ쾭??�?��????????利됱????�???self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
@@ -59,11 +58,10 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// 요청 처리
-self.addEventListener('fetch', e => {
+// ?붿껌 泥섎??self.addEventListener('fetch', e => {
   const url = e.request.url;
 
-  // admin 페이지 및 관련 JS/CSS → 항상 네트워크 (배포 즉시 반영)
+  // admin ??�씠吏 �??�??JS/CSS ????�???�듃??�겕 (諛고�?利됱??諛섏??
   if (url.includes('/admin') ||
       url.includes('js/admin') ||
       url.includes('js/map-admin') ||
@@ -71,7 +69,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Firebase / Google API / Naver → 항상 네트워크
+  // Firebase / Google API / Naver ????�???�듃??�겕
   if (url.includes('firestore') ||
       url.includes('firebase') ||
       url.includes('googleapis') ||
@@ -81,8 +79,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Network First: 서버 우선, 실패 시 캐시 폴백
-  const isNetworkFirst =
+  // Network First: ??�쾭 ?곗꽑, ??�뙣 ??�?��????��?  const isNetworkFirst =
     NETWORK_FIRST_PATTERNS.some(p => url.includes(p)) ||
     url.endsWith('/') ||
     url.endsWith('/publisher');
@@ -103,7 +100,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // 나머지 정적 자산(이미지, manifest 등) → 캐시 우선
+  // ??�㉧吏 ?뺤쟻 ?�?��(??�?吏, manifest ?? ??�?��???곗꽑
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
@@ -117,3 +114,4 @@ self.addEventListener('fetch', e => {
     })
   );
 });
+

@@ -264,12 +264,10 @@ async function _loadCartConfig() {
   // ── 인도자 인증 방식 로드 ──
   try {
     const authSnap = await db.collection('config').doc('auth').get();
-    console.log('[AUTH LOAD] config/auth exists:', authSnap.exists, '| raw data:', authSnap.exists ? JSON.stringify(authSnap.data()) : 'N/A');
     if (authSnap.exists) {
       const a = authSnap.data();
       _leaderAuthMode  = a.leaderAuthMode  || 'individual';
       _sharedLeaderPin = String(a.sharedLeaderPin || '');
-      console.log('[AUTH LOAD] leaderAuthMode:', _leaderAuthMode, '| sharedLeaderPin:', _sharedLeaderPin ? '(set, len=' + _sharedLeaderPin.length + ')' : '(empty)');
     } else {
       console.warn('[AUTH LOAD] config/auth 문서가 없습니다 → individual 기본값 사용');
     }
@@ -369,6 +367,36 @@ function rowsToObj(rows,ns){
     obj["r"+i]={s0:r[0]||"",s1:r[1]||"",s2:r[2]||""};
   });
   return obj;
+}
+function rowToArr(row){
+  if(Array.isArray(row)) return [row[0]||"",row[1]||"",row[2]||""];
+  if(row&&typeof row==="object") return [row.s0||"",row.s1||"",row.s2||""];
+  return ["","",""];
+}
+function sessionRows(rows,ns){
+  return sessionRowsToArrays(rows,ns).map(r=>({s0:r[0]||"",s1:r[1]||"",s2:r[2]||""}));
+}
+function sessionRowsToArrays(rows,ns){
+  return Array.from({length:ns},(_,i)=>{
+    const row=Array.isArray(rows)?rows[i]:(rows?rows["r"+i]:null);
+    return rowToArr(row);
+  });
+}
+function teamOrderIndex(k){
+  const i=TEAMS.indexOf(k);
+  return i<0?999:i;
+}
+function sortedTeamEntries(teams){
+  return Object.entries(teams||{}).sort(([a],[b])=>teamOrderIndex(a)-teamOrderIndex(b)||String(a).localeCompare(String(b)));
+}
+function teamRowsArray(team){
+  return sessionRowsToArrays(team?.rows,parseInt(team?.numSlots)||2);
+}
+function teamHasAssigned(team){
+  return teamRowsArray(team).some(row=>row.some(v=>String(v||"").trim()));
+}
+function activeSavedTeamEntries(teams){
+  return sortedTeamEntries(teams).filter(([,team])=>teamHasAssigned(team)||String(team?.cartPerson||"").trim());
 }
 function objToRows(obj,ns){
   if(!obj) return Array.from({length:ns},()=>["","",""]);
@@ -1311,7 +1339,7 @@ function signupWeekHTML(){
       ?`<div style="padding:4px 14px 12px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">${shareBtn}${adminBtn}${cancelBtn}</div>`:"";
     // 확정 시 카트 준비 담당을 계획표에도 표시 (취소 시 숨김)
     const cartLine=(confirmed&&!cancelled&&sd.teams)
-      ?Object.entries(sd.teams).map(([k,t])=>t.cartPerson?`${k} ${t.cartPerson}`:null).filter(Boolean).join(" · ")
+      ?activeSavedTeamEntries(sd.teams).map(([k,t])=>t.cartPerson?`${k} ${t.cartPerson}`:null).filter(Boolean).join(" · ")
       :"";
     return `<div class="schedule-card" ${(s.ended||cancelled)?'style="opacity:0.65"':""}>
       <div class="scard-head"><div class="scard-date">${s.emoji} ${s.dateLabel}</div>${statusBadge}</div>
@@ -1335,7 +1363,7 @@ async function _cancelWeekSession(key){
   try{
     const ref=db.collection("cartSessions").doc(key);
     const snap=await ref.get();
-    if(snap.exists()) await ref.update({cancelled:true});
+    if(snap.exists) await ref.update({cancelled:true});
     else await ref.set({weekKey:wkStr,typeId,signups:[],confirmed:false,cancelled:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     toast("계획이 취소되었습니다");
   }catch(e){toast("취소 실패: "+e.message);}
@@ -1357,7 +1385,6 @@ const _SE_COLORS=[
   {ac:"#7C3AED",bg:"#F5F3FF",border:"#DDD6FE"},
   {ac:"#B45309",bg:"#FFFBEB",border:"#FDE68A"},
 ];
-const _SE_NAMES=["A팀","B팀","C팀","D팀"];
 
 function _openSignupEditor(sessionKey){
   const sd=_weekSignupData[sessionKey]||{};
@@ -1368,21 +1395,22 @@ function _openSignupEditor(sessionKey){
   _seConductorWeek=sd.conductorWeek||(SCHEDULE_TYPES.find(t=>t.id===s.typeId)||{}).conductor||"";
   const saved=sd.teams||{};
   _seTeams=[];
-  const teamKeys=Object.keys(saved);
-  if(teamKeys.length){
-    teamKeys.forEach((k,i)=>{
-      const t=saved[k];
+  const teamEntries=activeSavedTeamEntries(saved);
+  if(teamEntries.length){
+    teamEntries.forEach(([k,t],i)=>{
       const ns=parseInt(t.numSlots)||2;
-      const rows=Array.from({length:ns},(_,ri)=>Array.isArray(t.rows)?[...(t.rows[ri]||["","",""])]:["","",""]);
-      _seTeams.push({id:i,loc:t.loc||LOCATIONS[0]||"",numSlots:ns,rows,cartPerson:t.cartPerson||""});
+      const rows=sessionRowsToArrays(t.rows,ns);
+      _seTeams.push({key:k,id:i,loc:t.loc||LOCATIONS[0]||"",numSlots:ns,rows,cartPerson:t.cartPerson||""});
     });
   } else {
-    _seTeams=[{id:0,loc:LOCATIONS[0]||"",numSlots:2,rows:Array.from({length:6},()=>["","",""]),cartPerson:""}];
+    _seTeams=[{key:"A",id:0,loc:LOCATIONS[0]||"",numSlots:2,rows:Array.from({length:6},()=>["","",""]),cartPerson:""}];
   }
   _renderSignupEditor();
 }
 
 function _renderSignupEditor(){
+  _seTeams.sort((a,b)=>teamOrderIndex(a.key)-teamOrderIndex(b.key));
+  _seTeams.forEach((t,i)=>t.id=i);
   let el=document.getElementById("_se_overlay");
   if(!el){el=document.createElement("div");el.id="_se_overlay";document.body.appendChild(el);}
   const s=_seSessionInfo;
@@ -1414,7 +1442,7 @@ function _renderSignupEditor(){
     const cartOpts=`<option value="">— 선택 —</option>`+_cartPersonOptions(t.cartPerson).map(m=>`<option${m===t.cartPerson?" selected":""}>${m}</option>`).join("");
     return `<div style="margin-bottom:12px;border-radius:12px;overflow:hidden;border:2px solid ${c.ac}55">
       <div style="padding:10px 14px;background:${c.ac};display:flex;align-items:center;gap:8px">
-        <span style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:#fff">${_SE_NAMES[ti]}</span>
+        <span style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:#fff">${TEAM_LABEL[t.key]||((t.key||TEAMS[ti]||"")+"\ud300")}</span>
         <span style="font-size:11px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.18);padding:2px 9px;border-radius:10px">${ns}조 · ${intv}분 간격</span>
         <button onclick="_seDelTeam(${ti})" style="margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:13px;width:26px;height:26px;border-radius:50%;cursor:pointer">×</button>
       </div>
@@ -1481,7 +1509,10 @@ function _seBlurAll(){
 }
 
 function _seAddTeam(){
-  _seTeams.push({id:_seTeams.length,loc:LOCATIONS[0]||"",numSlots:2,rows:Array.from({length:6},()=>["","",""]),cartPerson:""});
+  const used=new Set(_seTeams.map(t=>t.key));
+  const key=TEAMS.find(k=>!used.has(k));
+  if(!key){toast("\ucd94\uac00\ud560 \uc218 \uc788\ub294 \ud300\uc740 A~F\uae4c\uc9c0\uc785\ub2c8\ub2e4");return;}
+  _seTeams.push({key,id:_seTeams.length,loc:LOCATIONS[0]||"",numSlots:2,rows:Array.from({length:6},()=>["","",""]),cartPerson:""});
   _renderSignupEditor();
 }
 
@@ -1539,14 +1570,14 @@ async function _seConfirm(){
   const wkStr=_seSessionKey.substring(0,8);
   const typeId=_seSessionKey.substring(9);
   const teamsData={};
-  _seTeams.forEach((t,i)=>{
-    const k=["A","B","C","D"][i]||String(i);
-    teamsData[k]={loc:t.loc,numSlots:t.numSlots,cartPerson:t.cartPerson,rows:t.rows.slice(0,t.numSlots)};
+  _seTeams.sort((a,b)=>teamOrderIndex(a.key)-teamOrderIndex(b.key)).forEach((t,i)=>{
+    const k=t.key||TEAMS[i]||String(i);
+    teamsData[k]={loc:t.loc,numSlots:t.numSlots,cartPerson:t.cartPerson,rows:sessionRows(t.rows,t.numSlots)};
   });
   try{
     const ref=db.collection("cartSessions").doc(_seSessionKey);
     const snap=await ref.get();
-    if(snap.exists()){
+    if(snap.exists){
       await ref.update({teams:teamsData,confirmed:true,conductorWeek:_seConductorWeek||""});
     } else {
       await ref.set({weekKey:wkStr,typeId,signups:[],confirmed:true,teams:teamsData,conductorWeek:_seConductorWeek||"",
@@ -1559,20 +1590,23 @@ async function _seConfirm(){
 
 // 확정된 주간 세션(cartSessions) → 공유 카드 모델 (카트 담당 포함)
 function _buildWeekShareModel(s,sd){
-  const teams=Object.entries(sd.teams||{}).map(([k,team])=>({
-    key:k,
-    label:TEAM_LABEL[k]||k+"팀",
-    loc:team.loc||"장소 미정",
-    cartPerson:team.cartPerson||"",
-    numSlots:parseInt(team.numSlots)||2,
-    rows:team.rows||[]
-  }));
+  const teams=activeSavedTeamEntries(sd.teams)
+    .filter(([,team])=>teamHasAssigned(team))
+    .map(([k,team])=>({
+      key:k,
+      label:TEAM_LABEL[k]||k+"팀",
+      loc:team.loc||"장소 미정",
+      cartPerson:team.cartPerson||"",
+      numSlots:parseInt(team.numSlots)||2,
+      rows:sessionRowsToArrays(team.rows,parseInt(team.numSlots)||2)
+    }));
+  const cols=teams.some(t=>t.rows.some(r=>(r[2]||"").trim()))?3:2;
   return {
     dateLabel:`${s.emoji?s.emoji+" ":""}${s.dateLabel}`,
     timeRange:`${fmt12h(s.startStr)} ~ ${fmt12h(s.endStr)}`,
     conductor:"",
     startStr:s.startStr,
-    teams,cols:3
+    teams,cols
   };
 }
 
@@ -2044,7 +2078,8 @@ async function saveSchedule(){
     const ns=parseInt(t.numSlots)||2;
     const rows=objToRows(t.rows,ns);
     cleanTeams[k]={location:t.location||"",cartPerson:t.cartPerson||"",numSlots:ns,rows:rowsToObj(rows,ns),members:rows.flat().filter(Boolean)};
-    sessionTeams[k]={loc:t.location||"",numSlots:ns,cartPerson:t.cartPerson||"",rows:rows.slice(0,ns)};
+    // Firestore는 nested array 미지원 → 각 행을 {s0,s1,s2} 객체로 변환
+    sessionTeams[k]={loc:t.location||"",numSlots:ns,cartPerson:t.cartPerson||"",rows:sessionRows(rows,ns)};
   });
   const yr=new Date().getFullYear();
   const data={type:f.type,month:parseInt(f.month),day:parseInt(f.day),weekday:f.weekday,
@@ -2071,16 +2106,22 @@ async function saveSchedule(){
     // cartSessions 동기화: 팀 배정 내용을 전도인 뱃지(publisher.html)에 노출
     // weekKey는 세션 날짜가 아니라 해당 주 월요일 날짜(YYYYMMDD) — publisher와 동일한 방식
     if(db&&f.type){
-      const monday=ScheduleTime.weekMonday(new Date(yr,parseInt(mm)-1,parseInt(dd)));
-      const wkStr=ScheduleTime.weekKey(monday);
-      const sessionKey=wkStr+"_"+f.type;
-      const sessRef=db.collection("cartSessions").doc(sessionKey);
-      const sessSnap=await sessRef.get();
-      if(sessSnap.exists()){
-        await sessRef.update({teams:sessionTeams,confirmed:true});
-      }else{
-        await sessRef.set({weekKey:wkStr,typeId:f.type,signups:[],confirmed:true,teams:sessionTeams,
-          createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      try{
+        const monday=ScheduleTime.weekMonday(new Date(yr,parseInt(mm)-1,parseInt(dd)));
+        const wkStr=ScheduleTime.weekKey(monday);
+        const sessionKey=wkStr+"_"+f.type;
+        const sessRef=db.collection("cartSessions").doc(sessionKey);
+        const sessSnap=await sessRef.get();
+        if(sessSnap.exists){
+          await sessRef.update({teams:sessionTeams,confirmed:true});
+        }else{
+          await sessRef.set({weekKey:wkStr,typeId:f.type,signups:[],confirmed:true,teams:sessionTeams,
+            createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        }
+        toast("✅ 팀 배정이 전도인에게 공개됐습니다",2500);
+      }catch(csErr){
+        console.error("[cartSessions sync] error:",csErr);
+        toast("⚠️ 팀 배정 공개 실패: "+csErr.message,3000);
       }
     }
     localStorage.setItem("cw_schedules",JSON.stringify(S.schedules));
@@ -2101,7 +2142,7 @@ async function saveDetailLive(){
       const ns=parseInt(t.numSlots)||2;
       const rows=objToRows(t.rows,ns);
       cleanTeams[k]={...t,rows:rowsToObj(rows,ns),members:rows.flat().filter(Boolean)};
-      sessionTeams[k]={loc:t.location||"",numSlots:ns,cartPerson:t.cartPerson||"",rows:rows.slice(0,ns)};
+      sessionTeams[k]={loc:t.location||"",numSlots:ns,cartPerson:t.cartPerson||"",rows:sessionRows(rows,ns)};
     });
     await db.collection("cart_witnessing_schedules").doc(S.selected.id).update({teams:cleanTeams});
     S.selected.teams=cleanTeams;
@@ -2110,17 +2151,24 @@ async function saveDetailLive(){
     localStorage.setItem("cw_schedules",JSON.stringify(S.schedules));
     // cartSessions 동기화 — weekKey는 해당 주 월요일 날짜
     if(S.selected.date&&S.selected.type){
-      const parts=S.selected.date.split("-").map(Number);
-      const monday=ScheduleTime.weekMonday(new Date(parts[0],parts[1]-1,parts[2]));
-      const wkStr=ScheduleTime.weekKey(monday);
-      const sessionKey=wkStr+"_"+S.selected.type;
-      const sessRef=db.collection("cartSessions").doc(sessionKey);
-      const sessSnap=await sessRef.get();
-      if(sessSnap.exists()){
-        await sessRef.update({teams:sessionTeams,confirmed:true});
-      }else{
-        await sessRef.set({weekKey:wkStr,typeId:S.selected.type,signups:[],confirmed:true,teams:sessionTeams,
-          createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      try{
+        const parts=S.selected.date.split("-").map(Number);
+        const monday=ScheduleTime.weekMonday(new Date(parts[0],parts[1]-1,parts[2]));
+        const wkStr=ScheduleTime.weekKey(monday);
+        const sessionKey=wkStr+"_"+S.selected.type;
+        const hasAssigned=Object.values(sessionTeams).some(t=>(t.rows||[]).some(r=>rowToArr(r).some(Boolean)));
+        if(hasAssigned){
+          const sessRef=db.collection("cartSessions").doc(sessionKey);
+          const sessSnap=await sessRef.get();
+          if(sessSnap.exists){
+            await sessRef.update({teams:sessionTeams,confirmed:true});
+          }else{
+            await sessRef.set({weekKey:wkStr,typeId:S.selected.type,signups:[],confirmed:true,teams:sessionTeams,
+              createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+          }
+        }
+      }catch(csErr){
+        console.error("[cartSessions detail sync] error:",csErr);
       }
     }
   }catch(e){toast("저장 실패: "+e.message);}
