@@ -4708,14 +4708,32 @@ window.addRevisitVisit = async function(taskId) {
 
 window.endRevisit = async function(taskId) {
   if (!_revisitName || !db) return;
-  if (!confirm('이 분을 재방문 목록에서 종료할까요?\n\n더 이상 방문이 필요 없을 때만 사용하세요.\n목록에서 사라집니다.')) return;
+  if (!confirm('이 분을 재방문 목록에서 종료할까요?\n\n더 이상 방문이 필요 없을 때만 사용하세요.\n목록에서 사라지고, 구역카드의 재방문 표시도 해제됩니다.')) return;
   try {
-    await updateDoc(doc(db, 'publisherRevisits', _revisitName, 'items', taskId), {
+    const it = _revisitItems.find(x => x.id === taskId) || {};
+    const batch = writeBatch(db);
+    // ① 내 재방문 목록에서 종료
+    batch.update(doc(db, 'publisherRevisits', _revisitName, 'items', taskId), {
       status: 'ended',
       endedAt: serverTimestamp(),
       endedBy: _revisitName,
       endedRole: 'self'
     });
+    // ② 구역카드(visitMap)의 재방문 코드도 해제 — 단, 아직 'revisit'인 경우만
+    if (it.territoryId && (it.unitIndex !== undefined && it.unitIndex !== null)) {
+      try {
+        const terrRef = doc(db, 'territories', it.territoryId);
+        const terrSnap = await getDoc(terrRef);
+        if (terrSnap.exists()) {
+          const vm = terrSnap.data().visitMap || {};
+          const cur = vm[it.unitIndex];
+          if (cur && cur.code === 'revisit') {
+            batch.update(terrRef, { [`visitMap.${it.unitIndex}`]: deleteField() });
+          }
+        }
+      } catch(terrErr) { console.warn('[재방문 종료] 구역카드 해제 건너뜀:', terrErr.message); }
+    }
+    await batch.commit();
   } catch(e) { alert('종료 오류: ' + e.message); }
 };
 
