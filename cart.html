@@ -174,6 +174,25 @@ select:focus,input:focus{border-color:var(--navy);}
   font-size:13px;cursor:pointer;margin-bottom:14px;}
 .detail-back:hover{color:var(--navy);}
 .section-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px;}
+/* ── 인도자 도움말 드로어 ── */
+#ch-drawer{position:fixed;inset:0;z-index:700;display:none}
+#ch-drawer.open{display:block}
+.ch-backdrop{position:absolute;inset:0;background:rgba(15,23,42,0.5)}
+.ch-panel{position:absolute;left:0;right:0;bottom:0;max-height:88vh;background:#fff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+#ch-drawer.open .ch-panel{transform:translateY(0)}
+.ch-header{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid #F1F5F9;flex-shrink:0}
+.ch-header-title{font-size:16px;font-weight:700;color:var(--navy)}
+.ch-close{width:30px;height:30px;border:none;background:#F1F5F9;border-radius:8px;font-size:16px;color:#64748B;cursor:pointer}
+.ch-body{flex:1;overflow-y:auto;padding:16px 18px 28px;-webkit-overflow-scrolling:touch}
+.ch-section{margin-top:18px}
+.ch-section:first-child{margin-top:4px}
+.ch-section-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #EFF6FF;padding-bottom:6px}
+.ch-item{display:flex;gap:10px;margin-bottom:11px}
+.ch-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:#F8FAFC}
+.ch-text{flex:1;min-width:0}
+.ch-text strong{display:block;font-size:12.5px;color:#1E293B;font-weight:700;margin-bottom:2px}
+.ch-text span{font-size:11.5px;color:#64748B;line-height:1.6}
+.ch-help-bar{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;margin:10px 14px 0;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;color:#0369A1}
 </style>
 </head>
 <body>
@@ -469,7 +488,7 @@ function render(){
   syncForm();
   app.innerHTML=headerHTML()+tabsHTML()+
     "<main>"+(S.loading?"<div class=\"loading\"><div class=\"spinner\"></div> 불러오는 중...</div>":mainHTML())+"</main>"+
-    editModalHTML()+settingsModalHTML()+applyModalHTML();
+    editModalHTML()+settingsModalHTML()+applyModalHTML()+chDrawerHTML();
   bind();
 }
 
@@ -545,7 +564,8 @@ function headerHTML(){
   } else {
     // '+ 새 명단'(구 시스템 create 진입점) 제거 — 봉사 요일은 설정(목록 관리)에서 정의·반복됨
     const setBtn=S.role==="admin"?`<button class="btn btn-sm" id="hsettings" style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.25)">⚙️</button>`:"";
-    right=`<div style="display:flex;gap:8px;align-items:center">${setBtn}<button class="btn btn-sm" id="hlogout" style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.25);font-size:11px">🔓 전환</button></div>`;
+    const helpBtn=`<button class="btn btn-sm" id="hhelp" style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.25)">❓</button>`;
+    right=`<div style="display:flex;gap:8px;align-items:center">${helpBtn}${setBtn}<button class="btn btn-sm" id="hlogout" style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.25);font-size:11px">🔓 전환</button></div>`;
   }
   return `<header>
     <div class="header-title">
@@ -558,6 +578,52 @@ function headerHTML(){
     <div>${right}</div>
   </header>`;
 }
+
+// ── 인도자 도움말 드로어 ──
+function chDrawerHTML(){
+  return `<div id="ch-drawer">
+    <div class="ch-backdrop" onclick="closeChDrawer()"></div>
+    <div class="ch-panel">
+      <div class="ch-header">
+        <div class="ch-header-title">📖 전시대봉사 편성 도움말</div>
+        <button class="ch-close" onclick="closeChDrawer()">✕</button>
+      </div>
+      <div class="ch-body">
+        <div class="ch-section">
+          <div class="ch-section-title">🔁 한눈에 보는 흐름</div>
+          <div class="ch-item"><div class="ch-icon">1️⃣</div><div class="ch-text"><strong>신청 접수</strong><span>전도인이 각자 앱에서 참여할 요일을 신청합니다. 신청자는 "이번 주" 목록의 각 날짜 카드에 자동으로 모입니다.</span></div></div>
+          <div class="ch-item"><div class="ch-icon">2️⃣</div><div class="ch-text"><strong>팀 편성</strong><span>신청자를 바탕으로 조를 짜고 시간·장소·인도자를 정합니다. 마감 전이라도 미리 편성할 수 있습니다.</span></div></div>
+          <div class="ch-item"><div class="ch-icon">3️⃣</div><div class="ch-text"><strong>편성 확정</strong><span>신청 마감(봉사 3시간 전) 후 편성을 확정하면 전도인 화면에 "팀 확정"으로 안내됩니다.</span></div></div>
+        </div>
+        <div class="ch-section">
+          <div class="ch-section-title">⏰ 신청 마감 규칙</div>
+          <div class="ch-item"><div class="ch-icon">⏳</div><div class="ch-text"><strong>봉사 3시간 전 마감</strong><span>마감 전에는 전도인이 자유롭게 신청·취소합니다. 인도자는 미리 편성을 준비할 수 있으나, 이때는 <strong>임시저장만</strong> 가능합니다.</span></div></div>
+          <div class="ch-item"><div class="ch-icon">💾</div><div class="ch-text"><strong>임시저장 (팀 편성중)</strong><span>편성 내용을 저장하되 아직 확정하지 않은 상태입니다. 전도인에게는 "🔧 팀 편성중"으로 보이고, 내 배정은 실시간 확인됩니다.</span></div></div>
+          <div class="ch-item"><div class="ch-icon">✅</div><div class="ch-text"><strong>편성 확정</strong><span>마감 후 "편성 확정" 버튼이 활성화됩니다. 확정하면 전도인 화면이 "✅ 팀 확정"으로 바뀝니다.</span></div></div>
+        </div>
+        <div class="ch-section">
+          <div class="ch-section-title">📋 팀 편성하기</div>
+          <div class="ch-item"><div class="ch-icon">📋</div><div class="ch-text"><strong>"팀 편성" 버튼</strong><span>각 날짜 카드의 "팀 편성"을 누르면 신청자 명단과 편성표가 함께 열립니다. 신청자 칩을 빈 칸에 배치하세요.</span></div></div>
+          <div class="ch-item"><div class="ch-icon">🎤</div><div class="ch-text"><strong>담당 인도자·장소·조 수</strong><span>이번 주 담당 인도자, 팀별 장소, 조 수(시간 간격)를 정할 수 있습니다. 요일 기본값에서 바꾸면 이번 주만 적용됩니다.</span></div></div>
+          <div class="ch-item"><div class="ch-icon">📷</div><div class="ch-text"><strong>명단 공유</strong><span>확정 후 "명단 공유"로 팀 편성표 이미지를 만들어 카카오톡 등으로 보낼 수 있습니다.</span></div></div>
+        </div>
+        <div class="ch-section">
+          <div class="ch-section-title">🙏 취소 요청 처리</div>
+          <div class="ch-item"><div class="ch-icon">🙏</div><div class="ch-text"><strong>취소 요청 확인</strong><span>확정 후 전도인이 취소를 요청하면 카드에 "재편성 필요"로 표시되고 해당 이름에 "취소 처리" 버튼이 나타납니다.</span></div></div>
+          <div class="ch-item"><div class="ch-icon">🔧</div><div class="ch-text"><strong>대체 후 다시 저장</strong><span>편성표에서 그 봉사자를 빼고 필요하면 대체 인원을 배치한 뒤 다시 저장하면, 취소 요청과 함께 명단에서 정리됩니다.</span></div></div>
+        </div>
+        <div class="ch-section">
+          <div class="ch-section-title">⚙️ 봉사 요일 설정</div>
+          <div class="ch-item"><div class="ch-icon">⚙️</div><div class="ch-text"><strong>요일 추가·삭제</strong><span>오른쪽 위 톱니바퀴(⚙️) → "봉사 요일" 탭에서 매주 반복되는 봉사 요일·시간·기본 인도자를 관리합니다. 봉사자·인도자·장소 명단도 여기서 관리합니다.</span></div></div>
+          <div class="ch-item"><div class="ch-icon">🔁</div><div class="ch-text"><strong>매주 자동 반복</strong><span>설정한 요일은 매주 같은 시간으로 자동 반복됩니다. 한 번 설정하면 매주 새로 만들 필요가 없습니다.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.openChDrawer = function(){ document.getElementById("ch-drawer")?.classList.add("open"); };
+window.closeChDrawer = function(){ document.getElementById("ch-drawer")?.classList.remove("open"); };
 
 function tabsHTML(){
   if(S.screen!=="list") return "";
@@ -1730,6 +1796,7 @@ function bind(){
   document.getElementById("hcreate")?.addEventListener("click",startCreate);
   document.getElementById("hlogout")?.addEventListener("click",logout);
   document.getElementById("hsettings")?.addEventListener("click",()=>{S.settingsModal=true;render();});
+  document.getElementById("hhelp")?.addEventListener("click",openChDrawer);
   // 탭
   document.querySelectorAll(".tab").forEach(t=>
     t.addEventListener("click",()=>{
