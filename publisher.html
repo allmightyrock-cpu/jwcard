@@ -283,6 +283,66 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .badge-label{font-size:12px;font-weight:600;}
 .badge-arrow{opacity:0.4;font-size:13px;}
 .badge-zone.hidden{display:none;}
+/* ════ 내 재방문 버튼 ════ */
+.revisit-btn{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;
+  margin-top:7px;width:calc(100% - 32px);max-width:300px;
+  border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;
+  border:1px solid rgba(251,191,36,0.35);
+  background:rgba(251,191,36,0.14);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:all 0.2s;position:relative;z-index:1;
+  animation:badge-in 0.35s cubic-bezier(0.34,1.56,0.64,1) 180ms both;
+}
+.revisit-btn:hover{transform:translateY(-1px);background:rgba(251,191,36,0.22);border-color:rgba(251,191,36,0.55);}
+.revisit-btn:active{transform:scale(0.97);}
+.revisit-btn.hidden{display:none;}
+.revisit-btn-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(245,158,11,0.22);}
+.revisit-btn-text{flex:1;min-width:0;}
+.revisit-btn-name{font-weight:700;font-size:11px;opacity:0.7;margin-bottom:1px;color:rgba(254,243,199,0.95);}
+.revisit-btn-label{font-size:12px;font-weight:600;color:rgba(254,243,199,0.95);}
+.revisit-btn-count{
+  flex-shrink:0;min-width:22px;height:22px;padding:0 7px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:#7C2D12;background:#FCD34D;
+}
+.revisit-btn-count.zero{background:rgba(251,191,36,0.25);color:rgba(254,243,199,0.7);}
+/* ── 재방문 풀스크린 페이지 ── */
+.revisit-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:2000;display:none;opacity:0;transition:opacity .25s}
+.revisit-overlay.open{display:block;opacity:1}
+.revisit-modal{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:480px;background:#F8FAFC;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.revisit-overlay.open .revisit-modal{transform:translateX(0)}
+.revisit-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;flex-shrink:0}
+.revisit-header-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.revisit-header-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;color:#fff;background:rgba(255,255,255,0.18)}
+.revisit-header-close:active{background:rgba(255,255,255,0.3)}
+.revisit-body{flex:1;overflow-y:auto;padding:14px 16px;-webkit-overflow-scrolling:touch}
+.revisit-empty{text-align:center;padding:60px 20px;color:#94A3B8}
+.revisit-empty-icon{font-size:40px;margin-bottom:12px;opacity:0.5}
+.revisit-empty-text{font-size:13px;line-height:1.6}
+.revisit-intro{padding:11px 16px;background:#FFFBEB;border-bottom:1px solid #FDE68A;font-size:11.5px;color:#92400E;line-height:1.55;text-align:center;flex-shrink:0}
+.revisit-item{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:11px;box-shadow:0 1px 3px rgba(15,23,42,0.04);position:relative;transition:all .3s}
+.revisit-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.revisit-item-label{font-size:15px;font-weight:700;color:#0F172A;line-height:1.4}
+.revisit-item-terr{font-size:11px;color:#64748B;margin-top:3px}
+.revisit-item-sub{font-size:11px;color:#94A3B8;margin-top:2px}
+.revisit-item-stats{display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px dashed #E2E8F0}
+.revisit-stat{display:flex;flex-direction:column;gap:1px}
+.revisit-stat-val{font-size:14px;font-weight:800;color:#B45309}
+.revisit-stat-lbl{font-size:10px;color:#94A3B8;font-weight:600}
+.revisit-item-actions{display:flex;gap:7px;margin-top:12px;align-items:center}
+.rv-visit-btn{flex:1;padding:11px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;display:flex;align-items:center;justify-content:center;gap:6px}
+.rv-visit-btn:active{transform:scale(0.97)}
+.rv-more-btn{width:42px;height:42px;flex-shrink:0;border-radius:10px;border:1px solid #E2E8F0;background:#F8FAFC;font-size:18px;color:#64748B;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700}
+.rv-more-btn:active{background:#EFF6FF}
+.rv-menu{position:absolute;right:14px;bottom:14px;background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 8px 28px rgba(15,23,42,0.18);overflow:hidden;z-index:10;display:none;min-width:150px}
+.rv-menu.open{display:block;animation:rv-menu-in .15s ease}
+@keyframes rv-menu-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.rv-menu-item{padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;color:#334155}
+.rv-menu-item:active{background:#F1F5F9}
+.rv-menu-item.danger{color:#B91C1C}
+.rv-just-visited{animation:rv-pulse .6s ease}
+@keyframes rv-pulse{0%{background:#FEF3C7}100%{background:#fff}}
 /* 공지 배너 — 프리미엄 네이비 */
 .pub-notice-banner{
   background:rgba(27,58,107,0.07)!important;
@@ -1234,6 +1294,18 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </button>
 
   </div><!-- /badge-zone -->
+
+  <!-- 내 재방문 버튼 (재방문 1건 이상일 때만 표시) -->
+  <button class="revisit-btn hidden" id="revisit-btn" onclick="openRevisitPage()">
+    <div class="revisit-btn-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(253,224,71,0.95)" xmlns="http://www.w3.org/2000/svg"><path d="M18,0H8A5,5,0,0,0,3.424,3H2A1,1,0,0,0,2,5H3V7H2A1,1,0,0,0,2,9H3v2H2a1,1,0,0,0,0,2H3v2H2a1,1,0,0,0,0,2H3v2H2a1,1,0,0,0,0,2H3.424A5,5,0,0,0,8,24H18a5.006,5.006,0,0,0,5-5V5A5.006,5.006,0,0,0,18,0Zm3,19a3,3,0,0,1-3,3H8a3,3,0,0,1-3-3V5A3,3,0,0,1,8,2H18a3,3,0,0,1,3,3Zm-8-7a3,3,0,0,0,0-6A3,3,0,0,0,13,12Zm5,6a1,1,0,0,1-2,0,3,3,0,0,0-6,0,1,1,0,0,1-2,0C8.211,11.392,17.791,11.394,18,18Z"/></svg>
+    </div>
+    <div class="revisit-btn-text">
+      <div class="revisit-btn-name" id="revisit-name-label"></div>
+      <div class="revisit-btn-label">내 재방문 · 다시 찾아갈 세대</div>
+    </div>
+    <span class="revisit-btn-count" id="revisit-count">0</span>
+  </button>
 
   <!-- 전시대봉사 신청 섹션 (뱃지 탭 후 펼침) -->
   <div id="cart-section" style="display:none;width:calc(100% - 32px);max-width:300px;margin-top:8px;position:relative;z-index:1">
@@ -2661,9 +2733,29 @@ function _drawMarker(position, label, count) {
   });
 }
 </script>
+<!-- ════ 내 재방문 풀스크린 페이지 ════ -->
+<div class="revisit-overlay" id="revisit-overlay">
+  <div class="revisit-modal">
+    <div class="revisit-header">
+      <div class="revisit-header-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M18,0H8A5,5,0,0,0,3.424,3H2A1,1,0,0,0,2,5H3V7H2A1,1,0,0,0,2,9H3v2H2a1,1,0,0,0,0,2H3v2H2a1,1,0,0,0,0,2H3v2H2a1,1,0,0,0,0,2H3.424A5,5,0,0,0,8,24H18a5.006,5.006,0,0,0,5-5V5A5.006,5.006,0,0,0,18,0Zm3,19a3,3,0,0,1-3,3H8a3,3,0,0,1-3-3V5A3,3,0,0,1,8,2H18a3,3,0,0,1,3,3Zm-8-7a3,3,0,0,0,0-6A3,3,0,0,0,13,12Zm5,6a1,1,0,0,1-2,0,3,3,0,0,0-6,0,1,1,0,0,1-2,0C8.211,11.392,17.791,11.394,18,18Z"/></svg>
+        <span id="revisit-page-title">내 재방문</span>
+      </div>
+      <div class="revisit-header-close" onclick="closeRevisitPage()">✕</div>
+    </div>
+    <div class="revisit-intro">다시 찾아갈 분들의 목록입니다 · 방문할 때마다 <b>다시 방문함</b>을 눌러 기록하세요</div>
+    <div class="revisit-body" id="revisit-body">
+      <div class="revisit-empty">
+        <div class="revisit-empty-icon">📭</div>
+        <div class="revisit-empty-text">아직 재방문으로 표시한 세대가 없습니다.<br>구역에서 세대를 <b>재방문</b>으로 기록하면<br>여기에 모입니다.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, collection, query, where, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, collection, collectionGroup, query, where, orderBy, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion, arrayRemove, writeBatch } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // Firebase 설정은 config.js 에서 로드됩니다
@@ -2854,6 +2946,7 @@ window.onNameInput = async function(val) {
     stopPubMeetingListener();
     _cartMyName = '';
     _stopCartSignupListener();
+    _stopRevisitListener();
     return;
   }
   // 이름 있음 — DB 조회
@@ -2883,6 +2976,7 @@ window.onNameInput = async function(val) {
         badgeVisible = true;
       } else if (cBadge) { cBadge.style.display = 'none'; _cartMyName = ''; _stopCartSignupListener(); }
       if (zone) zone.classList.toggle('hidden', !badgeVisible);
+      _startRevisitListener(name);
       if (approved) startPubMeetingListener(name);
       else stopPubMeetingListener();
     } else {
@@ -2890,6 +2984,7 @@ window.onNameInput = async function(val) {
       if (lBadge) lBadge.style.display = 'none';
       if (cBadge) cBadge.style.display = 'none';
       stopPubMeetingListener();
+      _stopRevisitListener();
     }
   } catch(e) { /* ignore */ }
 };
@@ -4393,13 +4488,76 @@ window.clearCode = async function() {
 window.pickCode = async function(code) {
   if (_activeUnitIdx === null) return;
   const visitMap = { ...(_territory.visitMap || {}) };
-  visitMap[_activeUnitIdx] = { code, by: _pubName, at: new Date().toISOString() };
+  const _stamp = new Date().toISOString();
+  visitMap[_activeUnitIdx] = { code, by: _pubName, at: _stamp };
   try {
     _ignoreNextSnap = true;
-    await updateDoc(doc(db, 'territories', _territoryId), {
-      [`visitMap.${_activeUnitIdx}`]: { code, by: _pubName, at: new Date().toISOString() },
+    const batch = writeBatch(db);
+    const terrRef = doc(db, 'territories', _territoryId);
+    batch.update(terrRef, {
+      [`visitMap.${_activeUnitIdx}`]: { code, by: _pubName, at: _stamp },
       visitMap
     });
+    // 재방문 코드 → 본인 재방문 목록(publisherRevisits)에 함께 기록
+    if (code === 'revisit' && _pubName) {
+      const u = (_territory.units || [])[_activeUnitIdx] || {};
+      let unitStr = '';
+      try { unitStr = _fmtUnitLabel(_cleanUnitVal(u.unit)) || ''; } catch(_) {}
+      let _road  = (u.road     || '').trim();
+      let _jibun = (u.jibun    || '').trim();
+      let _bldg  = (u.building || '').trim();
+      const _detail= (u.detail   || '').trim();
+      // 세대 자체에 건물/주소가 없으면 소속 섹션(건물 그룹)에서 보강
+      if (!_bldg && !_road && !_jibun) {
+        const sec = (_sections || []).find(s => (s.indices || []).includes(_activeUnitIdx));
+        if (sec) {
+          _bldg  = (sec.building || '').trim();
+          _road  = (sec.road     || '').trim();
+          _jibun = (sec.jibun    || '').trim();
+        }
+      }
+      // 메인 라벨: "건물명 + 호수" (건물명 없으면 호수만) — 무엇(어느 집)
+      const unitLbl = [_bldg, unitStr].filter(Boolean).join(' ') || '호수 미기록';
+      // 주소 줄: 도로명+번지를 항상 온전히 표시 (+상세) — 어디(찾아갈 위치)
+      const _addrCore = [_road, _jibun].filter(Boolean).join(' ');
+      const _subParts = [];
+      if (_addrCore) _subParts.push(_addrCore);
+      if (_detail) _subParts.push(_detail);
+      // 주소가 전혀 없으면 최소한 구역명으로 위치 식별
+      if (!_subParts.length && _territory.name) _subParts.push(_territory.name);
+      const unitAddr = _subParts.join(' · ');
+      const taskId = `${_territoryId}_${_activeUnitIdx}`;
+      const rvRef = doc(db, 'publisherRevisits', _pubName, 'items', taskId);
+      // 이미 있으면 기존 firstMarkedAt/visitCount 보존, 없으면 새로 생성
+      const rvSnap = await getDoc(rvRef);
+      if (rvSnap.exists()) {
+        batch.set(rvRef, {
+          territoryId: _territoryId,
+          territoryNo: _territory.no || '',
+          territoryName: _territory.name || '',
+          unitIndex: _activeUnitIdx,
+          unitLabel: unitLbl,
+          unitAddr: unitAddr,
+          status: 'active',
+          owner: _pubName
+        }, { merge: true });
+      } else {
+        batch.set(rvRef, {
+          territoryId: _territoryId,
+          territoryNo: _territory.no || '',
+          territoryName: _territory.name || '',
+          unitIndex: _activeUnitIdx,
+          unitLabel: unitLbl,
+          unitAddr: unitAddr,
+          firstMarkedAt: serverTimestamp(),
+          lastVisitedAt: serverTimestamp(),
+          visitCount: 1,
+          status: 'active',
+          owner: _pubName
+        });
+      }
+    }
+    await batch.commit();
     _territory.visitMap = visitMap;
     closeSheets();
     renderUnitList(visitMap);
@@ -4407,6 +4565,158 @@ window.pickCode = async function(code) {
     // 길 안내 모드: 코드 저장 후 다음 미방문 세대로 자동 이동
     if (_navMode) { _navIdx = _navFindNext(_navIdx + 1); renderNavPanel(); _navSaveState(); }
   } catch(e) { alert('저장 오류: ' + e.message); }
+};
+
+// ════════════════════════════════════════════════════
+//  내 재방문 (publisherRevisits)
+// ════════════════════════════════════════════════════
+let _revisitItems = [];          // 현재 로드된 재방문 목록 (active만)
+let _revisitUnsub = null;        // onSnapshot 해제 함수
+let _revisitName  = '';          // 현재 구독 중인 전도인 이름
+
+// 카드 ⋯ 메뉴 바깥 클릭 시 닫기
+document.addEventListener('click', () => {
+  document.querySelectorAll('.rv-menu.open').forEach(m => m.classList.remove('open'));
+});
+
+window.openRevisitPage = function() {
+  const ov = document.getElementById('revisit-overlay');
+  if (!ov) return;
+  ov.classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeRevisitPage = function() {
+  const ov = document.getElementById('revisit-overlay');
+  if (!ov) return;
+  ov.classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+function _rvEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function _revisitFmtDate(ts) {
+  if (!ts || !ts.seconds) return '';
+  const d = new Date(ts.seconds * 1000);
+  return (d.getMonth() + 1) + '/' + d.getDate();
+}
+
+function _startRevisitListener(name) {
+  if (!name || !db) return;
+  if (_revisitName === name && _revisitUnsub) return; // 이미 구독 중
+  _stopRevisitListener();
+  _revisitName = name;
+  const lbl = document.getElementById('revisit-name-label');
+  if (lbl) lbl.textContent = name + '님';
+  try {
+    const col = collection(db, 'publisherRevisits', name, 'items');
+    _revisitUnsub = onSnapshot(col, (snap) => {
+      const items = [];
+      snap.forEach(d => {
+        const v = d.data() || {};
+        if (v.status === 'ended' || v.status === 'done') return; // 종료된 항목 제외
+        items.push({ id: d.id, ...v });
+      });
+      // 최근 방문한 순 → 같으면 처음 표시한 순
+      items.sort((a, b) =>
+        (b.lastVisitedAt?.seconds || b.firstMarkedAt?.seconds || 0) -
+        (a.lastVisitedAt?.seconds || a.firstMarkedAt?.seconds || 0));
+      _revisitItems = items;
+      _renderRevisitList();
+      _updateRevisitButton();
+    }, (err) => { console.warn('[재방문] 구독 오류:', err.message); });
+  } catch(e) { console.warn('[재방문] 리스너 실패:', e.message); }
+}
+
+function _stopRevisitListener() {
+  if (_revisitUnsub) { try { _revisitUnsub(); } catch(_) {} _revisitUnsub = null; }
+  _revisitName  = '';
+  _revisitItems = [];
+  _updateRevisitButton();
+}
+
+function _updateRevisitButton() {
+  const btn = document.getElementById('revisit-btn');
+  const cnt = document.getElementById('revisit-count');
+  if (!btn) return;
+  const n = _revisitItems.length;
+  if (cnt) cnt.textContent = String(n);
+  btn.classList.toggle('hidden', n < 1); // 1건 이상일 때만 표시
+}
+
+function _renderRevisitList() {
+  const body = document.getElementById('revisit-body');
+  if (!body) return;
+  if (!_revisitItems.length) {
+    body.innerHTML = '<div class="revisit-empty"><div class="revisit-empty-icon">📭</div><div class="revisit-empty-text">아직 재방문으로 표시한 세대가 없습니다.<br>구역에서 세대를 <b>재방문</b>으로 기록하면<br>여기에 모입니다.</div></div>';
+    return;
+  }
+  body.innerHTML = _revisitItems.map(it => {
+    const terrNo = it.territoryNo ? String(it.territoryNo) : '';
+    const terrNm = it.territoryName || '';
+    // "56번 구역 · 생연동" 형태 (숫자는 구역카드 번호)
+    const terr = [terrNo ? terrNo + '번 구역' : '', terrNm].filter(Boolean).join(' · ') || '구역';
+    const first = _revisitFmtDate(it.firstMarkedAt);
+    const last  = _revisitFmtDate(it.lastVisitedAt) || first;
+    const cnt   = it.visitCount || 1;
+    const safeId = String(it.id).replace(/'/g, "\\'");
+    const subAddr = (it.unitAddr || '').trim();
+    return `<div class="revisit-item" id="rv-card-${_rvEsc(it.id)}">
+      <div class="revisit-item-top">
+        <div>
+          <div class="revisit-item-label">${_rvEsc(it.unitLabel || '호수 미기록')}</div>
+          <div class="revisit-item-terr">${_rvEsc(terr)}</div>
+          ${subAddr ? `<div class="revisit-item-sub">${_rvEsc(subAddr)}</div>` : ''}
+        </div>
+      </div>
+      <div class="revisit-item-stats">
+        <div class="revisit-stat"><span class="revisit-stat-val">${cnt}회</span><span class="revisit-stat-lbl">방문</span></div>
+        <div class="revisit-stat"><span class="revisit-stat-val">${last || '—'}</span><span class="revisit-stat-lbl">최근 방문</span></div>
+        <div class="revisit-stat"><span class="revisit-stat-val">${first || '—'}</span><span class="revisit-stat-lbl">처음 표시</span></div>
+      </div>
+      <div class="revisit-item-actions">
+        <button class="rv-visit-btn" onclick="addRevisitVisit('${safeId}')">📅 다시 방문함</button>
+        <button class="rv-more-btn" onclick="toggleRevisitMenu(event,'${safeId}')">⋯</button>
+      </div>
+      <div class="rv-menu" id="rv-menu-${_rvEsc(it.id)}">
+        <div class="rv-menu-item danger" onclick="endRevisit('${safeId}')">🗂️ 재방문 종료</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleRevisitMenu = function(e, taskId) {
+  e.stopPropagation();
+  const el = document.getElementById('rv-menu-' + taskId);
+  if (!el) return;
+  document.querySelectorAll('.rv-menu').forEach(m => { if (m !== el) m.classList.remove('open'); });
+  el.classList.toggle('open');
+};
+
+window.addRevisitVisit = async function(taskId) {
+  if (!_revisitName || !db) return;
+  try {
+    const ref = doc(db, 'publisherRevisits', _revisitName, 'items', taskId);
+    const snap = await getDoc(ref);
+    const cur = snap.exists() ? (snap.data().visitCount || 1) : 1;
+    await updateDoc(ref, { visitCount: cur + 1, lastVisitedAt: serverTimestamp() });
+    const card = document.getElementById('rv-card-' + taskId);
+    if (card) { card.classList.remove('rv-just-visited'); void card.offsetWidth; card.classList.add('rv-just-visited'); }
+  } catch(e) { alert('기록 오류: ' + e.message); }
+};
+
+window.endRevisit = async function(taskId) {
+  if (!_revisitName || !db) return;
+  if (!confirm('이 분을 재방문 목록에서 종료할까요?\n\n더 이상 방문이 필요 없을 때만 사용하세요.\n목록에서 사라집니다.')) return;
+  try {
+    await updateDoc(doc(db, 'publisherRevisits', _revisitName, 'items', taskId), {
+      status: 'ended',
+      endedAt: serverTimestamp(),
+      endedBy: _revisitName,
+      endedRole: 'self'
+    });
+  } catch(e) { alert('종료 오류: ' + e.message); }
 };
 
 // ── 섹션 시트 ──
@@ -6771,7 +7081,7 @@ function _renderCartSessions(sessions, signupsData, listEl) {
     const iCancelRequested = cancelRequests.includes(_cartMyName);
     const cancelled = sd.cancelled || false;
     const ended = s.ended;
-    const open = !cancelled && !ended && !sd.confirmed && (Date.now() < s.dt.getTime() - _CART_CUTOFF_H * 3600000);
+    const open = !cancelled && !ended && (Date.now() < s.dt.getTime() - _CART_CUTOFF_H * 3600000);
     const msLeft = s.dt.getTime() - _CART_CUTOFF_H * 3600000 - now.getTime();
     let timeTag = '';
     if (ended) timeTag = '<span style="font-size:10px;color:#94A3B8;font-weight:600"> · 봉사 종료</span>';
@@ -6783,12 +7093,13 @@ function _renderCartSessions(sessions, signupsData, listEl) {
     }
     const confirmedTag = cancelled
       ? '<span style="font-size:9px;background:#FEE2E2;color:#B91C1C;padding:1px 6px;border-radius:5px;font-weight:700;margin-left:4px">취소됨</span>'
-      : sd.confirmed ? '<span style="font-size:9px;background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:5px;font-weight:700;margin-left:4px">팀 확정</span>' : '';
+      : sd.confirmed ? '<span style="font-size:9px;background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:5px;font-weight:700;margin-left:4px">팀 확정</span>'
+      : sd.draft ? '<span style="font-size:9px;background:#FEF3C7;color:#92400E;padding:1px 6px;border-radius:5px;font-weight:700;margin-left:4px">팀 편성중</span>' : '';
 
     // 내 배정 슬롯 찾기 (팀 확정 후, 취소되지 않은 경우만)
     // Firestore는 nested array를 map으로 변환하므로 배열/객체 양쪽 처리
     let mySlotHtml = '';
-    if (!cancelled && sd.confirmed && sd.teams && _cartMyName) {
+    if (!cancelled && (sd.confirmed || sd.draft) && sd.teams && _cartMyName) {
       for (const [teamKey, team] of _cartSortedTeamEntries(sd.teams)) {
         const rows = _cartRowsToArrays(team.rows, team.numSlots);
         const slotIdx = rows.findIndex(r => r.includes(_cartMyName));
@@ -6812,33 +7123,30 @@ function _renderCartSessions(sessions, signupsData, listEl) {
       toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <div style="width:44px;height:24px;border-radius:12px;background:#FECACA;position:relative;opacity:0.5"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
         <div style="font-size:9px;font-weight:700;color:#B91C1C">취소</div></div>`;
-    } else if (sd.confirmed && iSignedUp && !ended) {
-      toggleHtml = iCancelRequested
-        ? `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
-          <div style="width:44px;height:24px;border-radius:12px;background:#FBBF24;position:relative;opacity:.75"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
-          <div style="font-size:9px;font-weight:800;color:#B45309">\uc694\uccad \ucca0\ud68c</div></div>`
-        : `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
-          <div style="width:44px;height:24px;border-radius:12px;background:#16A34A;position:relative;transition:background .2s"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
-          <div style="font-size:9px;font-weight:800;color:#B91C1C">\ucde8\uc18c \uc694\uccad</div></div>`;
-    } else if (sd.confirmed) {
-      toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-        <div style="width:44px;height:24px;border-radius:12px;background:#DCFCE7;position:relative;opacity:.45"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
-        <div style="font-size:9px;font-weight:700;color:#16A34A">\ud655\uc815\ub428</div></div>`;
-    } else if (open) {
-      toggleHtml = `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
-        <div style="width:44px;height:24px;border-radius:12px;background:${iSignedUp?'#16A34A':'#E2E8F0'};position:relative;transition:background .2s">
-          <div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:${iSignedUp?'23':'3'}px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
-        </div>
-        <div style="font-size:9px;font-weight:700;color:${iSignedUp?'#16A34A':'#94A3B8'}">${iSignedUp?'\uc2e0\uccad\ub428':'\ubbf8\uc2e0\uccad'}</div>
-      </div>`;
     } else if (ended) {
       toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <div style="width:44px;height:24px;border-radius:12px;background:#E2E8F0;position:relative;opacity:0.2"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
         <div style="font-size:9px;font-weight:600;color:#94A3B8">종료</div></div>`;
-    } else {
+    } else if (!open) {
       toggleHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <div style="width:44px;height:24px;border-radius:12px;background:#E2E8F0;position:relative;opacity:0.35"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
         <div style="font-size:9px;font-weight:700;color:#EF4444">마감</div></div>`;
+    } else if (iSignedUp && sd.confirmed && iCancelRequested) {
+      toggleHtml = `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
+        <div style="width:44px;height:24px;border-radius:12px;background:#FBBF24;position:relative;opacity:.85"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+        <div style="font-size:9px;font-weight:800;color:#B45309">요청 철회</div></div>`;
+    } else if (iSignedUp && sd.confirmed) {
+      toggleHtml = `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
+        <div style="width:44px;height:24px;border-radius:12px;background:#16A34A;position:relative;transition:background .2s"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+        <div style="font-size:9px;font-weight:800;color:#B91C1C">취소 요청</div></div>`;
+    } else if (iSignedUp) {
+      toggleHtml = `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
+        <div style="width:44px;height:24px;border-radius:12px;background:#16A34A;position:relative;transition:background .2s"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+        <div style="font-size:9px;font-weight:700;color:#16A34A">신청됨</div></div>`;
+    } else {
+      toggleHtml = `<div onclick="window._cartDoToggle('${s.key}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
+        <div style="width:44px;height:24px;border-radius:12px;background:#E2E8F0;position:relative;transition:background .2s"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div></div>
+        <div style="font-size:9px;font-weight:700;color:#94A3B8">미신청</div></div>`;
     }
     const cardBg = cancelled?'rgba(254,242,242,0.7)':mySlotHtml?'linear-gradient(135deg,rgba(209,250,229,0.6),rgba(167,243,208,0.35))':iSignedUp?'linear-gradient(135deg,rgba(220,252,231,0.7),rgba(187,247,208,0.45))':ended?'rgba(241,245,249,0.5)':'rgba(248,250,255,0.6)';
     const cardBorder = cancelled?'rgba(248,113,113,0.4)':mySlotHtml?'rgba(16,185,129,0.35)':iSignedUp?'rgba(34,197,94,0.25)':ended?'rgba(226,232,240,0.6)':'rgba(219,228,255,0.5)';
@@ -6889,8 +7197,8 @@ async function _cartDoToggle(sessionKey) {
         }
       } else {
         if (data.confirmed) {
-          alert('\uc774\ubbf8 \ud300 \ud3b8\uc131\uc774 \ud655\uc815\ub418\uc5b4 \uc2e0\uccad\uc744 \ubcc0\uacbd\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.');
-          return;
+          const ok = confirm('\ud300 \ud3b8\uc131\uc774 \ud655\uc815\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.\n\uc2e0\uccad \ud6c4 \uc778\ub3c4\uc790\uc5d0\uac8c \ud300 \ubc30\uc815\uc744 \uc694\uccad\ud574 \uc8fc\uc138\uc694.\n\n\uc2e0\uccad\ud558\uc2dc\uaca0\uc5b4\uc694?');
+          if (!ok) return;
         }
         await updateDoc(sessionRef, { signups: arrayUnion(_cartMyName), cancelRequests: arrayRemove(_cartMyName) });
       }
@@ -6909,7 +7217,7 @@ const _TEAM_SHEET_COLORS = {
 function _cartShowTeamSheet(key) {
   const s  = _cartLastSessions.find(x => x.key === key);
   const sd = _cartLastSignupsData[key] || {};
-  if (!s || !sd.confirmed || !sd.teams) return;
+  if (!s || (!sd.confirmed && !sd.draft) || !sd.teams) return;
   if (typeof ShareCard === 'undefined') { _showToast('공유 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); return; }
 
   _cartCloseTeamSheet(); // 기존 팝업 정리
