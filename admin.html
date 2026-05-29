@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="css/admin.css">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap" rel="stylesheet">
 <script src="/config.js"></script>
+<script src="/js/config-check.js"></script>
 <script>
 // ── 네이버 지도 동적 로드 (config.js 또는 Firestore 설정값 사용) ──
 window._naverMapsLoaded = false;
@@ -100,7 +101,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         <span class="nav-icon">▪</span>구역관리
       </div>
       <div id="nav-publisher" class="nav-item" onclick="switchTab('publisher',this)">
-        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px" xmlns="http://www.w3.org/2000/svg"><path d="M12,16a4,4,0,1,1,4-4A4,4,0,0,1,12,16Zm0-6a2,2,0,1,0,2,2A2,2,0,0,0,12,10Zm6,13A6,6,0,0,0,6,23a1,1,0,0,0,2,0,4,4,0,0,1,8,0,1,1,0,0,0,2,0ZM18,8a4,4,0,1,1,4-4A4,4,0,0,1,18,8Zm0-6a2,2,0,1,0,2,2A2,2,0,0,0,18,2Zm6,13a6.006,6.006,0,0,0-6-6,1,1,0,0,0,0,2,4,4,0,0,1,4,4,1,1,0,0,0,2,0ZM6,8a4,4,0,1,1,4-4A4,4,0,0,1,6,8ZM6,2A2,2,0,1,0,8,4,2,2,0,0,0,6,2ZM2,15a4,4,0,0,1,4-4A1,1,0,0,0,6,9a6.006,6.006,0,0,0-6,6,1,1,0,0,0,2,0Z"/></svg></span>전도인관리
+        <span class="nav-icon">▲</span>전도인관리
       </div>
       <div class="nav-item active" onclick="switchTab('schedule',this)">
         <span class="nav-icon">🗓</span>봉사일정
@@ -140,6 +141,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       </div>
       <span class="admin-badge">관리자</span>
     </div>
+
+    <!-- ══ 업데이트 알림 배너 ══ -->
+    <div id="update-banner" style="display:none;align-items:center;gap:10px;background:#fef3c7;border-bottom:1.5px solid #fbbf24;padding:10px 16px;font-size:13px;flex-wrap:wrap">
+      <span style="font-size:16px">🔔</span>
+      <span id="update-banner-msg" style="flex:1;min-width:200px;color:#78350f;font-weight:600"></span>
+      <a id="update-banner-link" href="#" onclick="switchTab('manual',document.querySelector('.nav-item:last-child'));dismissUpdateBanner();return false;" style="color:#1d4ed8;font-weight:700;text-decoration:none;white-space:nowrap">업데이트 방법 보기 →</a>
+      <button onclick="dismissUpdateBanner()" style="border:none;background:none;cursor:pointer;font-size:16px;color:#92400e;padding:0 4px" title="닫기">✕</button>
+    </div>
+
     <div class="content">
 
       <!-- 구역관리 -->
@@ -872,7 +882,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div class="settings-card-title">회중 정보</div>
             <div class="form-group">
               <label>회중명</label>
-              <input type="text" id="s-congregation" placeholder="예: 동두천남부회중">
+              <input type="text" id="s-congregation" placeholder="예: 우리 회중">
             </div>
             <button class="btn btn-navy" onclick="saveCongregation()">저장</button>
           </div>
@@ -898,14 +908,14 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div class="settings-card-title">📍 지도 지역 설정</div>
             <div class="form-group">
               <label>주소 검색 지역 <span style="font-weight:400;color:#94A3B8">(시/군/구 단위)</span></label>
-              <input type="text" id="s-map-region" placeholder="예: 경기도 동두천시"
+              <input type="text" id="s-map-region" placeholder="예: 지역명"
                 style="max-width:280px">
             </div>
             <button class="btn btn-navy" onclick="saveMapRegion()">저장</button>
             <div id="s-map-region-msg" style="margin-top:8px;font-size:13px;display:none"></div>
             <p style="margin-top:10px;font-size:12px;color:#64748B;line-height:1.6">
               구역 카드의 도로명 주소를 지도에 표시할 때 앞에 붙는 지역명입니다.<br>
-              예: "행복로 12" → "<strong>경기도 동두천시</strong> 행복로 12" 로 검색됩니다.
+              예: "행복로 12" → "<strong>지역명</strong> 행복로 12" 로 검색됩니다.
             </p>
 
             <div style="border-top:1px solid #F1F5F9;margin-top:14px;padding-top:14px">
@@ -3279,7 +3289,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
     <div class="form-row">
       <label>주소</label>
-      <input type="text" id="cart-loc-address" placeholder="예: 경기도 동두천시 ..." style="flex:1">
+      <input type="text" id="cart-loc-address" placeholder="예: 지역명 ..." style="flex:1">
     </div>
     <div class="form-row">
       <label>위도</label>
@@ -3355,5 +3365,44 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <!-- Icons by <a href="https://www.flaticon.com" title="Flaticon">Flaticon</a> -->
+<script>
+// ══ 원격 버전 체크 (GitHub 최신 version.json 비교) ══
+function dismissUpdateBanner(){
+  sessionStorage.setItem('upd-dismissed','1');
+  var b = document.getElementById('update-banner');
+  if (b) b.style.display = 'none';
+}
+function _versionGt(a, b){
+  var av = String(a).split('.').map(Number);
+  var bv = String(b).split('.').map(Number);
+  for (var i = 0; i < Math.max(av.length, bv.length); i++){
+    var ai = av[i] || 0, bi = bv[i] || 0;
+    if (ai > bi) return true;
+    if (ai < bi) return false;
+  }
+  return false;
+}
+function _showUpdateBanner(cur, next){
+  var b = document.getElementById('update-banner');
+  var m = document.getElementById('update-banner-msg');
+  if (!b || !m) return;
+  m.textContent = '새 버전 v' + next + ' 업데이트 가능 (현재 v' + cur + ') — GitHub에서 최신 파일을 받아 재배포하세요.';
+  b.style.display = 'flex';
+}
+(function checkRemoteVersion(){
+  if (sessionStorage.getItem('upd-dismissed')) return;
+  fetch('version.json?_=' + Date.now())
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(local){
+      if (!local || !local.v) return;
+      fetch('https://raw.githubusercontent.com/allmightyrock-cpu/jwcard/main/version.json?_=' + Date.now())
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(remote){
+          if (!remote || !remote.v) return;
+          if (_versionGt(remote.v, local.v)) _showUpdateBanner(local.v, remote.v);
+        }).catch(function(){});
+    }).catch(function(){});
+})();
+</script>
 </body>
 </html>
