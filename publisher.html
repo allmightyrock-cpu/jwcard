@@ -343,6 +343,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .rv-menu-item.danger{color:#B91C1C}
 .rv-just-visited{animation:rv-pulse .6s ease}
 @keyframes rv-pulse{0%{background:#FEF3C7}100%{background:#fff}}
+/* 글자 크게 보기 토글 */
+.revisit-zoom-btn{width:auto;min-width:44px;height:32px;padding:0 10px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:13px;font-weight:800;color:#fff;background:rgba(255,255,255,0.18);margin-right:8px;user-select:none}
+.revisit-zoom-btn:active{background:rgba(255,255,255,0.32)}
+.revisit-modal.rv-large .revisit-item-label{font-size:20px}
+.revisit-modal.rv-large .revisit-item-terr{font-size:15px}
+.revisit-modal.rv-large .revisit-item-sub{font-size:15px}
+.revisit-modal.rv-large .revisit-stat-val{font-size:18px}
+.revisit-modal.rv-large .revisit-stat-lbl{font-size:13px}
+.revisit-modal.rv-large .revisit-intro{font-size:14px}
+.revisit-modal.rv-large .rv-visit-btn{font-size:16px;padding:13px}
+.revisit-modal.rv-large .rv-menu-item{font-size:15px}
 /* 공지 배너 — 프리미엄 네이비 */
 .pub-notice-banner{
   background:rgba(27,58,107,0.07)!important;
@@ -2821,7 +2832,10 @@ function _drawMarker(position, label, count) {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M18,0H8A5,5,0,0,0,3.424,3H2A1,1,0,0,0,2,5H3V7H2A1,1,0,0,0,2,9H3v2H2a1,1,0,0,0,0,2H3v2H2a1,1,0,0,0,0,2H3v2H2a1,1,0,0,0,0,2H3.424A5,5,0,0,0,8,24H18a5.006,5.006,0,0,0,5-5V5A5.006,5.006,0,0,0,18,0Zm3,19a3,3,0,0,1-3,3H8a3,3,0,0,1-3-3V5A3,3,0,0,1,8,2H18a3,3,0,0,1,3,3Zm-8-7a3,3,0,0,0,0-6A3,3,0,0,0,13,12Zm5,6a1,1,0,0,1-2,0,3,3,0,0,0-6,0,1,1,0,0,1-2,0C8.211,11.392,17.791,11.394,18,18Z"/></svg>
         <span id="revisit-page-title">나의 재방문</span>
       </div>
-      <div class="revisit-header-close" onclick="closeRevisitPage()">✕</div>
+      <div style="display:flex;align-items:center">
+        <div class="revisit-zoom-btn" id="revisit-zoom-btn" onclick="toggleRevisitZoom()">가+</div>
+        <div class="revisit-header-close" onclick="closeRevisitPage()">✕</div>
+      </div>
     </div>
     <div class="revisit-intro">다시 찾아갈 분들의 목록입니다 · 방문할 때마다 <b>다시 방문함</b>을 눌러 기록하세요</div>
     <div class="revisit-body" id="revisit-body">
@@ -4664,6 +4678,7 @@ window.openRevisitPage = function() {
   if (!ov) return;
   ov.classList.add('open');
   document.body.style.overflow = 'hidden';
+  _applyRevisitZoom();
 };
 
 window.closeRevisitPage = function() {
@@ -4672,6 +4687,24 @@ window.closeRevisitPage = function() {
   ov.classList.remove('open');
   document.body.style.overflow = '';
 };
+
+// 글자 크게/작게 토글 (주소 확인이 어려울 때) — 선택값 저장
+window.toggleRevisitZoom = function() {
+  const modal = document.querySelector('#revisit-overlay .revisit-modal');
+  const btn = document.getElementById('revisit-zoom-btn');
+  if (!modal) return;
+  const large = modal.classList.toggle('rv-large');
+  if (btn) btn.textContent = large ? '가−' : '가+';
+  try { localStorage.setItem('jwcard_revisit_zoom', large ? '1' : '0'); } catch(e) {}
+};
+function _applyRevisitZoom() {
+  let large = false;
+  try { large = localStorage.getItem('jwcard_revisit_zoom') === '1'; } catch(e) {}
+  const modal = document.querySelector('#revisit-overlay .revisit-modal');
+  const btn = document.getElementById('revisit-zoom-btn');
+  if (modal) modal.classList.toggle('rv-large', large);
+  if (btn) btn.textContent = large ? '가−' : '가+';
+}
 
 function _rvEsc(s) {
   return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
