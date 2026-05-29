@@ -1252,6 +1252,8 @@ let _seTeams = [];
 let _seSessionKey = "";
 let _seSessionInfo = {};
 let _seConductorWeek = "";   // 이번 주 담당 인도자 (요일 기본값 override)
+// 신청 마감 = 봉사 시작 N시간 전 (publisher.html과 동일값 유지)
+const _CART_CUTOFF_H = 3;
 
 // 아래 3개는 공유 모듈(js/schedule-time.js)에 위임 — 인도자/신청자 앱이 같은 주차/요일 계산을 쓰도록
 function _cwSchedTypeToDow(t){ return ScheduleTime.schedTypeToDow(t); }
@@ -1321,9 +1323,11 @@ function signupWeekHTML(){
     const signups=sd.signups||[];
     const cancelRequests=sd.cancelRequests||[];
     const confirmed=sd.confirmed||false;
+    const draft=sd.draft||false;
     const cancelled=sd.cancelled||false;
     const canCancel=_cwCanCancel(s,sd);
     const effCond=_cwEffectiveConductor(s,sd);
+    const beforeCutoff=!!(s&&s.dt)&&(Date.now()<s.dt.getTime()-_CART_CUTOFF_H*3600000);
     const statusBadge=cancelled
       ?`<span class="scard-badge" style="background:#FEE2E2;color:#B91C1C">\ud83d\udeab \ucde8\uc18c\ub428</span>`
       :confirmed&&(cancelRequests.length||sd.needsReassign)
@@ -1331,8 +1335,12 @@ function signupWeekHTML(){
       :confirmed
       ?`<span class="scard-badge" style="background:#DCFCE7;color:#166534">\u2705 \ud300 \ud655\uc815</span>`
       :s.ended
-        ?`<span class="scard-badge" style="background:#F1F5F9;color:#94A3B8">봉사 종료</span>`
-        :`<span class="scard-badge" style="background:#DBEAFE;color:#1D4ED8">신청 접수중</span>`;
+      ?`<span class="scard-badge" style="background:#F1F5F9;color:#94A3B8">봉사 종료</span>`
+      :draft
+      ?`<span class="scard-badge" style="background:#FEF3C7;color:#B45309">🔧 팀 편성중</span>`
+      :beforeCutoff
+      ?`<span class="scard-badge" style="background:#DBEAFE;color:#1D4ED8">신청 접수중</span>`
+      :`<span class="scard-badge" style="background:#FEF3C7;color:#B45309">⏰ 신청 마감 · 편성 대기</span>`;
     const chips=signups.length
       ?signups.map(n=>{
         const req=cancelRequests.includes(n);
@@ -1463,6 +1471,8 @@ function _renderSignupEditor(){
   const sd=_weekSignupData[_seSessionKey]||{};
   const signups=sd.signups||[];
   const cancelRequests=sd.cancelRequests||[];
+  // 신청 마감(봉사 3시간 전) 전이면 편성 확정 비활성 — 임시저장만 허용
+  const _beforeCutoff = !!(s&&s.dt) && (Date.now() < s.dt.getTime() - _CART_CUTOFF_H*3600000);
   const allUsed=new Set();
   _seTeams.forEach(t=>t.rows.slice(0,t.numSlots).forEach(r=>r.forEach(n=>{if(n)allUsed.add(n);})));
   const poolHtml=signups.map(n=>{
@@ -1536,9 +1546,14 @@ function _renderSignupEditor(){
       ${teamsHtml}
       <button onclick="_seAddTeam()" style="width:100%;padding:9px;border:2px dashed #BFDBFE;border-radius:10px;background:#F8FBFF;color:#2563EB;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px">+ 팀 추가</button>
     </div>
-    <div style="padding:10px 14px 14px;border-top:1px solid #F1F5F9;background:#fff;flex-shrink:0;display:flex;gap:8px">
+    <div style="padding:10px 14px 14px;border-top:1px solid #F1F5F9;background:#fff;flex-shrink:0">
+      ${_beforeCutoff?`<div style="padding:8px 11px;margin-bottom:9px;border-radius:10px;background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;font-size:11px;font-weight:600;line-height:1.5;text-align:center">⏳ 아직 신청 받는 중 · 지금은 <b>임시저장</b>만 가능해요<br><span style="font-weight:500">신청 마감(봉사 3시간 전) 후 편성 확정할 수 있습니다</span></div>`:""}
+      <div style="display:flex;gap:8px">
       <button onclick="_seDraftSave()" style="flex:1;padding:13px;background:#F59E0B;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💾 임시저장</button>
-      <button onclick="_seConfirm()" ${allFilled?"":"disabled"} style="flex:2;padding:13px;background:${allFilled?"#16A34A":"#CBD5E1"};color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:${allFilled?"pointer":"not-allowed"};font-family:inherit">✅ 편성 확정</button>
+      ${_beforeCutoff
+        ?`<button disabled style="flex:2;padding:13px;background:#CBD5E1;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:not-allowed;font-family:inherit">🔒 편성 확정</button>`
+        :`<button onclick="_seConfirm()" ${allFilled?"":"disabled"} style="flex:2;padding:13px;background:${allFilled?"#16A34A":"#CBD5E1"};color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:${allFilled?"pointer":"not-allowed"};font-family:inherit">✅ 편성 확정</button>`}
+      </div>
     </div>
   </div>
   <div id="_se_picker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;flex-direction:column;align-items:flex-end;justify-content:center">
@@ -1644,6 +1659,11 @@ async function _seDraftSave(){
 }
 
 async function _seConfirm(){
+  // 방어: 신청 마감(봉사 3시간 전) 전에는 확정 불가 (UI가 막혀도 직접 호출 차단)
+  if(_seSessionInfo&&_seSessionInfo.dt&&Date.now()<_seSessionInfo.dt.getTime()-_CART_CUTOFF_H*3600000){
+    toast("아직 신청 받는 중입니다 · 마감 후 확정할 수 있어요",3000);
+    return;
+  }
   const wkStr=_seSessionKey.substring(0,8);
   const typeId=_seSessionKey.substring(9);
   const teamsData={};
