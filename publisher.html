@@ -7104,6 +7104,14 @@ function _cartMergeSessionFallbacks(sessionData, fallbackData) {
 
 const _CART_CUTOFF_H = 3;
 const _CART_DOW_KO = ['일','월','화','수','목','금','토'];
+// 낮/밤 이모지 → 라인 SVG 아이콘 (표시 전용)
+const _CART_ICO_SUN='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px" xmlns="http://www.w3.org/2000/svg"><path d="M12,17c-2.76,0-5-2.24-5-5s2.24-5,5-5,5,2.24,5,5-2.24,5-5,5Zm0-8c-1.65,0-3,1.35-3,3s1.35,3,3,3,3-1.35,3-3-1.35-3-3-3ZM13,0h-2V5h2V0Zm0,19h-2v5h2v-5ZM5,11H0v2H5v-2Zm19,0h-5v2h5v-2Zm-2.81-6.78l-1.41-1.41-3.54,3.54,1.41,1.41,3.54-3.54ZM7.76,17.66l-1.41-1.41-3.54,3.54,1.41,1.41,3.54-3.54Zm0-11.31l-3.54-3.54-1.41,1.41,3.54,3.54,1.41-1.41Zm13.44,13.44l-3.54-3.54-1.41,1.41,3.54,3.54,1.41-1.41Z"/></svg>';
+const _CART_ICO_MOON='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px" xmlns="http://www.w3.org/2000/svg"><path d="M14,24A12.013,12.013,0,0,1,2,12C1.847,3.044,12.031-2.985,19.791,1.509l1.553.862-1.543.88c-6.7,3.688-6.21,13.87.8,16.906l1.621.731-1.467,1.006A11.921,11.921,0,0,1,14,24ZM14,2A10.011,10.011,0,0,0,4,12c-.155,7.117,7.763,12.2,14.155,9.082a11.544,11.544,0,0,1-.876-18.521A9.745,9.745,0,0,0,14,2Z"/></svg>';
+function _cartEmojiIcon(e){
+  if(e==='🌤'||e==='☀'||e==='☀️'||e==='🌞'||e==='🌅') return _CART_ICO_SUN;
+  if(e==='🌙'||e==='🌛'||e==='🌜'||e==='🌚') return _CART_ICO_MOON;
+  return e||'';
+}
 
 // 공유 모듈(js/schedule-time.js)에 위임 — 인도자 앱과 같은 주차 계산을 쓰도록
 function _cartWeekMonday() { return ScheduleTime.weekMonday(); }
