@@ -4654,8 +4654,9 @@ function _renderRevisitList() {
   }
   body.innerHTML = _revisitItems.map(it => {
     const terrNo = it.territoryNo ? String(it.territoryNo) : '';
-    // 구역 이름(name)에 인도자용 메모가 들어가는 경우가 많아 번호만 표시
-    const terr = terrNo ? terrNo + '번 구역' : '구역';
+    const terrNm = it.territoryName || '';
+    // 구역번호 + 구역 이름 모두 표시
+    const terr = [terrNo ? terrNo + '번 구역' : '', terrNm].filter(Boolean).join(' · ') || '구역';
     const first = _revisitFmtDate(it.firstMarkedAt);
     const last  = _revisitFmtDate(it.lastVisitedAt) || first;
     const cnt   = it.visitCount || 1;
