@@ -543,9 +543,9 @@ function headerHTML(){
     const _hbackLabel=S.tab!=="__signup"?"← 이번 주":"← 목록";
     right=`<button class="btn btn-sm" id="hback" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.3)">${_hbackLabel}</button>`;
   } else {
-    const newBtn=S.role==="admin"?`<button class="btn btn-sm" id="hcreate" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.3)">+ 새 명단</button>`:"";
+    // '+ 새 명단'(구 시스템 create 진입점) 제거 — 봉사 요일은 설정(목록 관리)에서 정의·반복됨
     const setBtn=S.role==="admin"?`<button class="btn btn-sm" id="hsettings" style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.25)">⚙️</button>`:"";
-    right=`<div style="display:flex;gap:8px;align-items:center">${newBtn}${setBtn}<button class="btn btn-sm" id="hlogout" style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.25);font-size:11px">🔓 전환</button></div>`;
+    right=`<div style="display:flex;gap:8px;align-items:center">${setBtn}<button class="btn btn-sm" id="hlogout" style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.25);font-size:11px">🔓 전환</button></div>`;
   }
   return `<header>
     <div class="header-title">
@@ -1344,7 +1344,7 @@ function signupWeekHTML(){
       :`<span style="font-size:11px;color:var(--text-muted)">\uc2e0\uccad\uc790 \uc5c6\uc74c</span>`;
     // 취소되면 편성·공유 버튼 숨김
     const adminBtn=(S.role==="admin"&&!cancelled)
-      ?`<button class="signup-sched-btn btn btn-navy btn-sm" data-typeid="${s.typeId}" style="font-size:11px;padding:6px 14px">📋 팀 편성</button>`:"";
+      ?`<button class="signup-sched-btn btn btn-navy btn-sm" data-key="${s.key}" style="font-size:11px;padding:6px 14px">📋 팀 편성</button>`:"";
     const shareBtn=(confirmed&&!cancelled)
       ?`<button class="week-share-btn btn btn-sm" data-key="${s.key}" style="background:#FEE500;border:none;color:#191919;font-size:11px;padding:6px 12px;font-weight:700;display:flex;align-items:center;gap:4px">📷 명단 공유</button>`:"";
     // 취소/해제 버튼 — 유효 담당 인도자 또는 봉사감독/관리자만
@@ -1717,9 +1717,9 @@ function bind(){
       if(S.tab==="__signup") _loadWeekSignups();
       render();
     }));
-  // 이번 주 신청 현황 — 팀 편성 버튼 → 이번 주 해당 명단으로 바로 진입
+  // 이번 주 신청 현황 — 팀 편성 버튼 → 신 시스템 편성 팝업(_openSignupEditor) 직접 진입
   document.querySelectorAll(".signup-sched-btn").forEach(b=>
-    b.addEventListener("click",e=>{e.stopPropagation();_openThisWeekSchedule(b.dataset.typeid);}));
+    b.addEventListener("click",e=>{e.stopPropagation();_openSignupEditor(b.dataset.key);}));
   // 확정된 주간 세션 — 명단(카트 담당 포함) 이미지 공유
   document.querySelectorAll(".week-share-btn").forEach(b=>
     b.addEventListener("click",e=>{e.stopPropagation();_shareWeekSession(b.dataset.key);}));
@@ -1734,6 +1734,7 @@ function bind(){
   document.querySelectorAll(".schedule-card").forEach(c=>
     c.addEventListener("click",e=>{
       if(e.target.closest("button")) return;
+      if(!c.dataset.id) return; // 신 시스템 카드(data-id 없음)는 무시
       openDetail(c.dataset.id);
     }));
   document.getElementById("ecreate")?.addEventListener("click",startCreate);
