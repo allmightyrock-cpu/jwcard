@@ -7285,7 +7285,7 @@ function _renderCartSessions(sessions, signupsData, listEl) {
     return `<div style="padding:10px 11px;border-radius:12px;margin-bottom:6px;background:${cardBg};border:1px solid ${cardBorder};${(ended&&!cancelled)?'opacity:0.55':''}">
       <div style="display:flex;align-items:center;gap:11px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:700;color:#0F172A;letter-spacing:-0.1px">${s.emoji?s.emoji+' ':''}${s.dateLabel}${confirmedTag}</div>
+          <div style="font-size:12px;font-weight:700;color:#0F172A;letter-spacing:-0.1px">${s.emoji?_cartEmojiIcon(s.emoji)+' ':''}${s.dateLabel}${confirmedTag}</div>
           <div style="font-size:11px;color:#64748B;margin-top:2px;font-weight:500">${_fmt12h(s.startStr)} ~ ${_fmt12h(s.endStr)}</div>
           <div style="font-size:10px;color:#475569;margin-top:3px">신청 <b style="color:#2563EB;font-weight:700">${count}</b>명${timeTag}</div>
         </div>
