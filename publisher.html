@@ -7490,7 +7490,7 @@ function _cartBuildShareModel(s, sd) {
 async function _cartShareTeamSheet(key) {
   const s  = _cartLastSessions.find(x => x.key === key);
   const sd = _cartLastSignupsData[key] || {};
-  if (!s || !sd.confirmed || !sd.teams) return;
+  if (!s || (!sd.confirmed && !sd.draft) || !sd.teams) return;
   if (typeof ShareCard === 'undefined') {
     _showToast('공유 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.');
     return;
