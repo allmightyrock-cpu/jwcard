@@ -4442,7 +4442,7 @@ function renderUnitList(visitMap) {
       const isSkip = code === 'jwmember' || code === 'interest';
       const skipTag = code==='jwmember' ? '<span class="skip-tag skip-jwm">형제/자매</span>'
                     : code==='interest' ? '<span class="skip-tag skip-std">관심자</span>' : '';
-      html += `<div class="unit-row${isDimmed?' dimmed':''}${isSkip?' dimmed':''}" onclick="openCodeSheet(${globalIdx})">
+      html += `<div class="unit-row${isDimmed?' dimmed':''}${isSkip?' dimmed':''}" data-uidx="${globalIdx}" data-hascode="${code?'1':'0'}">
         <div class="unit-icon">${iconSVG(code)}</div>
         <div class="unit-num">${(()=>{
           // u.jibun은 번지수 → 섹션 헤더에 이미 표시됨. 호수 fallback 사용 안 함
@@ -4458,10 +4458,64 @@ function renderUnitList(visitMap) {
   });
 
   document.getElementById('unit-list').innerHTML = html;
+  _bindUnitRowGestures();
   updateBottomBar(_territory.units||[], _territory.visitMap||{});
   // 길 안내 모드 목록 동기화
   if (_navMode) renderNavPanel();
 }
+
+// 세대 행 제스처: 짧은 탭=대화함(빈 세대만), 길게 누르기=결과 선택 팝업
+// 이미 코드가 있는 세대는 짧은 탭도 팝업(수정)으로 — 실수로 덮어쓰기 방지
+let _urPressTimer = null, _urLongFired = false, _urStartX = 0, _urStartY = 0, _urMoved = false;
+function _bindUnitRowGestures() {
+  const rows = document.querySelectorAll('#unit-list .unit-row');
+  rows.forEach(row => {
+    const idx = parseInt(row.dataset.uidx);
+    if (isNaN(idx)) return;
+    const hasCode = row.dataset.hascode === '1';
+
+    const start = (x, y) => {
+      _urLongFired = false; _urMoved = false; _urStartX = x; _urStartY = y;
+      clearTimeout(_urPressTimer);
+      _urPressTimer = setTimeout(() => {
+        _urLongFired = true;
+        if (navigator.vibrate) { try { navigator.vibrate(15); } catch(e){} }
+        openCodeSheet(idx);
+      }, 500);
+    };
+    const move = (x, y) => {
+      if (Math.abs(x - _urStartX) > 10 || Math.abs(y - _urStartY) > 10) {
+        _urMoved = true; clearTimeout(_urPressTimer);
+      }
+    };
+    const end = () => { clearTimeout(_urPressTimer); };
+
+    // 터치
+    row.addEventListener('touchstart', e => { const t=e.touches[0]; start(t.clientX, t.clientY); }, {passive:true});
+    row.addEventListener('touchmove',  e => { const t=e.touches[0]; move(t.clientX, t.clientY); }, {passive:true});
+    row.addEventListener('touchend',   end);
+    // 마우스(데스크톱)
+    row.addEventListener('mousedown', e => start(e.clientX, e.clientY));
+    row.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+    row.addEventListener('mouseup',   end);
+    row.addEventListener('mouseleave', end);
+
+    // 클릭(짧은 탭) — 스크롤/롱프레스가 아니면 처리
+    row.addEventListener('click', e => {
+      if (e.target.closest('.unit-more')) return; // ⋯ 버튼은 별도
+      if (_urLongFired || _urMoved) return;        // 롱프레스·스크롤은 무시
+      if (hasCode) { openCodeSheet(idx); return; } // 이미 입력됨 → 수정 팝업
+      _quickResp(idx);                             // 빈 세대 → 즉시 대화함
+    });
+  });
+}
+
+// 빈 세대 짧은 탭 → '대화함(resp)' 즉시 저장 (팝업 없음)
+window._quickResp = function(idx) {
+  _activeUnitIdx = idx;
+  window._activeUnitIdx = idx;
+  pickCode('resp');
+};
 
 function iconSVG(code) {
   if (!code) return `<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" stroke="#CBD5E1" stroke-width="1.5" fill="none"/></svg>`;
