@@ -522,6 +522,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .sb-partial{background:#FEF3C7;color:#92400E}
 .sb-none{background:#F1F5F9;color:#94A3B8}
 .sec-btn-icon{font-size:18px;color:#94A3B8;border:none;background:none;cursor:pointer;padding:4px 6px;border-radius:4px;line-height:1;font-family:inherit}
+.sec-bookmark-btn{width:30px;height:30px;border:1px solid #CBD5E1;background:#fff;color:#94A3B8;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0;box-shadow:0 1px 3px rgba(15,23,42,0.06);transition:background .15s,color .15s,border-color .15s,transform .08s}
+.sec-bookmark-btn svg{width:14px;height:14px;display:block}
+.sec-bookmark-btn:active{transform:scale(.96)}
+.sec-bookmark-btn.active{background:#FEF3C7;border-color:#F59E0B;color:#B45309}
 /* 커스텀 구분선 */
 .unit-divider{background:linear-gradient(90deg,#EEF4FF,#F8FAFF,#EEF4FF);border-top:1px solid #BFDBFE;border-bottom:1px solid #BFDBFE}
 .unit-divider-bar{display:flex;align-items:center;gap:8px;padding:6px 16px}
@@ -532,6 +536,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 
 /* 여기까지 마커 */
 .here-marker{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#EFF6FF;border-top:1px solid #BFDBFE;border-bottom:1px solid #BFDBFE}
+.bookmark-here-marker{background:#FFFBEB!important;border-top-color:#FCD34D!important;border-bottom-color:#FCD34D!important}
 .here-line{flex:1;height:1px;background:#BFDBFE}
 .here-label{font-size:11px;color:#2563EB;font-weight:500;white-space:nowrap}
 .here-clear{font-size:11px;color:#93C5FD;cursor:pointer;border:none;background:none;font-family:inherit}
@@ -1479,8 +1484,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <span class="card-num" id="c-no">—</span>
       <span class="card-type">호별 방문</span>
       <span class="card-cycle" id="c-cycle">1회차</span>
-      <button id="nav-toggle-btn" onclick="toggleNavMode()" style="margin-left:auto;background:rgba(255,255,255,0.15);border:none;color:rgba(255,255,255,0.85);font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600">🧭 길 안내</button>
-      <button onclick="exitCard()" style="background:rgba(255,255,255,0.15);border:none;color:rgba(255,255,255,0.7);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:6px">나가기</button>
+      <button id="nav-toggle-btn" onclick="toggleNavMode()" style="margin-left:auto;min-height:30px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.16);color:rgba(255,255,255,0.92);font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;display:inline-flex;align-items:center;gap:3px">🧭 길 안내</button>
+      <button onclick="exitCard()" aria-label="구역카드 나가기" title="나가기" style="width:30px;height:30px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.62);font-size:16px;line-height:1;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:8px;display:inline-flex;align-items:center;justify-content:center">×</button>
     </div>
     <div class="card-name" id="c-name">—</div>
     <div class="card-sub" id="c-sub">—</div>
@@ -2646,7 +2651,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   <div class="sheet-title">호수 옵션 &nbsp;·&nbsp; <span id="unit-more-label">—</span></div>
   <div class="sec-opt">
     <button class="sec-opt-btn" id="unit-more-here-btn" onclick="setHereAtUnit()">
-      <div class="sec-opt-label" style="color:#2563EB">📍 &nbsp;여기까지로 표시</div>
+      <div class="sec-opt-label" style="color:#92400E;display:flex;align-items:center;gap:8px"><span style="width:15px;height:15px;display:inline-flex;color:#B45309"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:15px;height:15px;display:block"><path fill="currentColor" d="M20.137,24a2.8,2.8,0,0,1-1.987-.835L12,17.051,5.85,23.169a2.8,2.8,0,0,1-3.095.609A2.8,2.8,0,0,1,1,21.154V5A5,5,0,0,1,6,0H18a5,5,0,0,1,5,5V21.154a2.8,2.8,0,0,1-1.751,2.624A2.867,2.867,0,0,1,20.137,24ZM6,2A3,3,0,0,0,3,5V21.154a.843.843,0,0,0,1.437.6h0L11.3,14.933a1,1,0,0,1,1.41,0l6.855,6.819a.843.843,0,0,0,1.437-.6V5a3,3,0,0,0-3-3Z"/></svg></span><span>여기까지로 표시</span></div>
       <div class="sec-opt-desc">이 호수를 기준으로 '여기까지' 마커를 설정합니다</div>
     </button>
     <button class="sec-opt-btn" onclick="closeSheets()">
@@ -4409,7 +4414,7 @@ function renderUnitList(visitMap) {
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         ${sec.building ? `<span class="sec-bldg-badge">${sec.building}</span>` : ''}
         <span class="sec-count">${doneCnt}/${realIndices.length}</span>
-        <span class="sec-badge ${badgeClass}">${badgeText}</span>
+        <button class="sec-bookmark-btn ${status==='partial'?'active':''}" onclick="event.stopPropagation();toggleSectionBookmark('${sec.key}')" title="${status==='partial'?'여기까지 표시 해제':'이 블록 여기까지 표시'}" aria-label="${status==='partial'?'여기까지 표시 해제':'이 블록 여기까지 표시'}">${bookmarkSVG()}</button>
         <button class="sec-btn-icon" onclick="openSecSheet('${sec.key}','${sec.label}')" title="섹션 상태 변경">⋮</button>
       </div>
     </div>`;
@@ -4445,9 +4450,9 @@ function renderUnitList(visitMap) {
       // 여기까지 마커
       if (status === 'partial' && hereAt !== undefined && globalIdx === hereAt + 1 && !shownHere) {
         shownHere = true;
-        html += `<div class="here-marker">
+        html += `<div class="here-marker bookmark-here-marker">
           <div class="here-line"></div>
-          <span class="here-label">📍 여기까지 했어요</span>
+          <span class="here-label" style="display:inline-flex;align-items:center;gap:4px;color:#92400E;font-weight:700"><span style="width:12px;height:12px;color:#B45309;display:inline-flex">${bookmarkSVG()}</span>여기까지 했어요</span>
           <div class="here-line"></div>
           <button class="here-clear" onclick="clearHere('${sec.key}')">✕</button>
         </div>`;
@@ -4530,6 +4535,10 @@ window._quickResp = function(idx) {
   window._activeUnitIdx = idx;
   pickCode('resp');
 };
+
+function bookmarkSVG() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.137,24a2.8,2.8,0,0,1-1.987-.835L12,17.051,5.85,23.169a2.8,2.8,0,0,1-3.095.609A2.8,2.8,0,0,1,1,21.154V5A5,5,0,0,1,6,0H18a5,5,0,0,1,5,5V21.154a2.8,2.8,0,0,1-1.751,2.624A2.867,2.867,0,0,1,20.137,24ZM6,2A3,3,0,0,0,3,5V21.154a.843.843,0,0,0,1.437.6h0L11.3,14.933a1,1,0,0,1,1.41,0l6.855,6.819a.843.843,0,0,0,1.437-.6V5a3,3,0,0,0-3-3Z"/></svg>';
+}
 
 function iconSVG(code) {
   if (!code) return `<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" stroke="#CBD5E1" stroke-width="1.5" fill="none"/></svg>`;
@@ -4960,6 +4969,31 @@ window.setSectionStatus = async function(status) {
   }
 };
 
+window.toggleSectionBookmark = async function(key) {
+  const sec = _sections.find(s => s.key === key);
+  if (!sec) return;
+  const sectionStatus = { ...(_territory.sectionStatus || {}) };
+  const current = sectionStatus[key]?.status || 'none';
+
+  if (current === 'partial') {
+    delete sectionStatus[key];
+  } else {
+    const realIndices = sec.indices.filter((_, li) => sec.units[li]?.type !== 'divider');
+    const hereAt = realIndices.length ? realIndices[realIndices.length - 1] : sec.indices[sec.indices.length - 1];
+    sectionStatus[key] = { status: 'partial', hereAt };
+  }
+
+  try {
+    _ignoreNextSnap = true;
+    await updateDoc(doc(db, 'territories', _territoryId), { sectionStatus });
+    _territory.sectionStatus = sectionStatus;
+    renderUnitList(_territory.visitMap || {});
+    _showToast(current === 'partial' ? '여기까지 표시를 해제했습니다' : '이 블록까지 여기까지로 표시했습니다');
+  } catch(e) {
+    alert('저장 오류: ' + e.message);
+  }
+};
+
 // 호수 ··· 메뉴
 let _unitMoreIdx = null, _unitMoreSecKey = null;
 window.openUnitMoreSheet = function(globalIdx, secKey) {
@@ -4985,6 +5019,7 @@ window.setHereAtUnit = async function() {
     _territory.sectionStatus = sectionStatus;
     closeSheets();
     renderUnitList(_territory.visitMap || {});
+    _showToast('여기까지로 표시했습니다');
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
 

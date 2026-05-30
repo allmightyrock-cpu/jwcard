@@ -8,9 +8,11 @@
   "display": "standalone",
   "background_color": "#1B3A6B",
   "theme_color": "#1B3A6B",
-  "orientation": "any",
+  "orientation": "portrait",
   "lang": "ko",
-  "categories": ["utilities"],
+  "categories": [
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
