@@ -254,8 +254,8 @@
     </div>
     <div class="prereq-card">
       <div class="icon">💬</div>
-      <div class="name">카카오 개발자 계정</div>
-      <div class="desc">카카오톡 주소 수정 요청 전송에 필요합니다.</div>
+      <div class="name">카카오 개발자 계정 <span style="font-size:11px;color:#94A3B8">(선택)</span></div>
+      <div class="desc">"주소 수정 요청"을 카카오톡으로 보낼 때만 필요합니다. 없어도 시스템은 정상 작동합니다.</div>
       <div class="opt">선택</div>
     </div>
   </div>
@@ -482,8 +482,8 @@ window.APP_CONFIG = {
     <div class="step-header">
       <div class="step-num">7</div>
       <div>
-        <div class="step-title">카카오 JavaScript 키 발급 및 설정</div>
-        <div class="step-sub">카카오톡 공유 기능 활성화 (주소 수정 요청 · 팀 배정표 전송)</div>
+        <div class="step-title">카카오 JavaScript 키 발급 및 설정 <span style="font-size:12px;color:#94A3B8;font-weight:400">(선택 — 안 해도 됩니다)</span></div>
+        <div class="step-sub">"주소 수정 요청"을 카카오톡으로 보내는 기능에만 사용됩니다</div>
       </div>
       <div class="step-opt-badge">선택</div>
     </div>
@@ -575,8 +575,8 @@ window.APP_CONFIG = {
       </ol>
 
       <div class="ok-box">
-        ✅ <b>설정 완료!</b> 이제 전도인이 구역카드에서 주소 오류를 발견하면 카카오톡으로 바로 알릴 수 있고,
-        전시대봉사 인도자는 팀 배정표를 💬 공유 버튼 하나로 팀원들에게 전송할 수 있습니다.
+        ✅ <b>설정 완료!</b> 이제 전도인이 구역카드에서 주소 오류를 발견하면 카카오톡으로 바로 알릴 수 있습니다.
+        <span style="font-size:12px;color:var(--gray)">(전시대봉사 팀 배정표 공유는 이 키와 무관하게 항상 작동합니다.)</span>
       </div>
 
       <!-- 자주 하는 실수 -->
@@ -681,8 +681,8 @@ window.APP_CONFIG = {
         A. <b>앱 설정 → 앱 키</b>에 4가지 키가 표시되는데, 그 중 <b>「JavaScript 키」</b>(32자리 영문+숫자)만 필요합니다. REST API 키·Admin 키·Native 앱 키는 이 앱에서 사용하지 않습니다.
       </div>
       <div>
-        <b>Q. 카카오 전시대봉사 팀 배정표 공유는 어떻게 사용하나요?</b><br>
-        A. 전시대봉사 앱(<code>cart.html</code>)에서 팀 편성이 완료된 일정 화면을 열면, 팀 배정표 상단에 <b>[💬 공유]</b> 버튼이 표시됩니다. 버튼을 누르면 배정표 이미지가 자동 생성되어 카카오톡 공유 창이 열립니다. 카카오 키 미설정 시에는 이미지를 다운로드해 직접 전송할 수 있습니다.
+        <b>Q. 전시대봉사 팀 배정표 공유는 어떻게 사용하나요? 카카오 키가 필요한가요?</b><br>
+        A. <b>카카오 키는 필요 없습니다.</b> 전시대봉사 앱(<code>cart.html</code>)에서 팀 편성된 일정 화면을 열면 팀 배정표 상단에 <b>[💬 공유]</b> 버튼이 있습니다. 누르면 배정표가 이미지로 만들어지고 — <b>휴대폰</b>에서는 기본 공유 시트가 떠서 카카오톡·문자 등으로 보낼 수 있고, <b>PC</b>에서는 이미지가 다운로드되어 카카오톡 대화창에 첨부하면 됩니다. PC에서 다운로드되는 것은 정상 동작입니다(고장 아님).
       </div>
     </div>
   </div>
