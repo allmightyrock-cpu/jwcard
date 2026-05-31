@@ -615,7 +615,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .sec-code-lbl{font-size:11px;font-weight:600;color:#475569}
 /* 특수 코드 */
 .special-codes{display:flex;gap:6px;padding:0 16px 20px}
-.spec-code-btn{flex:1;padding:7px 4px;border-radius:8px;border:1px solid #F1F5F9;background:#F8FAFC;cursor:pointer;font-size:11px;font-family:inherit;text-align:center;font-weight:500;display:flex;align-items:center;justify-content:center;gap:3px;transition:transform 0.1s}
+.spec-code-btn{flex:1;padding:12px 6px;border-radius:9px;border:1px solid #F1F5F9;background:#F8FAFC;cursor:pointer;font-size:12.5px;font-family:inherit;text-align:center;font-weight:500;display:flex;align-items:center;justify-content:center;gap:5px;transition:transform 0.1s}
 .spec-code-btn:active{transform:scale(0.97)}
 
 /* 섹션 상태 시트 */
@@ -2579,15 +2579,6 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   </div>
   <!-- 주요 버튼 2개 -->
   <div class="primary-code-btns">
-    <button class="primary-code-btn absent" onclick="pickCode('absent')">
-      <div class="primary-code-ico" style="background:#E2E8F0">
-        <svg width="22" height="22" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" stroke="#9CA3AF" stroke-width="1.5" fill="none"/><line x1="4" y1="7" x2="10" y2="7" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </div>
-      <div class="primary-code-text">
-        <div class="primary-code-label absent">아무도 없었어요</div>
-        <div class="primary-code-sub">부재 — 나중에 다시 방문</div>
-      </div>
-    </button>
     <button class="primary-code-btn resp" onclick="pickCode('resp')">
       <div class="primary-code-ico" style="background:#22C55E">
         <svg width="22" height="22" viewBox="0 0 14 14"><polyline points="2,7 5,10 12,3" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2595,6 +2586,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <div class="primary-code-text">
         <div class="primary-code-label resp">대화했어요 ✓</div>
         <div class="primary-code-sub">응답 — 만나서 대화함</div>
+      </div>
+    </button>
+    <button class="primary-code-btn absent" onclick="pickCode('absent')">
+      <div class="primary-code-ico" style="background:#E2E8F0">
+        <svg width="22" height="22" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" stroke="#9CA3AF" stroke-width="1.5" fill="none"/><line x1="4" y1="7" x2="10" y2="7" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="primary-code-text">
+        <div class="primary-code-label absent">아무도 없었어요</div>
+        <div class="primary-code-sub">부재 — 나중에 다시 방문</div>
       </div>
     </button>
   </div>
@@ -2629,10 +2629,6 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <button class="spec-code-btn" style="color:#5B21B6" onclick="pickCode('jwmember')">
       <div style="width:15px;height:15px;border-radius:50%;background:#7C3AED;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 14 14"><rect x="1" y="5" width="12" height="8" rx="1" fill="white" opacity="0.9"/><polyline points="1,7 7,2 13,7" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="9.5" r="1.5" fill="#7C3AED"/></svg></div>
       <span>형제/자매댁</span>
-    </button>
-    <button class="spec-code-btn" style="color:#0F766E" onclick="pickCode('interest')">
-      <div style="width:15px;height:15px;border-radius:50%;border:1.5px solid #0D9488;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 14 14"><rect x="2" y="1.5" width="10" height="11" rx="1" stroke="#0D9488" stroke-width="1.4" fill="none"/><line x1="4.5" y1="5" x2="9.5" y2="5" stroke="#0D9488" stroke-width="1.2" stroke-linecap="round"/><line x1="4.5" y1="7.5" x2="9.5" y2="7.5" stroke="#0D9488" stroke-width="1.2" stroke-linecap="round"/><line x1="4.5" y1="10" x2="7.5" y2="10" stroke="#0D9488" stroke-width="1.2" stroke-linecap="round"/></svg></div>
-      <span>관심자</span>
     </button>
   </div>
   <!-- 주소 수정 요청 (모든 세대에 표시) -->
@@ -4569,7 +4565,7 @@ function updateProgress(units, visitMap) {
     ['pc-abs','부재',counts.absent],['pc-resp','응답',counts.resp],
     ['pc-rev','재방문',counts.revisit],['pc-ref','거절',counts.refuse],
     ['pc-esc','동행필수',counts.escort],
-    ['pc-jwm','형제/자매',counts.jwmember],['pc-std','관심자',counts.interest]
+    ['pc-jwm','형제/자매',counts.jwmember]
   ].filter(c=>c[2]>0).map(c=>`<span class="pchip ${c[0]}">${c[1]} ${c[2]}</span>`).join('');
   updateBottomBar(units, visitMap);
 }
