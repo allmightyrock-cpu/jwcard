@@ -1075,9 +1075,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
 <script>
 (function(){
-  // config.js의 APP_CONFIG.kakaoJsKey 우선, 없으면 하드코딩 값 사용
+  // config.js의 APP_CONFIG.kakaoJsKey 사용 (배포본은 빈 값 — 회중이 자체 키 입력)
   const _kakaoKey = (window.APP_CONFIG && window.APP_CONFIG.kakaoJsKey)
-    || 'b4e8f17ccc0d414d0db102892634edf0';
+    || '';
   if (typeof Kakao !== 'undefined' && !Kakao.isInitialized() && _kakaoKey) {
     Kakao.init(_kakaoKey);
   }
