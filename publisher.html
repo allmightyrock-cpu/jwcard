@@ -698,6 +698,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .pub-chip.selected{background:#1B3A6B;color:#fff;border-color:#1B3A6B}
 .pub-chip.so{border-color:#7C3AED;color:#5B21B6}
 .pub-chip.so.selected{background:#7C3AED;border-color:#7C3AED;color:#fff}
+.pub-chip.attended{background:#DCFCE7;border-color:#16A34A;color:#166534;font-weight:700}
+.pub-chip.attended.selected{background:#16A34A;border-color:#16A34A;color:#fff}
+.pub-chip-attend-divider{width:100%;font-size:11px;color:#94A3B8;margin:2px 0 0;padding-left:2px}
 .assign-confirm-btn{width:100%;padding:12px;background:#1B3A6B;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px}
 .assign-confirm-btn:disabled{opacity:0.4;cursor:not-allowed}
 .assign-btn-row{display:flex;gap:6px;margin-top:8px}
@@ -6103,7 +6106,7 @@ window.selectTodayTerr = function(id) {
   else document.getElementById('ld-today-assign-box').style.display = 'none';
 };
 
-function _showTodayAssignSection() {
+async function _showTodayAssignSection() {
   const t = _ldAllTerritories.find(t => t.id === _todaySelectedId);
   if (!t) return;
   document.getElementById('ld-today-assign-box').style.display = 'block';
@@ -6112,12 +6115,32 @@ function _showTodayAssignSection() {
   document.getElementById('ld-today-change-btn').style.display =
     _todaySelectedPubs.length ? 'inline-block' : 'none';
 
-  document.getElementById('ld-today-pub-chips').innerHTML = _ldPublishers.map(p => {
+  // 오늘 출석 신청자 로드 (이 탭에서 진입했을 때 비어있을 수 있어 보장)
+  if (!_mtgAttendees.length) { try { await _loadMtgAttendees(); } catch(e){} }
+  const attSet = new Set(_mtgAttendees || []);
+  // 출석 신청자 먼저, 그 안에서 이름 가나다순
+  const sorted = [..._ldPublishers].sort((a, b) => {
+    const aa = attSet.has(a.name) ? 0 : 1, ab = attSet.has(b.name) ? 0 : 1;
+    if (aa !== ab) return aa - ab;
+    return (a.name || '').localeCompare(b.name || '', 'ko-KR');
+  });
+  const chip = p => {
     const isSel = _todaySelectedPubs.includes(p.name);
     const isSo  = p.permission === '봉사감독자';
-    return `<button class="pub-chip${isSo ? ' so' : ''}${isSel ? ' selected' : ''}"
-      onclick="toggleTodayPub('${p.name}')">${p.name}${isSo ? ' ★' : ''}</button>`;
-  }).join('');
+    const isAtt = attSet.has(p.name);
+    return `<button class="pub-chip${isSo ? ' so' : ''}${isAtt ? ' attended' : ''}${isSel ? ' selected' : ''}"
+      onclick="toggleTodayPub('${p.name}')">${isAtt ? '✋ ' : ''}${p.name}${isSo ? ' ★' : ''}</button>`;
+  };
+  const attended = sorted.filter(p => attSet.has(p.name));
+  const others   = sorted.filter(p => !attSet.has(p.name));
+  let html = '';
+  if (attended.length) {
+    html += `<div class="pub-chip-attend-divider">✋ 오늘 참여 신청 (${attended.length}명)</div>`;
+    html += attended.map(chip).join('');
+    if (others.length) html += `<div class="pub-chip-attend-divider">그 외 전도인</div>`;
+  }
+  html += others.map(chip).join('');
+  document.getElementById('ld-today-pub-chips').innerHTML = html;
   document.getElementById('ld-today-confirm-btn').disabled = !_todaySelectedPubs.length;
 }
 
