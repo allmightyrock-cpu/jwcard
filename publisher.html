@@ -6305,26 +6305,60 @@ window.searchUnallocatedForToday = function(showAll) {
     return true;
   });
 
-  // 정렬
-  filtered.sort((a, b) => {
+  // 보조 정렬(드롭다운) 비교 함수
+  const _sortCmp = (a, b) => {
     if (sort === 'old')         return getMs(a.lastAssignedDate) - getMs(b.lastAssignedDate);
     if (sort === 'recent_next') return getMs(b.lastAssignedDate) - getMs(a.lastAssignedDate);
     if (sort === 'units_asc')   return (a.totalUnits||0) - (b.totalUnits||0);
     if (sort === 'rate_asc')    return (a.completionRate||0) - (b.completionRate||0);
     return parseInt(a.no||0) - parseInt(b.no||0); // no_asc (default)
-  });
+  };
+  // 검색어가 있으면 관련도순 우선, 같은 관련도 안에서는 드롭다운 정렬 보조
+  // 점수: 0 번호 정확일치 · 1 번호 전방일치 · 2 번호 부분일치 · 3 이름/유형 일치 · 9 기타
+  const _relScore = t => {
+    if (!q) return 9;
+    const no = String(t.no||'').toLowerCase();
+    if (no === q) return 0;
+    if (no.startsWith(q)) return 1;
+    if (no.includes(q)) return 2;
+    if ((t.name||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q)) return 3;
+    return 9;
+  };
+  if (q) {
+    filtered.sort((a, b) => {
+      const sa = _relScore(a), sb = _relScore(b);
+      if (sa !== sb) return sa - sb;
+      const na = parseInt(a.no||0), nb = parseInt(b.no||0);
+      if (na !== nb) return na - nb;
+      return _sortCmp(a, b);
+    });
+  } else {
+    filtered.sort(_sortCmp);
+  }
 
   if (!filtered.length) {
-    resultsEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px">' +
-      (q || cat || cycleF ? '검색 결과가 없습니다' : '조건에 맞는 카드가 없습니다') + '</div>';
+    // 미배정만 상태에서 0건이면, 이미 배정된 카드 중 검색어와 일치하는 게 있는지 안내
+    let hint = (q || cat || cycleF ? '검색 결과가 없습니다' : '조건에 맞는 카드가 없습니다');
+    if (q && status === 'unassigned') {
+      const assignedMatch = (_ldAllTerritories||[]).filter(t => {
+        if ((t.assignedPublishers||[]).length === 0) return false; // 배정된 것만
+        const no = String(t.no||'').toLowerCase();
+        return no.includes(q) || (t.name||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q);
+      }).length;
+      if (assignedMatch > 0) {
+        hint = `미배정 구역 중에는 없습니다.<br><span style="color:#64748B;font-size:11px">이미 배정된 구역 중 <strong style="color:#2563EB">${assignedMatch}개</strong>가 "${q}"와 일치합니다. 상태를 <strong>전체</strong>로 바꿔 확인하세요.</span>`;
+      }
+    }
+    resultsEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px;line-height:1.6">' + hint + '</div>';
   } else {
     const hasFilter = q || cat || cycleF || status !== 'unassigned' || Object.values(_ldChips).some(Boolean);
     const SHOW_LIMIT = 200;
     const useLimit = !hasFilter && !_ldUnallocShowAll && filtered.length > SHOW_LIMIT;
     const shown = useLimit ? filtered.slice(0, SHOW_LIMIT) : filtered;
+    const _relSuffix = q ? ' · 관련도순' : '';
     const infoText = shown.length === filtered.length
-      ? `총 ${filtered.length}개 · 카드 탭하면 즉시 추가됨`
-      : `총 ${filtered.length}개 중 ${shown.length}개 표시 · 카드 탭하면 즉시 추가됨`;
+      ? `총 ${filtered.length}개 · 카드 탭하면 즉시 추가됨${_relSuffix}`
+      : `총 ${filtered.length}개 중 ${shown.length}개 표시 · 카드 탭하면 즉시 추가됨${_relSuffix}`;
     let html = `<div style="padding:6px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:11px;color:#64748B">${infoText}</div>`;
     html += shown.map(t => {
       const bg = CAT_BG2[t.category] || '#F1F5F9';

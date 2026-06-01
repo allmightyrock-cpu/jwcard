@@ -1501,17 +1501,14 @@ function renderSchedGallery() {
   const gsort = document.getElementById('sched-gal-sort')?.value || 'no';
   const gMonthVal = parseInt(document.getElementById('sched-gal-month-filter')?.value) || 0;
   const gMonthCutoff = gMonthVal > 0 ? Date.now() - gMonthVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
-  // 회차 키워드 파싱 ("2회차", "2회", "2차", "5차", "3" 단독 숫자 모두 처리)
+  // 회차 키워드 파싱 ("2회차", "2회", "2차", "5차"만 회차로 인정)
+  // 단독 숫자(예: 21)는 회차가 아니라 구역번호 검색으로 본다.
   let gParsedCycle = null, gKwRest = rawGq;
   if (rawGq) {
     const mCyc = rawGq.match(/([1-9]\d*)\s*(?:회\s*차?|차)/);
     if (mCyc) {
       gParsedCycle = parseInt(mCyc[1]);
       gKwRest = rawGq.replace(mCyc[0], '').trim();
-    } else if (/^\d+$/.test(rawGq)) {
-      // 단독 숫자 → 회차로 해석
-      gParsedCycle = parseInt(rawGq);
-      gKwRest = '';
     }
   }
   const filtered = _schedAllTerr.filter(t => {
@@ -1566,10 +1563,28 @@ function renderSchedGallery() {
     if (effectiveGsort === 'progress') return (b.completionRate||0)-(a.completionRate||0);
     return 0;
   };
+  // 검색어(번호/이름)가 있으면 관련도순 보조 (배분된 카드 우선 다음 순위)
+  const _gRel = t => {
+    const key = gKwRest || rawGq;
+    if (!key || gParsedCycle !== null) return 9;
+    const no = String(t.no||'').toLowerCase();
+    if (no === key) return 0;
+    if (no.startsWith(key)) return 1;
+    if (no.includes(key)) return 2;
+    if ((t.name||'').toLowerCase().includes(key)) return 3;
+    return 9;
+  };
+  const _gUseRel = rawGq && gParsedCycle === null;
   filtered.sort((a,b) => {
     const aAssigned = existing.has(a.id) ? 0 : 1;
     const bAssigned = existing.has(b.id) ? 0 : 1;
     if (aAssigned !== bAssigned) return aAssigned - bAssigned; // 배분된 카드 먼저
+    if (_gUseRel) {
+      const ra=_gRel(a), rb=_gRel(b);
+      if (ra!==rb) return ra-rb;
+      const na=parseInt(a.no)||0, nb=parseInt(b.no)||0;
+      if (na!==nb) return na-nb;
+    }
     return window._schedGalSortDesc ? cmp(b, a) : cmp(a, b);
   });
 
@@ -1649,17 +1664,14 @@ function renderUnallocatedList() {
   const sort = document.getElementById('sched-search-sort')?.value || 'no';
   const monthVal = parseInt(document.getElementById('sched-month-filter')?.value) || 0;
   const monthCutoff = monthVal > 0 ? Date.now() - monthVal * 30.44 * 24 * 60 * 60 * 1000 : 0;
-  // 회차 키워드 파싱 ("2회차", "2회", "2차", "5차", "3" 단독 숫자 모두 처리)
+  // 회차 키워드 파싱 ("2회차", "2회", "2차", "5차"만 회차로 인정)
+  // 단독 숫자(예: 21)는 회차가 아니라 구역번호 검색으로 본다.
   let parsedCycle = null, kwRest = rawQ;
   if (rawQ) {
     const mCyc = rawQ.match(/([1-9]\d*)\s*(?:회\s*차?|차)/);
     if (mCyc) {
       parsedCycle = parseInt(mCyc[1]);
       kwRest = rawQ.replace(mCyc[0], '').trim();
-    } else if (/^\d+$/.test(rawQ)) {
-      // 단독 숫자 → 회차로 해석
-      parsedCycle = parseInt(rawQ);
-      kwRest = '';
     }
   }
   const allAllocated = _getAllAllocatedSet(-1); // 모든 요일 배분 집합 (예외 없음)
@@ -1689,11 +1701,37 @@ function renderUnallocatedList() {
     return d.toDate ? d.toDate().getTime() : new Date(d).getTime();
   };
   const effectiveSort = (monthVal > 0 && sort === 'no') ? 'old' : sort;
-  if (effectiveSort === 'no')       filtered.sort((a,b) => (parseInt(a.no)||0)-(parseInt(b.no)||0));
-  else if (effectiveSort === 'old') filtered.sort((a,b) => getMs(a)-getMs(b));
-  else if (effectiveSort === 'cycle') filtered.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
-  else if (effectiveSort === 'progress') filtered.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
-  if (window._schedSortDesc) filtered.reverse();
+  const _sortCmp = (a,b) => {
+    if (effectiveSort === 'old') return getMs(a)-getMs(b);
+    if (effectiveSort === 'cycle') return (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0);
+    if (effectiveSort === 'progress') return (b.completionRate||0)-(a.completionRate||0);
+    return (parseInt(a.no)||0)-(parseInt(b.no)||0); // no
+  };
+  // 검색어(번호/이름)가 있으면 관련도순 우선, 같은 관련도는 드롭다운 정렬 보조
+  const _relScore = t => {
+    if (!kwRest && parsedCycle !== null) return 9;
+    const key = kwRest || rawQ;
+    if (!key) return 9;
+    const no = String(t.no||'').toLowerCase();
+    if (no === key) return 0;
+    if (no.startsWith(key)) return 1;
+    if (no.includes(key)) return 2;
+    if ((t.name||'').toLowerCase().includes(key)) return 3;
+    return 9;
+  };
+  const _useRel = rawQ && parsedCycle === null;
+  if (_useRel) {
+    filtered.sort((a,b) => {
+      const sa=_relScore(a), sb=_relScore(b);
+      if (sa!==sb) return sa-sb;
+      const na=parseInt(a.no)||0, nb=parseInt(b.no)||0;
+      if (na!==nb) return na-nb;
+      return _sortCmp(a,b);
+    });
+  } else {
+    filtered.sort(_sortCmp);
+  }
+  if (window._schedSortDesc && !_useRel) filtered.reverse();
   const schedCountEl = document.getElementById('sched-result-count');
   if (schedCountEl) {
     const isFiltered = monthVal > 0 || rawQ || _schedCatFilter;
