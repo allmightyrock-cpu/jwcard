@@ -2561,7 +2561,7 @@ window.bulkReclaimInformal = async function() {
   let msg = `비배정 사용중 ${allInformal.length}개 구역을 처리합니다.\n\n`;
   if (toReclaim.length)    msg += `• 일반 회수 ${toReclaim.length}개 (기록 초기화)\n`;
   if (toComplete.length)   msg += `• 완료 확정 ${toComplete.length}개 (S-13 기록, 회차↑)\n`;
-  if (toIncomplete.length) msg += `• 미완료 회수 ${toIncomplete.length}개 (⏸ 미완료 목록 유지)\n`;
+  if (toIncomplete.length) msg += `• 미완료 회수 ${toIncomplete.length}개 (방문기록 보존)\n`;
   if (!confirm(msg + '\n계속하시겠습니까?')) return;
 
   try {
@@ -2584,8 +2584,7 @@ window.bulkReclaimInformal = async function() {
         cycle: t.cycle || 1,
         completedAt: new Date().toISOString().slice(0, 10),
         publishers: _visitedPubs,
-        visitMode: window._visitMode || '호별',
-        unitVisits: t.visitMap || {}
+        visitMode: window._visitMode || '호별'
       };
       await updateDoc(doc(db, 'territories', t.id), {
         cycle: newCycle, status: '미배정', completionRate: 0,
@@ -2600,14 +2599,13 @@ window.bulkReclaimInformal = async function() {
       });
     }
 
-    // ③ 미완료 회수: visitMap만 초기화, completionStatus='incomplete' 유지
+    // ③ 미완료 회수: 방문기록은 이어가야 하므로 visitMap/sectionStatus를 보존한다.
     for (const t of toIncomplete) {
       await updateDoc(doc(db, 'territories', t.id), {
-        visitMap: {}, sectionStatus: {}, completionRate: 0,
         forceRetrievedAt: serverTimestamp(), forceRetrievedBy: byAdmin
         // completionStatus: 'incomplete' 그대로 유지 → ⏸ 미완료 목록에 남음
       });
-      Object.assign(t, { visitMap: {}, sectionStatus: {}, completionRate: 0 });
+      Object.assign(t, { forceRetrievedBy: byAdmin });
     }
 
     renderTerritoryTable();
@@ -2615,7 +2613,7 @@ window.bulkReclaimInformal = async function() {
     let result = '✅ 처리 완료\n';
     if (toReclaim.length)    result += `• 일반 회수: ${toReclaim.length}개\n`;
     if (toComplete.length)   result += `• 완료 확정: ${toComplete.length}개\n`;
-    if (toIncomplete.length) result += `• 미완료 회수: ${toIncomplete.length}개 (⏸ 미완료 목록에 유지)`;
+    if (toIncomplete.length) result += `• 미완료 회수: ${toIncomplete.length}개 (방문기록 보존)`;
     alert(result);
   } catch(e) { alert('처리 중 오류: ' + e.message); }
 };
@@ -2760,8 +2758,7 @@ window.completeTerritory = async function(id, name) {
     completedAt: new Date().toISOString().slice(0, 10),
     publishers:  _publishers,
     visitMode:   window._visitMode || '호별',
-    assignedAt:  _assignedAtStr,
-    unitVisits:  _visitMap   // 세대별 방문 스냅샷 저장
+    assignedAt:  _assignedAtStr
   };
   try {
     await updateDoc(doc(db, 'territories', id), {
@@ -4081,9 +4078,9 @@ window.openTerritoryCard = function(id) {
     tbody.innerHTML = '<tr><td colspan="4" style="padding:10px;text-align:center;color:#94A3B8">방문 기록 없음</td></tr>';
   }
 
-  // ── 세대별 × 회차별 전도인 그리드
+  // 세대별 방문 기록(과거 회차 스냅샷)은 회중 운영방침상 표시하지 않음
   const gridEl = document.getElementById('tc-unit-grid');
-  if (gridEl) gridEl.innerHTML = _renderUnitVisitGrid(t);
+  if (gridEl) gridEl.innerHTML = '';
 
   const activeBtn = document.getElementById('tc-active-status');
   if (activeBtn) {
