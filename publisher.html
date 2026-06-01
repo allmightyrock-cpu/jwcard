@@ -6393,9 +6393,11 @@ window.searchUnallocatedForToday = function(showAll) {
     if (cat && (t.category||'') !== cat) return false;
     // 회차 필터
     if (cycleF && String(parseInt(t.cycle)||1) !== cycleF) return false;
-    // 상태 필터
-    if (status === 'unassigned' && (t.assignedPublishers||[]).length > 0) return false;
-    if (status === '진행중'     && t.status !== '진행중') return false;
+    // 상태 필터 (교체 모드에서는 오늘 배당된 카드도 후보로 보여주려고 우회)
+    if (!_reassignMode) {
+      if (status === 'unassigned' && (t.assignedPublishers||[]).length > 0) return false;
+      if (status === '진행중'     && t.status !== '진행중') return false;
+    }
     // 칩 필터
     const vm = t.visitMap || {};
     const units = Object.values(vm);
@@ -6481,19 +6483,28 @@ window.searchUnallocatedForToday = function(showAll) {
       const bg = CAT_BG2[t.category] || '#F1F5F9';
       const cl = CAT_CL2[t.category] || '#475569';
       const isToday = todaySet.has(t.id);
+      // 교체 모드: 오늘 배당 카드도 "선택" 대상(자기 자신=출발 구역만 제외)
+      const isReassignSelf = _reassignMode && t.id === _reassignFromId;
+      const clickable = _reassignMode ? !isReassignSelf : !isToday;
       const ago = (() => { const ms = getMs(t.lastAssignedDate); return ms ? Math.floor((Date.now()-ms)/86400000)+'일 전' : '기록없음'; })();
       const namePart = t.name
         ? `<span style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</span>`
         : `<span style="flex:1"></span>`;
       const cyclePart = t.cycle ? `<span style="font-size:10px;color:#94A3B8">${t.cycle}회차</span>` : '';
-      return `<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #F1F5F9;cursor:${isToday?'default':'pointer'};${isToday?'background:#F0FDF4;':''}" ${isToday ? '' : `onclick="addUnallocatedToToday('${t.id}')"`}>
+      const rightBadge = _reassignMode
+        ? (isReassignSelf
+            ? '<span style="font-size:11px;color:#94A3B8;font-weight:600;flex-shrink:0">현재 구역</span>'
+            : '<span style="font-size:11px;background:#1B3A6B;color:#fff;padding:2px 8px;border-radius:5px;flex-shrink:0">여기로 변경</span>')
+        : (isToday
+            ? '<span style="font-size:11px;color:#16A34A;font-weight:600;flex-shrink:0">✅ 추가됨</span>'
+            : '<span style="font-size:11px;background:#2563EB;color:#fff;padding:2px 8px;border-radius:5px;flex-shrink:0">+ 추가</span>');
+      const rowBg = (_reassignMode ? isReassignSelf : isToday) ? 'background:#F0FDF4;' : '';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #F1F5F9;cursor:${clickable?'pointer':'default'};${rowBg}" ${clickable ? `onclick="addUnallocatedToToday('${t.id}')"` : ''}>
         <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px;background:${bg};color:${cl};white-space:nowrap;flex-shrink:0">${t.no}번</span>
         ${namePart}
         ${cyclePart}
         <span style="font-size:10px;color:#94A3B8;flex-shrink:0">${ago}</span>
-        ${isToday
-          ? '<span style="font-size:11px;color:#16A34A;font-weight:600;flex-shrink:0">✅ 추가됨</span>'
-          : '<span style="font-size:11px;background:#2563EB;color:#fff;padding:2px 8px;border-radius:5px;flex-shrink:0">+ 추가</span>'}
+        ${rightBadge}
       </div>`;
     }).join('');
     if (useLimit) {
