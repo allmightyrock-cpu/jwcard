@@ -6174,21 +6174,32 @@ async function _retrieveAssignment(id, { notify = true } = {}) {
   return { hadRecord: hasRec };
 }
 
-// "배정 변경" 진입점 — 배정된 카드에서 선택지 제공
+// "배정 변경" 진입점 — 버튼 모달로 선택지 제공
 window.changeTodayAssign = function() {
   if (!_todaySelectedId) return;
   const t = _ldAllTerritories.find(t => t.id === _todaySelectedId);
   if (!t || !(t.assignedPublishers || []).length) return;
   const label = `${t.no}번 ${t.name}`;
   const pubs = (t.assignedPublishers || []).join(', ');
-  const choice = prompt(
-    `"${label}" 배정 변경\n현재 배정: ${pubs}\n\n원하는 번호를 입력하세요:\n1 = 다른 구역으로 변경 (전도인 그대로, 이 구역은 회수)\n2 = 이 구역만 회수 (배정 해제)\n\n(취소하려면 빈칸/취소)`,
-    ''
-  );
-  if (choice === null) return;
-  const c = choice.trim();
-  if (c === '1')      _startReassignToOther();
-  else if (c === '2') unassignTodayTerr();
+  const ov = document.createElement('div');
+  ov.id = 'change-assign-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9995;background:rgba(15,23,42,0.55);display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:520px;padding:20px 18px 24px;box-shadow:0 -4px 24px rgba(0,0,0,0.2)">'
+    + '<div style="font-size:15px;font-weight:700;color:#1B3A6B;margin-bottom:4px">🔄 배정 변경 — ' + label + '</div>'
+    + '<div style="font-size:12.5px;color:#64748B;margin-bottom:16px">현재 배정: ' + pubs + '</div>'
+    + '<button id="ca-change" style="width:100%;padding:14px;margin-bottom:10px;background:#1B3A6B;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">'
+    +   '🔁 다른 구역으로 변경<br><span style="font-size:11.5px;font-weight:400;opacity:0.85">전도인은 그대로, 이 구역은 회수됩니다</span></button>'
+    + '<button id="ca-retrieve" style="width:100%;padding:14px;margin-bottom:10px;background:#FEF2F2;color:#991B1B;border:1.5px solid #FECACA;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">'
+    +   '🗑 이 구역만 회수<br><span style="font-size:11.5px;font-weight:400;opacity:0.85">배정을 해제합니다 (방문 기록은 보존)</span></button>'
+    + '<button id="ca-cancel" style="width:100%;padding:12px;background:#F1F5F9;color:#475569;border:none;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">취소</button>'
+    + '</div>';
+  const close = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  ov.querySelector('#ca-change').onclick   = () => { close(); _startReassignToOther(); };
+  ov.querySelector('#ca-retrieve').onclick = () => { close(); unassignTodayTerr(); };
+  ov.querySelector('#ca-cancel').onclick   = close;
+  document.body.appendChild(ov);
 };
 
 // 1) 다른 구역으로 변경: 현재 전도인 유지 → 새 구역 선택 팝업 띄움
