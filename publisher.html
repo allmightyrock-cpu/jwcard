@@ -2195,7 +2195,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div class="pub-chip-list" id="ld-today-pub-chips"></div>
             <div class="assign-btn-row">
               <button class="assign-confirm-btn" id="ld-today-confirm-btn" disabled onclick="confirmTodayAssign()">배정 확정</button>
-              <button class="assign-unassign-btn" id="ld-today-unassign-btn" style="display:none" onclick="unassignTodayTerr()">🗑 해제</button>
+              <button class="assign-unassign-btn" id="ld-today-change-btn" style="display:none" onclick="changeTodayAssign()">🔄 배정 변경</button>
             </div>
           </div>
         </div>
@@ -5589,6 +5589,12 @@ window.closeAddTerrPopup = function() {
   document.getElementById('add-terr-popup').style.display = 'none';
   document.body.style.overflow = '';
   _ldSelectedTerrId = null; _ldSelectedPubs = [];
+  // 교체 모드 취소 시 리셋 + 팝업 제목 복구
+  if (_reassignMode) {
+    _resetReassign();
+    const title = document.querySelector('#add-terr-popup .atp-title');
+    if (title) title.textContent = '➕ 구역 추가';
+  }
   renderTodaySection();
 };
 window.closeAddTerrPopupDone = function() {
@@ -6103,7 +6109,7 @@ function _showTodayAssignSection() {
   document.getElementById('ld-today-assign-box').style.display = 'block';
   document.getElementById('ld-today-assign-terr-name').textContent = `(${t.no}번 ${t.name})`;
   _todaySelectedPubs = [...(t.assignedPublishers || [])];
-  document.getElementById('ld-today-unassign-btn').style.display =
+  document.getElementById('ld-today-change-btn').style.display =
     _todaySelectedPubs.length ? 'inline-block' : 'none';
 
   document.getElementById('ld-today-pub-chips').innerHTML = _ldPublishers.map(p => {
@@ -6148,15 +6154,111 @@ window.confirmTodayAssign = async function() {
   } catch(e) { alert('배정 오류: ' + e.message); }
 };
 
+// 방문 기록 유무 판단 (visitMap에 code가 하나라도 있으면 기록 있음)
+function _hasVisitRecord(t) {
+  const vm = t && t.visitMap ? t.visitMap : {};
+  return Object.values(vm).some(v => v && v.code);
+}
+
+// 공통 회수 로직: 배정 해제 + (기록 없으면 미배정 / 있으면 기록 보존) + 전도인 실시간 통지
+// notify=true 면 forceRetrievedAt 갱신 → 그 구역 보고 있던 전도인 화면에 "회수" 알림
+async function _retrieveAssignment(id, { notify = true } = {}) {
+  const t = _ldAllTerritories.find(x => x.id === id);
+  const hasRec = _hasVisitRecord(t);
+  const patch = {
+    assignedPublishers: [],
+    status: hasRec ? '미완료' : '미배정',
+  };
+  if (notify) patch.forceRetrievedAt = serverTimestamp();
+  await updateDoc(doc(db, 'territories', id), patch);
+  return { hadRecord: hasRec };
+}
+
+// "배정 변경" 진입점 — 배정된 카드에서 선택지 제공
+window.changeTodayAssign = function() {
+  if (!_todaySelectedId) return;
+  const t = _ldAllTerritories.find(t => t.id === _todaySelectedId);
+  if (!t || !(t.assignedPublishers || []).length) return;
+  const label = `${t.no}번 ${t.name}`;
+  const pubs = (t.assignedPublishers || []).join(', ');
+  const choice = prompt(
+    `"${label}" 배정 변경\n현재 배정: ${pubs}\n\n원하는 번호를 입력하세요:\n1 = 다른 구역으로 변경 (전도인 그대로, 이 구역은 회수)\n2 = 이 구역만 회수 (배정 해제)\n\n(취소하려면 빈칸/취소)`,
+    ''
+  );
+  if (choice === null) return;
+  const c = choice.trim();
+  if (c === '1')      _startReassignToOther();
+  else if (c === '2') unassignTodayTerr();
+};
+
+// 1) 다른 구역으로 변경: 현재 전도인 유지 → 새 구역 선택 팝업 띄움
+let _reassignFromId = null, _reassignPubs = [];
+function _startReassignToOther() {
+  const t = _ldAllTerritories.find(t => t.id === _todaySelectedId);
+  if (!t) return;
+  _reassignFromId = _todaySelectedId;
+  _reassignPubs   = [...(t.assignedPublishers || [])];
+  // 구역 추가 팝업을 "교체 모드"로 연다
+  _reassignMode = true;
+  openAddTerrPopup();
+  const title = document.querySelector('#add-terr-popup .atp-title');
+  if (title) title.textContent = `🔄 ${_reassignPubs.join(', ')}님을 옮길 새 구역 선택`;
+}
+
+// 교체 모드에서 새 구역을 탭했을 때 실행 (addUnallocatedToToday에서 분기)
+window._reassignMode = false;
+async function _completeReassign(newId) {
+  const fromT = _ldAllTerritories.find(t => t.id === _reassignFromId);
+  const newT  = _ldAllTerritories.find(t => t.id === newId);
+  if (!fromT || !newT) { _resetReassign(); return; }
+  const pubs = _reassignPubs;
+  const fromHasRec = _hasVisitRecord(fromT);
+  const warn = fromHasRec
+    ? `\n\n⚠ "${fromT.no}번 ${fromT.name}"에는 이미 방문 기록이 있습니다.\n기록은 유지하고 배정만 회수합니다.`
+    : '';
+  if (!confirm(
+    `[${pubs.join(', ')}]님에게 배정된\n"${fromT.no}번 ${fromT.name}"을(를)\n"${newT.no}번 ${newT.name}"(으)로 변경합니다.\n기존 구역은 회수됩니다.${warn}\n\n진행할까요?`
+  )) return;
+  try {
+    // ① 기존 구역 회수 (기록 보존 + 전도인 통지)
+    await _retrieveAssignment(_reassignFromId, { notify: true });
+    // ② 새 구역을 오늘 목록에 추가 (없으면)
+    if (!_todaySchedIds.includes(newId) && _todayDayOfWeek >= 0) {
+      const newIds = [..._todaySchedIds, newId];
+      await setDoc(doc(db, 'weeklySchedule', String(_todayDayOfWeek)), {
+        terrIds: newIds, active: true,
+        allocatedDate: new Date().toISOString().slice(0,10),
+        updatedAt: serverTimestamp()
+      });
+      _todaySchedIds = newIds; _allSchedIds.add(newId);
+    }
+    // ③ 새 구역에 동일 전도인 배정
+    await updateDoc(doc(db, 'territories', newId), {
+      assignedPublishers: pubs,
+      status: '진행중',
+      lastAssignedDate: serverTimestamp(),
+    });
+    alert(`변경 완료!\n${pubs.join(', ')} → ${newT.no}번 ${newT.name}`);
+    _resetReassign();
+    closeAddTerrPopup();
+    _todaySelectedId = null; _todaySelectedPubs = [];
+    await _loadLdData();
+    renderTodaySection();
+    renderLdTerritoryList();
+  } catch(e) { alert('변경 오류: ' + e.message); }
+}
+function _resetReassign() {
+  _reassignMode = false; _reassignFromId = null; _reassignPubs = [];
+}
+
 window.unassignTodayTerr = async function() {
   if (!_todaySelectedId) return;
   const t = _ldAllTerritories.find(t => t.id === _todaySelectedId);
-  if (!confirm(`"${t ? t.no + '번 ' + t.name : ''}" 구역 배정을 해제하시겠습니까?`)) return;
+  const hasRec = _hasVisitRecord(t);
+  const warn = hasRec ? '\n\n⚠ 이미 방문 기록이 있습니다. 기록은 유지하고 배정만 회수합니다.' : '';
+  if (!confirm(`"${t ? t.no + '번 ' + t.name : ''}" 구역 배정을 회수하시겠습니까?${warn}`)) return;
   try {
-    await updateDoc(doc(db, 'territories', _todaySelectedId), {
-      assignedPublishers: [],
-      status: '미완료',
-    });
+    await _retrieveAssignment(_todaySelectedId, { notify: true });
     _todaySelectedId = null;
     _todaySelectedPubs = [];
     await _loadLdData();
@@ -6395,6 +6497,8 @@ window.searchUnallocatedForToday = function(showAll) {
 };
 
 window.addUnallocatedToToday = async function(id) {
+  // 교체 모드: 새 구역을 고른 것 → 배정 변경 완료 흐름으로
+  if (_reassignMode) { await _completeReassign(id); return; }
   if (_todaySchedIds.includes(id)) return;
   const t = _ldAllTerritories.find(t => t.id === id);
   try {
