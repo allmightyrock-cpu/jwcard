@@ -6324,7 +6324,11 @@ window.searchUnallocatedForToday = function(showAll) {
     if ((t.name||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q)) return 3;
     return 9;
   };
-  if (q) {
+  // 순수 회차 키워드("6회차"·"2차")는 좁히기일 뿐 관련도 의미가 없으므로
+  // 드롭다운 정렬(오래된 순 등)을 그대로 따른다. 번호/이름 검색일 때만 관련도순.
+  const _cycleOnly = /^[1-9]\d*\s*(?:회\s*차?|차)$/.test(q);
+  const _useRel = q && !_cycleOnly;
+  if (_useRel) {
     filtered.sort((a, b) => {
       const sa = _relScore(a), sb = _relScore(b);
       if (sa !== sb) return sa - sb;
@@ -6355,7 +6359,7 @@ window.searchUnallocatedForToday = function(showAll) {
     const SHOW_LIMIT = 200;
     const useLimit = !hasFilter && !_ldUnallocShowAll && filtered.length > SHOW_LIMIT;
     const shown = useLimit ? filtered.slice(0, SHOW_LIMIT) : filtered;
-    const _relSuffix = q ? ' · 관련도순' : '';
+    const _relSuffix = _useRel ? ' · 관련도순' : '';
     const infoText = shown.length === filtered.length
       ? `총 ${filtered.length}개 · 카드 탭하면 즉시 추가됨${_relSuffix}`
       : `총 ${filtered.length}개 중 ${shown.length}개 표시 · 카드 탭하면 즉시 추가됨${_relSuffix}`;
