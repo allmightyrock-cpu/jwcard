@@ -3440,42 +3440,10 @@ window.confirmMeetingAssignments = async function() {
     const btn = document.getElementById('mtg-confirm-btn');
     btn.disabled = true;
     btn.textContent = '저장 중...';
-    const today = new Date().toISOString().slice(0,10);
 
-    // pubAssignments 맵 빌드 (전도인 이름 → 구역 정보)
-    const pubAssignments = {};
-    for (const tid of _mtgSelectedTerrs) {
-      const pubs = _mtgAssignments[tid]||[];
-      const t = _ldAllTerritories.find(t=>t.id===tid);
-      pubs.forEach(name => {
-        pubAssignments[name] = {
-          terrId:   tid,
-          terrNo:   String(t?.no  || ''),
-          terrName: t?.name || ''
-        };
-      });
-    }
-
-    // territories 업데이트
-    for (const tid of _mtgSelectedTerrs) {
-      const pubs = _mtgAssignments[tid]||[];
-      const histEntry = { assignedAt: today, assignedBy: _pubName, publishers: [...pubs] };
-      await updateDoc(doc(db,'territories',tid), {
-        assignedPublishers: pubs,
-        status: pubs.length ? '진행중' : '미배정',
-        lastAssignedDate: serverTimestamp(),
-        assignHistory: arrayUnion(histEntry),
-      });
-    }
-
-    // meetings 문서에 pubAssignments 저장 → 전도인 실시간 수신
-    const meetRef = doc(db,'meetings',today);
-    const meetSnap = await getDoc(meetRef);
-    if (meetSnap.exists()) {
-      await updateDoc(meetRef, { pubAssignments });
-    } else {
-      await setDoc(meetRef, { date: today, attendees: [], pubAssignments });
-    }
+    // 공통 저장: territories + meetings.pubAssignments + assignHistory 일괄 갱신
+    const _pairs = _mtgSelectedTerrs.map(tid => ({ terrId: tid, pubs: _mtgAssignments[tid] || [] }));
+    await _saveAssignment(_pairs);
 
     btn.textContent = '✅ 배정 완료!';
     await _loadLdData();
@@ -6162,11 +6130,7 @@ window.confirmTodayAssign = async function() {
   const t = _ldAllTerritories.find(t => t.id === _todaySelectedId);
   if (!confirm(`"${t ? t.no + '번 ' + t.name : ''}" 구역을\n[${_todaySelectedPubs.join(', ')}]에게 배정하시겠습니까?`)) return;
   try {
-    await updateDoc(doc(db, 'territories', _todaySelectedId), {
-      assignedPublishers: _todaySelectedPubs,
-      status: '진행중',
-      lastAssignedDate: serverTimestamp(),
-    });
+    await _saveAssignment([{ terrId: _todaySelectedId, pubs: _todaySelectedPubs }]);
     alert(`배정 완료!\n${t ? t.no + '번 ' + t.name : ''} → ${_todaySelectedPubs.join(', ')}`);
     _todaySelectedId = null;
     _todaySelectedPubs = [];
@@ -6181,6 +6145,36 @@ window.confirmTodayAssign = async function() {
 function _hasVisitRecord(t) {
   const vm = t && t.visitMap ? t.visitMap : {};
   return Object.values(vm).some(v => v && v.code);
+}
+
+// ── 공통 배정 저장 ──────────────────────────────────────────────
+// 모든 배정 경로(구역배정 탭 / 오늘의 봉사 / 재배정)가 이 함수를 통해
+// territories + meetings.pubAssignments + assignHistory 를 일관되게 갱신한다.
+// pairs: [{ terrId, pubs:[이름...] }, ...]
+async function _saveAssignment(pairs) {
+  const today = new Date().toISOString().slice(0, 10);
+  // 1) territories 갱신 + assignHistory 누적
+  for (const { terrId, pubs } of pairs) {
+    const histEntry = { assignedAt: today, assignedBy: (typeof _pubName !== 'undefined' ? _pubName : ''), publishers: [...pubs] };
+    await updateDoc(doc(db, 'territories', terrId), {
+      assignedPublishers: pubs,
+      status: pubs.length ? '진행중' : '미배정',
+      lastAssignedDate: serverTimestamp(),
+      assignHistory: arrayUnion(histEntry),
+    });
+  }
+  // 2) meetings.pubAssignments 병합 (전도인 실시간 수신 출처)
+  const meetRef = doc(db, 'meetings', today);
+  const snap = await getDoc(meetRef);
+  const pubAssignments = (snap.exists() && snap.data().pubAssignments) ? { ...snap.data().pubAssignments } : {};
+  for (const { terrId, pubs } of pairs) {
+    const t = _ldAllTerritories.find(x => x.id === terrId);
+    pubs.forEach(name => {
+      pubAssignments[name] = { terrId, terrNo: String(t?.no || ''), terrName: t?.name || '' };
+    });
+  }
+  if (snap.exists()) await updateDoc(meetRef, { pubAssignments });
+  else               await setDoc(meetRef, { date: today, attendees: [], pubAssignments });
 }
 
 // 공통 회수 로직: 배정 해제 + (기록 없으면 미배정 / 있으면 기록 보존) + 전도인 실시간 통지
@@ -6266,12 +6260,8 @@ async function _completeReassign(newId) {
       });
       _todaySchedIds = newIds; _allSchedIds.add(newId);
     }
-    // ③ 새 구역에 동일 전도인 배정
-    await updateDoc(doc(db, 'territories', newId), {
-      assignedPublishers: pubs,
-      status: '진행중',
-      lastAssignedDate: serverTimestamp(),
-    });
+    // ③ 새 구역에 동일 전도인 배정 (공통 저장)
+    await _saveAssignment([{ terrId: newId, pubs }]);
     alert(`변경 완료!\n${pubs.join(', ')} → ${newT.no}번 ${newT.name}`);
     _resetReassign();
     closeAddTerrPopup();
