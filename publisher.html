@@ -6295,10 +6295,10 @@ window.searchUnallocatedForToday = function(showAll) {
     // 텍스트 검색
     if (q) {
       const cycleStr = String(parseInt(t.cycle)||1);
+      // 단독 숫자는 구역번호 검색. 회차는 "5회차"·"5차"처럼 명시할 때만.
       return String(t.no||'').includes(q)
         || (t.name||'').toLowerCase().includes(q)
         || (t.category||'').includes(q)
-        || cycleStr === q
         || (q.endsWith('회차') && cycleStr === q.replace('회차','').trim())
         || (q.endsWith('차') && !q.endsWith('회차') && cycleStr === q.replace('차','').trim());
     }
