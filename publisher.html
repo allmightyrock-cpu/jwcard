@@ -700,6 +700,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .pub-chip.so.selected{background:#7C3AED;border-color:#7C3AED;color:#fff}
 .pub-chip.attended{background:#DCFCE7;border-color:#16A34A;color:#166534;font-weight:700}
 .pub-chip.attended.selected{background:#16A34A;border-color:#16A34A;color:#fff}
+.pub-chip.assigned-elsewhere{background:#F1F5F9;border-color:#E2E8F0;color:#94A3B8}
+.pub-chip.assigned-elsewhere.selected{background:#1B3A6B;border-color:#1B3A6B;color:#fff}
 .pub-chip-attend-divider{width:100%;font-size:11px;color:#94A3B8;margin:2px 0 0;padding-left:2px}
 .assign-confirm-btn{width:100%;padding:12px;background:#1B3A6B;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px}
 .assign-confirm-btn:disabled{opacity:0.4;cursor:not-allowed}
@@ -6086,29 +6088,47 @@ async function _showTodayAssignSection() {
   // 오늘 출석 신청자 로드 (이 탭에서 진입했을 때 비어있을 수 있어 보장)
   if (!_mtgAttendees.length) { try { await _loadMtgAttendees(); } catch(e){} }
   const attSet = new Set(_mtgAttendees || []);
-  // 출석 신청자 먼저, 그 안에서 이름 가나다순
+  // 오늘 다른 구역에 이미 배정된 전도인 맵 (이름 → "12번" 등). 현재 편집 카드는 제외.
+  const assignedMap = {};
+  (_todaySchedIds || []).forEach(tid => {
+    if (tid === _todaySelectedId) return; // 지금 편집 중인 카드는 제외
+    const tt = _ldAllTerritories.find(x => x.id === tid);
+    (tt && tt.assignedPublishers || []).forEach(nm => {
+      assignedMap[nm] = (assignedMap[nm] ? assignedMap[nm] + ',' : '') + (tt.no + '번');
+    });
+  });
+  const isAssigned = nm => !!assignedMap[nm];
+  // 정렬: ① 미배정·출석 → ② 미배정·그외 → ③ 이미 배정됨(맨 아래)
+  const rank = p => isAssigned(p.name) ? 2 : (attSet.has(p.name) ? 0 : 1);
   const sorted = [..._ldPublishers].sort((a, b) => {
-    const aa = attSet.has(a.name) ? 0 : 1, ab = attSet.has(b.name) ? 0 : 1;
-    if (aa !== ab) return aa - ab;
+    const ra = rank(a), rb = rank(b);
+    if (ra !== rb) return ra - rb;
     return (a.name || '').localeCompare(b.name || '', 'ko-KR');
   });
   const chip = p => {
     const isSel = _todaySelectedPubs.includes(p.name);
     const isSo  = p.permission === '봉사감독자';
     const isAtt = attSet.has(p.name);
+    const asg   = assignedMap[p.name];
     const nm = p.name.replace(/'/g, "\\'");
-    return `<button class="pub-chip${isSo ? ' so' : ''}${isAtt ? ' attended' : ''}${isSel ? ' selected' : ''}"
-      data-name="${p.name}" onclick="toggleTodayPub('${nm}')">${isAtt ? '✋ ' : ''}${p.name}${isSo ? ' ★' : ''}</button>`;
+    const tail = asg ? ` <span style="font-size:10px;opacity:0.8">(${asg})</span>` : '';
+    return `<button class="pub-chip${isSo ? ' so' : ''}${isAtt && !asg ? ' attended' : ''}${asg ? ' assigned-elsewhere' : ''}${isSel ? ' selected' : ''}"
+      data-name="${p.name}" onclick="toggleTodayPub('${nm}')">${isAtt && !asg ? '✋ ' : ''}${p.name}${isSo ? ' ★' : ''}${tail}</button>`;
   };
-  const attended = sorted.filter(p => attSet.has(p.name));
-  const others   = sorted.filter(p => !attSet.has(p.name));
+  const freeAtt  = sorted.filter(p => !isAssigned(p.name) && attSet.has(p.name));
+  const freeOth  = sorted.filter(p => !isAssigned(p.name) && !attSet.has(p.name));
+  const assigned = sorted.filter(p => isAssigned(p.name));
   let html = '';
-  if (attended.length) {
-    html += `<div class="pub-chip-attend-divider">✋ 오늘 참여 신청 (${attended.length}명)</div>`;
-    html += attended.map(chip).join('');
-    if (others.length) html += `<div class="pub-chip-attend-divider">그 외 전도인</div>`;
+  if (freeAtt.length) {
+    html += `<div class="pub-chip-attend-divider">✋ 오늘 참여 신청 (${freeAtt.length}명)</div>`;
+    html += freeAtt.map(chip).join('');
+    if (freeOth.length) html += `<div class="pub-chip-attend-divider">그 외 전도인</div>`;
   }
-  html += others.map(chip).join('');
+  html += freeOth.map(chip).join('');
+  if (assigned.length) {
+    html += `<div class="pub-chip-attend-divider">이미 배정됨 (${assigned.length}명) — 눌러서 추가 배정 가능</div>`;
+    html += assigned.map(chip).join('');
+  }
   document.getElementById('ld-today-pub-chips').innerHTML = html;
   _updateTodayConfirmBtn();
 }
