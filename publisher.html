@@ -4616,8 +4616,7 @@ window.clearCode = async function() {
   try {
     _ignoreNextSnap = true;
     await updateDoc(doc(db, 'territories', _territoryId), {
-      [`visitMap.${_activeUnitIdx}`]: deleteField(),
-      visitMap
+      [`visitMap.${_activeUnitIdx}`]: deleteField()
     });
     _territory.visitMap = visitMap;
     closeSheets();
@@ -4637,8 +4636,7 @@ window.pickCode = async function(code) {
     const batch = writeBatch(db);
     const terrRef = doc(db, 'territories', _territoryId);
     batch.update(terrRef, {
-      [`visitMap.${_activeUnitIdx}`]: { code, by: _pubName, at: _stamp },
-      visitMap
+      [`visitMap.${_activeUnitIdx}`]: { code, by: _pubName, at: _stamp }
     });
     // 재방문 코드 → 본인 재방문 목록(publisherRevisits)에 함께 기록
     if (code === 'revisit' && _pubName) {
