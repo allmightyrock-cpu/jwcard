@@ -3614,6 +3614,8 @@ window.exitCard = function() {
   document.getElementById('card-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('no-input').value = '';
+  // v2.34 배정 UI 초기화: 배정박스 숨김 + 입력창 그룹 복원 (안 하면 재진입 시 빈 값으로 에러)
+  if (typeof setButtonState === 'function') setButtonState('checkin');
   setTimeout(() => document.getElementById('no-input').focus(), 100);
 };
 
@@ -3640,6 +3642,7 @@ window.resumeNewCard = function() {
   document.getElementById('resume-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('no-input').value = '';
+  if (typeof setButtonState === 'function') setButtonState('checkin'); // 배정박스 숨김 + 입력창 복원
   setTimeout(() => document.getElementById('no-input').focus(), 100);
   // 이름은 유지된 상태이므로 인도자 버튼 노출 체크
   if (window.checkLeaderBtn) window.checkLeaderBtn();
