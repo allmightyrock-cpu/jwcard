@@ -2584,7 +2584,8 @@ window.bulkReclaimInformal = async function() {
         cycle: t.cycle || 1,
         completedAt: new Date().toISOString().slice(0, 10),
         publishers: _visitedPubs,
-        visitMode: window._visitMode || '호별'
+        visitMode: window._visitMode || '호별',
+        unitVisits: t.visitMap || {}
       };
       await updateDoc(doc(db, 'territories', t.id), {
         cycle: newCycle, status: '미배정', completionRate: 0,
@@ -2758,7 +2759,8 @@ window.completeTerritory = async function(id, name) {
     completedAt: new Date().toISOString().slice(0, 10),
     publishers:  _publishers,
     visitMode:   window._visitMode || '호별',
-    assignedAt:  _assignedAtStr
+    assignedAt:  _assignedAtStr,
+    unitVisits:  _visitMap   // 세대별 방문 스냅샷 저장
   };
   try {
     await updateDoc(doc(db, 'territories', id), {
@@ -4078,9 +4080,9 @@ window.openTerritoryCard = function(id) {
     tbody.innerHTML = '<tr><td colspan="4" style="padding:10px;text-align:center;color:#94A3B8">방문 기록 없음</td></tr>';
   }
 
-  // 세대별 방문 기록(과거 회차 스냅샷)은 회중 운영방침상 표시하지 않음
+  // ── 세대별 × 회차별 전도인 그리드
   const gridEl = document.getElementById('tc-unit-grid');
-  if (gridEl) gridEl.innerHTML = '';
+  if (gridEl) gridEl.innerHTML = _renderUnitVisitGrid(t);
 
   const activeBtn = document.getElementById('tc-active-status');
   if (activeBtn) {
