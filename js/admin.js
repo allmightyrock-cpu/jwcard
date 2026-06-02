@@ -4082,14 +4082,16 @@ window.openTerritoryCard = function(id) {
   ).join('');
 
   // ── 요약 방문 이력 (모든 회차)
-  const history = t.cycleHistory || [];
+  // ddc-unit(세대별 방문기록 이관분)은 S-13 회차와 중복이므로 목록에서는 제외.
+  // 단, 세대별 방문 기록 표(_renderUnitVisitGrid)는 ddc-unit을 그대로 사용한다.
+  const history = (t.cycleHistory || []).filter(h => h._src !== 'ddc-unit');
   const tbody = document.getElementById('tc-history');
   if (history.length) {
     tbody.innerHTML = history.slice().reverse().map(h => {
       const vm = h.visitMode || '호별';
       const vmLabel = vm==='부재1' ? '호별+부재1' : vm==='부재2' ? '호별+부재2' : '호별';
       return `<tr>
-        <td style="padding:5px 8px">${h.cycle}회차</td>
+        <td style="padding:5px 8px">${h.cycle != null ? h.cycle + '회차' : '—'}</td>
         <td style="padding:5px 8px">${vmLabel}</td>
         <td style="padding:5px 8px">${_toDateStr(h.assignedAt)}&nbsp;→&nbsp;${_toDateStr(h.completedAt)}</td>
         <td style="padding:5px 8px">${(h.publishers||[]).join(', ')||'—'}</td>
