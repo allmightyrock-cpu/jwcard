@@ -1709,7 +1709,7 @@ function renderUnallocatedList() {
   };
   // 검색어(번호/이름)가 있으면 관련도순 우선, 같은 관련도는 드롭다운 정렬 보조
   const _relScore = t => {
-    if (!kwRest && parsedCycle !== null) return 9;
+    if (!kwRest && parsedCycle !== null) return 9; // 순수 회차검색은 관련도 의미 없음
     const key = kwRest || rawQ;
     if (!key) return 9;
     const no = String(t.no||'').toLowerCase();
@@ -1719,7 +1719,7 @@ function renderUnallocatedList() {
     if ((t.name||'').toLowerCase().includes(key)) return 3;
     return 9;
   };
-  const _useRel = rawQ && parsedCycle === null;
+  const _useRel = rawQ && parsedCycle === null; // 숫자/이름 검색일 때만 관련도순
   if (_useRel) {
     filtered.sort((a,b) => {
       const sa=_relScore(a), sb=_relScore(b);
@@ -3492,7 +3492,11 @@ function renderTerritoryDashboard() {
   let done6m = 0;
   T.forEach(t => {
     (t.cycleHistory || []).forEach(h => {
-      if (h.completedAt && (now - new Date(h.completedAt).getTime()) <= MS6M) done6m++;
+      if (!h.completedAt) return;
+      const ms = h.completedAt.toMillis ? h.completedAt.toMillis()
+               : h.completedAt.toDate ? h.completedAt.toDate().getTime()
+               : new Date(h.completedAt).getTime();
+      if (!isNaN(ms) && (now - ms) <= MS6M) done6m++;
     });
     // lastCompletedDate 도 체크 (cycleHistory 없는 레거시 구역)
     if (!t.cycleHistory?.length && t.lastCompletedDate) {
@@ -4021,7 +4025,7 @@ function _renderUnitVisitGrid(t) {
   const unitThStyle = 'padding:5px 6px;text-align:left;border-bottom:1px solid #E2E8F0;border-right:1px solid #E2E8F0;font-weight:600;color:#475569;white-space:nowrap;font-size:11px;background:#F8FAFC;position:sticky;left:0;z-index:1';
   const unitTdStyle = 'padding:4px 6px;text-align:left;border-bottom:1px solid #F1F5F9;border-right:1px solid #E2E8F0;font-size:11px;color:#64748B;white-space:nowrap;background:#FAFAFA;position:sticky;left:0;z-index:1';
 
-  const headers = cols.map(h => `<th style="${thStyle}">${h.cycle}회차<br><span style="font-weight:400;color:#94A3B8">${(h.completedAt||'').slice(0,10)}</span></th>`).join('');
+  const headers = cols.map(h => `<th style="${thStyle}">${h.cycle}회차<br><span style="font-weight:400;color:#94A3B8">${_histDate(h.completedAt)}</span></th>`).join('');
 
   const rows = units.map(code => {
     const cells = cols.map(h => {
@@ -4095,6 +4099,7 @@ window.openTerritoryCard = function(id) {
     tbody.innerHTML = '<tr><td colspan="4" style="padding:10px;text-align:center;color:#94A3B8">방문 기록 없음</td></tr>';
   }
 
+  // ── 세대별 × 회차별 전도인 그리드
   // ── 세대별 × 회차별 전도인 그리드
   const gridEl = document.getElementById('tc-unit-grid');
   if (gridEl) gridEl.innerHTML = _renderUnitVisitGrid(t);
@@ -5198,6 +5203,17 @@ const VISIT_CODE_META = {
 
 let _visitView = 'card'; // 'card' | 'list'
 
+// cycleHistory 날짜(문자열·Date·Firestore Timestamp) → 'YYYY-MM-DD'
+// S-13 이관 항목의 completedAt/assignedAt은 Timestamp 객체라 .slice()가 없어 깨지므로 정규화
+function _histDate(v) {
+  if (!v) return '';
+  if (typeof v === 'string') return v.slice(0, 10);
+  if (typeof v.toDate === 'function') { try { return v.toDate().toISOString().slice(0, 10); } catch (e) { return ''; } }
+  if (typeof v.seconds === 'number') return new Date(v.seconds * 1000).toISOString().slice(0, 10);
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  return '';
+}
+
 window.initVisitTab = function() {
   const today = new Date();
   const oneYearAgo = new Date(today); oneYearAgo.setFullYear(today.getFullYear() - 1);
@@ -5245,7 +5261,8 @@ window.applyVisitFilter = function() {
   let   inactiveCnt = 0;
   territories.forEach(t => {
     const cycles = (t.cycleHistory || []).filter(h => {
-      const d = (h.completedAt || '').slice(0, 10);
+      const d = _histDate(h.completedAt);
+      if (!d) return false;
       if (dateFrom && d < dateFrom) return false;
       if (dateTo   && d > dateTo)   return false;
       return true;
@@ -5282,7 +5299,8 @@ function _renderVisitCards(territories, dateFrom, dateTo) {
   grid.innerHTML = territories.map(t => {
     const cycles = (t.cycleHistory || [])
       .filter(h => {
-        const d = (h.completedAt || '').slice(0, 10);
+        const d = _histDate(h.completedAt);
+        if (!d) return false;
         if (dateFrom && d < dateFrom) return false;
         if (dateTo   && d > dateTo)   return false;
         return true;
@@ -5304,7 +5322,7 @@ function _renderVisitCards(territories, dateFrom, dateTo) {
       rowsHtml = cycles.map(h => {
         const pubs   = (h.publishers || []);
         const pubStr = pubs.length > 2 ? pubs.slice(0, 2).join(',') + '...' : pubs.join(',') || '—';
-        const dateStr = (h.completedAt || '').slice(2, 10);
+        const dateStr = _histDate(h.completedAt).slice(2);
         return '<div style="display:flex;align-items:center;gap:5px;font-size:11px;padding:3px 0;border-bottom:1px solid #F1F5F9;line-height:1.4">' +
           '<span style="min-width:26px;color:#1B3A6B;font-weight:600">' + h.cycle + '차</span>' +
           '<span style="min-width:26px;color:#64748B;background:#F1F5F9;border-radius:3px;padding:1px 3px;font-size:10px">' + vmModeLabel(h.visitMode) + '</span>' +
@@ -5354,7 +5372,8 @@ function _renderVisitTable(territories, dateFrom, dateTo) {
   territories.forEach(t => {
     (t.cycleHistory || [])
       .filter(h => {
-        const d = (h.completedAt || '').slice(0, 10);
+        const d = _histDate(h.completedAt);
+        if (!d) return false;
         if (dateFrom && d < dateFrom) return false;
         if (dateTo   && d > dateTo)   return false;
         return true;
@@ -5365,11 +5384,11 @@ function _renderVisitTable(territories, dateFrom, dateTo) {
     wrap.innerHTML = '<div style="text-align:center;padding:48px;color:#94A3B8;font-size:14px">해당 기간에 방문 완료 기록이 없습니다</div>';
     return;
   }
-  allRows.sort((a, b) => (b.h.completedAt || '').localeCompare(a.h.completedAt || ''));
+  allRows.sort((a, b) => _histDate(b.h.completedAt).localeCompare(_histDate(a.h.completedAt)));
   const rows = allRows.map(function({ t, h }) {
     const pubs      = (h.publishers || []).join(', ') || '—';
-    const assigned  = (h.assignedAt  || '—').slice(0, 10);
-    const completed = (h.completedAt || '—').slice(0, 10);
+    const assigned  = _histDate(h.assignedAt)  || '—';
+    const completed = _histDate(h.completedAt) || '—';
     return '<tr style="cursor:pointer" onclick="openTerritoryCard(\'' + t.id + '\')">' +
       '<td style="font-weight:600;color:#1B3A6B">' + t.no + '번</td>' +
       '<td style="font-size:12px;color:#475569">' + (t.name || '') + '</td>' +
@@ -5417,7 +5436,7 @@ window.openVisitDetailModal = function(id) {
   const thCurrent = 'padding:7px 8px;text-align:center;border-bottom:2px solid #059669;border-right:1px solid #CBD5E1;font-weight:600;white-space:nowrap;background:#ECFDF5;color:#065F46;font-size:11px;min-width:70px;position:sticky;top:0;z-index:2';
 
   const cycleHeaders = cycles.map(h => {
-    const dateStr   = (h.completedAt || h.assignedAt || '').slice(2, 10);
+    const dateStr   = _histDate(h.completedAt || h.assignedAt).slice(2);
     const modeLabel = h.visitMode === '편지' ? '편지' : h.visitMode === '전화' ? '전화' : '호별';
     return '<th style="' + thCycle + '">' + h.cycle + '회차' +
       '<div style="font-weight:400;font-size:10px;color:#64748B;margin-top:1px">' + modeLabel + ' ' + dateStr + '</div></th>';
@@ -5533,14 +5552,15 @@ window.exportVisitCsv = function() {
     .forEach(t => {
       (t.cycleHistory || [])
         .filter(h => {
-          const d = (h.completedAt || '').slice(0, 10);
+          const d = _histDate(h.completedAt);
+          if (!d) return false;
           if (dateFrom && d < dateFrom) return false;
           if (dateTo   && d > dateTo)   return false;
           return true;
         })
         .forEach(h => rows.push([t.no, t.name || '', h.cycle, h.visitMode || '',
-          (h.assignedAt  || '').slice(0, 10),
-          (h.completedAt || '').slice(0, 10),
+          _histDate(h.assignedAt),
+          _histDate(h.completedAt),
           (h.publishers  || []).join('|')]));
     });
   if (!rows.length) { alert('내보낼 데이터가 없습니다.'); return; }
@@ -5621,6 +5641,23 @@ window.applyMemoFilter = function() {
 
 function _esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+// 형제/자매댁 메모 감지 → visitMap의 jwmember 코드로 이관 대상
+function _memoIsJwHome(content) {
+  var s = String(content || '');
+  // "○○ 형제댁", "△△ 자매댁", "형제집", "자매 집" 등
+  return /형제\s*댁|자매\s*댁|형제\s*집|자매\s*집|형제자매\s*댁/.test(s);
+}
+
+// 개인정보 의심 키워드 감지 (이름·종교·민감정보) — 메모 이관/삭제 판단 보조
+// 단, 형제/자매댁은 jwmember 코드로 이관 가능하므로 PII 차단에서 제외
+function _memoPiiSuspect(content) {
+  var s = String(content || '');
+  if (_memoIsJwHome(s)) return false; // 형제/자매댁은 코드 이관 경로로
+  // 종교활동/관계: 자매·형제·연구생·연구·전도인·님댁 / 민감: 범죄·질병·가정사
+  var patterns = [/자매/, /형제/, /연구생/, /연구/, /전도인/, /님댁/, /성범죄/, /범죄자/, /환자/, /질병/, /이혼/, /우울/];
+  return patterns.some(function(p){ return p.test(s); });
+}
+
 function _renderMemoTable(memos) {
   var wrap = document.getElementById('memo-table-wrap'); if(!wrap) return;
   if (!memos.length) {
@@ -5643,14 +5680,27 @@ function _renderMemoTable(memos) {
       ?m.submittedAt.toDate().toLocaleDateString('ko-KR')
       :(m.submittedAt||'').slice(0,10);
     var approveBtn=isPending?'<button class="btn btn-sm btn-success" onclick="approveMemo(\'' + m.id + '\')">✓ 승인</button>':'';
+    var isJwHome=_memoIsJwHome(m.content);
+    var pii=_memoPiiSuspect(m.content);
+    var hasLoc=m.territoryId && (m.unitIdx!==undefined && m.unitIdx!==null);
+    var piiTag=pii?'<span title="개인정보 의심 키워드 포함" style="display:inline-block;margin-left:4px;background:#FEE2E2;color:#B91C1C;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700">⚠ 개인정보 의심</span>'
+              :isJwHome?'<span title="형제/자매댁 — 방문결과 코드로 이관 가능" style="display:inline-block;margin-left:4px;background:#EDE9FE;color:#5B21B6;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700">🏠 형제/자매댁</span>':'';
+    // 형제/자매댁 → jwmember 코드로 이관 (구분선 아님)
+    var jwBtn=(isJwHome && hasLoc)?'<button class="btn btn-sm" style="background:#F5F3FF;border:1px solid #DDD6FE;color:#5B21B6" onclick="migrateMemoToJwHome(\'' + m.id + '\')">🏠 형제/자매댁 표시</button>':'';
+    // 동선 메모 → 구분선 이관 (형제자매댁·개인정보는 제외)
+    var canMigrate=hasLoc && !pii && !isJwHome;
+    var migrateBtn=canMigrate?'<button class="btn btn-sm" style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8" onclick="migrateMemoToDivider(\'' + m.id + '\')">→ 구분선 이관</button>':'';
     return '<tr>'
       +'<td style="font-size:12px;color:#94A3B8;white-space:nowrap">'+dt+'</td>'
-      +'<td><strong style="color:#1B3A6B">'+(m.territoryNo||'')+'번</strong><br><span style="font-size:11px;color:#64748B">'+_esc(m.territoryName||'')+'</span></td>'
+      +'<td>'+(m.territoryId
+          ? '<a href="#" onclick="openTerritoryFromMemo(\''+_esc(m.territoryId)+'\');return false;" title="이 구역카드로 이동" style="color:#1B3A6B;font-weight:700;text-decoration:underline;cursor:pointer">'+(m.territoryNo||'')+'번 ↗</a>'
+          : '<strong style="color:#1B3A6B">'+(m.territoryNo||'')+'번</strong>')
+        +'<br><span style="font-size:11px;color:#64748B">'+_esc(m.territoryName||'')+'</span></td>'
       +'<td>'+typeBadge+'<br>'+statusBadge+'</td>'
       +'<td style="font-size:11px;color:#64748B">'+(CAT[m.category]||m.category||'')+'</td>'
-      +'<td style="font-size:13px;max-width:260px;word-break:break-all">'+_esc(m.content||'')+'</td>'
+      +'<td style="font-size:13px;max-width:260px;word-break:break-all">'+_esc(m.content||'')+piiTag+'</td>'
       +'<td style="font-size:12px">'+_esc(m.submittedBy||'—')+'</td>'
-      +'<td><div class="row-actions">'+approveBtn+'<button class="btn btn-sm btn-danger" onclick="deleteMemo(\'' + m.id + '\')">삭제</button></div></td>'
+      +'<td><div class="row-actions">'+approveBtn+jwBtn+migrateBtn+'<button class="btn btn-sm btn-danger" onclick="deleteMemo(\'' + m.id + '\')">삭제</button></div></td>'
       +'</tr>';
   }).join('');
   wrap.innerHTML='<div class="table-scroll-wrap"><table>'
@@ -5704,6 +5754,86 @@ window.deleteMemo = async function(id) {
   try {
     await deleteDoc(doc(db,'memos',id));
   } catch(e){ alert('삭제 오류: '+e.message); }
+};
+
+// 메모의 구역번호 클릭 → 전도인이 보는 실제 구역카드(publisher) 미리보기 새 창
+// (구분선·지시사항이 실제로 어떻게 표시되는지 확인용. 편집창 아님)
+window.openTerritoryFromMemo = function(territoryId) {
+  if (!territoryId) { alert('이 메모에는 구역 정보가 없습니다.'); return; }
+  var t = (window._territories || []).find(function(x){ return x.id === territoryId; });
+  if (!t) { alert('구역을 찾을 수 없습니다. (삭제되었거나 위치가 바뀌었을 수 있습니다)'); return; }
+  // 메모관리 모달은 그대로 두고(돌아와 삭제할 수 있도록) 실제 카드 화면을 새 창으로 연다
+  previewTerritory(territoryId);
+};
+
+// 형제/자매댁 메모 → 해당 호수 visitMap에 jwmember 코드 기록 후 메모 삭제
+window.migrateMemoToJwHome = async function(id) {
+  var m = _memos.find(function(x){ return x.id === id; });
+  if (!m) { alert('메모를 찾을 수 없습니다.'); return; }
+  var terrId = m.territoryId;
+  var unitIdx = (m.unitIdx !== undefined && m.unitIdx !== null) ? parseInt(m.unitIdx) : -1;
+  if (!terrId || unitIdx < 0) { alert('이관할 위치 정보가 없습니다.'); return; }
+  var t = (window._territories || []).find(function(x){ return x.id === terrId; });
+  if (!t) { alert('구역을 찾을 수 없습니다.'); return; }
+  var units = t.units || [];
+  if (unitIdx >= units.length) { alert('호수 위치가 범위를 벗어났습니다. (엑셀 교체로 위치가 바뀌었을 수 있습니다)'); return; }
+  var cur = units[unitIdx] || {};
+  var curUnit = String(cur.unit || '').trim();
+  var memUnit = String(m.unit || '').trim();
+  if (memUnit && curUnit && memUnit !== curUnit) {
+    if (!confirm('⚠ 위치 불일치 경고\n\n메모 기준 호수: "' + memUnit + '"\n현재 그 위치 호수: "' + curUnit + '"\n\n그래도 이 위치를 형제/자매댁으로 표시할까요?')) return;
+  }
+  if (!confirm('"' + (curUnit || ('위치 ' + unitIdx)) + '"를 형제/자매댁으로 표시합니다.\n방문 결과에 🏠 형제/자매댁 코드가 기록되고, 메모는 삭제됩니다.\n\n계속할까요?')) return;
+  var visitMap = Object.assign({}, t.visitMap || {});
+  visitMap[unitIdx] = { code:'jwmember', by:'관리자', at: new Date().toISOString() };
+  try {
+    await updateDoc(doc(db, 'territories', terrId), { visitMap: visitMap });
+    t.visitMap = visitMap;
+    await deleteDoc(doc(db, 'memos', id));
+    alert('✅ 형제/자매댁으로 표시 완료. 구역카드 방문 결과에 반영됩니다.');
+  } catch(e) { alert('이관 오류: ' + e.message); }
+};
+
+// 동선 메모 → 해당 호수 바로 위에 구분선(divider) 삽입 후 메모 삭제
+window.migrateMemoToDivider = async function(id) {
+  var m = _memos.find(function(x){ return x.id === id; });
+  if (!m) { alert('메모를 찾을 수 없습니다.'); return; }
+  if (_memoPiiSuspect(m.content)) {
+    alert('개인정보 의심 키워드가 포함되어 이관할 수 없습니다.\n내용을 확인 후 삭제하거나, 안전한 내용만 남겨 주세요.');
+    return;
+  }
+  var terrId = m.territoryId;
+  var unitIdx = (m.unitIdx !== undefined && m.unitIdx !== null) ? parseInt(m.unitIdx) : -1;
+  if (!terrId || unitIdx < 0) { alert('이관할 위치 정보가 없습니다.'); return; }
+  var t = (window._territories || []).find(function(x){ return x.id === terrId; });
+  if (!t) { alert('구역을 찾을 수 없습니다.'); return; }
+  var units = (t.units || []).slice();
+  if (unitIdx >= units.length) { alert('호수 위치가 범위를 벗어났습니다. (엑셀 교체로 위치가 바뀌었을 수 있습니다)'); return; }
+  // 안전장치: 메모 저장 당시 호수와 현재 위치의 호수가 일치하는지 대조
+  var cur = units[unitIdx] || {};
+  var curUnit = String(cur.unit || '').trim();
+  var memUnit = String(m.unit || '').trim();
+  if (memUnit && curUnit && memUnit !== curUnit) {
+    if (!confirm('⚠ 위치 불일치 경고\n\n메모 기준 호수: "' + memUnit + '"\n현재 그 위치 호수: "' + curUnit + '"\n\n엑셀 교체 등으로 위치가 달라졌을 수 있습니다.\n그래도 이 위치에 구분선을 삽입할까요?')) return;
+  }
+  // 메모 내용에서 [건물명 호수] 접두사 제거 → 순수 동선 내용만 (접두사는 위치로 대체됨)
+  var noteText = String(m.content || '').replace(/^\[[^\]]*\]\s*/, '').trim() || String(m.content || '').trim();
+  if (!confirm('이 메모를 "' + (curUnit || ('위치 ' + unitIdx)) + '" 바로 위에 구분선(안내)으로 이관합니다.\n\n내용: ' + noteText + '\n\n이관 후 메모는 목록에서 삭제됩니다. 계속할까요?')) return;
+  // divider 삽입
+  units.splice(unitIdx, 0, { type:'divider', label:'📍 안내', note: noteText });
+  try {
+    await updateDoc(doc(db, 'territories', terrId), { units: units });
+    t.units = units;
+    await deleteDoc(doc(db, 'memos', id));
+    alert('✅ 구분선으로 이관 완료. 편집 화면에서 위치·문구를 조정할 수 있습니다.');
+    // 이관 직후 편집 화면(호수 목록 탭)으로 이동 → 구분선 위치·문구 미세 조정
+    closeModal('memo-add-modal');
+    openEditModal(terrId);
+    setTimeout(function(){
+      var unitTab = document.querySelector('#edit-modal .edit-tab[onclick*="units"]');
+      if (unitTab) switchEditTab('units', unitTab);
+    }, 120);
+  } catch(e) { alert('이관 오류: ' + e.message); }
 };
 
 // ── 엑셀 다운로드 ──
