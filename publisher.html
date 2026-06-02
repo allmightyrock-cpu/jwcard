@@ -2708,7 +2708,6 @@ function initNaverMap() {
       minZoom: 12,
       maxZoom: 19
     });
-    console.log('[지도] 초기화 완료');
     if (naver.maps.Service) {
       // geocoder 즉시 사용 가능
       if (window.moveTerritoryMap) moveTerritoryMap();
@@ -2749,7 +2748,6 @@ function tryGeocode(queries, idx, label, count) {
     return;
   }
   var q = queries[idx];
-  console.log('[지도] 네이버 지오코딩 ' + (idx+1) + '/' + queries.length + ':', q);
   naver.maps.Service.geocode({ query: q }, function(status, response) {
     if (status === naver.maps.Service.Status.ERROR) {
       console.warn('[지도] 네이버 ERROR:', q);
@@ -2761,7 +2759,6 @@ function tryGeocode(queries, idx, label, count) {
       setMapStatus('❌ 결과없음 (' + (idx+1) + '/' + queries.length + '): ' + q);
       tryGeocode(queries, idx + 1, label, count); return;
     }
-    console.log('[지도] 네이버 성공:', q);
     setMapStatus(null);
     var item = response.v2.addresses[0];
     // 참조 코드와 동일하게 Point(x, y) 사용
@@ -2783,7 +2780,6 @@ function tryNominatimGeocode(queries, idx, label, count) {
     return;
   }
   var q = queries[idx];
-  console.log('[지도] Nominatim ' + (idx+1) + '/' + queries.length + ':', q);
   var url = 'https://nominatim.openstreetmap.org/search'
           + '?format=json&limit=1&accept-language=ko'
           + '&q=' + encodeURIComponent(q)
@@ -2792,7 +2788,6 @@ function tryNominatimGeocode(queries, idx, label, count) {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data && data.length > 0) {
-        console.log('[지도] Nominatim 성공:', q, data[0].display_name);
         setMapStatus(null);
         _placeMarkerLatLng(parseFloat(data[0].lat), parseFloat(data[0].lon), label, count);
       } else {
@@ -3503,14 +3498,9 @@ window.handleLogin = async function() {
     _isSO           = _permission === '봉사감독자';
     _canEditAddress = !!_pubDoc.canEditAddress;
 
-    // 구역 확인 — 전체 목록에서 클라이언트 필터 (번호 형식 무관)
-    const terrSnap = await getDocs(collection(db, 'territories'));
+    // 구역 확인 — 번호 직접 조회 우선, 실패 시 구버전 데이터 호환용 전체 fallback
     const noInput = document.getElementById('no-input').value.trim();
-    const noClean = noInput.replace(/^0+/,'') || noInput;
-    const matched = terrSnap.docs.find(d => {
-      const stored = String(d.data().no || '').replace(/^0+/,'') || String(d.data().no || '');
-      return stored === noClean;
-    });
+    const matched = await _findTerritoryByNo(noInput);
     if (!matched) { showErr(`구역 번호 ${noInput}을 찾을 수 없습니다. 인도자에게 확인하세요.`); return; }
     _territory = matched.data();
     _territoryId = matched.id;
@@ -3544,6 +3534,32 @@ function showErr(msg) {
 // Enter 키
 document.getElementById('name-input').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('no-input').focus(); });
 document.getElementById('no-input').addEventListener('keydown', e => { if(e.key==='Enter') window.handleLogin(); });
+
+async function _findTerritoryByNo(rawNo) {
+  const raw = String(rawNo || '').trim();
+  const clean = raw.replace(/^0+/, '') || raw;
+  const candidates = [];
+  const pushCandidate = v => {
+    if (v !== '' && v !== null && v !== undefined && !candidates.some(x => x === v)) candidates.push(v);
+  };
+  pushCandidate(raw);
+  pushCandidate(clean);
+  const numeric = Number(clean);
+  if (Number.isFinite(numeric)) pushCandidate(numeric);
+
+  for (const val of candidates) {
+    try {
+      const snap = await getDocs(query(collection(db, 'territories'), where('no', '==', val)));
+      if (!snap.empty) return snap.docs[0];
+    } catch (_) {}
+  }
+
+  const terrSnap = await getDocs(collection(db, 'territories'));
+  return terrSnap.docs.find(d => {
+    const stored = String(d.data().no || '').replace(/^0+/, '') || String(d.data().no || '');
+    return stored === clean;
+  }) || null;
+}
 
 // 저장된 이름 초기화
 window.exitCard = function() {
@@ -3686,10 +3702,9 @@ const _LD_SESSION_HOURS = 4;
         _isSO           = _permission === '봉사감독자';
         _canEditAddress = !!_pubDoc.canEditAddress;
 
-        // 구역 확인
-        const terrSnap = await getDocs(collection(db, 'territories'));
-        const matched = terrSnap.docs.find(d => d.id === savedId);
-        if (!matched) {
+        // 구역 확인 — 저장된 문서 ID로 단일 조회
+        const matched = await getDoc(doc(db, 'territories', savedId));
+        if (!matched.exists()) {
           localStorage.removeItem('jwcard_terr_id');
           document.getElementById('no-input').focus();
           return;
@@ -4046,10 +4061,13 @@ async function clearPresence() {
 
 function startPresenceListener() {
   if (_presenceUnsub) { _presenceUnsub(); _presenceUnsub = null; }
-  _presenceUnsub = onSnapshot(collection(db, 'presence'), (snap) => {
+  if (!_territoryId) return;
+  _presenceUnsub = onSnapshot(
+    query(collection(db, 'presence'), where('territoryId', '==', _territoryId), where('active', '==', true)),
+    (snap) => {
     const onlineOthers = snap.docs
       .map(d => d.data())
-      .filter(d => d.active && d.name !== _pubName && d.territoryId === _territoryId);
+      .filter(d => d.name !== _pubName);
     const bar = document.getElementById('presence-bar');
     const chips = document.getElementById('presence-chips');
     if (!bar || !chips) return;
@@ -4167,7 +4185,8 @@ function enterCard() {
 
   document.getElementById('card-screen').style.display = 'block';
   buildCard();
-  setTimeout(function() { initNaverMap(); }, 200);
+  // 지도 초기화는 카드가 먼저 그려진 뒤 지연 실행해 초기 진입 체감을 가볍게 한다.
+  setTimeout(function() { initNaverMap(); }, 1500);
   if (!_isPreview) {
     writePresence();
     if (_heartbeatTimer) clearInterval(_heartbeatTimer);
@@ -4457,46 +4476,65 @@ function renderUnitList(visitMap) {
 // 세대 행 제스처: 짧은 탭=대화함(빈 세대만), 길게 누르기=결과 선택 팝업
 // 이미 코드가 있는 세대는 짧은 탭도 팝업(수정)으로 — 실수로 덮어쓰기 방지
 let _urPressTimer = null, _urLongFired = false, _urStartX = 0, _urStartY = 0, _urMoved = false;
+let _unitListGesturesBound = false;
+let _urActiveRow = null;
+
 function _bindUnitRowGestures() {
-  const rows = document.querySelectorAll('#unit-list .unit-row');
-  rows.forEach(row => {
+  const list = document.getElementById('unit-list');
+  if (!list || _unitListGesturesBound) return;
+  _unitListGesturesBound = true;
+
+  const getRow = target => target && target.closest ? target.closest('#unit-list .unit-row') : null;
+  const start = (row, x, y) => {
+    if (!row) return;
+    _urActiveRow = row;
+    _urLongFired = false; _urMoved = false; _urStartX = x; _urStartY = y;
+    clearTimeout(_urPressTimer);
+    const idx = parseInt(row.dataset.uidx);
+    if (isNaN(idx)) return;
+    _urPressTimer = setTimeout(() => {
+      _urLongFired = true;
+      if (navigator.vibrate) { try { navigator.vibrate(15); } catch(e){} }
+      openCodeSheet(idx);
+    }, 500);
+  };
+  const move = (x, y) => {
+    if (Math.abs(x - _urStartX) > 10 || Math.abs(y - _urStartY) > 10) {
+      _urMoved = true; clearTimeout(_urPressTimer);
+    }
+  };
+  const end = () => { clearTimeout(_urPressTimer); _urActiveRow = null; };
+
+  list.addEventListener('touchstart', e => {
+    if (e.target.closest('.unit-more')) return;
+    const t = e.touches[0];
+    start(getRow(e.target), t.clientX, t.clientY);
+  }, { passive:true });
+  list.addEventListener('touchmove', e => {
+    if (!_urActiveRow) return;
+    const t = e.touches[0];
+    move(t.clientX, t.clientY);
+  }, { passive:true });
+  list.addEventListener('touchend', end);
+
+  list.addEventListener('mousedown', e => {
+    if (e.target.closest('.unit-more')) return;
+    start(getRow(e.target), e.clientX, e.clientY);
+  });
+  list.addEventListener('mousemove', e => { if (_urActiveRow) move(e.clientX, e.clientY); });
+  list.addEventListener('mouseup', end);
+  list.addEventListener('mouseleave', end);
+
+  list.addEventListener('click', e => {
+    if (e.target.closest('.unit-more')) return;
+    const row = getRow(e.target);
+    if (!row) return;
+    if (_urLongFired || _urMoved) return;
     const idx = parseInt(row.dataset.uidx);
     if (isNaN(idx)) return;
     const hasCode = row.dataset.hascode === '1';
-
-    const start = (x, y) => {
-      _urLongFired = false; _urMoved = false; _urStartX = x; _urStartY = y;
-      clearTimeout(_urPressTimer);
-      _urPressTimer = setTimeout(() => {
-        _urLongFired = true;
-        if (navigator.vibrate) { try { navigator.vibrate(15); } catch(e){} }
-        openCodeSheet(idx);
-      }, 500);
-    };
-    const move = (x, y) => {
-      if (Math.abs(x - _urStartX) > 10 || Math.abs(y - _urStartY) > 10) {
-        _urMoved = true; clearTimeout(_urPressTimer);
-      }
-    };
-    const end = () => { clearTimeout(_urPressTimer); };
-
-    // 터치
-    row.addEventListener('touchstart', e => { const t=e.touches[0]; start(t.clientX, t.clientY); }, {passive:true});
-    row.addEventListener('touchmove',  e => { const t=e.touches[0]; move(t.clientX, t.clientY); }, {passive:true});
-    row.addEventListener('touchend',   end);
-    // 마우스(데스크톱)
-    row.addEventListener('mousedown', e => start(e.clientX, e.clientY));
-    row.addEventListener('mousemove', e => move(e.clientX, e.clientY));
-    row.addEventListener('mouseup',   end);
-    row.addEventListener('mouseleave', end);
-
-    // 클릭(짧은 탭) — 스크롤/롱프레스가 아니면 처리
-    row.addEventListener('click', e => {
-      if (e.target.closest('.unit-more')) return; // ⋯ 버튼은 별도
-      if (_urLongFired || _urMoved) return;        // 롱프레스·스크롤은 무시
-      if (hasCode) { openCodeSheet(idx); return; } // 이미 입력됨 → 수정 팝업
-      _quickResp(idx);                             // 빈 세대 → 즉시 대화함
-    });
+    if (hasCode) { openCodeSheet(idx); return; }
+    _quickResp(idx);
   });
 }
 
@@ -5054,9 +5092,6 @@ window.moveTerritoryMap = function moveTerritoryMap() {
     setMapStatus('📍 주소 정보가 없습니다');
     return;
   }
-
-  console.log('[지도] firstUnit:', JSON.stringify({road, jibun, building}));
-  console.log('[지도] 검색 후보:', uniqueQueries);
   setMapStatus('🔍 위치 검색 중...');
   tryGeocode(uniqueQueries, 0, label, count);
 };
@@ -5401,8 +5436,8 @@ window.showUnitFixRequest = function() {
           objectType: 'text',
           text: msg,
           link: {
-            mobileWebUrl: 'https://jwcard-admin.your-worker.example.workers.dev',
-            webUrl: 'https://jwcard-admin.your-worker.example.workers.dev'
+            mobileWebUrl: 'https://your-worker.example.workers.dev',
+            webUrl: 'https://your-worker.example.workers.dev'
           }
         });
         el.remove();
@@ -6492,6 +6527,7 @@ window.searchUnallocatedForToday = function(showAll) {
     filtered.sort((a, b) => {
       const sa = _relScore(a), sb = _relScore(b);
       if (sa !== sb) return sa - sb;
+      // 같은 관련도: 번호 검색이면 번호 오름차순이 자연스러움
       const na = parseInt(a.no||0), nb = parseInt(b.no||0);
       if (na !== nb) return na - nb;
       return _sortCmp(a, b);
@@ -6536,6 +6572,7 @@ window.searchUnallocatedForToday = function(showAll) {
         ? `<span style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</span>`
         : `<span style="flex:1"></span>`;
       const cyclePart = t.cycle ? `<span style="font-size:10px;color:#94A3B8">${t.cycle}회차</span>` : '';
+      // 우측 배지: 교체모드면 선택/현재구역, 일반모드면 추가됨/추가
       const rightBadge = _reassignMode
         ? (isReassignSelf
             ? '<span style="font-size:11px;color:#94A3B8;font-weight:600;flex-shrink:0">현재 구역</span>'
@@ -7375,9 +7412,19 @@ function _cartHasAssignedTeams(teams) {
 function _cartDateKey(date) {
   return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
 }
-async function _cartLoadScheduleFallbacks(sessions) {
+const _cartFallbackCache = new Map();
+async function _cartLoadScheduleFallbacks(sessions, wkStr, sessionData) {
+  const cached = _cartFallbackCache.get(wkStr);
+  const now = Date.now();
+  if (cached && (now - cached.at) < 60000) return cached.data;
+
   const fallback = {};
-  await Promise.all(sessions.map(async s => {
+  const needFallback = sessions.filter(s => {
+    const cur = (sessionData || {})[s.key] || {};
+    return !cur.confirmed || !cur.teams || !_cartHasAssignedTeams(cur.teams);
+  });
+
+  await Promise.all(needFallback.map(async s => {
     try {
       const snap = await getDocs(query(
         collection(db, 'cart_witnessing_schedules'),
@@ -7398,6 +7445,7 @@ async function _cartLoadScheduleFallbacks(sessions) {
       console.warn('전시대 편성 백업 조회 오류:', e.message);
     }
   }));
+  _cartFallbackCache.set(wkStr, { at: now, data: fallback });
   return fallback;
 }
 function _cartMergeSessionFallbacks(sessionData, fallbackData) {
@@ -7499,7 +7547,7 @@ async function _loadCartSessions() {
       async snap => {
         const data = {};
         snap.forEach(d => { data[d.id] = d.data(); });
-        const fallback = await _cartLoadScheduleFallbacks(sessions);
+        const fallback = await _cartLoadScheduleFallbacks(sessions, wkStr, data);
         const merged = _cartMergeSessionFallbacks(data, fallback);
         // listEl이 DOM에서 분리됐을 경우 재조회
         const el = document.getElementById('cart-sessions-list') || listEl;
