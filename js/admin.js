@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, deleteField, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // ── Firebase 초기화 (config.js 에서 로드) ──
@@ -2538,8 +2538,23 @@ window.confirmForceReturn = async function() {
     updateData.completionRate = 0;
     updateData.visitMap = {};
   }
+  const prevPubs = (t.assignedPublishers || []).slice();
   try {
     await updateDoc(doc(db, 'territories', _frTerrId), updateData);
+    // meetings.pubAssignments 에서도 해당 전도인 항목 제거 (안 하면 전도인 화면에 번호 계속 뜸)
+    if (prevPubs.length) {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const meetRef = doc(db, 'meetings', today);
+        const msnap = await getDoc(meetRef);
+        const pa = (msnap.exists() && msnap.data().pubAssignments) ? msnap.data().pubAssignments : {};
+        const toDelete = {};
+        prevPubs.forEach(nm => {
+          if (pa[nm] && pa[nm].terrId === _frTerrId) toDelete['pubAssignments.' + nm] = deleteField();
+        });
+        if (Object.keys(toDelete).length) await updateDoc(meetRef, toDelete);
+      } catch(e2) { console.warn('pubAssignments 정리 실패:', e2); }
+    }
     Object.assign(t, { status: '미배정', assignedPublishers: [], completionStatus: null });
     if (type === 'cancel') { t.completionRate = 0; t.visitMap = {}; }
     closeModal('force-return-modal');

@@ -3060,8 +3060,15 @@ function startPubMeetingListener(pubName) {
       if (noInput && !noInput.value) noInput.value = String(asgn.terrNo);
       setButtonState('start', asgn.terrNo, { assigned: true });
     } else if (attendees.includes(pubName)) {
-      // 신청했지만 아직 미배정 → pending 유지 (이미 pending이면 그대로)
+      // 신청했지만 아직 미배정 → pending. 직전에 자동배정 상태였다면 해제(번호 회수됨)
+      if (_btnState === 'start') { if (noInput) noInput.value = ''; }
       if (_btnState !== 'pending') setButtonState('pending');
+    } else {
+      // 출석도 배정도 없음 → 자동배정 상태였다면 초기 상태로 복귀 (회수 반영)
+      if (_btnState === 'start') {
+        if (noInput) noInput.value = '';
+        setButtonState('checkin');
+      }
     }
   });
 }
@@ -6283,12 +6290,27 @@ async function _saveAssignment(pairs) {
 async function _retrieveAssignment(id, { notify = true } = {}) {
   const t = _ldAllTerritories.find(x => x.id === id);
   const hasRec = _hasVisitRecord(t);
+  const prevPubs = (t && t.assignedPublishers) ? [...t.assignedPublishers] : [];
   const patch = {
     assignedPublishers: [],
     status: hasRec ? '미완료' : '미배정',
   };
   if (notify) patch.forceRetrievedAt = serverTimestamp();
   await updateDoc(doc(db, 'territories', id), patch);
+  // meetings.pubAssignments 에서도 해당 전도인 항목 제거 (안 하면 전도인 화면에 번호 계속 뜸)
+  if (prevPubs.length) {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const meetRef = doc(db, 'meetings', today);
+      const snap = await getDoc(meetRef);
+      const pa = (snap.exists() && snap.data().pubAssignments) ? snap.data().pubAssignments : {};
+      const toDelete = {};
+      prevPubs.forEach(nm => {
+        if (pa[nm] && pa[nm].terrId === id) toDelete['pubAssignments.' + nm] = deleteField();
+      });
+      if (Object.keys(toDelete).length) await updateDoc(meetRef, toDelete);
+    } catch(e) { console.warn('pubAssignments 정리 실패:', e); }
+  }
   return { hadRecord: hasRec };
 }
 
