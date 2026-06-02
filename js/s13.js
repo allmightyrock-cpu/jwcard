@@ -222,9 +222,40 @@ window.renderS13Preview = function() {
 
 
 // ══ 인쇄 / PDF (공식 S-13 양식 기준) ══
+window.s13TogglePrintOptions = function() {
+  var panel = document.getElementById('s13-print-options');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' || !panel.style.display ? 'block' : 'none';
+};
+
+function _s13GetPrintOptions() {
+  var replaceEl = document.getElementById('s13-print-replace-admin');
+  var nameEl = document.getElementById('s13-print-admin-name');
+  var limitEl = document.getElementById('s13-print-limit-publishers');
+  return {
+    replaceAdmin: !!(replaceEl && replaceEl.checked),
+    adminReplacement: (nameEl && nameEl.value ? nameEl.value : '').trim(),
+    limitPublishers: !limitEl || limitEl.checked
+  };
+}
+
+function _s13FormatPublishersForPrint(value, options) {
+  var names = (value || '').split(',').map(function(name) {
+    return name.trim();
+  }).filter(Boolean).map(function(name) {
+    if (options.replaceAdmin && name === '관리자' && options.adminReplacement) {
+      return options.adminReplacement;
+    }
+    return name;
+  });
+  if (options.limitPublishers) names = names.slice(0, 2);
+  return names.join(', ');
+}
+
 window.printS13 = function() {
   var range       = _s13GetRange();
   var cong        = window._congregation || '';
+  var printOptions = _s13GetPrintOptions();
   var serviceYear = _s13ServiceYear(range.end || range.start || null);
   var list        = (window._territories || [])
     .slice()
@@ -266,9 +297,7 @@ window.printS13 = function() {
       var slots = [0,1,2,3].map(function(i) {
         var a = r.assignments[i] || {};
         var go = !!(a.publishers && !a.completedDate);
-        // 인쇄용: 전도인 이름 최대 2명으로 제한
-        var pubNames = (a.publishers || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
-        var pub = pubNames.slice(0, 2).join(', ');
+        var pub = _s13FormatPublishersForPrint(a.publishers, printOptions);
         return { pub: pub, adate: s13FmtShort(a.assignedDate), cdate: go ? '진행중' : s13FmtShort(a.completedDate), go: go };
       });
 
