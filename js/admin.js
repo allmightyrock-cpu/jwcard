@@ -4086,20 +4086,33 @@ window.openTerritoryCard = function(id) {
   // 단, 세대별 방문 기록 표(_renderUnitVisitGrid)는 ddc-unit을 그대로 사용한다.
   const history = (t.cycleHistory || []).filter(h => h._src !== 'ddc-unit');
   const tbody = document.getElementById('tc-history');
-  if (history.length) {
-    tbody.innerHTML = history.slice().reverse().map(h => {
-      const vm = h.visitMode || '호별';
-      const vmLabel = vm==='부재1' ? '호별+부재1' : vm==='부재2' ? '호별+부재2' : '호별';
-      return `<tr>
+  const _vmLabelOf = vm => vm==='부재1' ? '호별+부재1' : vm==='부재2' ? '호별+부재2' : '호별';
+  // 진행중(미완료) 현재 회차: cycleHistory엔 없지만 visitMap/배정에 활동이 있으면 표시 (완료 시 정식 회차로 전환)
+  const _SYSBY = ['엑셀업로드','엑셀일괄업로드'];
+  const _ipPubs = [...new Set([
+    ...(t.assignedPublishers || []),
+    ...Object.values(t.visitMap || {}).map(v => v && v.by).filter(b => b && !_SYSBY.includes(b))
+  ])];
+  const _showIp = (t.completionStatus === 'incomplete' || t.status === '진행중') && _ipPubs.length > 0;
+  let _hRows = '';
+  if (_showIp) {
+    _hRows += `<tr style="background:#FFFBEB">
+        <td style="padding:5px 8px">${t.cycle != null ? t.cycle + '회차' : '—'}</td>
+        <td style="padding:5px 8px">${_vmLabelOf(t.visitMode)}</td>
+        <td style="padding:5px 8px"><span style="color:#B45309;font-weight:600">진행중</span></td>
+        <td style="padding:5px 8px">${_ipPubs.join(', ')}</td>
+      </tr>`;
+  }
+  _hRows += history.slice().reverse().map(h => {
+    const vmLabel = _vmLabelOf(h.visitMode);
+    return `<tr>
         <td style="padding:5px 8px">${h.cycle != null ? h.cycle + '회차' : '—'}</td>
         <td style="padding:5px 8px">${vmLabel}</td>
         <td style="padding:5px 8px">${_toDateStr(h.assignedAt)}&nbsp;→&nbsp;${_toDateStr(h.completedAt)}</td>
         <td style="padding:5px 8px">${(h.publishers||[]).join(', ')||'—'}</td>
       </tr>`;
-    }).join('');
-  } else {
-    tbody.innerHTML = '<tr><td colspan="4" style="padding:10px;text-align:center;color:#94A3B8">방문 기록 없음</td></tr>';
-  }
+  }).join('');
+  tbody.innerHTML = _hRows || '<tr><td colspan="4" style="padding:10px;text-align:center;color:#94A3B8">방문 기록 없음</td></tr>';
 
   // ── 세대별 × 회차별 전도인 그리드
   // ── 세대별 × 회차별 전도인 그리드
