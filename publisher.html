@@ -2696,7 +2696,11 @@ function initNaverMap() {
     var el = document.getElementById('naver-map');
     if (!el) return;
     // 중복 초기화 방지 — 이미 지도 있으면 위치만 업데이트
-    if (_naverMap) { if (window.moveTerritoryMap) moveTerritoryMap(); return; }
+    // 재진입: 컨테이너 크기가 바뀌었을 수 있으니 resize 후 위치 갱신 (지도 잘림 방지)
+    if (_naverMap) {
+      setTimeout(function(){ try { naver.maps.Event.trigger(_naverMap, 'resize'); } catch(_){} if (window.moveTerritoryMap) moveTerritoryMap(); }, 50);
+      return;
+    }
     _naverMap = new naver.maps.Map(el, {
       zoom: 16,
       draggable: true,
@@ -2708,6 +2712,8 @@ function initNaverMap() {
       minZoom: 12,
       maxZoom: 19
     });
+    // 생성 직후 컨테이너 크기 재인식 — 타일이 잘려 그려지는 문제 방지
+    setTimeout(function(){ try { naver.maps.Event.trigger(_naverMap, 'resize'); } catch(_){} }, 100);
     if (naver.maps.Service) {
       // geocoder 즉시 사용 가능
       if (window.moveTerritoryMap) moveTerritoryMap();
@@ -4185,8 +4191,10 @@ function enterCard() {
 
   document.getElementById('card-screen').style.display = 'block';
   buildCard();
-  // 지도 초기화는 카드가 먼저 그려진 뒤 지연 실행해 초기 진입 체감을 가볍게 한다.
-  setTimeout(function() { initNaverMap(); }, 1500);
+  // 지도 초기화: 카드 렌더 직후 짧게 지연(렌더 블로킹 방지)하되,
+  // 빈 칸이 어색하지 않도록 "불러오는 중" 표시 후 빠르게 초기화한다.
+  if (!_isPreview) setMapStatus('지도 불러오는 중…');
+  setTimeout(function() { initNaverMap(); }, 300);
   if (!_isPreview) {
     writePresence();
     if (_heartbeatTimer) clearInterval(_heartbeatTimer);
