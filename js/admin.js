@@ -5202,6 +5202,15 @@ const VISIT_CODE_META = {
 };
 
 let _visitView = 'card'; // 'card' | 'list'
+let _visitSort = { key: 'completed', dir: 'desc' }; // 목록 정렬: key=no|cycle|completed, dir=asc|desc
+
+// 방문내역 목록 컬럼 정렬 토글 (구역번호·회차·완료일)
+window.sortVisitTable = function(key) {
+  const defDir = key === 'completed' ? 'desc' : 'asc'; // 완료일 기본 최신순, 나머지 오름차순
+  if (_visitSort.key === key) _visitSort.dir = _visitSort.dir === 'asc' ? 'desc' : 'asc';
+  else _visitSort = { key: key, dir: defDir };
+  applyVisitFilter();
+};
 
 // cycleHistory 날짜(문자열·Date·Firestore Timestamp) → 'YYYY-MM-DD'
 // S-13 이관 항목의 completedAt/assignedAt은 Timestamp 객체라 .slice()가 없어 깨지므로 정규화
@@ -5384,7 +5393,12 @@ function _renderVisitTable(territories, dateFrom, dateTo) {
     wrap.innerHTML = '<div style="text-align:center;padding:48px;color:#94A3B8;font-size:14px">해당 기간에 방문 완료 기록이 없습니다</div>';
     return;
   }
-  allRows.sort((a, b) => _histDate(b.h.completedAt).localeCompare(_histDate(a.h.completedAt)));
+  const _dir = _visitSort.dir === 'asc' ? 1 : -1;
+  allRows.sort((a, b) => {
+    if (_visitSort.key === 'no')    return (parseInt(a.t.no || 0) - parseInt(b.t.no || 0)) * _dir;
+    if (_visitSort.key === 'cycle') return ((a.h.cycle || 0) - (b.h.cycle || 0)) * _dir;
+    return _histDate(a.h.completedAt).localeCompare(_histDate(b.h.completedAt)) * _dir;
+  });
   const rows = allRows.map(function({ t, h }) {
     const pubs      = (h.publishers || []).join(', ') || '—';
     const assigned  = _histDate(h.assignedAt)  || '—';
@@ -5398,8 +5412,10 @@ function _renderVisitTable(territories, dateFrom, dateTo) {
       '<td style="font-size:12px">' + pubs + '</td>' +
     '</tr>';
   }).join('');
+  const _ind = k => _visitSort.key === k ? (_visitSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+  const _sortTh = (k, label) => '<th style="cursor:pointer;user-select:none;white-space:nowrap" title="클릭하여 정렬" onclick="sortVisitTable(\'' + k + '\')">' + label + '<span style="color:#1B3A6B;font-size:10px">' + _ind(k) + '</span></th>';
   wrap.innerHTML = '<div class="table-scroll-wrap"><table>' +
-    '<thead><tr><th>구역</th><th>이름</th><th>회차</th><th>방식</th><th>기간</th><th>전도인</th></tr></thead>' +
+    '<thead><tr>' + _sortTh('no','구역') + '<th>이름</th>' + _sortTh('cycle','회차') + '<th>방식</th>' + _sortTh('completed','기간') + '<th>전도인</th></tr></thead>' +
     '<tbody>' + rows + '</tbody></table></div>' +
     '<div style="font-size:12px;color:#94A3B8;margin-top:8px;text-align:right">' + allRows.length.toLocaleString() + '건 표시</div>';
 }
