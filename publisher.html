@@ -937,6 +937,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   }
   #ld-terr-list .tc-card,
   #ld-today-list .tc-card { margin-bottom:0 }
+  /* 인라인 배정 패널: 선택 카드 아래 전 컬럼 span (그리드 활성 시) */
+  #ld-today-list > #ld-today-assign-box { grid-column:1 / -1 }
 
   /* 인도자 패널 칩 필터 행 줄바꿈 방지 */
   .ld-chip-row { flex-wrap:nowrap; overflow-x:auto }
@@ -1094,7 +1096,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
 <script>
 (function(){
-  // config.js의 APP_CONFIG.kakaoJsKey 사용 (배포본은 빈 값 — 회중이 자체 키 입력)
+  // config.js의 APP_CONFIG.kakaoJsKey 우선, 없으면 하드코딩 값 사용
   const _kakaoKey = (window.APP_CONFIG && window.APP_CONFIG.kakaoJsKey)
     || '';
   if (typeof Kakao !== 'undefined' && !Kakao.isInitialized() && _kakaoKey) {
@@ -2212,11 +2214,13 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <div class="assign-box" id="ld-today-assign-box" style="display:none">
             <div class="assign-label">👤 배정할 전도인 선택 <span id="ld-today-assign-terr-name" style="color:#1B3A6B;font-weight:600"></span></div>
             <div class="assign-label" style="font-size:11px;color:#94A3B8;font-weight:400;margin-top:-4px">이름을 누르면 선택, 다시 누르면 취소됩니다 (여러 명 가능)</div>
+            <input type="text" id="ld-today-pub-search" placeholder="🔍 전도인 이름 검색" autocomplete="off" oninput="_onTodaySearchInput(this.value)"
+              style="width:100%;box-sizing:border-box;padding:8px 11px;margin:6px 0 8px;border:1px solid #CBD5E1;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
             <div class="assign-btn-row" style="position:sticky;top:0;z-index:2;background:#fff;padding-bottom:6px">
               <button class="assign-confirm-btn" id="ld-today-confirm-btn" disabled onclick="confirmTodayAssign()">전도인을 선택하세요</button>
               <button class="assign-unassign-btn" id="ld-today-change-btn" style="display:none" onclick="changeTodayAssign()">🔄 배정 변경</button>
             </div>
-            <div class="pub-chip-list" id="ld-today-pub-chips"></div>
+            <div class="pub-chip-list" id="ld-today-pub-chips" style="max-height:48vh;overflow-y:auto"></div>
           </div>
         </div>
 
@@ -3056,7 +3060,7 @@ function startPubMeetingListener(pubName) {
     const asgn      = (data.pubAssignments || {})[pubName];
     const noInput   = document.getElementById('no-input');
     if (asgn) {
-      // 배정 완료 → 번호 채우고 start 상태로
+      // 배정 완료 → 번호 채우고 start 상태로 (자동 배정: assigned 플래그)
       if (noInput && !noInput.value) noInput.value = String(asgn.terrNo);
       setButtonState('start', asgn.terrNo, { assigned: true });
     } else if (attendees.includes(pubName)) {
@@ -6009,6 +6013,9 @@ let _todayDayOfWeek   = -1;        // 오늘 요일 (0=일~6=토)
 let _todayAutoReturn  = true;      // 자정 자동 반납 여부
 let _todaySelectedId  = null;      // 예정 구역 중 선택된 구역
 let _todaySelectedPubs = [];
+let _todayChipData = null;      // 출석자 우선 정렬 결과 캐시 (검색 시 재사용)
+let _todaySearchQuery = '';     // 전도인 검색어
+let _todaySearchTimer = null;   // 검색 debounce 타이머
 
 async function loadTodaySchedule() {
   try {
@@ -6083,9 +6090,12 @@ function renderTodaySection() {
 
   // 예정 0개면 예정 목록·자동반납 영역 숨기고 미배정 카드 추가 안내만 강조
   const listEl = document.getElementById('ld-today-list');
+  // 인라인 배정 패널을 리스트 밖으로 분리 (innerHTML 재빌드에 파괴 방지)
+  const _abox = document.getElementById('ld-today-assign-box');
+  if (_abox && _abox.parentElement === listEl) listEl.insertAdjacentElement('afterend', _abox);
   if (!todayTerrs.length) {
     listEl.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px;background:#F8FAFC;border-radius:8px;border:1.5px dashed #E2E8F0"><strong style="color:#1B3A6B">➕ 구역 추가</strong> 버튼을 눌러 오늘 사용할 구역을 선택하세요</div>';
-    document.getElementById('ld-today-assign-box').style.display = 'none';
+    _hideTodayAssignBox();
     _refreshUnallocatedCount();
     _renderLdUnallocCatSelect();
     if (typeof _updateAtpCount === 'function') _updateAtpCount();
@@ -6102,7 +6112,7 @@ function renderTodaySection() {
     const hasRev = Object.values(vm).some(v => v?.code === 'revisit');
     const assigned = (t.assignedPublishers || []).join(', ') || '미배정';
     const isSel = _todaySelectedId === t.id;
-    return `<div class="tc-card today${isSel ? ' selected' : ''}" onclick="selectTodayTerr('${t.id}')">
+    return `<div class="tc-card today${isSel ? ' selected' : ''}" data-tid="${t.id}" onclick="selectTodayTerr('${t.id}')">
       <div class="tc-top">
         <span class="tc-no">${t.no}</span>
         <span class="tc-name">${t.name}</span>
@@ -6122,12 +6132,12 @@ function renderTodaySection() {
     </div>`;
   }).join('');
 
-  // 선택된 구역 배정박스 유지
+  // 선택된 구역 배정박스 유지 (선택 카드 아래로 재배치)
   if (_todaySelectedId && todayTerrs.find(t => t.id === _todaySelectedId)) {
     _showTodayAssignSection();
   } else {
     _todaySelectedId = null;
-    document.getElementById('ld-today-assign-box').style.display = 'none';
+    _hideTodayAssignBox();
   }
 
   // 자동 반납 체크박스 동기화
@@ -6146,22 +6156,36 @@ function renderTodaySection() {
 window.selectTodayTerr = function(id) {
   _todaySelectedId = _todaySelectedId === id ? null : id;
   _todaySelectedPubs = [];
-  renderTodaySection();
+  _todaySearchQuery = '';
+  // 전체 목록 재렌더 대신 선택 표시만 토글 (모바일 성능)
+  document.querySelectorAll('#ld-today-list .tc-card').forEach(c => {
+    c.classList.toggle('selected', c.getAttribute('data-tid') === _todaySelectedId);
+  });
   if (_todaySelectedId) _showTodayAssignSection();
-  else document.getElementById('ld-today-assign-box').style.display = 'none';
+  else _hideTodayAssignBox();
 };
 
 async function _showTodayAssignSection() {
   const t = _ldAllTerritories.find(t => t.id === _todaySelectedId);
   if (!t) return;
-  document.getElementById('ld-today-assign-box').style.display = 'block';
+  const box = document.getElementById('ld-today-assign-box');
+  // 단일 패널을 선택된 카드 바로 아래로 이동 (복제 아님)
+  const cardEl = document.querySelector(`#ld-today-list .tc-card[data-tid="${_todaySelectedId}"]`);
+  if (cardEl && box) cardEl.insertAdjacentElement('afterend', box);
+  if (box) box.style.display = 'block';
   document.getElementById('ld-today-assign-terr-name').textContent = `(${t.no}번 ${t.name})`;
+  // 검색어 초기화
+  _todaySearchQuery = '';
+  const searchEl = document.getElementById('ld-today-pub-search');
+  if (searchEl) searchEl.value = '';
   _todaySelectedPubs = [...(t.assignedPublishers || [])];
   document.getElementById('ld-today-change-btn').style.display =
     _todaySelectedPubs.length ? 'inline-block' : 'none';
 
   // 오늘 출석 신청자 로드 (이 탭에서 진입했을 때 비어있을 수 있어 보장)
   if (!_mtgAttendees.length) { try { await _loadMtgAttendees(); } catch(e){} }
+  // 비동기 로드 중 사용자가 다른 카드 선택/해제했으면 중단
+  if (_todaySelectedId !== t.id) return;
   const attSet = new Set(_mtgAttendees || []);
   // 오늘 다른 구역에 이미 배정된 전도인 맵 (이름 → "12번" 등). 현재 편집 카드는 제외.
   const assignedMap = {};
@@ -6180,32 +6204,59 @@ async function _showTodayAssignSection() {
     if (ra !== rb) return ra - rb;
     return (a.name || '').localeCompare(b.name || '', 'ko-KR');
   });
-  const chip = p => {
-    const isSel = _todaySelectedPubs.includes(p.name);
-    const isSo  = p.permission === '봉사감독자';
-    const isAtt = attSet.has(p.name);
-    const asg   = assignedMap[p.name];
-    const nm = p.name.replace(/'/g, "\\'");
-    const tail = asg ? ` <span style="font-size:10px;opacity:0.8">(${asg})</span>` : '';
-    return `<button class="pub-chip${isSo ? ' so' : ''}${isAtt && !asg ? ' attended' : ''}${asg ? ' assigned-elsewhere' : ''}${isSel ? ' selected' : ''}"
-      data-name="${p.name}" onclick="toggleTodayPub('${nm}')">${isAtt && !asg ? '✋ ' : ''}${p.name}${isSo ? ' ★' : ''}${tail}</button>`;
+  // 출석자 우선 정렬 결과를 캐시 — 검색 시 재계산 없이 필터만 (성능)
+  _todayChipData = {
+    attSet, assignedMap,
+    freeAtt:  sorted.filter(p => !isAssigned(p.name) && attSet.has(p.name)),
+    freeOth:  sorted.filter(p => !isAssigned(p.name) && !attSet.has(p.name)),
+    assigned: sorted.filter(p => isAssigned(p.name))
   };
-  const freeAtt  = sorted.filter(p => !isAssigned(p.name) && attSet.has(p.name));
-  const freeOth  = sorted.filter(p => !isAssigned(p.name) && !attSet.has(p.name));
-  const assigned = sorted.filter(p => isAssigned(p.name));
-  let html = '';
-  if (freeAtt.length) {
-    html += `<div class="pub-chip-attend-divider">✋ 오늘 참여 신청 (${freeAtt.length}명)</div>`;
-    html += freeAtt.map(chip).join('');
-    if (freeOth.length) html += `<div class="pub-chip-attend-divider">그 외 전도인</div>`;
-  }
-  html += freeOth.map(chip).join('');
-  if (assigned.length) {
-    html += `<div class="pub-chip-attend-divider">이미 배정됨 (${assigned.length}명) — 눌러서 추가 배정 가능</div>`;
-    html += assigned.map(chip).join('');
-  }
-  document.getElementById('ld-today-pub-chips').innerHTML = html;
+  _renderTodayChips();
   _updateTodayConfirmBtn();
+}
+
+// 칩 1개 렌더 (캐시된 _todayChipData 기준)
+function _todayChip(p) {
+  const d = _todayChipData;
+  const isSel = _todaySelectedPubs.includes(p.name);
+  const isSo  = p.permission === '봉사감독자';
+  const isAtt = d.attSet.has(p.name);
+  const asg   = d.assignedMap[p.name];
+  const nm = p.name.replace(/'/g, "\\'");
+  const tail = asg ? ` <span style="font-size:10px;opacity:0.8">(${asg})</span>` : '';
+  return `<button class="pub-chip${isSo ? ' so' : ''}${isAtt && !asg ? ' attended' : ''}${asg ? ' assigned-elsewhere' : ''}${isSel ? ' selected' : ''}"
+    data-name="${p.name}" onclick="toggleTodayPub('${nm}')">${isAtt && !asg ? '✋ ' : ''}${p.name}${isSo ? ' ★' : ''}${tail}</button>`;
+}
+
+// 칩 목록 렌더 (검색어 필터 적용, 출석자 우선 그룹 순서 유지)
+function _renderTodayChips() {
+  const d = _todayChipData; if (!d) return;
+  const q = (_todaySearchQuery || '').trim().toLowerCase();
+  const flt = arr => q ? arr.filter(p => (p.name || '').toLowerCase().includes(q)) : arr;
+  const fa = flt(d.freeAtt), fo = flt(d.freeOth), asg = flt(d.assigned);
+  const div = txt => `<div class="pub-chip-attend-divider">${txt}</div>`;
+  let html = '';
+  if (fa.length) { html += div(`✋ 오늘 참여 신청 (${fa.length}명)`); html += fa.map(_todayChip).join(''); }
+  if (fo.length) { if (fa.length) html += div('그 외 전도인'); html += fo.map(_todayChip).join(''); }
+  if (asg.length) { html += div(`이미 배정됨 (${asg.length}명) — 눌러서 추가 배정 가능`); html += asg.map(_todayChip).join(''); }
+  if (!fa.length && !fo.length && !asg.length) html = '<div style="padding:12px;text-align:center;color:#94A3B8;font-size:12px">검색 결과 없음</div>';
+  document.getElementById('ld-today-pub-chips').innerHTML = html;
+}
+
+// 검색 입력 (debounce 120ms — 모바일 성능)
+window._onTodaySearchInput = function(val) {
+  _todaySearchQuery = val;
+  if (_todaySearchTimer) clearTimeout(_todaySearchTimer);
+  _todaySearchTimer = setTimeout(_renderTodayChips, 120);
+};
+
+// 배정 패널 숨김 + 리스트 밖 원위치로 복귀 (innerHTML 재빌드 안전)
+function _hideTodayAssignBox() {
+  const box = document.getElementById('ld-today-assign-box');
+  if (!box) return;
+  box.style.display = 'none';
+  const wrap = document.getElementById('ld-today-list');
+  if (wrap && box.parentElement === wrap) wrap.insertAdjacentElement('afterend', box);
 }
 
 // 확정 버튼 라벨/활성 상태 갱신 (선택 인원·이름 표시)
@@ -6245,7 +6296,7 @@ window.confirmTodayAssign = async function() {
     await _loadLdData();
     renderTodaySection();
     renderLdTerritoryList();
-    document.getElementById('ld-today-assign-box').style.display = 'none';
+    _hideTodayAssignBox();
   } catch(e) { alert('배정 오류: ' + e.message); }
 };
 
@@ -6302,6 +6353,12 @@ async function _retrieveAssignment(id, { notify = true } = {}) {
     try {
       const today = new Date().toISOString().slice(0, 10);
       const meetRef = doc(db, 'meetings', today);
+      const fields = {};
+      prevPubs.forEach(nm => {
+        // 이 전도인의 pubAssignment가 '이 구역(id)'을 가리킬 때만 제거 (다른 구역 배정 보호)
+        fields['pubAssignments.' + nm] = deleteField();
+      });
+      // 다른 구역으로 재배정된 경우를 보호하려면 현재 맵을 읽어 대상 구역 일치 확인
       const snap = await getDoc(meetRef);
       const pa = (snap.exists() && snap.data().pubAssignments) ? snap.data().pubAssignments : {};
       const toDelete = {};
@@ -6411,7 +6468,7 @@ window.unassignTodayTerr = async function() {
     await _loadLdData();
     renderTodaySection();
     renderLdTerritoryList();
-    document.getElementById('ld-today-assign-box').style.display = 'none';
+    _hideTodayAssignBox();
   } catch(e) { alert('오류: ' + e.message); }
 };
 
@@ -6434,7 +6491,7 @@ window.returnTodayTerr = async function(id) {
     if (_todaySelectedId === id) {
       _todaySelectedId = null;
       _todaySelectedPubs = [];
-      document.getElementById('ld-today-assign-box').style.display = 'none';
+      _hideTodayAssignBox();
     }
     renderTodaySection();
     renderLdTerritoryList();
