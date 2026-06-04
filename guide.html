@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인도자 교육 가이드 — 전자 구역카드</title>
+<style>
+  :root{
+    --navy:#1B3A6B; --navy2:#2E5A9E; --green:#166534; --green-bg:#F0FDF4; --green-bd:#86EFAC;
+    --amber:#92400E; --amber-bg:#FFFBEB; --amber-bd:#FDE68A;
+    --ink:#1E293B; --gray:#64748B; --line:#E2E8F0; --soft:#F8FAFC;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    color:var(--ink); background:#EEF2F7; line-height:1.65; -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:880px; margin:0 auto; background:#fff; min-height:100vh; box-shadow:0 0 40px rgba(0,0,0,0.06)}
+  header.hero{
+    background:linear-gradient(135deg,var(--navy),var(--navy2)); color:#fff; padding:30px 24px 26px;
+  }
+  header.hero .eyebrow{font-size:13px; opacity:.85; letter-spacing:.5px; margin-bottom:6px}
+  header.hero h1{margin:0 0 8px; font-size:26px; font-weight:800; letter-spacing:-.3px}
+  header.hero p{margin:0; font-size:14px; opacity:.92; line-height:1.6}
+
+  /* 목차 */
+  nav.toc{background:var(--soft); border-bottom:1px solid var(--line); padding:14px 24px}
+  nav.toc strong{display:block; font-size:12px; color:var(--gray); margin-bottom:8px; letter-spacing:.5px}
+  nav.toc a{
+    display:inline-block; margin:0 6px 6px 0; padding:6px 12px; border:1px solid var(--line); border-radius:20px;
+    font-size:13px; color:var(--navy); text-decoration:none; background:#fff;
+  }
+  nav.toc a:hover{background:var(--navy); color:#fff; border-color:var(--navy)}
+
+  main{padding:8px 24px 60px}
+  section{padding:24px 0; border-bottom:1px solid var(--line)}
+  section:last-child{border-bottom:none}
+  h2{font-size:20px; font-weight:800; color:var(--navy); margin:6px 0 4px; display:flex; align-items:center; gap:9px; scroll-margin-top:14px}
+  h2 .num{background:var(--navy); color:#fff; width:30px; height:30px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0}
+  h3{font-size:16px; font-weight:700; color:var(--ink); margin:22px 0 8px}
+  .lead{color:var(--gray); font-size:14px; margin:4px 0 4px}
+  p{font-size:14.5px}
+
+  /* 단계 리스트 */
+  ol.steps{counter-reset:step; list-style:none; padding:0; margin:12px 0}
+  ol.steps>li{
+    position:relative; padding:12px 14px 12px 50px; margin-bottom:10px; background:var(--soft);
+    border:1px solid var(--line); border-radius:12px; font-size:14.5px;
+  }
+  ol.steps>li::before{
+    counter-increment:step; content:counter(step);
+    position:absolute; left:12px; top:11px; width:26px; height:26px; border-radius:50%;
+    background:var(--navy); color:#fff; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps>li b{color:var(--navy)}
+
+  ul.plain{padding-left:20px; margin:8px 0; font-size:14.5px}
+  ul.plain li{margin-bottom:5px}
+
+  /* 칩(버튼 표기) */
+  .btnchip{display:inline-block; background:#EFF3FB; border:1px solid #C7D6EE; color:var(--navy); border-radius:7px; padding:1px 8px; font-size:13px; font-weight:600; white-space:nowrap}
+
+  /* 콜아웃 */
+  .note{border-radius:12px; padding:13px 15px; margin:14px 0; font-size:14px; line-height:1.6}
+  .note.tip{background:var(--green-bg); border:1px solid var(--green-bd)}
+  .note.tip b{color:var(--green)}
+  .note.warn{background:var(--amber-bg); border:1px solid var(--amber-bd)}
+  .note.warn b{color:var(--amber)}
+  .note .ic{font-weight:800; margin-right:6px}
+
+  /* 역할 표 */
+  table.roles{width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px}
+  table.roles th,table.roles td{border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top}
+  table.roles th{background:var(--navy); color:#fff; font-weight:600; white-space:nowrap}
+  table.roles tr:nth-child(even) td{background:var(--soft)}
+
+  .pill{display:inline-block; font-size:12px; font-weight:700; padding:2px 9px; border-radius:20px}
+  .pill.green{background:var(--green-bg); color:var(--green); border:1px solid var(--green-bd)}
+  .pill.amber{background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-bd)}
+
+  footer{padding:22px 24px 40px; color:var(--gray); font-size:12.5px; text-align:center; line-height:1.7}
+  .printbtn{
+    display:inline-block; margin-top:6px; background:var(--navy); color:#fff; border:none; border-radius:9px;
+    padding:9px 18px; font-size:14px; cursor:pointer; font-family:inherit;
+  }
+
+  @media (max-width:560px){
+    header.hero h1{font-size:22px}
+    main{padding:8px 16px 50px}
+    nav.toc{padding:12px 16px}
+  }
+  @media print{
+    body{background:#fff}
+    .wrap{box-shadow:none; max-width:100%}
+    nav.toc,.printbtn{display:none}
+    header.hero{background:var(--navy)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+    section{break-inside:avoid; border-bottom:1px solid #ccc}
+    h2{break-after:avoid}
+    ol.steps>li,.note,table.roles{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">전자 구역카드 시스템 · 인도자용</div>
+    <h1>인도자 교육 가이드</h1>
+    <p>호별봉사·전시대봉사 인도자가 시스템을 운용하고 전도인을 안내하기 위한 단계별 안내서입니다.<br>이름·암호 외에 별도 설치나 가입은 필요하지 않습니다.</p>
+  </header>
+
+  <nav class="toc">
+    <strong>목차</strong>
+    <a href="#basic">① 공통 기초</a>
+    <a href="#house">② 호별봉사 인도자</a>
+    <a href="#cart">③ 전시대봉사 인도자</a>
+    <a href="#publisher">④ 전도인에게 안내할 것</a>
+    <a href="#faq">⑤ 자주 묻는 질문</a>
+  </nav>
+
+  <main>
+
+    <!-- ① 공통 기초 -->
+    <section id="basic">
+      <h2><span class="num">1</span> 공통 기초</h2>
+      <p class="lead">먼저 시스템의 큰 그림과 인도자 진입 방법을 익힙니다.</p>
+
+      <h3>시스템 한눈에 보기</h3>
+      <ul class="plain">
+        <li><b>전도인</b>은 이름(또는 구역번호)으로 들어와 배정받은 구역카드를 열고 방문 결과를 기록합니다.</li>
+        <li><b>인도자</b>는 "배정 패널"에서 오늘 쓸 구역을 고르고 전도인에게 구역을 배정합니다.</li>
+        <li>배정 결과는 <b>실시간으로</b> 전도인 화면에 구역 번호로 나타납니다. (종이·전화 없이 현장에서 바로)</li>
+      </ul>
+
+      <h3>인도자 진입 방법</h3>
+      <ol class="steps">
+        <li>앱 로그인 화면에서 <b>이름을 입력</b>합니다.</li>
+        <li><span class="btnchip">배정 패널만 열기</span> 버튼을 누릅니다. (구역카드 화면에서는 하단 <span class="btnchip">📋</span> 버튼으로도 들어옵니다)</li>
+        <li><b>암호</b>를 입력합니다 — 회중 설정에 따라 둘 중 하나입니다.
+          <ul class="plain" style="margin-top:6px">
+            <li><b>개인 PIN 방식</b>: 처음 한 번 본인 PIN(4자리 이상)을 직접 정하고, 이후 그 PIN으로 들어옵니다.</li>
+            <li><b>공용 암호 방식</b>: 관리자가 정한 하나의 암호를 모든 인도자가 공유해 사용합니다.</li>
+          </ul>
+        </li>
+      </ol>
+      <div class="note tip"><span class="ic">💡</span><b>팁</b> — 인도자 패널 상단에 <b>구역 배정 / 오늘의 봉사 / 사용법</b> 탭이 보이면 정상 진입된 것입니다. (봉사감독자는 <b>구역 비활성화</b> 탭이 추가로 보입니다.)</div>
+
+      <h3>역할별 차이 (인도자가 알아둘 것)</h3>
+      <table class="roles">
+        <tr><th>역할</th><th>진입</th><th>할 수 있는 일</th></tr>
+        <tr><td>전도인</td><td>이름/구역번호</td><td>배정받은 구역카드 열람·방문 기록</td></tr>
+        <tr><td>인도자 · 구역의종</td><td>이름 + 암호</td><td>호별봉사 구역 추가·배정·반납, 전시대봉사 팀 편성</td></tr>
+        <tr><td>봉사감독자</td><td>이름 + 암호</td><td>인도자 기능 + 구역 비활성화/활성화</td></tr>
+        <tr><td>관리자</td><td>이름 + 암호</td><td>전체 기능 + 설정·권한 관리</td></tr>
+      </table>
+    </section>
+
+    <!-- ② 호별봉사 -->
+    <section id="house">
+      <h2><span class="num">2</span> 호별봉사 인도자</h2>
+      <p class="lead">"오늘 쓸 구역 준비 → 현장에서 출석 받고 배정"의 두 단계로 운용합니다.</p>
+
+      <h3>준비 — 오늘 쓸 구역 담기 (구역 배정 탭)</h3>
+      <ol class="steps">
+        <li><span class="btnchip">구역 배정</span> 탭을 엽니다. 관리자가 그 요일에 미리 배분해 둔 구역이 <span class="pill green">초록 카드</span>로 보입니다.</li>
+        <li>구역이 부족하면 <span class="btnchip">➕ 구역 추가</span>를 눌러 팝업에서 구역을 찾습니다.
+          <ul class="plain" style="margin-top:6px">
+            <li><b>드롭다운</b>: 상태(미배정/전체/미완료)·유형(아파트·상가·주택)·회차·정렬(오래된 순 등)</li>
+            <li><b>칩 필터</b>: ⚠ 동행필수 없는 구역만 · ⏰ 재방문 세대 있는 구역 · 🕐 6개월+ 미사용</li>
+            <li><b>검색</b>: 구역 번호·이름·회차로 바로 찾기</li>
+          </ul>
+        </li>
+        <li>원하는 구역의 <span class="btnchip">+ 추가</span>를 누르면 오늘 배당 목록에 들어갑니다.</li>
+      </ol>
+      <div class="note tip"><span class="ic">🔁</span><b>자동 반납</b> — "자정에 자동 반납"이 켜져 있으면 그날 쓴 구역은 자정에 자동으로 미할당으로 돌아갑니다. 다음 주에도 같은 구역을 유지하려면 이 체크를 해제하세요.</div>
+
+      <h3>현장에서 — 오늘의 봉사 3단계</h3>
+      <p>모임 장소에서 <span class="btnchip">오늘의 봉사</span> 탭을 열고 ① 출석 → ② 구역 선택 → ③ 배정 순으로 진행합니다.</p>
+      <ol class="steps">
+        <li><b>① 출석 확인</b> — 전도인이 자기 폰에서 <span class="btnchip">✋ 오늘의 봉사 참여 신청</span>을 누르면 <b>즉시</b> 출석 목록에 뜹니다. 신청 못 한 사람은 이름을 직접 입력해 <span class="btnchip">추가</span>할 수 있습니다.</li>
+        <li><b>② 구역 선택</b> — 준비 단계에서 담아둔 구역들 중 오늘 쓸 구역을 탭해 고릅니다. (여러 개 가능)</li>
+        <li><b>③ 배정</b> — 각 구역 카드에서 전도인을 선택하고 <span class="btnchip">✅ 배정 확정</span>을 누릅니다. 확정하면 전도인 화면에 구역 번호가 자동으로 나타납니다.</li>
+      </ol>
+
+      <h3>전도인 배정 패널 사용법 (빠른 배정)</h3>
+      <p><span class="btnchip">구역 배정</span> 탭에서 구역 카드를 누르면, <b>그 카드 바로 아래</b>에 전도인 선택 패널이 펼쳐집니다.</p>
+      <ul class="plain">
+        <li><b>오늘 참여 신청한 전도인이 맨 위에 강조(✋)</b>되어 나옵니다 — 보통 이분들부터 배정합니다.</li>
+        <li>그 아래 <b>그 외 전도인</b>, 맨 아래 <b>이미 배정됨</b> 순서입니다.</li>
+        <li>이름이 많으면 패널 위 <span class="btnchip">🔍 이름 검색</span>에 두 글자만 쳐도 바로 좁혀집니다.</li>
+        <li>이름을 누르면 선택, 다시 누르면 취소됩니다(여러 명 가능). <b>한 구역에 최대 6명</b> — 앞 1·2번째가 공식 배정, 3번째부터는 "함께 활동중"으로 표시됩니다.</li>
+      </ul>
+
+      <h3>배정 변경·구역 반납</h3>
+      <ul class="plain">
+        <li><b>전도인 바꾸기</b>: 패널에서 선택을 해제/추가하고 다시 <span class="btnchip">배정 확정</span>.</li>
+        <li><b>구역 반납</b>: 구역 카드의 <span class="btnchip">반납</span> 버튼을 누르면 그 구역이 미할당으로 돌아갑니다.</li>
+        <li>변경·반납은 전도인 화면에 <b>실시간 반영</b>됩니다.</li>
+      </ul>
+      <div class="note warn"><span class="ic">⚠</span><b>이미 방문 기록이 있는 구역</b>을 회수할 때는 기록이 보존되며 "미완료" 상태로 남습니다. 전도인이 회수 사실을 모르고 방문하지 않도록, 회수 시 전도인에게도 알려 주세요.</div>
+    </section>
+
+    <!-- ③ 전시대봉사 -->
+    <section id="cart">
+      <h2><span class="num">3</span> 전시대봉사 인도자</h2>
+      <p class="lead">전도인의 요일 신청을 받아 팀을 편성하고 확정합니다.</p>
+
+      <h3>전도인은 이렇게 신청합니다</h3>
+      <ul class="plain">
+        <li>이름을 입력하면 메인 화면에 <b>전시대봉사 일정</b>이 나타납니다.</li>
+        <li>참여할 <b>요일 토글을 켜면</b> 신청됩니다.</li>
+        <li>신청·취소는 <b>봉사 시작 3시간 전</b>까지 자유롭게 가능합니다.</li>
+      </ul>
+
+      <h3>인도자의 팀 편성</h3>
+      <ol class="steps">
+        <li>전시대봉사 <b>관리(팀 편성)</b> 화면으로 들어갑니다.</li>
+        <li>요일별 신청자 명단을 보고 <b>팀(A·B·C…)과 슬롯(인원)</b>에 전도인을 배치하고, 필요하면 <b>팀 담당자</b>를 지정합니다.</li>
+        <li>편성을 마치면 <b>확정</b>합니다. 상태가 <span class="pill amber">팀 편성중</span> → <span class="pill green">팀 확정</span>으로 바뀝니다.</li>
+      </ol>
+
+      <h3>마감 전후 / 전도인 화면</h3>
+      <ul class="plain">
+        <li><b>마감 전</b>(편성중): 전도인은 신청·취소 가능, 인도자는 실시간으로 신청 현황을 봅니다.</li>
+        <li><b>마감 후</b>(시작 3시간 이내): 새 신청은 막히고, 필요한 경우 취소 요청만 가능합니다.</li>
+        <li><b>확정 후</b>: 전도인은 "내 배정"에서 <b>팀·시간·동반자·장소</b>를 확인합니다.</li>
+      </ul>
+      <div class="note tip"><span class="ic">💡</span><b>팁</b> — 편성 중에도 신청이 들어올 수 있으니, 마감 시간 직전에 명단을 한 번 더 확인하고 확정하면 좋습니다.</div>
+    </section>
+
+    <!-- ④ 전도인 안내 -->
+    <section id="publisher">
+      <h2><span class="num">4</span> 전도인에게 안내할 것</h2>
+      <p class="lead">인도자가 전도인에게 알려주면 좋은 핵심 사용법입니다.</p>
+      <ul class="plain">
+        <li><b>참여 신청</b>: 모임 장소 도착 → 이름 입력 → <span class="btnchip">✋ 오늘의 봉사 참여 신청</span>.</li>
+        <li><b>구역 받기</b>: 배정되면 구역 번호가 자동 표시 → <span class="btnchip">🗺 구역카드 바로 열기</span>. (직접 번호+이름으로 열 수도 있음)</li>
+        <li><b>방문 결과</b>: 세대 옆 <span class="btnchip">✅ 방문 완료</span> → 결과 선택(대화함·아무도 없음 등) → 다음 세대로 자동 이동.</li>
+        <li><b>길 안내</b>: <span class="btnchip">🧭 길 안내</span> → 주소 탭 → 지도 앱(T맵·네이버·카카오) 선택 → 안내 시작.</li>
+        <li><b>부재 방문</b>: 호별 1회전을 마치면 <span class="btnchip">✓ 호별 완료 → 부재1</span>로 전환해 부재 세대만 다시 돕니다.</li>
+        <li><b>구역 완료</b>: 모두 마치면 <span class="btnchip">✓ 구역 완료</span> 신청 → 인도자/관리자가 확인 처리합니다.</li>
+      </ul>
+      <div class="note tip"><span class="ic">📖</span><b>앱 안의 "사용법"</b>에 더 자세한 설명서가 있습니다. 처음 쓰는 전도인에게는 이 설명서를 한 번 같이 보여주면 좋습니다.</div>
+    </section>
+
+    <!-- ⑤ FAQ -->
+    <section id="faq">
+      <h2><span class="num">5</span> 자주 묻는 질문</h2>
+
+      <h3>전도인 화면에 구역 번호가 안 떠요</h3>
+      <p>아직 배정이 확정되지 않았을 수 있습니다. 인도자가 <span class="btnchip">✅ 배정 확정</span>을 눌렀는지 확인하세요. 확정 후에는 전도인 화면에 자동으로 나타납니다.</p>
+
+      <h3>오늘의 봉사 ② 구역 선택에 구역이 안 보여요</h3>
+      <p>먼저 <span class="btnchip">구역 배정</span> 탭에서 <span class="btnchip">➕ 구역 추가</span>로 오늘 쓸 구역을 담아야 ② 단계에 나타납니다.</p>
+
+      <h3>PIN을 잊었어요</h3>
+      <p>개인 PIN 방식이라면 관리자에게 초기화를 요청하세요. 공용 암호 방식이라면 관리자가 공유한 암호를 다시 확인하세요.</p>
+
+      <h3>지난주 구역을 계속 쓰고 싶어요</h3>
+      <p>구역 배정 탭의 <b>"자정에 자동 반납"</b> 체크를 해제하면 그 구역이 다음 주에도 유지됩니다.</p>
+
+      <h3>혼자 가는 자매에게 안전한 구역만 주고 싶어요</h3>
+      <p>구역 추가 팝업에서 <b>"⚠ 동행필수 없는 구역만"</b> 칩을 켜면 동행이 필요 없는 구역만 골라 담을 수 있습니다.</p>
+    </section>
+
+  </main>
+
+  <footer>
+    <button class="printbtn" onclick="window.print()">🖨 이 가이드 인쇄 / PDF 저장</button>
+    <div style="margin-top:14px">전자 구역카드 시스템 · 인도자 교육 가이드<br>회중 상황에 맞게 인쇄해 교육 자료로 사용하실 수 있습니다.</div>
+  </footer>
+
+</div>
+</body>
+</html>
