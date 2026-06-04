@@ -1310,7 +1310,7 @@ function _adpSort(cards, opts) {
       if (aU !== bU) return aU ? -1 : 1;
     }
     if (opts.priOldest) {
-      const diff = getMs(a.lastAssignedDate) - getMs(b.lastAssignedDate);
+      const diff = _terrLastDoneMs(a) - _terrLastDoneMs(b);
       if (diff !== 0) return diff;
     }
     if (opts.priLowrate) {
@@ -1362,8 +1362,8 @@ function _calcAutoDist() {
     if (t.completionStatus === 'complete') return false;
     if (_ADP_EXCLUDE_CATS.has(t.category || '')) return false;
     if (t.personalAssignee) return false;
-    // 개월 수 필터: lastCompletedDate(완료일) 우선, 없으면 lastAssignedDate(배정일) 기준
-    if (_monthCutoff > 0 && _getDateMs(t.lastCompletedDate || t.lastAssignedDate) > _monthCutoff) return false;
+    // 개월 수 필터: 실제 마지막 완료일(백필 lastCompletedDate) 기준
+    if (_monthCutoff > 0 && _terrLastDoneMs(t) > _monthCutoff) return false;
     return true;
   });
 
@@ -1691,9 +1691,7 @@ function renderSchedGallery() {
     // 완료 구역: 현재 요일 배분된 카드는 유지, 나머지는 필터 적용
     if (!existing.has(t.id) && _schedGalStatusFilter === 'incomplete' && t.completionStatus === 'complete') return false;
     if (gMonthCutoff > 0 && !existing.has(t.id)) {
-      const d = t.lastCompletedDate || t.lastAssignedDate;
-      const ms = d ? (d.toDate ? d.toDate().getTime() : new Date(d).getTime()) : 0;
-      if (ms > gMonthCutoff) return false;
+      if (_terrLastDoneMs(t) > gMonthCutoff) return false;
     }
     if (rawGq) {
       if (gParsedCycle !== null) {
@@ -1723,11 +1721,7 @@ function renderSchedGallery() {
   }
 
   // 배정된 카드 맨 앞으로, 그 안에서 선택한 정렬 적용
-  const getMs = t => {
-    const d = t.lastCompletedDate || t.lastAssignedDate;
-    if (!d) return 0;
-    return d.toDate ? d.toDate().getTime() : new Date(d).getTime();
-  };
+  const getMs = t => _terrLastDoneMs(t); // 실제 마지막 완료일(백필 lastCompletedDate) 기준 통일
   const effectiveGsort = (gMonthVal > 0 && gsort === 'no') ? 'old' : gsort;
   const cmp = (a, b) => {
     if (effectiveGsort === 'no')       return (parseInt(a.no)||0)-(parseInt(b.no)||0);
@@ -1854,9 +1848,7 @@ function renderUnallocatedList() {
     if (_schedStatusFilter === 'incomplete' && t.completionStatus === 'complete') return false;
     if (_schedCatFilter && (t.category||'') !== _schedCatFilter) return false;
     if (monthCutoff > 0) {
-      const d = t.lastCompletedDate || t.lastAssignedDate;
-      const ms = d ? (d.toDate ? d.toDate().getTime() : new Date(d).getTime()) : 0;
-      if (ms > monthCutoff) return false;
+      if (_terrLastDoneMs(t) > monthCutoff) return false;
     }
     if (rawQ) {
       if (parsedCycle !== null) {
@@ -1868,11 +1860,7 @@ function renderUnallocatedList() {
     }
     return true;
   });
-  const getMs = t => {
-    const d = t.lastCompletedDate || t.lastAssignedDate;
-    if (!d) return 0;
-    return d.toDate ? d.toDate().getTime() : new Date(d).getTime();
-  };
+  const getMs = t => _terrLastDoneMs(t); // 실제 마지막 완료일(백필 lastCompletedDate) 기준 통일
   const effectiveSort = (monthVal > 0 && sort === 'no') ? 'old' : sort;
   const _sortCmp = (a,b) => {
     if (effectiveSort === 'old') return getMs(a)-getMs(b);
@@ -1928,7 +1916,8 @@ function renderUnallocatedList() {
         filtered.map(t => {
           const { bg, cl } = catColor(t.category);
           const cycleStr = `${t.cycle || 1}회차`;
-          const dateStr  = _fmtShort(t.lastCompletedDate || t.lastAssignedDate);
+          const _dd = _terrLastDoneDate(t);
+          const dateStr  = _dd ? _fmtShort(_dd) : '';
           const metaStr  = dateStr ? `${cycleStr} · ${dateStr}` : cycleStr;
           return `<div class="ssi-gal-tile" onclick="addSchedTerr('${t.id}')">
             <div class="sgal-header">
@@ -1950,8 +1939,8 @@ function renderUnallocatedList() {
           ? '<span class="ssi-dot ssi-dot-active" title="진행중"></span>'
           : '<span class="ssi-dot ssi-dot-idle" title="미배정"></span>';
         const cycleStr = `${t.cycle || 1}회차`;
-        const dateRaw  = t.lastCompletedDate || t.lastAssignedDate;
-        const dateStr  = _fmtShort(dateRaw);
+        const _dd = _terrLastDoneDate(t);
+        const dateStr  = _dd ? _fmtShort(_dd) : '';
         const metaStr  = dateStr ? `${cycleStr} · ${dateStr}` : cycleStr;
         return `<div class="sched-search-item" onclick="addSchedTerr('${t.id}')">
           ${stDot}
