@@ -41,6 +41,132 @@ window._deleteTargetId = null;
 const SESSION_KEY     = 'jwcard_admin_session';
 const SESSION_HOURS   = 4;  // 세션 유효 시간
 
+const DESIGNER_SESSION_KEY = 'jwcard_designer_session';
+
+function _parseDesignerExpiry(value) {
+  if (!value) return 0;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const t = new Date(value).getTime();
+    return Number.isFinite(t) ? t : 0;
+  }
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (typeof value.seconds === 'number') return value.seconds * 1000;
+  return 0;
+}
+
+function _designerNameMatch(name) {
+  const v = String(name || '').trim().toLowerCase();
+  return v === '디자이너' || v === 'designer' || v === 'design';
+}
+
+function _saveDesignerSession(session) {
+  try {
+    localStorage.setItem(DESIGNER_SESSION_KEY, JSON.stringify({
+      name: '디자이너',
+      permission: '디자이너',
+      expiry: session.expiry || 0,
+      note: session.note || '',
+      savedAt: Date.now()
+    }));
+  } catch (_) {}
+}
+
+function _loadDesignerSession() {
+  try {
+    const raw = localStorage.getItem(DESIGNER_SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s || s.permission !== '디자이너' || !s.expiry || Date.now() > s.expiry) {
+      localStorage.removeItem(DESIGNER_SESSION_KEY);
+      return null;
+    }
+    return s;
+  } catch (_) {
+    localStorage.removeItem(DESIGNER_SESSION_KEY);
+    return null;
+  }
+}
+
+function _clearDesignerSession() {
+  try { localStorage.removeItem(DESIGNER_SESSION_KEY); } catch (_) {}
+}
+
+function _enterDesignerMode(session) {
+  window._adminLoginName = '디자이너';
+  window._adminPermission = '디자이너';
+  window._isDesignerMode = true;
+  _saveDesignerSession(session || {});
+}
+
+async function _tryDesignerLogin(code) {
+  const entered = String(code || '').trim();
+  if (!entered) return { ok: false, message: '디자이너 임시 코드를 입력하세요.' };
+  try {
+    const snap = await getDoc(doc(db, 'config', 'designAccess'));
+    if (!snap.exists()) return { ok: false, message: '디자이너 모드가 설정되어 있지 않습니다.' };
+    const cfg = snap.data() || {};
+    const expiry = _parseDesignerExpiry(cfg.expiresAt);
+    if (!cfg.enabled) return { ok: false, message: '디자이너 임시 접근이 꺼져 있습니다.' };
+    if (!cfg.code || String(cfg.code).trim() !== entered) return { ok: false, message: '디자이너 임시 코드가 올바르지 않습니다.' };
+    if (!expiry || Date.now() > expiry) return { ok: false, message: '디자이너 임시 접근 기간이 만료되었습니다.' };
+    return { ok: true, session: { expiry, note: cfg.note || '' } };
+  } catch (err) {
+    console.warn('designer login failed', err);
+    return { ok: false, message: '디자이너 모드 확인 중 오류가 발생했습니다.' };
+  }
+}
+
+function _applyDesignerModeUI() {
+  if (!window._isDesignerMode || document.body.dataset.designerModeApplied === '1') return;
+  document.body.dataset.designerModeApplied = '1';
+  document.body.classList.add('designer-mode');
+
+  const style = document.createElement('style');
+  style.textContent = `
+    body.designer-mode .designer-mode-banner {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 14px;
+      background: #fff7ed;
+      color: #9a3412;
+      border-bottom: 1px solid #fed7aa;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    body.designer-mode .designer-mode-banner a {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const banner = document.createElement('div');
+  banner.className = 'designer-mode-banner';
+  banner.innerHTML = '🎨 디자이너 검수 모드 · 저장/삭제 작업은 차단됩니다 <a href="publisher.html" target="_blank">전도인 화면</a> <a href="cart.html" target="_blank">전시대 화면</a>';
+  document.body.prepend(banner);
+
+  document.addEventListener('click', function(e) {
+    if (!window._isDesignerMode) return;
+    const el = e.target && e.target.closest && e.target.closest('button,a,input[type="button"],input[type="submit"],[onclick]');
+    if (!el) return;
+    const text = [el.textContent, el.id, el.className, el.getAttribute('onclick'), el.getAttribute('href')].join(' ');
+    const allow = /switchTab|toggleSidebar|logout|close|open|search|filter|render|print|manual|help|map|지도|검색|닫기|보기|열기|로그아웃|href="publisher|href="cart/i.test(text);
+    const danger = /save|delete|reset|clear|add|update|complete|assign|bulk|import|upload|remove|fix|geocode|저장|삭제|초기화|추가|완료|배정|회수|반납|업로드|정비|변경|활성|비활성|좌표|가져오기|일괄/i.test(text);
+    if (danger && !allow) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      alert('디자이너 검수 모드에서는 저장·삭제·배정 같은 변경 작업이 차단됩니다.');
+    }
+  }, true);
+}
+
+
 function _saveAdminSession(name, permission) {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify({
@@ -70,6 +196,18 @@ window.adminNameInput = function() {
   const label = document.getElementById('login-pw-label');
   const pwInput = document.getElementById('pw-input');
   if (!hint || !label) return;
+
+  if (_designerNameMatch(name)) {
+    label.textContent = '디자이너 임시 코드';
+    if (pwInput) {
+      pwInput.removeAttribute('inputmode');
+      pwInput.removeAttribute('pattern');
+      pwInput.placeholder = '설정에서 발급한 임시 코드';
+    }
+    hint.textContent = '디자이너 모드는 일정 기간 동안 화면 검수용으로만 사용합니다.';
+    hint.style.display = 'block';
+    return;
+  }
   if (name) {
     label.textContent = '개인 PIN';
     hint.textContent  = '구역카드 앱에서 설정한 PIN을 입력하세요';
@@ -102,6 +240,20 @@ window.handleLogin = async function() {
   errEl.style.display = 'none';
 
   if (!pw) { showError('비밀번호 또는 PIN을 입력해 주세요.'); return; }
+
+
+  if (_designerNameMatch(name)) {
+    const result = await _tryDesignerLogin(pw);
+    if (!result.ok) {
+      showError(result.message);
+      return;
+    }
+    _clearAdminSession();
+  _clearDesignerSession();
+    _enterDesignerMode(result.session);
+    enterAdmin();
+    return;
+  }
 
   // ── 이름 있음: publishers 개인 PIN 인증 ──
   if (name) {
@@ -176,7 +328,7 @@ function enterAdmin() {
   loadAdminConfig();
   // 기본 탭이 봉사일정이므로 진입 시 초기화 (전체관리자만 — 권한 제한 시 _applyRoleUI에서 territory로 전환됨)
   const perm = window._adminPermission || '관리자';
-  if (perm === '관리자' || perm === '봉사감독자') initScheduleTab();
+  if (perm === '관리자' || perm === '봉사감독자' || perm === '디자이너') initScheduleTab();
 }
 
 // ── 권한에 따른 UI 제한 적용 ──
@@ -187,6 +339,18 @@ function _applyRoleUI() {
   // 전도인관리: 관리자·봉사감독자 접근 / 설정: 관리자만 접근
   const navPub = document.getElementById('nav-publisher');
   const navSet = document.getElementById('nav-settings');
+
+  if (perm === '디자이너' || window._isDesignerMode) {
+    window._isDesignerMode = true;
+    if (navPub) navPub.style.display = 'none';
+    if (navSet) navSet.style.display = 'none';
+    ['nav-territory','nav-schedule','nav-map','nav-visit','nav-memo','nav-s13','nav-manual'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+    _applyDesignerModeUI();
+    return;
+  }
   if (navPub) navPub.style.display = canSeePub ? '' : 'none';
   if (navSet) navSet.style.display = isFullAdmin ? '' : 'none';
   // 구역지도·방문내역·메모관리: 관리자·봉사감독자만 접근 (S-13은 구역의종도 접근 가능)
@@ -204,6 +368,14 @@ function _applyRoleUI() {
 
 // ── 페이지 로드 시 세션 자동 복원 ──
 (function() {
+
+  const designerSession = _loadDesignerSession();
+  if (designerSession) {
+    _enterDesignerMode(designerSession);
+    enterAdmin();
+    return;
+  }
+
   const s = _loadAdminSession();
   if (s) {
     window._adminLoginName = s.name;
@@ -365,6 +537,7 @@ document.getElementById('pw-input').addEventListener('keydown', e => {
 // ── 로그아웃 ──
 window.logout = function() {
   _clearAdminSession();
+  _clearDesignerSession();
   document.getElementById('admin-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   const nameEl = document.getElementById('login-name-input');
@@ -3811,6 +3984,20 @@ window.setTerrView = function(view) {
   window.renderTerritoryTable();
 };
 
+// 구역의 실제 마지막 완료일 — cycleHistory의 진짜 완료일(ddc-unit 빈값·미완료 제외) 중 최신. 없으면 null(미방문).
+// 정렬·표시·미사용필터가 신 시스템 셋업일이 아니라 실제 방문 이력을 따르도록 함(구 시스템과 동일하게).
+function _terrLastDoneDate(t) {
+  let mx = 0;
+  ((t && t.cycleHistory) || []).forEach(h => {
+    const c = h && h.completedAt;
+    if (!c) return;                      // ddc-unit(빈 문자열)·미완료 항목 제외
+    const ms = c.toDate ? c.toDate().getTime() : new Date(c).getTime();
+    if (!isNaN(ms) && ms > mx) mx = ms;
+  });
+  return mx ? new Date(mx) : null;
+}
+function _terrLastDoneMs(t) { const d = _terrLastDoneDate(t); return d ? d.getTime() : 0; }
+
 // ── 미니 카드 그리드 뷰 렌더 ──
 function _renderTerrCardsNew(list, now) {
   const vMode = window._visitMode || '호별';
@@ -3820,7 +4007,8 @@ function _renderTerrCardsNew(list, now) {
     const cc = Math.min(cycle, 6);
     const numCls = isInactive ? 'nc-inactive' : `nc-${cc}`;
     const pct = t.completionRate || 0;
-    const dtStr = _fmtDT(t.lastCompletedDate || t.lastAssignedDate);
+    const _dd = _terrLastDoneDate(t);
+    const dtStr = _dd ? _fmtDT(_dd) : '방문내역없음';
     const lastH = (t.cycleHistory || []).slice(-1)[0];
     const vm = (lastH && lastH.visitMode) ? lastH.visitMode : vMode;
 
@@ -3855,18 +4043,14 @@ function _renderTerrCardsNew(list, now) {
 function _renderTerrListNew(list, now) {
   const items = list.map(t => {
     const isInactive = t.active === false;
-    let isOld = false;
-    const _lastDate = t.lastCompletedDate || t.lastAssignedDate;
-    if (_lastDate) {
-      const lms = _lastDate.toDate ? _lastDate.toDate().getTime() : new Date(_lastDate).getTime();
-      isOld = (now - lms) > 180*24*60*60*1000;
-    } else { isOld = true; }
+    const _dd = _terrLastDoneDate(t);
+    const isOld = !_dd || (now - _dd.getTime()) > 180*24*60*60*1000;
     const cycle = t.cycle || 1;
     const cc = Math.min(cycle, 6);
     const numCls = isInactive ? 'nc-inactive' : `nc-${cc}`;
     const rowCls = isInactive ? 'tl-inactive' : (isOld ? 'tl-old' : '');
     const pct = t.completionRate || 0;
-    const dtStr = _fmtDT(t.lastCompletedDate || t.lastAssignedDate);
+    const dtStr = _dd ? _fmtDT(_dd) : '방문내역없음';
     const cat = t.category || '';
     let badge = '';
     if (isInactive) {
@@ -3962,22 +4146,15 @@ window.renderTerritoryTable = function() {
       const noS = String(t.no||'').toLowerCase(), nmS = (t.name||'').toLowerCase();
       if (!noS.includes(kwRest) && !nmS.includes(kwRest)) return false;
     }
-    // 개월 필터: lastCompletedDate(완료일) 우선, 없으면 lastAssignedDate(배정일) 기준
+    // 개월 필터: 실제 마지막 완료일 기준(미방문은 항상 포함)
     if (monthCutoff > 0) {
-      const dateField = t.lastCompletedDate || t.lastAssignedDate;
-      const ms = dateField
-        ? (dateField.toDate ? dateField.toDate().getTime() : new Date(dateField).getTime())
-        : 0;
+      const ms = _terrLastDoneMs(t);
       if (ms > monthCutoff) return false;
     }
     return true;
   });
 
-  const getMs = t => {
-    const d = t.lastCompletedDate || t.lastAssignedDate;
-    if (!d) return 0;
-    return d.toDate ? d.toDate().getTime() : new Date(d).getTime();
-  };
+  const getMs = t => _terrLastDoneMs(t); // 실제 마지막 완료일 기준(미방문=0=가장 오래됨)
   // 개월 필터 활성 시 기본 번호순이면 자동으로 오래된순 전환
   const effectiveSort = (monthFilterVal > 0 && sort === 'no') ? 'old' : sort;
   if (effectiveSort==='no')       list.sort((a,b) => (parseInt(a.no)||0)-(parseInt(b.no)||0));
