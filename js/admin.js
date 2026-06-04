@@ -2706,7 +2706,7 @@ window.confirmForceReturn = async function() {
     // meetings.pubAssignments 에서도 해당 전도인 항목 제거 (안 하면 전도인 화면에 번호 계속 뜸)
     if (prevPubs.length) {
       try {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10); // KST(자정 기준) — publisher meetings 키와 통일
         const meetRef = doc(db, 'meetings', today);
         const msnap = await getDoc(meetRef);
         const pa = (msnap.exists() && msnap.data().pubAssignments) ? msnap.data().pubAssignments : {};

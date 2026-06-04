@@ -3056,10 +3056,13 @@ window.onNoInput = function(val) {
   }
 };
 
+// 오늘 날짜(KST) — meetings/참여신청 키. UTC slice는 KST 0~9시에 전날로 잡혀 자정 초기화가 안 되므로 KST로 통일.
+function _kstDate(){ return new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10); }
+
 // ── 전도인 배정 실시간 감시 시작/중지 ──
 function startPubMeetingListener(pubName) {
   stopPubMeetingListener();
-  const today = new Date().toISOString().slice(0,10);
+  const today = _kstDate();
   _pubMeetingListener = onSnapshot(doc(db,'meetings',today), (snap) => {
     if (!snap.exists()) return;
     const data      = snap.data();
@@ -3158,7 +3161,7 @@ window.cancelCheckIn = async function() {
   const name = (document.getElementById('name-input')?.value || '').trim();
   if (!name) return;
   if (!confirm('오늘의 봉사 참여 신청을 취소하시겠습니까?\n취소 후 다시 신청할 수 있습니다.')) return;
-  const today = new Date().toISOString().slice(0,10);
+  const today = _kstDate();
   try {
     const meetRef = doc(db, 'meetings', today);
     const sn = await getDoc(meetRef);
@@ -3187,7 +3190,7 @@ window.checkInToMeeting = async function() {
     }
   } catch(e) { showErr('오류: ' + e.message); return; }
   setButtonState('pending');
-  const today = new Date().toISOString().slice(0,10);
+  const today = _kstDate();
   try {
     const meetRef = doc(db, 'meetings', today);
     const sn = await getDoc(meetRef);
@@ -3204,7 +3207,7 @@ window.checkInToMeeting = async function() {
 };
 
 // ════ 오늘의 봉사 모임 탭 ════
-const _mtgDate = new Date().toISOString().slice(0,10);
+const _mtgDate = _kstDate();
 let _mtgAttendees      = [];  // 오늘 출석 전도인 이름 배열
 let _mtgSelectedTerrs  = [];  // 선택된 구역 id 배열
 let _mtgAssignments    = {};  // { terrId: [pubNames] }
@@ -6318,7 +6321,7 @@ function _hasVisitRecord(t) {
 // territories + meetings.pubAssignments + assignHistory 를 일관되게 갱신한다.
 // pairs: [{ terrId, pubs:[이름...] }, ...]
 async function _saveAssignment(pairs) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = _kstDate();
   // 1) territories 갱신 + assignHistory 누적
   for (const { terrId, pubs } of pairs) {
     const histEntry = { assignedAt: today, assignedBy: (typeof _pubName !== 'undefined' ? _pubName : ''), publishers: [...pubs] };
@@ -6358,7 +6361,7 @@ async function _retrieveAssignment(id, { notify = true } = {}) {
   // meetings.pubAssignments 에서도 해당 전도인 항목 제거 (안 하면 전도인 화면에 번호 계속 뜸)
   if (prevPubs.length) {
     try {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = _kstDate();
       const meetRef = doc(db, 'meetings', today);
       const fields = {};
       prevPubs.forEach(nm => {
