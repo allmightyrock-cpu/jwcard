@@ -3987,14 +3987,11 @@ window.setTerrView = function(view) {
 // 구역의 실제 마지막 완료일 — cycleHistory의 진짜 완료일(ddc-unit 빈값·미완료 제외) 중 최신. 없으면 null(미방문).
 // 정렬·표시·미사용필터가 신 시스템 셋업일이 아니라 실제 방문 이력을 따르도록 함(구 시스템과 동일하게).
 function _terrLastDoneDate(t) {
-  let mx = 0;
-  ((t && t.cycleHistory) || []).forEach(h => {
-    const c = h && h.completedAt;
-    if (!c) return;                      // ddc-unit(빈 문자열)·미완료 항목 제외
-    const ms = c.toDate ? c.toDate().getTime() : new Date(c).getTime();
-    if (!isNaN(ms) && ms > mx) mx = ms;
-  });
-  return mx ? new Date(mx) : null;
+  // 구 시스템 vt_recent를 백필한 lastCompletedDate를 진실의 출처로 사용(미방문=null=맨 위).
+  const d = t && t.lastCompletedDate;
+  if (!d) return null;
+  const dd = d.toDate ? d.toDate() : new Date(d);
+  return isNaN(dd.getTime()) ? null : dd;
 }
 function _terrLastDoneMs(t) { const d = _terrLastDoneDate(t); return d ? d.getTime() : 0; }
 
@@ -4158,8 +4155,8 @@ window.renderTerritoryTable = function() {
   // 개월 필터 활성 시 기본 번호순이면 자동으로 오래된순 전환
   const effectiveSort = (monthFilterVal > 0 && sort === 'no') ? 'old' : sort;
   if (effectiveSort==='no')       list.sort((a,b) => (parseInt(a.no)||0)-(parseInt(b.no)||0));
-  else if (effectiveSort==='old') list.sort((a,b) => getMs(a)-getMs(b));
-  else if (effectiveSort==='recent') list.sort((a,b) => getMs(b)-getMs(a));
+  else if (effectiveSort==='old') list.sort((a,b) => (getMs(a)-getMs(b)) || ((parseInt(a.no)||0)-(parseInt(b.no)||0)));
+  else if (effectiveSort==='recent') list.sort((a,b) => (getMs(b)-getMs(a)) || ((parseInt(a.no)||0)-(parseInt(b.no)||0)));
   else if (effectiveSort==='cycle')  list.sort((a,b) => (b.cycle||1)-(a.cycle||1)||(parseInt(a.no)||0)-(parseInt(b.no)||0));
   else if (effectiveSort==='progress') list.sort((a,b) => (b.completionRate||0)-(a.completionRate||0));
   if (window._terrSortDesc) list.reverse();
