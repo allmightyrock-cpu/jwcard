@@ -1,18 +1,50 @@
-// 전자구역카드 시스템 — Firestore 보안 규칙
+// 전자구역카드 시스템 — Firestore 보안 규칙 (v2: 최소 강화)
 //
 // [적용 방법]
 // Firebase 콘솔 → Firestore Database → 규칙 탭 → 아래 내용으로 교체 후 [게시]
+// ⚠ 게시 전 반드시 콘솔 "규칙 시뮬레이터(Rules Playground)"로 주요 경로를 테스트할 것.
+//    (잘못 게시하면 라이브 앱의 읽기/쓰기가 즉시 막혀 마비될 수 있음)
 //
 // [원리]
-// 앱은 로드 시 자동으로 Firebase 익명 인증(signInAnonymously)을 수행합니다.
-// request.auth != null 조건은 앱을 통해 접속한 사용자만 허용하고,
-// 외부에서 API키만으로 직접 접근하는 것을 차단합니다.
+// 앱은 로드 시 자동으로 Firebase 익명 인증(signInAnonymously)을 수행한다.
+// request.auth != null 은 "앱을 통해 접속한 사용자"만 허용하고, API키만으로의 직접 접근을 막는다.
+//
+// [이 규칙이 하는 것]
+//  1) 앱이 실제 사용하는 12개 컬렉션만 허용 → 임의 컬렉션/경로 생성 차단(사고 반경 축소).
+//  2) config 컬렉션(인도자 공용암호 config/auth, 디자이너코드 config/designAccess) 삭제 금지.
+//
+// [이 규칙이 못 하는 것 — 별도 단계 필요]
+//  - 익명 인증 구조라 "본인 카드만 읽기"·"관리자만 권한/설정 변경" 같은 역할 기반 보호는 불가.
+//  - PIN/권한이 평문으로 읽히고 권한 위조가 가능한 문제는 "관리자·봉사감독자 실계정 + Custom Claims"
+//    도입(역할 신뢰 모델) 단계에서 해결해야 함. 전화번호 등 민감 PII 업로드는 그 전까지 보류 권장.
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // ── 앱이 사용하는 컬렉션 (익명 포함 인증 사용자 read/write) ──
+    match /territories/{id}               { allow read, write: if request.auth != null; }
+    match /publishers/{id}                { allow read, write: if request.auth != null; }
+    match /meetings/{id}                  { allow read, write: if request.auth != null; }
+    match /weeklySchedule/{id}            { allow read, write: if request.auth != null; }
+    match /presence/{id}                  { allow read, write: if request.auth != null; }
+    match /memos/{id}                     { allow read, write: if request.auth != null; }
+    match /adminNotices/{id}              { allow read, write: if request.auth != null; }
+    match /publisherRevisits/{id}         { allow read, write: if request.auth != null; }
+    match /addressRequests/{id}           { allow read, write: if request.auth != null; }
+    match /cartSessions/{id}              { allow read, write: if request.auth != null; }
+    match /cart_witnessing_schedules/{id} { allow read, write: if request.auth != null; }
+    // admin 컬렉션: settings에서 admin/config 문서를 삭제하므로 write(삭제 포함) 허용 유지
+    match /admin/{id}                     { allow read, write: if request.auth != null; }
+
+    // ── 설정/인증 컬렉션: 읽기·생성·수정 허용, 삭제 금지(공용암호·설정 보호) ──
+    // (app은 config 문서를 삭제하지 않음 → 삭제만 차단해도 기능 영향 없음)
+    match /config/{id} {
+      allow read, create, update: if request.auth != null;
+      allow delete: if false;
     }
+
+    // ── 그 외 임의 경로/컬렉션 전면 차단 ──
+    match /{document=**} { allow read, write: if false; }
   }
 }
