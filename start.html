@@ -3,137 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>전자구역카드 — 설치 흐름 한눈에 보기</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<title>전자구역카드 설치 시작</title>
 <style>
-  :root{ --navy:#1B3A6B; --blue:#2563eb; --line:#e2e8f0; }
+  :root{
+    --navy:#1B3A6B; --blue:#2563EB; --sky:#EFF6FF; --green:#166534; --green-bg:#F0FDF4;
+    --amber:#92400E; --amber-bg:#FFFBEB; --red:#B91C1C; --red-bg:#FEF2F2;
+    --ink:#1E293B; --muted:#64748B; --line:#E2E8F0; --soft:#F8FAFC;
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:'Noto Sans KR',sans-serif;background:#f1f5f9;color:#0f172a;line-height:1.7}
-  .top{background:linear-gradient(135deg,#1B3A6B,#2563eb);color:#fff;padding:30px 20px}
-  .wrap{max-width:640px;margin:0 auto;padding:18px 16px 60px}
-  h1{font-size:22px;margin:0 0 6px;font-weight:900}
-  .top .sub{font-size:14px;opacity:.92;margin:0;line-height:1.6}
-  .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-  .pill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600}
-
-  .intro{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:18px;font-size:13.5px;color:#334155}
-  .intro b{color:#0f172a}
-
-  .sec-t{font-size:13px;font-weight:800;color:var(--navy);letter-spacing:.5px;margin:26px 4px 6px}
-
-  /* 세로 스텝 타임라인 */
-  .steps{position:relative;margin-top:8px}
-  .step{position:relative;display:flex;gap:14px;padding-bottom:18px}
-  .step:not(:last-child)::before{content:'';position:absolute;left:18px;top:38px;bottom:-2px;width:2px;background:#dbe3f0}
-  .num{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:1;box-shadow:0 2px 8px rgba(27,58,107,.3)}
-  .card{flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
-  .card .h{font-size:15px;font-weight:800;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-  .card .time{font-size:11px;font-weight:700;color:#0369a1;background:#e0f2fe;border-radius:20px;padding:2px 9px}
-  .card .d{font-size:13px;color:#475569;margin-top:6px}
-  .card .go{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:700;color:#fff;background:var(--blue);text-decoration:none;border-radius:9px;padding:8px 14px}
-  .card .go.alt{background:#fff;color:var(--blue);border:1.5px solid #bfdbfe}
-
-  .endbox{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #a7f3d0;border-radius:14px;padding:16px 18px;margin-top:18px}
-  .endbox .h{font-size:15px;font-weight:800;color:#065f46}
-  .endbox .d{font-size:13px;color:#047857;margin-top:4px}
-
-  .links{font-size:12.5px;color:#64748b;margin-top:24px;text-align:center;line-height:2.1}
-  .links a{color:var(--blue);font-weight:600;text-decoration:none;margin:0 7px}
-  .note{font-size:12px;color:#94a3b8;text-align:center;margin-top:10px}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:#EEF2F7;color:var(--ink);line-height:1.7;-webkit-text-size-adjust:100%}
+  .page{max-width:920px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 40px rgba(15,23,42,.07)}
+  header{background:linear-gradient(135deg,var(--navy),#2E5A9E);color:#fff;padding:34px 28px 28px}
+  header .eyebrow{font-size:13px;opacity:.82;margin-bottom:5px}
+  h1{font-size:27px;line-height:1.25;margin:0 0 8px;font-weight:700;letter-spacing:0}
+  header p{margin:0;font-size:14px;opacity:.92}
+  main{padding:24px 28px 64px}
+  nav.quick{display:flex;gap:8px;flex-wrap:wrap;background:var(--soft);border-bottom:1px solid var(--line);padding:14px 28px}
+  nav.quick a{font-size:13px;text-decoration:none;color:var(--navy);background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+  h2{font-size:20px;color:var(--navy);font-weight:650;margin:28px 0 10px;display:flex;align-items:center;gap:8px;scroll-margin-top:16px}
+  h3{font-size:15px;color:#334155;font-weight:650;margin:18px 0 8px}
+  p,li{font-size:14px}
+  a{color:#1D4ED8}
+  code{background:#EEF2FF;color:#1E3A8A;border-radius:5px;padding:1px 6px;font-family:Consolas,ui-monospace,monospace;font-size:12.5px}
+  .lead{font-size:14.5px;color:#475569}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:12px 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+  .card b{color:var(--navy);font-weight:650}
+  .step{display:grid;grid-template-columns:38px 1fr;gap:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;margin:11px 0}
+  .num{width:32px;height:32px;border-radius:10px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:650}
+  .step-title{font-size:15px;font-weight:650;color:var(--navy);margin-bottom:4px}
+  .step-body{font-size:14px;color:#475569}
+  .toolbox{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0}
+  .tool{border:1px solid #BFDBFE;background:#EFF6FF;border-radius:13px;padding:14px;text-decoration:none;color:var(--ink)}
+  .tool strong{display:block;color:var(--navy);font-weight:650;margin-bottom:3px}
+  .note{border-radius:11px;padding:12px 14px;margin:12px 0;font-size:13.5px}
+  .note.info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
+  .note.warn{background:var(--amber-bg);border:1px solid #FDE68A;color:var(--amber)}
+  .note.danger{background:var(--red-bg);border:1px solid #FECACA;color:var(--red)}
+  .note.ok{background:var(--green-bg);border:1px solid #BBF7D0;color:var(--green)}
+  .codeblock{background:#0F172A;color:#E2E8F0;border-radius:11px;padding:13px 15px;font-family:Consolas,ui-monospace,monospace;font-size:12.5px;overflow:auto;line-height:1.65;margin:10px 0;white-space:pre}
+  details{border:1px solid var(--line);border-radius:12px;background:#fff;margin:9px 0;overflow:hidden}
+  summary{cursor:pointer;list-style:none;padding:13px 15px;font-size:14px;font-weight:650;color:var(--navy)}
+  summary::-webkit-details-marker{display:none}
+  .answer{border-top:1px solid var(--line);padding:13px 15px;color:#475569}
+  .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .btn{display:inline-block;text-decoration:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:650}
+  .btn.primary{background:var(--navy);color:#fff}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;text-align:center;padding:22px 28px 34px}
+  @media(max-width:640px){header{padding:28px 20px 24px}main{padding:18px 18px 52px}nav.quick{padding:12px 18px}.step{grid-template-columns:1fr}.num{margin-bottom:2px}h1{font-size:23px}}
+  @media print{body{background:#fff}.page{box-shadow:none;max-width:none}nav.quick,.links .btn,footer{display:none}.step,.card,.note,details{break-inside:avoid}header{background:var(--navy)!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 </style>
 </head>
 <body>
-<div class="top">
-  <div class="wrap" style="padding-bottom:0">
-    <h1>🗺️ 설치, 이렇게 진행돼요</h1>
-    <p class="sub">코딩을 몰라도 괜찮습니다. 순서대로 따라하면 누구나 설치할 수 있어요.<br>전체 그림을 먼저 가볍게 훑어보세요.</p>
-    <div class="pill-row">
-      <span class="pill">💰 무료</span>
-      <span class="pill">⏱️ 약 30~40분</span>
-      <span class="pill">🔒 개인정보 미수집</span>
-      <span class="pill">📱 휴대폰 앱(PWA)</span>
-    </div>
-  </div>
-</div>
-
-<div class="wrap">
-
-  <div class="intro">
-    <b>준비물:</b> 구글 계정 1개, 인터넷이 되는 PC.<br>
-    어려운 코딩은 없습니다 — 대부분 <b>"콘솔에서 값 복사 → 붙여넣기 → 업로드"</b> 입니다.
-    중간에 막히면 <b>설치 점검(자동 진단)</b>이 무엇이 문제인지 알려줍니다.
-  </div>
-
-  <div class="sec-t">전체 6단계</div>
-  <div class="steps">
-
-    <div class="step">
-      <div class="num">1</div>
-      <div class="card">
-        <div class="h">📥 파일 받기 <span class="time">약 2분</span></div>
-        <div class="d">GitHub에서 최신 파일 묶음을 내려받습니다. (압축 풀기)</div>
+<div class="page">
+  <header>
+    <div class="eyebrow">설치 시작 페이지</div>
+    <h1>설치는 install-guide.html에서 진행합니다</h1>
+    <p>기존 start.html의 내용은 공식 설치 안내서로 통합되었습니다. 아래 버튼으로 설치 안내서를 열어 주세요.</p>
+  </header>
+  <main>
+    <section>
+      <h2>바로가기</h2>
+      <div class="toolbox">
+        <a class="tool" href="install-guide.html"><strong>📖 공식 설치 안내서</strong>처음부터 끝까지 따라가는 중심 문서입니다.</a>
+        <a class="tool" href="setup.html"><strong>⚙️ config.js 생성 도우미</strong>설치 중 설정 파일을 만들 때 사용합니다.</a>
+        <a class="tool" href="diagnostics.html"><strong>🩺 설치 점검 도구</strong>배포 후 연결 상태를 확인합니다.</a>
       </div>
-    </div>
-
-    <div class="step">
-      <div class="num">2</div>
-      <div class="card">
-        <div class="h">🔥 Firebase 만들기 <span class="time">약 10분</span></div>
-        <div class="d">무료 데이터 저장소(Firebase)를 만들고, 콘솔에서 보이는 <b>설정값</b>을 복사해 둡니다. 익명 로그인도 켭니다.</div>
-        <a class="go alt" href="install-guide.html">자세한 방법 보기</a>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">3</div>
-      <div class="card">
-        <div class="h">⚙️ 설정 만들기 <span class="time">약 3분</span></div>
-        <div class="d">복사한 값을 <b>간편 설치 도우미</b>에 붙여넣기만 하면 <b>config.js</b> 파일이 자동으로 만들어집니다. (직접 코드 편집 불필요)</div>
-        <a class="go" href="setup.html">⚙️ 간편 설치 도우미 열기</a>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">4</div>
-      <div class="card">
-        <div class="h">☁️ 배포(업로드) <span class="time">약 10분</span></div>
-        <div class="d">받은 config.js를 폴더에 넣고, Cloudflare Pages에 폴더를 통째로 올리면 <b>접속 주소</b>가 발급됩니다.</div>
-        <a class="go alt" href="install-guide.html">배포 방법 보기</a>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">5</div>
-      <div class="card">
-        <div class="h">🩺 점검하기 <span class="time">약 2분</span></div>
-        <div class="d">발급된 주소 뒤에 <b>/diagnostics.html</b>을 붙여 열고 <b>점검 시작</b>을 누르면, 연결·지도·앱 상태를 자동으로 확인해 줍니다. 문제가 있으면 해결 방법도 알려줍니다.</div>
-        <a class="go" href="diagnostics.html">🩺 설치 점검 열기</a>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">6</div>
-      <div class="card">
-        <div class="h">✅ 사용 시작 <span class="time">약 5분</span></div>
-        <div class="d"><b>/admin.html</b> 접속 → 최초 접속 시 관리자 비밀번호 설정 → 전도인 등록 → (있다면) 엑셀로 구역 데이터 업로드. 끝!</div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="endbox">
-    <div class="h">🎉 이게 전부입니다</div>
-    <div class="d">한 번 설치해 두면, 전도인은 휴대폰에서 앱처럼 쓰고(홈 화면 추가), 관리자는 PC에서 구역을 배정·관리합니다. 업데이트가 있으면 앱에 배너로 안내됩니다.</div>
-  </div>
-
-  <div class="note">중간에 막히거나 오류가 나면 — 먼저 <b>설치 점검</b>, 그다음 <b>자주 묻는 질문</b>을 확인하세요.</div>
-
-  <div class="links">
-    <a href="setup.html">⚙️ 간편 설치 도우미</a> ·
-    <a href="diagnostics.html">🩺 설치 점검</a> ·
-    <a href="faq.html">❓ 자주 묻는 질문</a> ·
-    <a href="install-guide.html">📖 상세 설치 안내서</a>
-  </div>
+      <div class="note info">이 페이지는 기존 링크가 깨지지 않도록 남겨 둔 시작 페이지입니다. 실제 설치 설명은 <code>install-guide.html</code>에 통합되어 있습니다.</div>
+    </section>
+  </main>
 </div>
 </body>
 </html>
