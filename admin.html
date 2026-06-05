@@ -1148,11 +1148,11 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           .man-pdf-btn:hover{background:#2563EB}
           /* 표지 */
           .man-cover{background:linear-gradient(135deg,#1B3A6B 0%,#2563EB 100%);color:#fff;padding:36px 28px 32px;border-radius:16px;margin-bottom:28px;text-align:center}
-          .man-cover h1{font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-0.3px}
+          .man-cover h1{font-size:24px;font-weight:600;margin-bottom:8px;letter-spacing:0}
           .man-cover p{font-size:14px;opacity:0.85;margin:0}
           /* 목차 */
           .man-toc{background:#EFF6FF;border-left:4px solid #2563EB;border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:28px}
-          .man-toc h2{font-size:14px;font-weight:700;color:#1B3A6B;margin-bottom:12px}
+          .man-toc h2{font-size:14px;font-weight:500;color:#1B3A6B;margin-bottom:12px}
           .man-toc ol{padding-left:18px;margin:0;columns:2;column-gap:20px}
           .man-toc li{font-size:14px;margin-bottom:6px;break-inside:avoid}
           .man-toc a{color:#2563EB;text-decoration:none;font-weight:500}
@@ -1160,8 +1160,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           /* 챕터 */
           .man-ch{margin-bottom:36px;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
           .man-ch-hdr{background:#1B3A6B;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
-          .man-ch-num{background:rgba(255,255,255,0.2);border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700;flex-shrink:0}
-          .man-ch-title{font-size:16px;font-weight:700;flex:1;letter-spacing:-0.2px}
+          .man-ch-num{background:rgba(255,255,255,0.18);border-radius:6px;padding:2px 10px;font-size:12px;font-weight:500;flex-shrink:0}
+          .man-ch-title{font-size:16px;font-weight:500;flex:1;letter-spacing:0}
           .man-ch-arrow{font-size:22px;line-height:1;transition:transform 0.25s;flex-shrink:0;
             width:32px;height:32px;display:flex;align-items:center;justify-content:center;
             background:rgba(255,255,255,0.15);border-radius:50%}
@@ -1169,10 +1169,12 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           .man-ch-body.collapsed{display:none}
           /* 섹션 */
           .man-sec{margin-bottom:24px}
-          .man-sec-title{font-size:15px;font-weight:700;color:#1B3A6B;padding:0 0 8px;margin-bottom:13px;border-bottom:2px solid #EFF6FF;display:flex;align-items:center;gap:8px}
+          .man-sec-title{font-size:15px;font-weight:500;color:#1B3A6B;padding:0 0 8px;margin-bottom:13px;border-bottom:1px solid #DBEAFE;display:flex;align-items:center;gap:8px}
           .man-sec-title::before{content:'';display:inline-block;width:4px;height:16px;background:#2563EB;border-radius:2px;flex-shrink:0}
-          .man-sub{font-size:14px;font-weight:700;color:#334155;margin:14px 0 7px;padding-left:4px}
+          .man-sub{font-size:14px;font-weight:500;color:#334155;margin:14px 0 7px;padding-left:4px}
           .man-p{font-size:14px;color:#374151;margin-bottom:8px;line-height:1.75}
+          #tab-manual strong{font-weight:500;color:#1D4ED8}
+          #tab-manual .man-table strong,#tab-manual .man-steps strong{font-weight:500;color:#1B3A6B;background:#EFF6FF;border-radius:4px;padding:0 3px}
           /* 힌트 박스 */
           .man-hint{border-radius:8px;padding:11px 15px;margin:10px 0;font-size:13px;display:flex;gap:10px;align-items:flex-start;line-height:1.65}
           .man-hint.info{background:#EFF6FF;color:#1E40AF;border-left:3px solid #3B82F6}
@@ -1190,9 +1192,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           /* 단계 목록 */
           .man-steps{counter-reset:ms;list-style:none;padding:0;margin:10px 0}
           .man-steps li{counter-increment:ms;padding:10px 14px 10px 46px;margin-bottom:7px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;font-size:14px;position:relative;line-height:1.65}
-          .man-steps li::before{content:counter(ms);position:absolute;left:13px;top:50%;transform:translateY(-50%);width:22px;height:22px;background:#1B3A6B;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+          .man-steps li::before{content:counter(ms);position:absolute;left:13px;top:50%;transform:translateY(-50%);width:22px;height:22px;background:#1B3A6B;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500}
           /* 뱃지 */
-          .man-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600}
+          .man-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500}
           .man-badge.blue{background:#DBEAFE;color:#1D4ED8}
           .man-badge.green{background:#DCFCE7;color:#166534}
           .man-badge.amber{background:#FEF3C7;color:#92400E}
@@ -1201,7 +1203,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           .man-badge.navy{background:#1B3A6B;color:#fff}
           .man-badge.purple{background:#EDE9FE;color:#6D28D9}
           /* 새기능 뱃지 */
-          .man-new{display:inline-block;background:#DCFCE7;color:#166534;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle}
+          .man-new{display:inline-block;background:#DCFCE7;color:#166534;font-size:10px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle}
           /* 반응형 */
           @media(max-width:768px){
             #man-wrap{padding:14px 14px 60px}
@@ -1250,23 +1252,23 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           #man-left-nav{width:220px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto;background:#FAFBFD;border-right:1px solid #E2E8F0;padding:0 0 40px;scrollbar-width:thin}
           .mln-header{padding:14px 16px 12px;border-bottom:1px solid #E2E8F0;margin-bottom:6px}
           .mln-logo{font-size:22px;margin-bottom:3px}
-          .mln-sitename{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:1px}
-          .mln-title-text{font-size:13px;font-weight:700;color:#1B3A6B;line-height:1.3}
+          .mln-sitename{font-size:10px;font-weight:500;color:#94A3B8;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:1px}
+          .mln-title-text{font-size:13px;font-weight:500;color:#1B3A6B;line-height:1.3}
           .mln-list{list-style:none;padding:4px 0 8px;margin:0}
           .mln-item{padding:8px 14px 8px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:#4B5563;line-height:1.45;border-left:3px solid transparent;transition:background .12s,color .12s}
           .mln-item:hover{background:#EFF6FF;color:#1B3A6B}
-          .mln-item.active{background:#EFF6FF;color:#1E40AF;font-weight:600;border-left-color:#2563EB}
-          .mln-num{font-size:10px;background:#CBD5E1;color:#fff;border-radius:4px;padding:1px 5px;flex-shrink:0;margin-top:2px;line-height:1.4;font-weight:700}
+          .mln-item.active{background:#EFF6FF;color:#1E40AF;font-weight:500;border-left-color:#2563EB}
+          .mln-num{font-size:10px;background:#CBD5E1;color:#fff;border-radius:4px;padding:1px 5px;flex-shrink:0;margin-top:2px;line-height:1.4;font-weight:500}
           .mln-item.active .mln-num{background:#2563EB}
 
           /* ── 오른쪽 "이 페이지에서" ── */
           #man-right-nav{width:185px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto;padding:22px 12px 40px;scrollbar-width:thin}
-          .mrn-title{font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:10px;padding-left:12px}
+          .mrn-title{font-size:10.5px;font-weight:500;color:#94A3B8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;padding-left:12px}
           #man-otp-list{list-style:none;padding:0;margin:0}
           #man-otp-list li{margin-bottom:2px}
           #man-otp-list a{font-size:12px;color:#6B7280;text-decoration:none;display:block;padding:4px 6px 4px 12px;border-left:2px solid #E2E8F0;line-height:1.4;transition:color .12s,border-color .12s}
           #man-otp-list a:hover{color:#1B3A6B;border-left-color:#93C5FD;background:#F8FAFC}
-          #man-otp-list a.man-otp-active{color:#1D4ED8;font-weight:600;border-left-color:#2563EB;background:#EFF6FF}
+          #man-otp-list a.man-otp-active{color:#1D4ED8;font-weight:500;border-left-color:#2563EB;background:#EFF6FF}
 
           /* ── 카드형 챕터 목차 ── */
           .man-toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
@@ -1275,8 +1277,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           .man-toc-card:active{background:#F8FAFC}
           .man-toc-card-top{display:flex;align-items:center;gap:7px;margin-bottom:4px}
           .man-toc-card-icon{font-size:18px;line-height:1;flex-shrink:0}
-          .man-toc-card-num{font-size:10px;font-weight:700;background:#1B3A6B;color:#fff;border-radius:4px;padding:1px 6px;flex-shrink:0}
-          .man-toc-card-title{font-size:13px;font-weight:700;color:#1B3A6B;line-height:1.35}
+          .man-toc-card-num{font-size:10px;font-weight:500;background:#1B3A6B;color:#fff;border-radius:4px;padding:1px 6px;flex-shrink:0}
+          .man-toc-card-title{font-size:13px;font-weight:500;color:#1B3A6B;line-height:1.35}
           .man-toc-card-desc{font-size:11.5px;color:#64748B;line-height:1.5;padding-left:2px}
           @media(max-width:959px){.man-toc-grid{grid-template-columns:repeat(2,1fr);gap:8px}}
           @media(max-width:480px){.man-toc-grid{grid-template-columns:1fr 1fr;gap:7px}.man-toc-card{padding:10px 10px 9px}.man-toc-card-title{font-size:12px}.man-toc-card-desc{display:none}}
