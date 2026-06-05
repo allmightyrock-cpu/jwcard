@@ -429,7 +429,7 @@ async function loadAdminConfig() {
   }
 }
 function getDefaultGroups() {
-  return ['주택구역','상가구역','격지 구역','형제 동반 필수 구역','아파트 구역','인터폰','편지 구역','개인 구역'];
+  return ['주택구역','상가구역','격지 구역','형제동반필수 구역','아파트 구역','인터폰','편지 구역','개인 구역'];
 }
 
 // ── 관리자 Presence 실시간 감시 ──
@@ -2010,8 +2010,8 @@ const _CAL_CAT_COLOR = {
   '아파트 구역':   {bg:'#DBEAFE',cl:'#1D4ED8'},
   '격지 구역':     {bg:'#F3E8FF',cl:'#7C3AED'},
   '각지':          {bg:'#F3E8FF',cl:'#7C3AED'},
-  '형제 동반 필수 구역': {bg:'#FEE2E2',cl:'#991B1B'},
-  '형제 동반 필수':      {bg:'#FEE2E2',cl:'#991B1B'},
+  '형제동반필수 구역': {bg:'#FEE2E2',cl:'#991B1B'},
+  '형제동반필수':      {bg:'#FEE2E2',cl:'#991B1B'},
   '인터폰':        {bg:'#FFE4E6',cl:'#BE123C'},
   '편지 구역':     {bg:'#FEF9C3',cl:'#A16207'},
   '편지구역':      {bg:'#FEF9C3',cl:'#A16207'},
@@ -3153,7 +3153,7 @@ function renderUnitEditList() {
       <div class="addr-cell${sameAddr?' inh':''}"><input type="text" value="${_escH(u.jibun)}" oninput="editUField(${i},'jibun',this.value)" placeholder="번지"></div>
       <div class="addr-cell${sameBld?' inh':''}"><input type="text" value="${_escH(u.building)}" oninput="editUField(${i},'building',this.value)" placeholder="건물명"></div>
       <div class="addr-cell unit-cell"><input type="text" value="${_escH(u.unit)}" oninput="editUField(${i},'unit',this.value)" placeholder="세부주소"></div>
-      <div class="addr-cell-chk"><input type="checkbox" title="형제 동반 필수 (자매 단독·자매끼리 배정 금지)"${u.escortRequired?' checked':''} onchange="editUField(${i},'escortRequired',this.checked)"></div>
+      <div class="addr-cell-chk"><input type="checkbox" title="형제동반필수 (자매 단독·자매끼리 배정 금지)"${u.escortRequired?' checked':''} onchange="editUField(${i},'escortRequired',this.checked)"></div>
       <div class="addr-row-acts">
         <button class="addr-act-btn ins" title="위에 행 삽입" onclick="insertUnitRowAt(${i})">+</button>
         <button class="addr-act-btn" title="위에 구분선 삽입" onclick="insertDividerAt(${i})"
@@ -5351,7 +5351,7 @@ window.deleteTerritory = function(id, name) {
 // ── Firebase 함수 전역 노출 (비모듈 스크립트용 — 설정탭 등) ──
 window._db             = db;
 window._doc            = (...a) => doc(...a);
-window._getDefaultGroups = () => ['주택구역','상가구역','격지 구역','형제 동반 필수 구역','아파트 구역','인터폰','편지 구역'];
+window._getDefaultGroups = () => ['주택구역','상가구역','격지 구역','형제동반필수 구역','아파트 구역','인터폰','편지 구역'];
 window._getDoc         = (...a) => getDoc(...a);
 window._getDocs        = (...a) => getDocs(...a);
 window._updateDoc      = (...a) => updateDoc(...a);
@@ -5374,7 +5374,7 @@ const VISIT_CODE_META = {
   revisit:  { label:'재방문',          icon:'⏰', color:'#1D4ED8', bg:'#DBEAFE' },
   refuse:   { label:'거절',            icon:'✕',  color:'#991B1B', bg:'#FEE2E2' },
   vacant:   { label:'공실',            icon:'□',  color:'#475569', bg:'#F8FAFC' },
-  escort:   { label:'형제 동반 필수',        icon:'⚠',  color:'#92400E', bg:'#FEF3C7' },
+  escort:   { label:'형제동반필수',        icon:'⚠',  color:'#92400E', bg:'#FEF3C7' },
   jwmember: { label:'형제/자매댁',     icon:'🏠', color:'#5B21B6', bg:'#EDE9FE' },
   interest: { label:'관심자/성서연구', icon:'📖', color:'#0F766E', bg:'#F0FDFA' },
 };

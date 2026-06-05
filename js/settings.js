@@ -23,7 +23,7 @@ async function loadSettingsValues() {
         if (ch.dataset.val === (data.visitMode || '호별')) ch.classList.add('selected');
       });
       window._visitMode = data.visitMode || '호별';
-      window._territoryGroups = data.territoryGroups || window._getDefaultGroups?.() || ['주택구역','상가구역','격지 구역','형제 동반 필수 구역','아파트 구역','인터폰','편지 구역','개인 구역'];
+      window._territoryGroups = data.territoryGroups || window._getDefaultGroups?.() || ['주택구역','상가구역','격지 구역','형제동반필수 구역','아파트 구역','인터폰','편지 구역','개인 구역'];
       if (!window._territoryGroups.includes('개인 구역')) {
         window._territoryGroups = [...window._territoryGroups, '개인 구역'];
       }

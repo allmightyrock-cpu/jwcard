@@ -1541,7 +1541,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 </div>
   <div class="escort-banner" id="escort-banner" style="display:none">
     <span style="font-size:16px">⚠</span>
-    형제 동반 필수 세대 포함 — 자매 단독·자매끼리 방문 금지. 형제(또는 형제가 포함된 부부·친족 짝)와 함께 방문하세요
+    형제동반필수 세대 포함 — 자매 단독·자매끼리 방문 금지. 형제(또는 형제가 포함된 부부·친족 짝)와 함께 방문하세요
   </div>
   <!-- 완료 신청 대기 배너 -->
   <div class="completion-banner" id="completion-banner">
@@ -1847,14 +1847,14 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <span class="help-code-chip" style="background:#DBEAFE;color:#1D4ED8">⏰ 재방문</span>
           <span class="help-code-chip" style="background:#FEE2E2;color:#991B1B">✕ 거절</span>
           <span class="help-code-chip" style="background:#F8FAFC;color:#475569">□ 공실</span>
-          <span class="help-code-chip" style="background:#FEF3C7;color:#92400E">⚠ 형제 동반 필수</span>
+          <span class="help-code-chip" style="background:#FEF3C7;color:#92400E">⚠ 형제동반필수</span>
           <span class="help-code-chip" style="background:#EDE9FE;color:#5B21B6">🏠 형제/자매댁</span>
           <span class="help-code-chip" style="background:#F0FDFA;color:#0F766E">📖 관심자</span>
         </div>
         <div class="help-item" style="margin-top:10px">
           <div class="help-icon" style="background:#FEF3C7">⚠</div>
           <div class="help-text">
-            <strong>형제 동반 필수 세대</strong>
+            <strong>형제동반필수 세대</strong>
             <span>안전을 위해 <b>자매 단독·자매끼리는 방문하지 않으며</b>, 형제(또는 형제가 포함된 부부·친족 짝)가 함께 방문해야 하는 세대입니다. 카드 상단에 경고 배너가 표시됩니다.</span>
           </div>
         </div>
@@ -2058,7 +2058,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         </div>
         <div class="help-warn-item">
           <span style="font-size:14px;flex-shrink:0">✓</span>
-          <span style="color:#166534"><strong>허용:</strong> 호수·방문 날짜·형제 동반 필수 표시(사유는 적지 않음)</span>
+          <span style="color:#166534"><strong>허용:</strong> 호수·방문 날짜·형제동반필수 표시(사유는 적지 않음)</span>
         </div>
         <div style="font-size:11px;color:#991B1B;margin-top:10px;line-height:1.7;border-top:1px solid #FECACA;padding-top:8px">
           이 시스템은 개인정보 입력이 구조적으로 차단되어 있습니다.<br>
@@ -2389,7 +2389,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <div class="ldh-text">
               <strong>칩 필터 3가지</strong>
               <span>
-                <strong style="color:#991B1B">⚠ 형제 동반 필수 제외</strong> — 형제 동반 필수 세대가 있는 구역을 빼고 표시<br>
+                <strong style="color:#991B1B">⚠ 형제동반필수 제외</strong> — 형제동반필수 세대가 있는 구역을 빼고 표시<br>
                 <strong>⏰ 재방문 세대 있는 구역</strong> — 재방문 코드가 기록된 세대가 있는 구역<br>
                 <strong>🕐 6개월+ 미사용</strong> — 최근 6개월간 배정 이력이 없는 구역
               </span>
@@ -2542,7 +2542,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       </div>
       <!-- ② 칩 필터 (미할당 카드에 적용 — "오늘 예정만" 제외) -->
       <div class="ld-chip-row" style="margin-bottom:8px">
-        <button class="ld-chip warn" id="ldc-no-escort" onclick="toggleLdChip('no-escort',this)">형제 동반 필수 제외</button>
+        <button class="ld-chip warn" id="ldc-no-escort" onclick="toggleLdChip('no-escort',this)">형제동반필수 제외</button>
         <button class="ld-chip" id="ldc-revisit" onclick="toggleLdChip('revisit',this)">재방문 세대 있는 구역</button>
         <button class="ld-chip" id="ldc-old6m" onclick="toggleLdChip('old6m',this)">6개월+ 미사용</button>
       </div>
@@ -2655,7 +2655,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   <div class="special-codes">
     <button class="spec-code-btn" style="color:#92400E" onclick="pickCode('escort')">
       <div style="width:15px;height:15px;border-radius:50%;background:#FEF3C7;border:1.5px solid #F59E0B;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="9" height="9" viewBox="0 0 14 14"><path d="M7 2 L13 12 L1 12 Z" stroke="#92400E" stroke-width="1.5" fill="none" stroke-linejoin="round"/><line x1="7" y1="6" x2="7" y2="9" stroke="#92400E" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="10.5" r="0.6" fill="#92400E"/></svg></div>
-      <span>형제 동반 필수</span>
+      <span>형제동반필수</span>
     </button>
     <button class="spec-code-btn" style="color:#5B21B6" onclick="pickCode('jwmember')">
       <div style="width:15px;height:15px;border-radius:50%;background:#7C3AED;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 14 14"><rect x="1" y="5" width="12" height="8" rx="1" fill="white" opacity="0.9"/><polyline points="1,7 7,2 13,7" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="9.5" r="1.5" fill="#7C3AED"/></svg></div>
@@ -4322,7 +4322,7 @@ function buildCard() {
     ? `<span class="addr-num">${firstAddr}</span> ${t.name}`
     : t.name;
 
-  // 형제 동반 필수 세대 확인
+  // 형제동반필수 세대 확인
   const visitMap = t.visitMap || {};
   const hasEscort = units.some((u,i) => (visitMap[i]?.code === 'escort') || u.escortRequired);
   if (hasEscort) document.getElementById('escort-banner').style.display = 'flex';
@@ -4512,8 +4512,8 @@ function renderUnitList(visitMap) {
           // u.jibun은 번지수 → 섹션 헤더에 이미 표시됨. 호수 fallback 사용 안 함
           const lbl = _fmtUnitLabel(_cleanUnitVal(u.unit));
           return lbl
-            ? lbl + (isEscort?'<span class="escort-tag">⚠ 형제 동반 필수</span>':'') + skipTag
-            : '<span class="unit-no-label">호수 미기록</span>' + (isEscort?'<span class="escort-tag">⚠ 형제 동반 필수</span>':'') + skipTag;
+            ? lbl + (isEscort?'<span class="escort-tag">⚠ 형제동반필수</span>':'') + skipTag
+            : '<span class="unit-no-label">호수 미기록</span>' + (isEscort?'<span class="escort-tag">⚠ 형제동반필수</span>':'') + skipTag;
         })()}</div>
         <div class="unit-more" onclick="event.stopPropagation();openUnitMoreSheet(${globalIdx},'${sec.key}')">···</div>
       </div>`;
@@ -4631,7 +4631,7 @@ function updateProgress(units, visitMap) {
   document.getElementById('c-chips').innerHTML = [
     ['pc-abs','부재',counts.absent],['pc-resp','응답',counts.resp],
     ['pc-rev','재방문',counts.revisit],['pc-ref','거절',counts.refuse],
-    ['pc-esc','형제 동반 필수',counts.escort],
+    ['pc-esc','형제동반필수',counts.escort],
     ['pc-jwm','형제/자매',counts.jwmember]
   ].filter(c=>c[2]>0).map(c=>`<span class="pchip ${c[0]}">${c[1]} ${c[2]}</span>`).join('');
   updateBottomBar(units, visitMap);
@@ -4640,7 +4640,7 @@ function updateProgress(units, visitMap) {
 // ── 코드 시트 ──
 const CODE_LABELS = {
   absent:'부재', resp:'응답', revisit:'재방문', refuse:'거절',
-  vacant:'공실', escort:'형제 동반 필수', jwmember:'형제/자매댁', interest:'관심자/성서연구'
+  vacant:'공실', escort:'형제동반필수', jwmember:'형제/자매댁', interest:'관심자/성서연구'
 };
 window.openCodeSheet = function(idx) {
   _activeUnitIdx = idx;
@@ -5218,7 +5218,7 @@ function updateBottomBar(units, visitMap) {
   const parts = [];
   if (remaining > 0)      parts.push(`미방문 ${remaining}세대`);
   if (revisitCount > 0)   parts.push(`재방문 ${revisitCount}세대`);
-  if (escortCount > 0)    parts.push(`형제 동반 필수 ${escortCount}세대`);
+  if (escortCount > 0)    parts.push(`형제동반필수 ${escortCount}세대`);
   descCom.textContent = parts.length > 0 ? parts.join(' · ') : `${done}/${total}세대 완료`;
 }
 
@@ -5252,7 +5252,7 @@ window.submitComplete = async function() {
   const lines = [`총 ${units.length}세대 중 ${done}세대 방문 완료`];
   if (unvisited > 0)   lines.push(`· 미방문 ${unvisited}세대 있음`);
   if (revisitCnt > 0)  lines.push(`· 재방문 예정 ${revisitCnt}세대 있음`);
-  if (escortCount > 0) lines.push(`· 형제 동반 필수 ${escortCount}세대 포함`);
+  if (escortCount > 0) lines.push(`· 형제동반필수 ${escortCount}세대 포함`);
   lines.push('');
   lines.push('구역을 완료 처리하고 반납하시겠습니까?');
   if (!confirm(lines.join('\n'))) return;
@@ -5707,7 +5707,7 @@ async function _loadLdData() {
       .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko-KR'));
     if (cfgSnap.exists()) {
       _ldGroups = cfgSnap.data().territoryGroups ||
-        ['주택구역','상가구역','격지 구역','형제 동반 필수 구역','아파트 구역','인터폰','편지 구역','개인 구역'];
+        ['주택구역','상가구역','격지 구역','형제동반필수 구역','아파트 구역','인터폰','편지 구역','개인 구역'];
     }
     _renderLdCatSelect();
     _renderLdCycleSelect();
@@ -7252,7 +7252,7 @@ function _renderNavNextCard() {
   var chips = '';
   if (unitLabel)  chips += '<span class="nav-chip">🏠 ' + _escHtml(unitLabel) + '</span>';
   if (floorLabel) chips += '<span class="nav-chip">' + _escHtml(floorLabel) + '</span>';
-  if (isEscort)   chips += '<span class="nav-chip nav-chip-warn">⚠ 형제 동반 필수</span>';
+  if (isEscort)   chips += '<span class="nav-chip nav-chip-warn">⚠ 형제동반필수</span>';
 
   var coordBadge = hasCached
     ? '<span style="font-size:10px;color:#38BDF8;margin-left:6px">📡 좌표 준비됨</span>'
