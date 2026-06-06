@@ -1,68 +1,61 @@
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  전자구역카드 시스템 — 배포 패키지
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+전자 구역 카드 공개 배포본
+================================
 
-■ 이 패키지의 구성
-  admin.html          관리자 페이지
-  publisher.html      전도인용 구역카드 페이지 (PWA 홈화면 추가 가능)
-  cart.html           전시대봉사 일정 페이지 (cartApproved 전도인만 링크 표시)
-  manifest.json       PWA 설정
-  sw.js               서비스 워커 (오프라인 지원)
-  _headers            Cloudflare Pages MIME 설정
-  install-guide.html  설치 안내서 (브라우저에서 열어 PDF로 인쇄 가능)
-  css/admin.css       관리자 스타일시트
-  js/admin.js         관리자 기능 스크립트
-  js/publisher.html   전도인 화면 스크립트 (publisher.html 내부 포함)
-  js/map-admin.js     지도 기능 스크립트
-  js/s13.js           S-13 양식 스크립트
-  js/settings.js      설정 기능 스크립트
-  icon-192.png        앱 아이콘 (192×192)
-  icon-512.png        앱 아이콘 (512×512)
+이 폴더는 여호와의 증인 회중에서 사용할 수 있는 전자 구역 카드 시스템의 공개용 템플릿입니다.
+회중 고유 정보와 실제 Firebase 설정값은 포함하지 않습니다.
+
+사용 범위
+---------
+
+이 소프트웨어는 한국의 여호와의 증인 회중에서 회중 봉사와 구역 관리를 돕기 위해 제공됩니다.
+여호와의 증인 회중 이외의 개인, 단체, 기업이 별도 목적으로 사용, 복사, 수정, 배포하는 것은 허용하지 않습니다.
 
 
-■ 설치 전 반드시 수정해야 할 항목
+처음 설치할 때
+--------------
 
-  1. js/admin.js  — 5~13줄
-     js/admin.js와 publisher.html(스크립트 부분) 두 곳의
-     firebaseConfig 블록을 본인 Firebase 프로젝트 값으로 교체
-
-     [교체 전]
-       apiKey: "YOUR_API_KEY",
-       projectId: "YOUR_PROJECT_ID",
-       ...
-
-     [교체 후]
-       Firebase 콘솔 → ⚙ 프로젝트 설정 → 일반 → 내 앱 →
-       SDK 설정 및 구성 → '구성' 에서 복사한 실제 값 붙여넣기
-
-  2. admin.html — 9줄 (네이버 지도 스크립트)
-     publisher.html — 611줄 (네이버 지도 스크립트)
-     YOUR_NAVER_CLIENT_ID → 발급받은 네이버 클라우드 Client ID 로 교체
-
-  3. js/map-admin.js — 49줄, 133줄
-     var BASE = '';  → 본인 회중 지역 주소 앞부분으로 변경
-     (예) var BASE = '경기도 OO시 ';
-     → 지도 검색 정확도가 향상됩니다. 빈 값으로 둬도 동작은 합니다.
+1. install-guide.html 을 브라우저에서 여세요.
+2. Firebase 프로젝트를 만들고 익명 로그인을 활성화하세요.
+3. Firestore Database를 만들고 firestore.rules 내용을 검토 후 게시하세요.
+4. setup.html 에 Firebase 설정값을 입력해 config.js 내용을 만드세요.
+5. config.example.js 를 복사해서 config.js 로 이름을 바꾼 뒤 설정값을 넣으세요.
+6. 폴더 전체를 Cloudflare Pages 등 정적 호스팅에 배포하세요.
+7. diagnostics.html 로 설치 상태를 점검하세요.
 
 
-■ 관리자 비밀번호 (최초 접속 시 직접 설정)
+주요 파일
+---------
 
-  최초 admin.html 접속 시 이름은 비우고 원하는 비밀번호를 입력하면
-  "비밀번호 설정 모드"로 전환됩니다. 비밀번호·확인란에 같은 값(4자리 이상)을
-  입력하고 "비밀번호 설정 및 로그인"을 누르면 그 값이 관리자 비밀번호로
-  저장되며 바로 로그인됩니다. (고정 기본 비밀번호는 없습니다)
-  이후에는 설정한 비밀번호로 로그인하며 [설정 → 비밀번호 변경]에서 바꿀 수 있습니다.
+install-guide.html   설치 안내서
+setup.html           config.js 생성 보조 도구
+diagnostics.html     설치 점검 도구
+faq.html             문제 해결 FAQ
+start.html           설치 안내서로 연결되는 시작 페이지
+config.example.js    공개용 설정 템플릿
+firestore.rules      Firestore 보안 규칙 템플릿
+admin.html           관리자 화면
+publisher.html       전도인용 화면
+cart.html            전시대봉사 화면
+credits.html         아이콘 등 외부 자산 출처
 
 
-■ 설치 순서 요약
+중요 보안 주의
+--------------
 
-  STEP 1. Firebase 프로젝트 생성 + Firestore 활성화 + 보안규칙 설정
-  STEP 2. 네이버 클라우드 Client ID 발급
-  STEP 3. 위 항목 1~3 코드 수정
-  STEP 4. Cloudflare Pages 배포 (이 폴더를 통째로 업로드)
-  STEP 5. admin.html 접속 → 최초 접속 시 관리자 비밀번호 직접 설정 → 설정 완료
+- config.js 는 실제 Firebase 설정값이 들어가는 파일입니다.
+- config.js 를 GitHub, 카페, 메신저 등에 공개로 올리지 마세요.
+- 공개 배포본에는 config.example.js 만 포함하는 것이 안전합니다.
+- 주소 데이터에는 운영에 필요한 최소 정보만 넣으세요.
+- 거주자 이름, 전화번호, 개인 사정 등 민감한 개인정보는 입력하지 않는 것을 권장합니다.
+- 전화봉사 카드처럼 전화번호가 포함된 자료는 이 공개 템플릿이나 Firestore에 넣지 마세요.
 
-  ★ 자세한 설치 절차: install-guide.html 을 브라우저에서 열어 확인하세요.
-     (또는 인쇄하여 PDF로 저장 가능)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+업데이트할 때
+------------
+
+1. 새 배포본을 받습니다.
+2. 기존 config.js 는 따로 보존합니다.
+3. 새 파일을 덮어쓴 뒤 기존 config.js 를 다시 넣습니다.
+4. 다시 배포하고 diagnostics.html 로 점검합니다.
+
+자세한 내용은 install-guide.html 을 참고하세요.

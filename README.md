@@ -1,205 +1,77 @@
-# 📋 전자구역카드 시스템
+# 전자 구역 카드
 
-> **🔒 사용 대상 제한**  
-> 이 소프트웨어는 **한국 여호와의 증인 회중 전용**입니다.  
-> 여호와의 증인 회중 이외의 개인·단체는 이 소프트웨어를 사용·배포·수정할 수 없습니다.  
-> This software is intended exclusively for use by **Jehovah's Witnesses congregations in Korea**.  
-> Use by any other individual or organization is not permitted.
+여호와의 증인 회중에서 구역 배정, 호별 방문 기록, S-13 구역 기록, 전시대봉사 일정을 관리하기 위한 웹앱/PWA 템플릿입니다.
 
-종이 구역카드를 완전히 대체하는 웹 기반 구역관리 시스템입니다.  
-Firebase + Cloudflare Pages 기반 · 실시간 동기화 · **월 비용 0원**
+이 배포본은 다른 회중도 참고할 수 있도록 회중 고유 정보와 실제 Firebase 설정값을 제거한 공개용 패키지입니다.
 
----
+## 사용 범위
 
-## ✨ 주요 기능
+이 소프트웨어는 한국의 여호와의 증인 회중에서 회중 봉사와 구역 관리를 돕기 위해 제공됩니다.
+여호와의 증인 회중 이외의 개인, 단체, 기업이 별도 목적으로 사용, 복사, 수정, 배포하는 것은 허용하지 않습니다.
 
-- 구역 등록·배정·회수·자동 반납 (KST 기준)
-- 요일별 봉사 일정 편성 및 인도자 배정 패널
-- 전도인 권한 체계 (관리자 / 봉사감독자 / 구역의종 / 인도자 / 일반)
-- 인도자 인증 이중 모드 — **개인 PIN 방식** 또는 **공용 암호 방식** 회중 설정으로 선택
-- 네이버 지도 연동 구역 지도 및 주소 편집
-- 방문 기록 (코드 선택 방식 — 개인정보 최소 수집)
-- S-13 기록 관리 및 엑셀 내보내기
-- 전시대봉사(Cart Witnessing) 일정 관리
-- PWA 지원 — 안드로이드 · iOS · iPad 홈 화면 설치
-- 오프라인 캐시 (Service Worker)
+## 주요 기능
 
----
+- 구역 카드 등록, 수정, 검색, 그룹 관리
+- 전도인 명단과 구역 배정 관리
+- 전도인용 모바일 구역 카드 화면
+- 방문 결과 기록과 방문 내역 조회
+- S-13 구역 배정 기록 관리
+- 전시대봉사 신청 및 팀 편성
+- 모바일 PWA 설치 지원
+- 설치 점검 도구와 FAQ 제공
 
-## 📁 파일 구성
+## 파일 구성
 
-| 파일 | 설명 |
-|------|------|
-| `publisher.html` | 전도인용 구역카드 앱 (PWA) |
-| `admin.html` | 관리자 앱 |
-| `cart.html` | 전시대봉사 일정 앱 |
-| `config.example.js` | 설정 파일 **템플릿** (→ `config.js`로 복사 후 수정) |
-| `sw.js` | Service Worker (오프라인 지원) |
-| `manifest.json` | PWA 설정 |
-| `_headers` | Cloudflare Pages MIME 설정 |
-| `install-guide.html` | 설치 안내서 (브라우저에서 열어 PDF 인쇄 가능) |
-| `css/admin.css` | 관리자 스타일시트 |
-| `js/admin.js` | 관리자 기능 스크립트 |
-| `js/map-admin.js` | 지도 기능 스크립트 |
-| `js/s13.js` | S-13 스크립트 |
-| `js/settings.js` | 설정 스크립트 |
+| 파일 | 용도 |
+| --- | --- |
+| `install-guide.html` | 공식 설치 안내서입니다. 처음 설치할 때 이 파일부터 여세요. |
+| `setup.html` | Firebase 설정값을 입력해 `config.js` 내용을 만드는 보조 도구입니다. |
+| `diagnostics.html` | 설치 후 Firebase, 설정 파일, 주요 화면 연결 상태를 점검하는 도구입니다. |
+| `faq.html` | 설치와 운영 중 자주 생기는 문제 해결 안내입니다. |
+| `start.html` | 기존 안내 링크 호환용 시작 페이지입니다. 설치 안내서로 연결됩니다. |
+| `config.example.js` | 공개용 설정 템플릿입니다. 이 파일을 복사해 `config.js`를 만듭니다. |
+| `firestore.rules` | Firestore 보안 규칙 템플릿입니다. 운영 전 반드시 검토하세요. |
+| `admin.html` | 관리자 화면입니다. 구역, 전도인, 배정, 기록, 설정을 관리합니다. |
+| `publisher.html` | 전도인용 구역 카드 화면입니다. |
+| `cart.html` | 전시대봉사 신청 및 팀 편성 화면입니다. |
+| `guide.html` | 전도인용 사용 안내 화면입니다. |
+| `credits.html` | 아이콘 등 외부 자산 출처 표시 화면입니다. |
 
----
+## 설치 요약
 
-## 🚀 설치 방법
+1. `install-guide.html`을 브라우저에서 엽니다.
+2. Firebase 프로젝트를 만들고 Authentication 익명 로그인을 활성화합니다.
+3. Firestore Database를 만들고 `firestore.rules` 내용을 검토 후 게시합니다.
+4. `setup.html`에서 Firebase 설정값을 입력해 `config.js` 내용을 만듭니다.
+5. `config.example.js`를 복사해 `config.js`로 이름을 바꾸고, 생성한 설정값을 붙여 넣습니다.
+6. 이 폴더 전체를 Cloudflare Pages 등 정적 호스팅에 배포합니다.
+7. 배포 후 `diagnostics.html`로 설치 상태를 점검합니다.
+8. `/admin.html`에 접속해 회중명, 전도인, 구역 데이터를 설정합니다.
 
-### 준비물
-- [Google 계정](https://accounts.google.com) — Firebase 용
-- [Cloudflare 계정](https://cloudflare.com) — 웹 호스팅 용
-- [Naver Cloud 계정](https://ncloud.com) — 지도 API 용 (선택)
+자세한 절차는 `install-guide.html`에 정리되어 있습니다.
 
-### STEP 1 — 최신 버전 다운로드
+## 보안과 개인정보 주의
 
-오른쪽 **Releases** 탭 → 최신 버전 → `Source code (zip)` 다운로드 후 압축 해제
+- `config.js`에는 실제 Firebase 프로젝트 정보가 들어갑니다. 공개 GitHub 저장소나 카페 게시글에 올리지 마세요.
+- 공개 배포본에는 `config.example.js`만 포함하는 구조를 유지하세요.
+- 주소 데이터는 회중 운영에 필요한 최소 범위만 사용하고, 거주자 이름, 전화번호, 개인 사정 같은 민감한 개인정보는 입력하지 않는 것을 권장합니다.
+- 전화봉사 카드처럼 전화번호가 포함된 자료는 이 공개 템플릿이나 Firestore에 넣지 마세요. 별도 보안 체계를 갖춘 방식으로 관리해야 합니다.
+- `firestore.rules`는 운영 전 반드시 실제 회중 운영 방식에 맞게 검토해야 합니다.
 
-### STEP 2 — config.js 만들기
+## 업데이트 방법
 
-```bash
-# config.example.js 를 복사해서 config.js 로 이름 변경
-```
+1. 새 배포본을 내려받습니다.
+2. 기존에 사용하던 `config.js`는 보존합니다.
+3. 새 파일들을 덮어쓴 뒤, 기존 `config.js`를 다시 넣습니다.
+4. Cloudflare Pages 등에 재배포합니다.
+5. 브라우저에서 새로고침 후 `diagnostics.html`로 점검합니다.
 
-`config.js` 파일을 열어 본인 Firebase 값과 네이버 Client ID 입력:
+Firebase에 저장된 운영 데이터는 파일을 업데이트해도 자동으로 삭제되지 않습니다. 단, 배포 전 백업을 권장합니다.
 
-```js
-window.APP_CONFIG = {
-  firebase: {
-    apiKey:            "여기에 본인 값 입력",
-    authDomain:        "여기에 본인 값 입력",
-    projectId:         "여기에 본인 값 입력",
-    storageBucket:     "여기에 본인 값 입력",
-    messagingSenderId: "여기에 본인 값 입력",
-    appId:             "여기에 본인 값 입력"
-  },
-  naverClientId: "여기에 본인 값 입력"
-};
-```
+## 출처
 
-### STEP 2-1 — 카카오 JavaScript 키 발급 *(선택 · 카카오톡 공유 기능)*
+아이콘 등 외부 자산 출처는 `credits.html`에서 확인할 수 있습니다.
 
-> **설정하지 않아도** 앱은 정상 동작합니다 — 미설정 시 클립보드 복사로 대체됩니다.
+## 문의
 
-카카오 키를 설정하면 아래 기능들이 활성화됩니다:
-- 🏠 **주소 수정 요청** — 전도인이 구역카드에서 주소 오류 발견 시 카카오톡으로 수정 요청 전송
-- 🛒 **전시대봉사 팀 배정표 공유** — 인도자가 팀 편성 결과를 팀원들에게 카카오톡으로 이미지 전송
-
-#### 발급 방법
-
-1. [developers.kakao.com](https://developers.kakao.com) 접속 → 카카오 계정으로 **로그인**  
-   *(별도 가입 불필요 — 카카오톡 계정을 그대로 사용)*
-
-2. 상단 **[내 애플리케이션] → [애플리케이션 추가하기]** → 앱 이름 입력 (예: `전자구역카드`) → **[저장]**
-
-3. 앱 대시보드 좌측 **[앱 설정] → [플랫폼] → [Web 플랫폼 등록]** 클릭  
-   → **사이트 도메인**에 Cloudflare 배포 주소 입력 후 저장:
-   ```
-   https://your-project.pages.dev
-   ```
-   > ⚠️ 이 단계를 빠뜨리면 공유 버튼이 작동하지 않습니다. `https://` 포함 필수!
-
-4. 좌측 **[앱 설정] → [앱 키]** → **JavaScript 키** 복사 (32자리 영문+숫자)  
-   > REST API 키·Admin 키·Native 앱 키가 아닌 **JavaScript 키**를 복사하세요.
-
-5. `config.js` 에 아래 항목 추가 후 Cloudflare 재배포:
-
-```js
-kakaoJsKey: "복사한_32자리_JavaScript_키"
-```
-
-> 📖 더 자세한 설명은 `install-guide.html`의 **STEP 7** 을 참고하세요.
-
----
-
-### STEP 3 — Firebase 설정
-
-1. [console.firebase.google.com](https://console.firebase.google.com) 접속
-2. 프로젝트 생성 → Firestore Database 활성화 (프로덕션 모드)
-3. 보안 규칙을 아래로 교체 후 게시:
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
-```
-
-### STEP 4 — Cloudflare Pages 배포
-
-1. [dash.cloudflare.com](https://dash.cloudflare.com) 접속
-2. Workers & Pages → Pages → **파일 직접 업로드** 선택
-3. 이 폴더 전체 (`config.js` 포함)를 드래그&드롭
-4. 배포 완료 → 발급된 도메인으로 접속
-
-### STEP 5 — 첫 로그인
-
-- `admin.html` 접속 → **최초 접속 시** 이름은 비우고 원하는 비밀번호를 입력하면 **"비밀번호 설정 모드"**로 전환됩니다
-- 비밀번호·확인란에 같은 값(4자리 이상) 입력 → **"비밀번호 설정 및 로그인"** → 이 값이 관리자 비밀번호로 저장되고 바로 로그인됩니다
-- 이후에는 설정한 비밀번호로 로그인하며, 필요 시 **[설정 → 비밀번호 변경]**에서 변경할 수 있습니다
-
-### STEP 6 — 인도자 인증 방식 설정
-
-`admin.html` → **설정 탭 → 🔐 인도자 인증 방식** 에서 선택:
-
-| 방식 | 설명 | 적합한 경우 |
-|------|------|------------|
-| **개인 PIN** | 인도자 각자가 4자리+ PIN을 직접 등록 | 보안을 중시하는 회중 |
-| **공용 암호** | 관리자가 정한 암호 하나를 모든 인도자가 공유 | 암호 관리를 단순화하고 싶은 회중 |
-
-> 💡 공용 암호 방식은 구역카드·전시대봉사 앱에 **동일한 암호 하나**가 적용됩니다.
-
----
-
-## 🔄 업데이트 방법
-
-새 버전이 출시되면 아래 순서로 진행하세요.
-
-1. 이 페이지의 초록색 **[<> Code]** 버튼 → **[Download ZIP]** 클릭 후 압축 해제
-2. ⚠️ **`config.js`는 교체하지 마세요!** — 본인이 만들어 둔 config.js를 새 폴더에 복사해 넣기
-3. Cloudflare 대시보드 → 해당 프로젝트 → **[새 배포 만들기]** → 폴더 전체 업로드
-4. 앱에서 **"새 버전이 있습니다"** 배너 → [업데이트] 버튼 클릭
-
-> 💡 **업데이트 알림 받기:** 이 페이지 오른쪽 상단 **[Watch]** → **[Releases only]** 선택하면 새 버전이 나올 때 이메일로 알림이 옵니다.
-
-
----
-
-## 📖 상세 매뉴얼
-
-설치 후 **`admin.html` → 메뉴얼 탭** 에서 전체 사용법을 확인할 수 있습니다.
-
----
-
-## ⚠️ 주의사항
-
-- `config.js` 는 본인 Firebase 키가 담겨 있으므로 **절대 GitHub에 업로드하지 마세요**
-- 이 저장소의 `config.js` 는 `.gitignore` 로 자동 제외됩니다
-
----
-
-## 📞 문의 / 지원
-
-설치 중 문제가 생기거나 사용법이 궁금하면 아래로 연락해 주세요.
-
-> **allmightyrock@gmail.com**  
-> 같은 여호와의 증인 형제자매를 위해 피드백을 제공합니다.
-
----
-
-## 📄 라이선스
-
-**사용 제한 라이선스 (Restricted Use License)**
-
-- 이 소프트웨어는 **한국 여호와의 증인 회중** 만 사용할 수 있습니다.
-- 여호와의 증인 회중 이외의 개인, 단체, 기업은 어떠한 목적으로도 사용·복사·수정·배포할 수 없습니다.
-- 비상업 · 회중 봉사 전용 · 개인정보 미수집 시스템
-
-This software may only be used by Jehovah's Witnesses congregations in Korea.  
-Use, copying, modification, or distribution by any other individual, group, or organization is prohibited.
+설치와 사용 중 도움이 필요하면 공개 저장소 안내 또는 배포자가 제공한 연락처를 참고하세요.
