@@ -3796,6 +3796,55 @@ window.filterTerritory = function(cat, el) {
   window.renderTerritoryTable();
 };
 
+// ── 현재 적용 중인 필터 칩 표시 + 개별/전체 해제 ──
+const _STATUS_LABEL = { active:'활성만', inactive:'비활성만', '진행중':'진행중', '완료':'완료', '미배정':'미배정' };
+function _activeTerrFilters() {
+  const cat   = window._currentCategory;
+  const cmplt = window._currentCompletionFilter || '전체';
+  const statusF = window._currentStatusFilter || 'all';
+  const rawKw = (document.getElementById('terr-search')?.value || '').trim();
+  const monthVal = parseInt(document.getElementById('terr-month-filter')?.value) || 0;
+  const list = [];
+  if (statusF !== 'all') list.push({ k:'status', label:(_STATUS_LABEL[statusF]||statusF) });
+  if (cmplt === 'complete')   list.push({ k:'cmplt', label:'완료신청' });
+  if (cmplt === 'incomplete') list.push({ k:'cmplt', label:'미완료' });
+  if (cat && cat !== '전체')  list.push({ k:'cat', label:'유형:'+cat });
+  if (monthVal > 0)           list.push({ k:'month', label:monthVal+'개월+' });
+  if (rawKw)                  list.push({ k:'search', label:'검색:'+rawKw });
+  return list;
+}
+function _renderActiveFilterBar() {
+  const bar = document.getElementById('terr-active-filters');
+  if (!bar) return;
+  const f = _activeTerrFilters();
+  if (!f.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.style.display = 'flex';
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;');
+  bar.innerHTML =
+    '<span style="font-size:11px;color:#94A3B8">적용 중</span>' +
+    f.map(x => `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:12px;padding:2px 4px 2px 9px">${esc(x.label)}<button onclick="removeTerrFilter('${x.k}')" title="이 필터 끄기" style="border:0;background:none;color:#60A5FA;cursor:pointer;font-size:13px;line-height:1;padding:0 4px;font-family:inherit">×</button></span>`).join('') +
+    `<button onclick="clearAllTerrFilters()" style="font-size:11px;color:#DC2626;background:#FFF5F5;border:1px solid #FECACA;border-radius:12px;padding:3px 10px;cursor:pointer;font-family:inherit">필터 초기화</button>`;
+}
+window.removeTerrFilter = function(kind) {
+  if (kind === 'status') { window._currentStatusFilter = 'all'; const el=document.getElementById('terr-status-filter'); if(el) el.value='all'; }
+  else if (kind === 'cmplt') { window._currentCompletionFilter = '전체'; }
+  else if (kind === 'cat')  { window._currentCategory = '전체'; document.querySelectorAll('#cat-tabs .terr-type-tab, #cat-tabs .cat-tab').forEach(t=>t.classList.remove('active')); document.querySelector('#cat-tabs .terr-type-tab, #cat-tabs .cat-tab')?.classList.add('active'); }
+  else if (kind === 'month'){ const el=document.getElementById('terr-month-filter'); if(el) el.value=''; }
+  else if (kind === 'search'){ const el=document.getElementById('terr-search'); if(el) el.value=''; }
+  window.renderTerritoryTable();
+};
+window.clearAllTerrFilters = function() {
+  window._currentStatusFilter = 'all';
+  window._currentCompletionFilter = '전체';
+  window._currentCategory = '전체';
+  const s=document.getElementById('terr-status-filter'); if(s) s.value='all';
+  const m=document.getElementById('terr-month-filter'); if(m) m.value='';
+  const k=document.getElementById('terr-search'); if(k) k.value='';
+  document.querySelectorAll('#cat-tabs .terr-type-tab, #cat-tabs .cat-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('#cat-tabs .terr-type-tab, #cat-tabs .cat-tab')?.classList.add('active');
+  window.renderTerritoryTable();
+};
+
 window.filterCompletionStatus = function(status, el) {
   if (window._currentCompletionFilter === status) {
     window._currentCompletionFilter = '전체';
@@ -4057,7 +4106,18 @@ window.renderTerritoryTable = function() {
     countEl.textContent = isFiltered ? `검색 결과 ${list.length}개` : `전체 ${list.length}개`;
     countEl.style.color = (isFiltered && list.length > 0) ? '#3B82F6' : '#94A3B8';
   }
-  if (!list.length) { wrap.innerHTML='<div class="loading">조건에 맞는 구역이 없습니다.</div>'; return; }
+  _renderActiveFilterBar();
+  if (!list.length) {
+    const af = _activeTerrFilters();
+    const hint = af.length >= 2
+      ? `<div style="color:#B45309;font-size:12.5px;margin-top:8px;line-height:1.6">지금 <b>${af.map(x=>x.label).join(' + ')}</b> 조건이 <b>함께</b> 적용 중입니다.<br>조건이 너무 좁을 수 있어요.</div>
+         <button onclick="clearAllTerrFilters()" style="margin-top:10px;font-size:12px;color:#fff;background:#DC2626;border:0;border-radius:8px;padding:7px 16px;cursor:pointer;font-family:inherit">필터 초기화</button>`
+      : (af.length === 1
+        ? `<div style="font-size:12px;color:#94A3B8;margin-top:6px">현재 <b>${af[0].label}</b> 필터가 적용 중입니다.</div>`
+        : '');
+    wrap.innerHTML = `<div class="loading" style="text-align:center">조건에 맞는 구역이 없습니다.${hint}</div>`;
+    return;
+  }
 
   const view = window._terrView || 'list';
   wrap.innerHTML = view === 'card' ? _renderTerrCardsNew(list, now) : _renderTerrListNew(list, now);

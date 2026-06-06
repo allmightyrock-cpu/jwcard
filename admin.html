@@ -276,6 +276,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <button class="terr-type-tab active" onclick="filterTerritory('전체',this)">전체 <span class="cnt">(0)</span></button>
           </div>
 
+          <!-- 현재 적용 중인 필터 칩 (조합 검색 시 상태 표시) -->
+          <div id="terr-active-filters" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 2px"></div>
           <div style="display:flex;justify-content:flex-end;margin:4px 0 2px">
             <span id="terr-result-count" style="font-size:11px;color:#94A3B8"></span>
           </div>
