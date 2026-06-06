@@ -3355,15 +3355,19 @@ window.bulkSetCycle = async function() {
   );
   if (!targets.length) { alert('대상 구역이 없습니다.'); return; }
   const catLabel = catFilter ? `[${catFilter}] 유형 ` : '전체 ';
-  if (!confirm(
-    `${catLabel}구역 ${targets.length}개의 회차를 ${cycleVal}회차로 변경합니다.\n계속하시겠습니까?`
-  )) return;
+  const assignedCnt = targets.filter(t => (t.assignedPublishers || []).length > 0).length;
+  let msg =
+    `${catLabel}구역 ${targets.length}개의 회차를 ${cycleVal}회차로 변경합니다.\n\n` +
+    `⚠ 현재 진행 중인 방문 표시와 '여기까지 표시'가 초기화됩니다.\n` +
+    `(완료 처리된 과거 이력과 S-13 기록은 보존됩니다.)\n`;
+  if (assignedCnt) msg += `\n⚠ 이 중 ${assignedCnt}개는 현재 배정(진행중)된 구역입니다 — 진행 표시가 사라집니다.\n`;
+  if (!confirm(msg + '\n계속하시겠습니까?')) return;
 
   let ok = 0, fail = 0;
   for (const t of targets) {
     try {
-      await updateDoc(doc(db, 'territories', t.id), { cycle: cycleVal, visitMap: {}, sectionStatus: {} });
-      t.cycle = cycleVal; t.visitMap = {}; t.sectionStatus = {};
+      await updateDoc(doc(db, 'territories', t.id), { cycle: cycleVal, visitMap: {}, sectionStatus: {}, completionRate: 0 });
+      t.cycle = cycleVal; t.visitMap = {}; t.sectionStatus = {}; t.completionRate = 0;
       ok++;
     } catch(e) { fail++; }
   }
