@@ -1303,6 +1303,13 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
   </div>
 
+  <!-- 미처리(완료/미완료 미입력) 안내 배너 — 배정 12시간 경과 시 -->
+  <div id="pending-process-banner" onclick="_openPendingCard()" style="display:none;width:calc(100% - 32px);max-width:340px;margin:0 auto 10px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:1px solid #F59E0B;border-radius:14px;padding:12px 15px;cursor:pointer;box-shadow:0 6px 18px rgba(217,119,6,.18)">
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#92400E"><span style="font-size:16px">⏰</span><span id="pending-process-title">처리할 구역이 있습니다</span></div>
+    <div id="pending-process-body" style="font-size:12px;color:#78350F;margin-top:5px;line-height:1.5"></div>
+    <div style="font-size:11px;color:#B45309;margin-top:6px;font-weight:600">👉 탭하여 구역카드를 열고 <b>완료/미완료</b>를 눌러 주세요</div>
+  </div>
+
   <!-- 뱃지 버튼 영역 (이름 입력 + 역할 확인 후 등장) -->
   <div class="badge-zone hidden" id="badge-zone">
 
@@ -3140,6 +3147,7 @@ window.onNameInput = async function(val) {
       _startRevisitListener(name);
       if (approved) startPubMeetingListener(name);
       else stopPubMeetingListener();
+      _checkPendingProcessing(name);
     } else {
       if (zone)   zone.classList.add('hidden');
       if (lBadge) lBadge.style.display = 'none';
@@ -4853,6 +4861,45 @@ function _revisitFmtDate(ts) {
   const d = new Date(ts.seconds * 1000);
   return (d.getMonth() + 1) + '/' + d.getDate();
 }
+
+// ── 미처리(완료/미완료 미입력) 안내: 배정 12시간 경과 카드 ──
+let _pendingProcessCards = [];
+let _pendingCheckedFor = '';
+async function _checkPendingProcessing(name) {
+  const banner = document.getElementById('pending-process-banner');
+  if (!banner) return;
+  if (!name || !db) { banner.style.display = 'none'; return; }
+  if (name === _pendingCheckedFor) return;   // 같은 이름 반복 조회 방지
+  _pendingCheckedFor = name;
+  try {
+    const snap = await getDocs(query(collection(db, 'territories'), where('assignedPublishers', 'array-contains', name)));
+    const now = Date.now();
+    const cards = [];
+    snap.forEach(d => {
+      const t = d.data() || {};
+      if (t.completionStatus) return;
+      if (!t.lastAssignedDate) return;
+      const ms = t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate().getTime() : new Date(t.lastAssignedDate).getTime();
+      if (isNaN(ms)) return;
+      const hrs = (now - ms) / 3600000;
+      if (hrs >= 12) cards.push({ no: t.no, name: t.name || '', hrs: Math.floor(hrs) });
+    });
+    cards.sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
+    _pendingProcessCards = cards;
+    if (!cards.length) { banner.style.display = 'none'; return; }
+    const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    document.getElementById('pending-process-title').textContent = `완료/미완료 처리가 필요한 구역 ${cards.length}곳`;
+    document.getElementById('pending-process-body').innerHTML =
+      cards.map(c => `· <b>${esc(c.no)}번</b> ${esc(c.name)} <span style="color:#B45309">(배정 ${c.hrs}시간 경과)</span>`).join('<br>');
+    banner.style.display = 'block';
+  } catch (e) { console.warn('미처리 확인 실패', e); banner.style.display = 'none'; }
+}
+window._openPendingCard = function() {
+  if (!_pendingProcessCards.length) return;
+  const noEl = document.getElementById('no-input');
+  if (noEl) noEl.value = String(_pendingProcessCards[0].no);
+  if (window.handleLogin) window.handleLogin();
+};
 
 function _startRevisitListener(name) {
   if (!name || !db) return;
