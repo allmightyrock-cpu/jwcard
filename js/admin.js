@@ -3626,11 +3626,11 @@ function renderTerritoryDashboard() {
   const bars = sortedCycles.map(([cycle, count]) => {
     const pct = Math.round(count / maxCount * 100);
     return `<div onclick="window.filterByCycle(${cycle})" title="클릭하면 ${cycle}회차 구역만 목록에 표시됩니다" style="display:flex;align-items:center;gap:10px;margin-bottom:9px;cursor:pointer;border-radius:6px;padding:2px 3px;transition:background .12s" onmouseover="this.style.background='#eef2f9'" onmouseout="this.style.background=''">
-      <div style="width:44px;text-align:right;font-size:12px;color:#2563eb;font-weight:700;flex-shrink:0;text-decoration:underline;text-underline-offset:2px">${cycle}회차</div>
+      <div style="width:44px;text-align:right;font-size:12px;color:#2563eb;font-weight:600;flex-shrink:0;text-decoration:underline;text-underline-offset:2px">${cycle}회차</div>
       <div style="flex:1;background:#f1f5f9;border-radius:6px;height:20px;position:relative;overflow:hidden">
         <div style="width:${pct}%;background:linear-gradient(90deg,#1B3A6B 0%,#2563eb 100%);height:100%;border-radius:6px"></div>
       </div>
-      <div style="width:32px;font-size:12px;font-weight:700;color:#1B3A6B;text-align:right;flex-shrink:0">${count}</div>
+      <div style="width:32px;font-size:12px;font-weight:600;color:#1B3A6B;text-align:right;flex-shrink:0">${count}</div>
     </div>`;
   }).join('');
 
@@ -3646,9 +3646,9 @@ function renderTerritoryDashboard() {
         <circle cx="38" cy="38" r="${r}" fill="none" stroke="${col}" stroke-width="8"
           stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
           stroke-linecap="round" transform="rotate(-90 38 38)"/>
-        <text x="38" y="43" text-anchor="middle" font-size="12" font-weight="700" fill="${col}">${pct}%</text>
+        <text x="38" y="43" text-anchor="middle" font-size="12" font-weight="600" fill="${col}">${pct}%</text>
       </svg>
-      <div style="font-size:11px;font-weight:700;color:#475569;margin-top:3px">${label}</div>
+      <div style="font-size:11px;font-weight:500;color:#475569;margin-top:3px">${label}</div>
       <div style="font-size:10px;color:#94a3b8;margin-top:1px">${num} / ${den}</div>
     </div>`;
   }
@@ -3674,14 +3674,14 @@ function renderTerritoryDashboard() {
   const donutSvg = `<svg width="128" height="128" viewBox="0 0 128 128">
     <circle cx="${_dcx}" cy="${_dcy}" r="${_dr}" fill="none" stroke="#f1f5f9" stroke-width="${_dsw}"/>
     ${donutCircles}
-    <text x="${_dcx}" y="${_dcy - 4}" text-anchor="middle" font-size="20" font-weight="700" fill="#1B3A6B">${T.length}</text>
+    <text x="${_dcx}" y="${_dcy - 4}" text-anchor="middle" font-size="20" font-weight="600" fill="#1B3A6B">${T.length}</text>
     <text x="${_dcx}" y="${_dcy + 13}" text-anchor="middle" font-size="11" fill="#94a3b8">전체구역</text>
   </svg>`;
   const legendHtml = donutSegs.map(s => `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <div style="width:11px;height:11px;border-radius:3px;background:${s.color};flex-shrink:0"></div>
       <span style="font-size:12px;color:#475569;flex:1">${s.label}</span>
-      <span style="font-size:13px;font-weight:700;color:#1e293b">${s.val}</span>
+      <span style="font-size:13px;font-weight:600;color:#1e293b">${s.val}</span>
       <span style="font-size:11px;color:#94a3b8">&nbsp;${T.length ? Math.round(s.val / T.length * 100) : 0}%</span>
     </div>`).join('');
 
@@ -3697,7 +3697,7 @@ function renderTerritoryDashboard() {
       </div>
     </div>
     <div>
-      <div style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.5px;margin-bottom:12px;text-transform:uppercase">회차별 구역 수</div>
+      <div style="font-size:11px;font-weight:600;color:#475569;letter-spacing:.3px;margin-bottom:12px">회차별 구역 수</div>
       ${bars}
       <div style="font-size:10px;color:#94a3b8;margin-top:6px">전체 ${T.length}개 구역 기준</div>
     </div>`;
@@ -3763,14 +3763,14 @@ async function loadAddressRequests() {
       return `<div style="padding:11px 14px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;background:#fff">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="flex:1">
-            <div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:3px">
+            <div style="font-size:13px;font-weight:600;color:#1E293B;margin-bottom:3px">
               ${r.terrNo ? `구역 ${r.terrNo}` : ''} ${r.terrName || ''} <span style="font-size:11px;color:#94a3b8">${r.addr||''}</span>
             </div>
             <div style="font-size:12px;color:#475569;margin-bottom:2px">수정 항목: <b>${fieldsStr}</b></div>
             <div style="font-size:12px;color:#1E293B;margin-bottom:3px">내용: ${r.detail||'—'}</div>
             <div style="font-size:11px;color:#94a3b8">${r.requester||'전도인'} · ${dateStr}</div>
           </div>
-          <button onclick="resolveAddrRequest('${d.id}')" style="flex-shrink:0;padding:6px 12px;background:#166534;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">처리 완료</button>
+          <button onclick="resolveAddrRequest('${d.id}')" style="flex-shrink:0;padding:6px 12px;background:#166534;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">처리 완료</button>
         </div>
       </div>`;
     }).join('');
