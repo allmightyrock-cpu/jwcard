@@ -3697,7 +3697,7 @@ function renderTerritoryDashboard() {
       </div>
     </div>
     <div>
-      <div style="font-size:11px;font-weight:600;color:#475569;letter-spacing:.3px;margin-bottom:12px">회차별 구역 수</div>
+      <div style="font-size:11px;font-weight:500;color:#64748B;letter-spacing:.5px;margin-bottom:12px">회차별 구역 수</div>
       ${bars}
       <div style="font-size:10px;color:#94a3b8;margin-top:6px">전체 ${T.length}개 구역 기준</div>
     </div>`;
