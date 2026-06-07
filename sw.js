@@ -4,7 +4,7 @@
 //   예: 'jwcard-v2.30' → 'jwcard-v2.31'
 //   버전이 바뀌어야 모든 모바일 PWA가 업데이트를 받습니다.
 //
-const CACHE = 'jwcard-v2.51'; // MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편
+const CACHE = 'jwcard-v2.52'; // MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편
 
 // 프리캐시 정적 리소스 (오프라인 대비, 기본은 Network First)
 const STATIC = [
@@ -12,6 +12,7 @@ const STATIC = [
   '/publisher.html',
   '/cart.html',
   '/guide.html',
+  '/install.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -88,10 +89,13 @@ self.addEventListener('fetch', e => {
   const isNetworkFirst =
     NETWORK_FIRST_PATTERNS.some(p => url.includes(p)) ||
     url.endsWith('/') ||
-    url.endsWith('/publisher');
+    url.endsWith('/publisher') ||
+    url.endsWith('/install') ||
+    url.endsWith('/install.html');
 
   if (isNetworkFirst) {
-    const fallback = url.includes('cart.html') ? '/cart.html' : '/publisher.html';
+    const fallback = url.includes('cart.html') ? '/cart.html'
+      : (url.includes('install') ? '/install.html' : '/publisher.html');
     e.respondWith(
       fetch(e.request)
         .then(res => {
