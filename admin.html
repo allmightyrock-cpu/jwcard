@@ -1443,10 +1443,16 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               </div>
 
               <div class="man-sec">
-                <div class="man-sec-title">구역 추가 방법</div>
-                <a href="/data-guide" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;background:linear-gradient(135deg,#1B3A6B,#2E5A9E);color:#fff;border-radius:10px;padding:12px 14px;margin:6px 0 14px">
-                  <span><span style="font-size:13px;font-weight:600;display:block">📘 구역 데이터 입력 가이드</span><span style="font-size:11px;opacity:.9">신규 회중 — 구역카드 생성·주소 입력 전체 안내 (인쇄 가능)</span></span>
-                  <span style="font-size:16px">›</span>
+                <div class="man-sec-title">구역 추가 방법 <span style="font-size:11px;font-weight:500;color:#2563EB;margin-left:4px">👇 자세한 설명은 아래 가이드</span></div>
+                <a href="/data-guide" target="_blank" rel="noopener"
+                   onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 7px 20px rgba(27,58,107,.28)'"
+                   onmouseout="this.style.transform='';this.style.boxShadow=''"
+                   style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-decoration:none;background:linear-gradient(135deg,#1B3A6B,#2E5A9E);color:#fff;border-radius:11px;padding:13px 14px;margin:8px 0 16px;cursor:pointer;transition:transform .15s,box-shadow .15s">
+                  <span style="display:flex;align-items:center;gap:10px;min-width:0">
+                    <span style="font-size:22px;flex-shrink:0">📘</span>
+                    <span style="min-width:0"><span style="font-size:13.5px;font-weight:700;display:block">구역 데이터 입력 가이드</span><span style="font-size:11px;opacity:.92">신규 회중 — 구역카드 생성·주소 입력 전체 안내 (인쇄 가능)</span></span>
+                  </span>
+                  <span style="background:#fff;color:#1B3A6B;font-size:12px;font-weight:700;padding:7px 13px;border-radius:8px;white-space:nowrap;flex-shrink:0">가이드 열기 →</span>
                 </a>
                 <div class="man-sub">① 수동 추가</div>
                 <ul class="man-steps">
