@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>구역 데이터 입력 가이드 — 전자 구역카드</title>
+<style>
+  :root{
+    --navy:#1B3A6B; --navy2:#2E5A9E; --green:#166534; --green-bg:#F0FDF4; --green-bd:#86EFAC;
+    --amber:#92400E; --amber-bg:#FFFBEB; --amber-bd:#FDE68A;
+    --ink:#1E293B; --gray:#64748B; --line:#E2E8F0; --soft:#F8FAFC;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif; color:var(--ink); background:#EEF2F7; line-height:1.65; -webkit-text-size-adjust:100%;}
+  .wrap{max-width:880px; margin:0 auto; background:#fff; min-height:100vh; box-shadow:0 0 40px rgba(0,0,0,0.06)}
+  header.hero{background:linear-gradient(135deg,var(--navy),var(--navy2)); color:#fff; padding:30px 24px 26px;}
+  header.hero .eyebrow{font-size:13px; opacity:.85; letter-spacing:.5px; margin-bottom:6px}
+  header.hero h1{margin:0 0 8px; font-size:26px; font-weight:800; letter-spacing:-.3px}
+  header.hero p{margin:0; font-size:14px; opacity:.92; line-height:1.6}
+  nav.toc{background:var(--soft); border-bottom:1px solid var(--line); padding:14px 24px}
+  nav.toc strong{display:block; font-size:12px; color:var(--gray); margin-bottom:8px; letter-spacing:.5px}
+  nav.toc a{display:inline-block; margin:0 6px 6px 0; padding:6px 12px; border:1px solid var(--line); border-radius:20px; font-size:13px; color:var(--navy); text-decoration:none; background:#fff;}
+  nav.toc a:hover{background:var(--navy); color:#fff; border-color:var(--navy)}
+  main{padding:8px 24px 60px}
+  section{padding:24px 0; border-bottom:1px solid var(--line)}
+  section:last-child{border-bottom:none}
+  h2{font-size:20px; font-weight:800; color:var(--navy); margin:6px 0 4px; display:flex; align-items:center; gap:9px; scroll-margin-top:14px}
+  h2 .num{background:var(--navy); color:#fff; width:30px; height:30px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0}
+  h3{font-size:16px; font-weight:700; color:var(--ink); margin:22px 0 8px}
+  .lead{color:var(--gray); font-size:14px; margin:4px 0 4px}
+  p{font-size:14.5px}
+  ol.steps{counter-reset:step; list-style:none; padding:0; margin:12px 0}
+  ol.steps>li{position:relative; padding:12px 14px 12px 50px; margin-bottom:10px; background:var(--soft); border:1px solid var(--line); border-radius:12px; font-size:14.5px;}
+  ol.steps>li::before{counter-increment:step; content:counter(step); position:absolute; left:12px; top:11px; width:26px; height:26px; border-radius:50%; background:var(--navy); color:#fff; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  ol.steps>li b{color:var(--navy)}
+  ul.plain{padding-left:20px; margin:8px 0; font-size:14.5px}
+  ul.plain li{margin-bottom:5px}
+  .btnchip{display:inline-block; background:#EFF3FB; border:1px solid #C7D6EE; color:var(--navy); border-radius:7px; padding:1px 8px; font-size:13px; font-weight:600; white-space:nowrap}
+  code{background:#F1F5F9;border:1px solid #E2E8F0;border-radius:5px;padding:1px 6px;font-size:13px;font-family:'Consolas',monospace;color:#1B3A6B}
+  .note{border-radius:12px; padding:13px 15px; margin:14px 0; font-size:14px; line-height:1.6}
+  .note.tip{background:var(--green-bg); border:1px solid var(--green-bd)}
+  .note.tip b{color:var(--green)}
+  .note.warn{background:var(--amber-bg); border:1px solid var(--amber-bd)}
+  .note.warn b{color:var(--amber)}
+  .note .ic{font-weight:800; margin-right:6px}
+  table.roles{width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px}
+  table.roles th,table.roles td{border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top}
+  table.roles th{background:var(--navy); color:#fff; font-weight:600; white-space:nowrap}
+  table.roles tr:nth-child(even) td{background:var(--soft)}
+  footer{padding:22px 24px 40px; color:var(--gray); font-size:12.5px; text-align:center; line-height:1.7}
+  .printbtn{display:inline-block; margin-top:6px; background:var(--navy); color:#fff; border:none; border-radius:9px; padding:9px 18px; font-size:14px; cursor:pointer; font-family:inherit;}
+  @media (max-width:560px){ header.hero h1{font-size:22px} main{padding:8px 16px 50px} nav.toc{padding:12px 16px} table.roles{font-size:12.5px} table.roles th,table.roles td{padding:6px 7px} }
+  @media print{ body{background:#fff} .wrap{box-shadow:none; max-width:100%} nav.toc,.printbtn{display:none} header.hero{background:var(--navy)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact} section{break-inside:avoid; border-bottom:1px solid #ccc} h2{break-after:avoid} ol.steps>li,.note,table.roles{break-inside:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">전자 구역카드 시스템 · 관리자용</div>
+    <h1>구역 데이터 입력 가이드</h1>
+    <p>프로그램 설치가 끝났다면, 이제 우리 회중의 <b>구역(영역)과 세대 주소</b>를 시스템에 입력해야 사용할 수 있습니다.<br>이 문서는 구역카드를 만들고 주소 데이터를 넣는 방법을 처음부터 안내합니다.</p>
+  </header>
+
+  <nav class="toc">
+    <strong>목차</strong>
+    <a href="#flow">① 전체 흐름</a>
+    <a href="#card">② 구역카드 이해</a>
+    <a href="#manual">③ 직접 입력(한 장씩)</a>
+    <a href="#excel">④ 엑셀로 입력</a>
+    <a href="#batch">⑤ 한 번에 여러 구역</a>
+    <a href="#detail">⑥ 세대 목록 꾸미기</a>
+    <a href="#region">⑦ 지역명·정비</a>
+    <a href="#finish">⑧ 마무리 체크리스트</a>
+  </nav>
+
+  <main>
+
+    <!-- ① 전체 흐름 -->
+    <section id="flow">
+      <h2><span class="num">1</span> 전체 흐름</h2>
+      <p class="lead">설치 → <b>데이터 입력(이 문서)</b> → 인도자 운용, 세 단계입니다.</p>
+      <ol class="steps">
+        <li><b>설치</b> — config.js 작성·배포 (별도 "설치 안내서" 참고). 이미 끝났다고 가정합니다.</li>
+        <li><b>구역 데이터 입력</b> — 우리 회중의 구역과 세대 주소를 넣습니다. <b>← 지금 이 단계</b></li>
+        <li><b>운용</b> — 인도자가 구역을 배정하고 전도인이 방문 결과를 기록합니다. ("인도자 교육 가이드" 참고)</li>
+      </ol>
+      <div class="note tip"><span class="ic">💡</span><b>누가 하나요?</b> — 구역 데이터 입력은 <b>관리자</b> 또는 <b>봉사감독자</b> 권한으로 <code>admin.html</code>(관리자 화면) → <b>구역관리</b>에서 합니다.</div>
+      <div class="note warn"><span class="ic">⚠</span><b>먼저 연습하세요.</b> 실제 구역을 넣기 전에, <b>샘플(연습용) 구역카드</b>를 한 장 만들어 입력·수정·삭제를 익혀 보면 실수를 줄일 수 있습니다.</div>
+    </section>
+
+    <!-- ② 구역카드 이해 -->
+    <section id="card">
+      <h2><span class="num">2</span> 구역카드란?</h2>
+      <p class="lead">구역카드 1장 = 한 구역(영역)의 봉사 단위입니다. 아래 정보로 이루어집니다.</p>
+      <table class="roles">
+        <tr><th>구성 요소</th><th>설명</th><th>예시</th></tr>
+        <tr><td>구역 번호</td><td><b>정수만</b> 사용 (1, 2, 3 …). 회중에서 부르는 구역 번호.</td><td>1 / 2 / 145</td></tr>
+        <tr><td>구역 이름</td><td>알아보기 쉬운 이름. 아파트 단지명·동네명 등.</td><td>○○아파트 1단지, △△동 주택가</td></tr>
+        <tr><td>구역 유형(그룹)</td><td>주택·상가·아파트·격지·인터폰·편지 등으로 분류. 필터·통계에 사용.</td><td>아파트 구역</td></tr>
+        <tr><td>세대(호수) 목록</td><td>그 구역에 속한 집들의 주소 목록. 도로명·번지·건물명·세부주소(호수).</td><td>행복로 12, 101동 1001호 …</td></tr>
+      </table>
+      <div class="note tip"><span class="ic">💡</span>구역 유형(그룹)은 <b>설정 → 구역그룹관리</b>에서 회중에 맞게 추가·이름변경할 수 있습니다.</div>
+    </section>
+
+    <!-- ③ 직접 입력 -->
+    <section id="manual">
+      <h2><span class="num">3</span> 방법 A — 직접 입력(한 장씩)</h2>
+      <p class="lead">구역 수가 적거나, 한 장을 새로 만들거나 수정할 때 좋습니다.</p>
+      <ol class="steps">
+        <li>구역관리 화면에서 <span class="btnchip">+ 구역 추가</span> 클릭</li>
+        <li><b>구역 번호</b>(정수)·<b>구역 이름</b>·<b>구역 유형</b>을 입력하고 저장</li>
+        <li>방금 만든 카드의 <span class="btnchip">⋮</span> → 카드 팝업이 열리면 <span class="btnchip">편집</span></li>
+        <li>편집 모달에서 <span class="btnchip">호수 목록</span> 탭으로 이동</li>
+        <li>각 세대를 한 줄씩 추가 — <b>도로명 · 번지 · 건물명 · 세부주소(호수)</b> 입력</li>
+        <li>다 입력했으면 저장. 세대 수가 자동 집계됩니다.</li>
+      </ol>
+      <div class="note tip"><span class="ic">💡</span>세대가 많은 구역은 다음 <b>④ 엑셀 입력</b>이 훨씬 빠릅니다. 직접 입력은 소규모·수정용으로 쓰세요.</div>
+    </section>
+
+    <!-- ④ 엑셀 입력 -->
+    <section id="excel">
+      <h2><span class="num">4</span> 방법 B — 엑셀로 입력</h2>
+      <p class="lead">세대가 많은 구역을 빠르게 넣을 때 가장 효율적입니다. 엑셀(xlsx) 한 파일 = 구역 한 장.</p>
+
+      <h3>① 파일 이름 규칙</h3>
+      <p><code>{구역번호}_{구역이름}.xlsx</code> 형식으로 저장합니다.</p>
+      <ul class="plain">
+        <li>예) <code>1_행복아파트.xlsx</code>, <code>145_중앙로 상가.xlsx</code></li>
+        <li>구역번호는 <b>정수만</b> 가능합니다. <code>001</code>, <code>13-1</code>, <code>23.5</code> 형식은 인식되지 않습니다.</li>
+      </ul>
+
+      <h3>② 열(칸) 순서 — 정확히 지켜 주세요</h3>
+      <p>엑셀 첫 행부터 아래 순서로 칸을 채웁니다. <b>한 행 = 한 세대</b>입니다.</p>
+      <table class="roles">
+        <tr><th>열</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>
+        <tr><td>항목</td><td>도로명</td><td>번지</td><td>건물명</td><td>세부주소</td><td>금지(Y)</td><td>메모</td></tr>
+        <tr><td>예시</td><td>행복로</td><td>12</td><td>행복아파트</td><td>101동 1001호</td><td></td><td>경비실 옆</td></tr>
+      </table>
+      <ul class="plain">
+        <li><b>도로명·번지</b>: 도로명주소 기준. (지번만 있으면 번지 칸에 지번을 넣어도 됩니다)</li>
+        <li><b>건물명</b>: 아파트·빌딩 이름. 없으면 비워도 됩니다.</li>
+        <li><b>세부주소</b>: 동·호수 등 실제 방문 단위. (예: <code>101동 1001호</code>, <code>2층 201호</code>)</li>
+        <li><b>금지(Y)</b>: 방문 금지 세대면 <code>Y</code>. 일반 세대는 비워 둡니다.</li>
+        <li><b>메모</b>: 참고사항(이유 없는 간단 메모). 개인정보·민감내용은 적지 않습니다.</li>
+      </ul>
+
+      <h3>③ 업로드</h3>
+      <ol class="steps">
+        <li>구역관리 → <span class="btnchip">엑셀 업로드</span> 클릭</li>
+        <li>위 규칙으로 만든 <code>.xlsx</code> 파일 선택</li>
+        <li>미리보기로 주소가 잘 들어갔는지 확인 후 저장</li>
+      </ol>
+      <div class="note warn"><span class="ic">⚠</span>빈 행(완전히 비어 있는 줄)은 세대로 인식되지 않습니다. 줄 사이 빈 칸을 피해 주세요.</div>
+    </section>
+
+    <!-- ⑤ 일괄 업로드 -->
+    <section id="batch">
+      <h2><span class="num">5</span> 방법 C — 한 번에 여러 구역(일괄 업로드)</h2>
+      <p class="lead">처음 회중 데이터를 통째로 구축할 때 가장 빠릅니다.</p>
+      <ol class="steps">
+        <li>각 구역을 <code>{번호}_{이름}.xlsx</code> 형식으로 여러 개 준비 (④의 규칙과 동일)</li>
+        <li>구역관리 → <span class="btnchip">📦 일괄 업로드</span> 클릭</li>
+        <li>여러 xlsx 파일을 한꺼번에 선택하거나, <b>ZIP</b>으로 묶어 업로드</li>
+      </ol>
+      <div class="note tip"><span class="ic">💡</span>이미 존재하는 <b>구역번호는 자동으로 건너뜁니다</b>. 그래서 나중에 새 구역만 추가 업로드해도 기존 데이터가 덮어써지지 않습니다.</div>
+    </section>
+
+    <!-- ⑥ 세대 목록 꾸미기 -->
+    <section id="detail">
+      <h2><span class="num">6</span> 세대 목록 꾸미기 (선택)</h2>
+      <p class="lead">현장에서 보기 좋게, 안전하게 봉사하도록 도와주는 표시들입니다. 편집 모달 → 호수 목록에서 설정합니다.</p>
+
+      <h3>구분선 · 지시문</h3>
+      <ul class="plain">
+        <li><b>구분선</b>: 세대 목록을 묶음으로 나눕니다. (예: "1·2라인 진입", "3·4라인 진입") — 행 오른쪽 <span class="btnchip">─</span> 버튼 또는 하단 <span class="btnchip">구분선 추가</span>.</li>
+        <li><b>지시문</b>: 구분선 행의 <span class="btnchip">+ 지시문</span> 버튼으로 여러 줄 안내를 넣습니다. (공동현관 비밀번호·주의사항 등) → 전도인 앱에 <b>황색 박스</b>로 표시됩니다.</li>
+        <li>구분선은 세대 수·진행률 계산에서 <b>제외</b>됩니다.</li>
+      </ul>
+
+      <h3>형제 동반 필수 표시 <span style="color:#92400E">⚠</span></h3>
+      <p>안전을 위해 동반이 필요한 세대는 호수 목록에서 <b>형제동반필수</b>를 체크합니다. 전도인 앱에 ⚠ 경고가 뜨고, <b>자매 단독·자매끼리 배정이 금지</b>됨을 안내합니다. (형제 또는 형제가 포함된 부부·친족 짝으로만 배정)</p>
+    </section>
+
+    <!-- ⑦ 지역명·정비 -->
+    <section id="region">
+      <h2><span class="num">7</span> 지역명 설정 · 데이터 정비</h2>
+      <h3>지역명(지도 검색 기준)</h3>
+      <p>설정에서 <b>시·도 단위 기본 지역명</b>을 넣어 두면, 도로명 주소를 지도에서 정확히 찾습니다. (예: 기본 지역명 "○○시" → "행복로 12"를 "○○시 행복로 12"로 검색)</p>
+      <h3>건물명 오류 일괄 정비</h3>
+      <p>엑셀로 가져온 뒤 도로명·번지가 바뀌는 행에 이전 건물명이 잘못 이어졌다면, <b>설정 → 🔧 데이터 정비 → 건물명 오류 일괄 정비</b>로 한 번에 고칠 수 있습니다.</p>
+    </section>
+
+    <!-- ⑧ 마무리 -->
+    <section id="finish">
+      <h2><span class="num">8</span> 마무리 체크리스트</h2>
+      <ul class="plain">
+        <li>☐ 연습용 샘플 구역으로 추가·수정·삭제를 익혔다</li>
+        <li>☐ 구역 유형(그룹)을 회중에 맞게 정리했다 (설정 → 구역그룹관리)</li>
+        <li>☐ 지역명(시·도)을 설정했다</li>
+        <li>☐ 엑셀 파일명을 <code>{번호}_{이름}.xlsx</code>로 맞췄다 (번호는 정수)</li>
+        <li>☐ 열 순서(도로명·번지·건물명·세부주소·금지·메모)를 지켰다</li>
+        <li>☐ 일괄 업로드 후 세대 수·주소가 맞는지 카드 몇 개를 확인했다</li>
+        <li>☐ 형제 동반 필수 세대를 표시했다</li>
+        <li>☐ 연습용 샘플 구역카드는 삭제했다</li>
+      </ul>
+      <div class="note tip"><span class="ic">✅</span>데이터 입력이 끝나면 이제 <b>인도자 교육 가이드</b>를 따라 배정·운용을 시작하면 됩니다.</div>
+      <p style="text-align:center"><button class="printbtn" onclick="window.print()">🖨 이 가이드 인쇄 / PDF 저장</button></p>
+    </section>
+
+  </main>
+
+  <footer>
+    전자 구역카드 시스템 · 구역 데이터 입력 가이드<br>
+    이 문서는 여호와의 증인 회중의 봉사 구역 관리 용도로 제작되었습니다.
+  </footer>
+
+</div>
+</body>
+</html>
