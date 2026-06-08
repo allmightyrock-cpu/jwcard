@@ -4267,6 +4267,9 @@ window.openTerritoryCard = function(id) {
       : completeTerritoryFromCard;
   }
 
+  // 구역 이미지(애드온) — 설정에서 켰을 때만 동작 (격리 모듈)
+  if (window.TerritoryImage) window.TerritoryImage.onCardOpen(t);
+
   document.getElementById('terr-card-modal').classList.add('open');
 };
 

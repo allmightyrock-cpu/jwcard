@@ -14,6 +14,10 @@ async function loadSettingsValues() {
       const clEl = document.getElementById('s-cycle-limit');
       if (clEl) clEl.value = data.cycleLimit || 6;
       window._cycleLimit = data.cycleLimit || 6;
+      // 구역 이미지(애드온) 사용 여부
+      window._territoryImageAddon = !!data.territoryImageAddon;
+      const tiEl = document.getElementById('s-territory-image-addon');
+      if (tiEl) tiEl.checked = window._territoryImageAddon;
       const vmEl = document.getElementById('s-visit-mode');
       if (vmEl) vmEl.querySelectorAll('.vm-chip').forEach(ch => {
         ch.classList.remove('selected');
@@ -80,6 +84,16 @@ window.saveCycleLimit = async function() {
     await window._updateDoc(window._doc(window._db, 'admin', 'config'), { cycleLimit: val });
     window._cycleLimit = val;
     alert(`✅ 회차제한이 ${val}회차로 저장되었습니다.`);
+  } catch(e) { alert('저장 오류: ' + e.message); }
+};
+
+window.saveTerritoryImageAddon = async function() {
+  if (!window._db) { alert('로그인 후 이용 가능합니다.'); return; }
+  const val = !!document.getElementById('s-territory-image-addon')?.checked;
+  try {
+    await window._updateDoc(window._doc(window._db, 'admin', 'config'), { territoryImageAddon: val });
+    window._territoryImageAddon = val;
+    alert(val ? '✅ 구역 이미지 기능을 켰습니다.' : '✅ 구역 이미지 기능을 껐습니다.');
   } catch(e) { alert('저장 오류: ' + e.message); }
 };
 
