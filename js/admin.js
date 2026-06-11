@@ -4403,12 +4403,23 @@ window.deleteLastVisitFromCard = async function() {
   if (!t) return;
   const hist = t.cycleHistory || [];
   if (!hist.length) { alert('삭제할 방문 기록이 없습니다.'); return; }
-  if (!confirm('가장 최근 방문 기록 1건을 삭제하시겠습니까?')) return;
+  const removed = hist[hist.length - 1];
+  // 이 기록이 "실제 완료"여서 회차를 올린 항목이면, 삭제 시 회차도 함께 되돌린다(완료 실수 복구).
+  const curCycle = t.cycle || 1;
+  const rollBack = !!(removed && removed.completedAt && curCycle > 1 && Number(removed.cycle) === curCycle - 1);
+  const msg = rollBack
+    ? `가장 최근 완료 기록(${removed.cycle}회차 · ${removed.completedAt})을 삭제하고\n회차를 ${curCycle}회차 → ${curCycle - 1}회차로 되돌립니다.\n\n계속하시겠습니까?`
+    : '가장 최근 방문 기록 1건을 삭제하시겠습니까?';
+  if (!confirm(msg)) return;
   const newHist = hist.slice(0, -1);
+  const payload = { cycleHistory: newHist };
+  if (rollBack) payload.cycle = curCycle - 1;
   try {
-    await updateDoc(doc(db, 'territories', id), { cycleHistory: newHist });
+    await updateDoc(doc(db, 'territories', id), payload);
     t.cycleHistory = newHist;
+    if (rollBack) t.cycle = curCycle - 1;
     openTerritoryCard(id);
+    try { renderTerritoryTable(); updateTerritoryStats(); } catch(_) {}
   } catch(e) { alert('삭제 오류: ' + e.message); }
 };
 
