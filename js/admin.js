@@ -5992,13 +5992,61 @@ window.migrateMemoToDivider = async function(id) {
   } catch(e) { alert('이관 오류: ' + e.message); }
 };
 
+// ── 입력 양식(빈 템플릿) 다운로드 — 각 칸 작성법 + 예시 포함 ──
+window.downloadTerritoryTemplate = function() {
+  if (typeof XLSX === 'undefined') { alert('엑셀 모듈 로딩 중입니다. 잠시 후 다시 시도하세요.'); return; }
+  // 시트1: 실제 입력 시트 (안내 1줄 + 머리글). 머리글 다음 행부터 입력.
+  const main = [
+    ['📋 이 줄 아래 머리글(도로명·번지…) 다음 행부터 한 세대(집)씩 입력하세요. 작성법은 "작성안내" 시트를 보세요. (이 안내 줄은 지워도 됩니다)'],
+    ['도로명','번지','건물명','세부주소','금지','메모']
+  ];
+  const ws1 = XLSX.utils.aoa_to_sheet(main);
+  ws1['!cols'] = [{wch:16},{wch:10},{wch:18},{wch:12},{wch:6},{wch:24}];
+
+  // 시트2: 작성안내 (열 설명 + 핵심 규칙 + 예시표)
+  const guide = [
+    ['구역 세대 주소 — 작성안내'],
+    [],
+    ['열','설명','예시'],
+    ['도로명','도로명주소의 도로명. 같은 도로가 이어지면 빈칸으로 둬도 위 값이 이어집니다.','행복로'],
+    ['번지','건물번호(지번만 있으면 지번을 넣어도 됨). 같은 번지가 이어지면 빈칸 가능.','12'],
+    ['건물명','아파트·빌라·빌딩 이름. 없으면 비웁니다. ★번지가 바뀌면 건물명도 새로 적으세요(빈칸이면 위 건물명이 그 번지에만 이어짐).','행복빌라 가동'],
+    ['세부주소','동·호수 등 세부. 단독주택은 비웁니다.','101호'],
+    ['금지','방문금지(거절 등) 세대면 Y. 아니면 비웁니다.','Y'],
+    ['메모','참고사항(개조심, 폐가 등).','개조심'],
+    [],
+    ['※ 핵심 규칙'],
+    ['1) 한 줄 = 한 세대(집).'],
+    ['2) 같은 번지의 여러 세대는 도로명·번지·건물명을 비워도 위 값이 자동으로 이어집니다.'],
+    ['3) 번지(또는 도로명)가 바뀌면 건물명은 자동으로 끊깁니다. 새 번지의 건물명은 그 행에 다시 적으세요.'],
+    ['4) 완전히 빈 줄은 세대로 인식되지 않습니다(줄 사이 빈 칸 피하기).'],
+    ['5) 개인정보(이름·연락처)는 넣지 마세요.'],
+    [],
+    ['── 작성 예시 (이렇게 입력) ──'],
+    ['도로명','번지','건물명','세부주소','금지','메모'],
+    ['행복로','12','행복빌라 가동','101호','',''],
+    ['','','','102호','','시차 두고'],
+    ['','','','201호','Y','거절'],
+    ['행복로','14','행복빌라 나동','101호','','← 번지 바뀌어 건물명 새로 적음'],
+    ['','','','102호','',''],
+    ['행복로','16','','','','← 건물명 없는 단독주택']
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(guide);
+  ws2['!cols'] = [{wch:14},{wch:54},{wch:14}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, '구역카드');
+  XLSX.utils.book_append_sheet(wb, ws2, '작성안내');
+  XLSX.writeFile(wb, '구역카드_입력양식.xlsx');
+};
+
 // ── 엑셀 다운로드 ──
 window.downloadTerritoryExcel = function(id) {
   const t = (window._territories || []).find(t => t.id === id);
   if (!t) return;
   const rows = [['도로명','번지','건물명','세부주소','금지','메모']];
   (t.units || []).forEach(u => {
-    rows.push([u.road||'', u.jibun||'', u.building||'', u.detail||'', u.ban?'Y':'', u.memo||'']);
+    rows.push([u.road||'', u.jibun||'', u.building||'', u.unit||'', u.ban?'Y':'', u.memo||'']);
   });
   const ws = XLSX.utils.aoa_to_sheet(rows);
   const wb = XLSX.utils.book_new();
@@ -6013,7 +6061,7 @@ window.downloadAllTerritoriesExcel = async function() {
   list.forEach(t => {
     const rows = [['도로명','번지','건물명','세부주소','금지','메모']];
     (t.units || []).forEach(u => {
-      rows.push([u.road||'', u.jibun||'', u.building||'', u.detail||'', u.ban?'Y':'', u.memo||'']);
+      rows.push([u.road||'', u.jibun||'', u.building||'', u.unit||'', u.ban?'Y':'', u.memo||'']);
     });
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
