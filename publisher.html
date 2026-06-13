@@ -4504,30 +4504,14 @@ function renderUnitList(visitMap) {
     const badgeClass = status==='done'?'sb-done':status==='partial'?'sb-partial':'sb-none';
     const badgeText = status==='done'?'✓ 완료':status==='partial'?'⏸ 여기까지':'—';
 
-    // ── 헤더 표시: 번지 반복 제거 + 동·라인 크게 (배포본은 층묶음 없음) ──
-    const _prev = si > 0 ? _sections[si-1] : null;
-    const _sameJibun = !!(_prev && _prev.jibun === sec.jibun && _prev.road === sec.road);
-    const _sameBldg  = !!(_prev && _sameJibun && _prev.building === sec.building);
-    const _split = (b) => { const m = String(b||'').match(/^(.*?동)\s*(.*)$/); return m ? { dong:m[1].trim(), line:m[2].trim() } : { dong:'', line:String(b||'').trim() }; };
-    const _cur = _split(sec.building), _pv = _prev ? _split(_prev.building) : { dong:'', line:'' };
-    const _sameDong = !!(_prev && _sameJibun && _cur.dong && _cur.dong === _pv.dong);
-    let _big;
-    if (_sameBldg)      _big = sec.floorLabel || _cur.line || sec.building;
-    else if (_sameDong) { let _ln = _cur.line || sec.building; if (_ln && !/라인|호|층/.test(_ln)) _ln += '라인'; _big = _ln; }
-    else                _big = sec.building || sec.floorLabel || '';
-    const _showFloorBadge = !!sec.floorLabel && _big !== sec.floorLabel;
-    const _showJibun = !_sameJibun;
-
     html += `<div class="sec-card"><div class="sec-hdr">
-      <div class="sec-left" style="display:flex;align-items:center;gap:8px;min-width:0">
-        ${_showJibun && sec.jibun ? `<span class="sec-jibun">${sec.jibun}</span>` : `<span style="flex-shrink:0;width:4px"></span>`}
-        <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
-          ${_showJibun && sec.road ? `<span class="sec-road">${sec.road}</span>` : ''}
-          ${_big ? `<span style="font-size:20px;font-weight:800;color:#1B3A6B;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_big}</span>` : ''}
-        </div>
+      <div class="sec-left" style="display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap">
+        ${sec.jibun ? `<span class="sec-jibun">${sec.jibun}</span>` : ''}
+        ${sec.road ? `<span class="sec-road">${sec.road}</span>` : ''}
+        ${sec.building ? `<span style="font-size:15px;font-weight:600;color:#1E3A5F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${sec.building}</span>` : ''}
+        ${sec.floorLabel ? `<span style="font-size:11px;background:#EEF4FF;color:#1E3A5F;border:1px solid #C7D9F5;padding:1px 8px;border-radius:10px;font-weight:600;white-space:nowrap">${sec.floorLabel}</span>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-        ${_showFloorBadge ? `<span style="font-size:12px;background:#1B3A6B;color:#fff;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap">${sec.floorLabel}</span>` : ''}
         <span class="sec-count">${doneCnt}/${realIndices.length}</span>
         <button class="sec-bookmark-btn ${status==='partial'?'active':''}" onclick="event.stopPropagation();toggleSectionBookmark('${sec.key}')" title="${status==='partial'?'여기까지 표시 해제':'이 블록 여기까지 표시'}" aria-label="${status==='partial'?'여기까지 표시 해제':'이 블록 여기까지 표시'}">${bookmarkSVG()}</button>
         <button class="sec-btn-icon" onclick="openSecSheet('${sec.key}','${sec.label}')" title="섹션 상태 변경">⋮</button>
