@@ -4,7 +4,7 @@
 //   예: 'jwcard-v2.30' → 'jwcard-v2.31'
 //   버전이 바뀌어야 모든 모바일 PWA가 업데이트를 받습니다.
 //
-const CACHE = 'jwcard-v2.61'; // MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편
+const CACHE = 'jwcard-v2.62'; // MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편
 
 // 프리캐시 정적 리소스 (오프라인 대비, 기본은 Network First)
 const STATIC = [
