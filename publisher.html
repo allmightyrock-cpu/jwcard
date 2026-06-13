@@ -1525,7 +1525,13 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   <button class="so-activate-btn" id="so-activate-btn" style="display:none" onclick="soActivateTerritory()">
     🔓 구역 활성화 (봉사감독자 전용)
   </button>
-  <button id="inactive-back-btn" onclick="exitInactiveScreen()" style="margin-top:18px;padding:11px 26px;background:#fff;color:#475569;border:1px solid #CBD5E1;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">← 돌아가기</button>
+</div>
+
+<!-- 비활성/사용대기 카드 차단 안내 배너 (가벼운 상단 토스트) -->
+<div id="blocked-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;align-items:center;gap:10px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top, 0px));background:#FEF3C7;border-bottom:1px solid #FCD34D;box-shadow:0 2px 8px rgba(0,0,0,0.08);font-family:inherit">
+  <span style="font-size:18px;line-height:1;flex-shrink:0">🔒</span>
+  <span id="blocked-banner-text" style="flex:1;min-width:0;font-size:14px;font-weight:600;color:#92400E">비활성 구역카드입니다.</span>
+  <button onclick="hideBlockedBanner()" aria-label="안내 닫기" title="닫기" style="flex-shrink:0;width:28px;height:28px;background:transparent;border:none;color:#92400E;font-size:20px;line-height:1;cursor:pointer;font-family:inherit;border-radius:6px">×</button>
 </div>
 <!-- ══ 구역카드 ══ -->
 <div id="card-screen">
@@ -3654,11 +3660,17 @@ async function _findTerritoryByNo(rawNo) {
 }
 
 // 저장된 이름 초기화
-// 비활성/사용대기 차단 화면에서 입력 화면으로 돌아가기
-window.exitInactiveScreen = function() {
-  const el = document.getElementById('inactive-screen');
-  if (el) el.style.display = 'none';
-  exitCard();
+// 비활성/사용대기 카드 차단 안내 — 가벼운 상단 배너
+window.showBlockedBanner = function(msg) {
+  const b = document.getElementById('blocked-banner');
+  if (!b) return;
+  const t = document.getElementById('blocked-banner-text');
+  if (t) t.textContent = msg || '비활성 구역카드입니다.';
+  b.style.display = 'flex';
+};
+window.hideBlockedBanner = function() {
+  const b = document.getElementById('blocked-banner');
+  if (b) b.style.display = 'none';
 };
 
 window.exitCard = function() {
@@ -4267,56 +4279,11 @@ function enterCard() {
     }
   }
 
-  // 비활성 구역 / 회차제한(사용대기) 차단 체크
-  const _overLimit = _isOverLimit(_territory);
-  if (_territory.active === false || _overLimit) {
-    document.getElementById('inactive-screen').style.display = 'flex';
-    const t  = _territory;
-    const _icon  = document.getElementById('inactive-icon');
-    const _title = document.getElementById('inactive-title');
-    const _desc  = document.getElementById('inactive-desc');
-    const _meta  = document.getElementById('inactive-meta');
-    const _soBtn = document.getElementById('so-activate-btn');
-
-    if (_territory.active === false) {
-      // ── 봉사감독자가 명시적으로 비활성화한 카드 ──
-      if (_icon)  _icon.textContent  = '🔒';
-      if (_title) _title.textContent = '비활성화된 구역카드';
-      if (_desc)  _desc.innerHTML    =
-        '이 구역카드는 봉사감독자에 의해 비활성화되어 있습니다.<br>사용 가능 여부는 봉사감독자에게 문의하세요.';
-      const by = t.deactivatedBy || '—';
-      const rs = t.deactivatedReason || '사유 없음';
-      const dt = _fmtDate(t.deactivatedAt) || '—';
-      if (_meta) _meta.innerHTML =
-        '비활성화 처리자: <strong>' + by + '</strong><br>처리 일자: <strong>' + dt + '</strong><br>사유: ' + rs;
-      if (_isSO && _soBtn) {
-        _soBtn.textContent = '🔓 구역 활성화 (봉사감독자 전용)';
-        _soBtn.onclick = soActivateTerritory;
-        _soBtn.style.display = 'block';
-      }
-    } else {
-      // ── 회차제한 도달(사용대기) — active=false 아님, 회차로 자동 차단 ──
-      const lim = window._cycleLimit || 6;
-      if (_icon)  _icon.textContent  = '⏳';
-      if (_title) _title.textContent = '사용대기 구역카드';
-      if (_desc)  _desc.innerHTML    =
-        '이 구역은 <strong>' + lim + '회차 제한</strong>에 도달하여 현재 <strong>사용대기</strong> 상태입니다.<br>' +
-        '인도자·봉사감독자에게 문의해 주세요.';
-      if (_meta) _meta.innerHTML =
-        '현재 회차: <strong>' + (t.cycle || 1) + '회차</strong> (제한 ' + lim + '회차)';
-      if (_isSO && _soBtn) {
-        // 봉사감독자는 필요 시 그대로 열어 확인/관리 가능
-        _soBtn.textContent = '🔓 그래도 열기 (봉사감독자 전용)';
-        _soBtn.onclick = function(){ _soForceOpenCard(); };
-        _soBtn.style.display = 'block';
-      }
-    }
-
-    if (_isSO) {
-      document.getElementById('leader-fab').style.display = 'block';
-      document.getElementById('ld-tab-manage-btn').style.display = 'block';
-      document.getElementById('ld-title-text').textContent = '구역 관리 (봉사감독자)';
-    }
+  // 비활성 구역 / 회차제한(사용대기) 차단 — 미리보기는 제외(관리자 확인용)
+  if (!_isPreview && (_territory.active === false || _isOverLimit(_territory))) {
+    // 무거운 전체 화면 대신, 가벼운 상단 배너만 띄우고 입력 화면으로 복귀
+    exitCard();
+    showBlockedBanner('비활성 구역카드입니다.');
     return;
   }
 
@@ -4346,33 +4313,6 @@ function enterCard() {
   if (typeof checkIOSPwaBanner === 'function') checkIOSPwaBanner();
 
   // 길 안내 모드 중 지도앱으로 나갔다가 돌아온 경우 상태 복원
-  setTimeout(function() {
-    if (typeof _navRestoreState === 'function') _navRestoreState();
-  }, 400);
-}
-
-// 봉사감독자 전용: 사용대기(회차제한) 차단 화면에서 그대로 카드 열기
-function _soForceOpenCard() {
-  document.getElementById('inactive-screen').style.display = 'none';
-  document.getElementById('card-screen').style.display = 'block';
-  buildCard();
-  if (!_isPreview) setMapStatus('지도 불러오는 중…');
-  setTimeout(function() { initNaverMap(); }, 300);
-  if (!_isPreview) {
-    writePresence();
-    if (_heartbeatTimer) clearInterval(_heartbeatTimer);
-    _heartbeatTimer = setInterval(writePresence, 60000);
-    startPresenceListener();
-  }
-  startTerritoryListener();
-  if (_isLeader) {
-    document.getElementById('leader-fab').style.display = 'block';
-    if (_isSO) {
-      document.getElementById('ld-tab-manage-btn').style.display = 'block';
-      document.getElementById('ld-title-text').textContent = '구역 관리 (봉사감독자)';
-    }
-  }
-  if (typeof checkIOSPwaBanner === 'function') checkIOSPwaBanner();
   setTimeout(function() {
     if (typeof _navRestoreState === 'function') _navRestoreState();
   }, 400);
