@@ -4501,13 +4501,27 @@ function buildSections(units, visitMap) {
   }
 }
 
-// 그룹 헤더용 건물 표시: 카드 타이틀과 중복되는 단지명을 빼고 '동'부터만 표시
-// 예) "○○ 8단지 805동 1-2" → "805동 1-2"  (동 토큰 없으면 원문 그대로)
+// 그룹 헤더용 건물 표시:
+//  - 카드 제목의 '주(主) 단지'와 같은 동이면 단지명을 빼고 '동'부터만 표시
+//      예) 제목 "○○아파트 8단지 …" + "○○ 8단지 805동 1-2" → "805동 1-2"
+//  - 제목과 다른 '포함' 단지는 단지명을 그대로 유지해 구분
+//      예) 제목 "○○아파트 (△△ 포함)" + "△△ 1단지 105동" → "△△ 1단지 105동"
+//  - 동 토큰이 없으면 원문 그대로
 function _secBldDisplay(b) {
   b = (b || '').trim();
   if (!b) return '';
   const m = b.match(/\d+\s*동/);
-  if (m) { const idx = b.indexOf(m[0]); if (idx >= 0) return b.slice(idx).trim(); }
+  if (!m) return b;
+  const idx = b.indexOf(m[0]);
+  const complex = b.slice(0, idx).trim();   // 동 앞부분 = 단지명
+  const tail    = b.slice(idx).trim();      // 동부터
+  if (!complex) return tail;
+  // 정규화: 괄호(포함표기) 제거 + '아파트' 제거 + 공백 제거
+  const norm = s => (s || '').replace(/\(.*$/, '').replace(/아파트/g, '').replace(/\s+/g, '').trim();
+  const titleBase = norm((typeof _territory !== 'undefined' && _territory && _territory.name) || '');
+  const nc = norm(complex);
+  // 카드 제목의 주 단지명과 일치 → 단지명 생략, 다른 단지 → 단지명 유지(전체 표시)
+  if (nc && titleBase && (titleBase.includes(nc) || nc.includes(titleBase))) return tail;
   return b;
 }
 
