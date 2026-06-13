@@ -1525,6 +1525,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   <button class="so-activate-btn" id="so-activate-btn" style="display:none" onclick="soActivateTerritory()">
     🔓 구역 활성화 (봉사감독자 전용)
   </button>
+  <button id="inactive-back-btn" onclick="exitInactiveScreen()" style="margin-top:18px;padding:11px 26px;background:#fff;color:#475569;border:1px solid #CBD5E1;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">← 돌아가기</button>
 </div>
 <!-- ══ 구역카드 ══ -->
 <div id="card-screen">
@@ -3653,6 +3654,13 @@ async function _findTerritoryByNo(rawNo) {
 }
 
 // 저장된 이름 초기화
+// 비활성/사용대기 차단 화면에서 입력 화면으로 돌아가기
+window.exitInactiveScreen = function() {
+  const el = document.getElementById('inactive-screen');
+  if (el) el.style.display = 'none';
+  exitCard();
+};
+
 window.exitCard = function() {
   // ── 관리자 미리보기 모드: 로그인 화면으로 가지 않고 탭 닫기 → 관리자 화면으로 복귀 ──
   if (_isPreview) {
