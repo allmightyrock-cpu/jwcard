@@ -3415,6 +3415,8 @@ window.handleReplaceFile = function(input) {
       let lastRoad = '', lastJibun = '', lastBuilding = '';
       const rows = rawRows.map(r => {
         const g = (idx) => (idx >= 0 && idx < r.length) ? String(r[idx] || '').trim() : '';
+        const _mk = g(colMap.unit);
+        if (_mk !== '' && /^[@#*?!~\-_=+.]+$/.test(_mk)) return null; // 구 시스템 지시문 마커(@@@/### 등) 행 무시
         const rawRoad = g(colMap.road), rawJibun = g(colMap.jibun), rawBuilding = g(colMap.building);
         const road = rawRoad || lastRoad;
         const jibun = rawJibun || lastJibun;
@@ -3426,7 +3428,7 @@ window.handleReplaceFile = function(input) {
         const memo = g(colMap.memo);
         lastRoad = road; lastJibun = jibun; lastBuilding = building;
         return [road, jibun, building, unit, ban, memo];
-      }).filter(r => r[1] !== '' || r[3] !== '');  // 번지 OR 호수 하나만 있어도 유효
+      }).filter(r => r && (r[1] !== '' || r[3] !== ''));  // 번지 OR 호수 하나만 있어도 유효
 
       _replaceExcelData = rows;
       document.getElementById('replace-upload-label').textContent = `${file.name} (${rows.length}세대)`;
@@ -4598,6 +4600,8 @@ window.handleExcelFile = function(input) {
       let lastRoad = '', lastJibun = '', lastBuilding = '';
       const rows = rawRows.map(r => {
         const g = (idx) => (idx >= 0 && idx < r.length) ? String(r[idx] || '').trim() : '';
+        const _mk = g(colMap.unit);
+        if (_mk !== '' && /^[@#*?!~\-_=+.]+$/.test(_mk)) return null; // 구 시스템 지시문 마커(@@@/### 등) 행 무시
         const rawRoad    = g(colMap.road);
         const rawJibun   = g(colMap.jibun);
         const rawBuilding = g(colMap.building);
@@ -4612,7 +4616,7 @@ window.handleExcelFile = function(input) {
         const memo    = g(colMap.memo);
         lastRoad = road; lastJibun = jibun; lastBuilding = building;
         return [road, jibun, building, unit, ban, memo];
-      }).filter(r => r[1] !== '' || r[3] !== '');  // 번지 또는 세부주소 중 하나만 있어도 유효 (격지 단독주택 지원)
+      }).filter(r => r && (r[1] !== '' || r[3] !== ''));  // 번지 또는 세부주소 중 하나만 있어도 유효 (격지 단독주택 지원)
 
       if (!rows.length) {
         throw new Error('유효한 세대 데이터를 찾지 못했습니다. 도로명/번지 또는 호수가 있는지 헤더와 데이터를 확인해 주세요.');
@@ -4951,6 +4955,8 @@ function _parseOneExcelToBatchItem(filename, arrayBuf) {
   let lastRoad = '', lastJibun = '', lastBuilding = '';
   const rows = rawRows.map(r => {
     const g = (idx) => (idx >= 0 && idx < r.length) ? String(r[idx] || '').trim() : '';
+    const _mk = g(colMap.unit);
+    if (_mk !== '' && /^[@#*?!~\-_=+.]+$/.test(_mk)) return null; // 구 시스템 지시문 마커(@@@/### 등) 행 무시
     const rawRoad    = g(colMap.road);
     const rawJibun   = g(colMap.jibun);
     const rawBuilding = g(colMap.building);
@@ -4965,7 +4971,7 @@ function _parseOneExcelToBatchItem(filename, arrayBuf) {
     const memo    = g(colMap.memo);
     lastRoad = road; lastJibun = jibun; lastBuilding = building;
     return [road, jibun, building, unit, ban, memo];
-  }).filter(r => r[1] !== '' || r[3] !== '');
+  }).filter(r => r && (r[1] !== '' || r[3] !== ''));
 
   if (!rows.length) throw new Error('유효한 세대 데이터 없음');
 

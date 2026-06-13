@@ -454,6 +454,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .card-header{
   position:relative;
   padding:16px;
+  padding-top:calc(16px + env(safe-area-inset-top, 0px)); /* 아이폰 상태바/노치에 상단 버튼 가림 방지 */
   overflow:hidden;
   background:#1B3A6B;
 }
@@ -1302,6 +1303,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
         </span>
         <span style="font-size:16px;color:#86EFAC">›</span>
       </button>
+      <div style="text-align:center;margin-top:6px">
+        <button onclick="dismissInstallSection()" style="background:none;border:none;font-size:11px;color:rgba(60,100,160,0.6);cursor:pointer;font-family:inherit">이미 설치했어요 · 그만 보기</button>
+      </div>
     </div>
 
   </div>
@@ -8338,17 +8342,27 @@ window._cartShareTeamSheet  = _cartShareTeamSheet;
     // 자동 팝업 없음 — 전도인이 직접 버튼 눌러서 설치
   });
 
-  // 페이지 로드 시: 이미 설치된 경우 버튼 숨김
+  // 설치 안내 숨김 헬퍼
+  function _hideInstallSection() {
+    const sec = document.getElementById('pwa-install-section');
+    if (sec) sec.style.display = 'none';
+    const b = document.getElementById('pwa-banner');
+    if (b) { b.classList.remove('show'); b.style.display = 'none'; }
+  }
+  function _markInstalled() { try { localStorage.setItem('pwa_everInstalled', '1'); } catch(e){} _hideInstallSection(); }
+  window.addEventListener('appinstalled', _markInstalled);
+  window.dismissInstallSection = function() { _markInstalled(); };
+
   window.addEventListener('load', () => {
     localStorage.removeItem('pwa_dismissed'); // 구버전 플래그 정리
-
-    if (isInstalled()) {
-      // 이미 설치됨 → 설치 버튼 숨김
-      const sec = document.getElementById('pwa-install-section');
-      if (sec) sec.style.display = 'none';
-    }
-    // 미설치 → 버튼은 HTML에서 이미 보이는 상태로 렌더링됨
+    let everInstalled = false;
+    try { everInstalled = localStorage.getItem('pwa_everInstalled') === '1'; } catch(e){}
+    if (isInstalled() || everInstalled) _markInstalled();
   });
+  try {
+    const _mm = window.matchMedia('(display-mode: standalone)');
+    if (_mm && _mm.addEventListener) _mm.addEventListener('change', e => { if (e.matches) _markInstalled(); });
+  } catch(e){}
 
   function showInstallBar() {
     // 하위 호환 유지용 (외부에서 호출되는 경우 대비)
