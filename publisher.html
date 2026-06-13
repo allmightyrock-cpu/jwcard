@@ -4553,6 +4553,16 @@ function buildSections(units, visitMap) {
   }
 }
 
+// 그룹 헤더용 건물 표시: 카드 타이틀과 중복되는 단지명을 빼고 '동'부터만 표시
+// 예) "○○ 8단지 805동 1-2" → "805동 1-2"  (동 토큰 없으면 원문 그대로)
+function _secBldDisplay(b) {
+  b = (b || '').trim();
+  if (!b) return '';
+  const m = b.match(/\d+\s*동/);
+  if (m) { const idx = b.indexOf(m[0]); if (idx >= 0) return b.slice(idx).trim(); }
+  return b;
+}
+
 function renderUnitList(visitMap) {
   const sectionStatus = _territory.sectionStatus || {};
   // '여기까지' 마커가 있는 섹션의 순서 인덱스 (없으면 -1)
@@ -4576,8 +4586,7 @@ function renderUnitList(visitMap) {
       <div class="sec-left" style="display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap">
         ${sec.jibun ? `<span class="sec-jibun">${sec.jibun}</span>` : ''}
         ${sec.road ? `<span class="sec-road">${sec.road}</span>` : ''}
-        ${sec.building ? `<span style="font-size:15px;font-weight:600;color:#1E3A5F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${sec.building}</span>` : ''}
-        ${sec.floorLabel ? `<span style="font-size:11px;background:#EEF4FF;color:#1E3A5F;border:1px solid #C7D9F5;padding:1px 8px;border-radius:10px;font-weight:600;white-space:nowrap">${sec.floorLabel}</span>` : ''}
+        ${sec.building ? `<span style="font-size:15px;font-weight:600;color:#1E3A5F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${_secBldDisplay(sec.building)}</span>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         <span class="sec-count">${doneCnt}/${realIndices.length}</span>
