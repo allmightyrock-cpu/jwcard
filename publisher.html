@@ -2224,6 +2224,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
     <div class="ld-tabs">
       <button class="ld-tab active" onclick="switchLdTab('assign',this)">구역 배정</button>
+      <button class="ld-tab" onclick="switchLdTab('field',this)" id="ld-tab-field-btn">비배정 승인<span id="ld-field-badge" style="display:none;margin-left:5px;font-size:10px;background:#F59E0B;color:#fff;padding:1px 6px;border-radius:8px;font-weight:700;vertical-align:middle"></span></button>
       <button class="ld-tab" onclick="switchLdTab('meeting',this)" id="ld-tab-meeting-btn">오늘의 봉사</button>
       <button class="ld-tab" onclick="switchLdTab('manage',this)" id="ld-tab-manage-btn" style="display:none">구역 비활성화</button>
       <button class="ld-tab" onclick="switchLdTab('ldhelp',this)" id="ld-tab-help-btn">사용법</button>
@@ -2231,9 +2232,6 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <div class="ld-body">
       <!-- 배정 탭 -->
       <div id="ld-tab-assign">
-
-        <!-- ── 비배정 진행 카드(현장/번호입력 흔적) 승인·정리 ── -->
-        <div id="ld-field-pending" style="display:none;margin-bottom:16px"></div>
 
         <!-- ── 오늘 예정 구역 섹션 ── -->
         <div id="ld-today-section" style="display:none;margin-bottom:16px">
@@ -2269,6 +2267,16 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           ➕ 구역 추가
           <span id="ld-today-addable-badge" style="font-size:11px;font-weight:600;background:#1D4ED8;color:#fff;padding:2px 8px;border-radius:8px;display:none"></span>
         </button>
+      </div>
+      <!-- 비배정 승인 탭 -->
+      <div id="ld-tab-field" style="display:none">
+        <div style="font-size:12px;color:#64748B;line-height:1.6;background:#F8FAFC;border:1px solid #F1F5F9;border-radius:10px;padding:11px 13px;margin-bottom:14px">
+          배정 절차 없이 <strong>전도인이 구역번호를 직접 입력해 진행</strong>했거나, 현장에서 번호만 받아 활동한 카드입니다.<br>
+          <strong style="color:#16A34A">✅ 정식 배정 승인</strong> → 방문한 전도인에게 정식 배정됩니다.<br>
+          <strong style="color:#B91C1C">🧹 기록 정리</strong> → 테스트·오기록을 삭제합니다(봉사감독자·관리자).
+        </div>
+        <div id="ld-field-pending"></div>
+        <div id="ld-field-empty" style="display:none;text-align:center;padding:40px 20px;color:#94A3B8;font-size:13px">승인 대기 중인 비배정 카드가 없습니다.</div>
       </div>
       <!-- 오늘의 봉사 탭 -->
       <div id="ld-tab-meeting" style="display:none">
@@ -2341,6 +2349,28 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           .ldh-tip{background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 12px;font-size:12px;color:#78350F;line-height:1.65;margin-bottom:10px}
           .ldh-warn{background:#FEE2E2;border:1px solid #FECACA;border-radius:8px;padding:10px 12px;font-size:12px;color:#991B1B;line-height:1.65;margin-bottom:10px}
         </style>
+
+        <!-- 비배정 카드 처리 -->
+        <div class="ldh-sec">
+          <div class="ldh-title">🔔 비배정 카드 처리 (현장·번호입력)</div>
+          <div class="ldh-tip">전도인이 배정 절차 없이 <strong>구역번호를 직접 입력</strong>해 진행했거나, 현장에서 번호만 받아 활동하면 그 흔적이 <strong>「비배정 승인」 탭</strong>에 모입니다. 방문 결과 자체는 정상 저장되지만, 정식 배정으로 정리하면 기록이 깔끔해집니다.</div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#FEF9C3">🕒</div>
+            <div class="ldh-text"><strong>진행 시각으로 판단하세요</strong><span>각 카드에 <strong>언제 진행했는지(날짜·시간)</strong>가 표시됩니다. 정식 호별봉사 시간대에 진행된 것이면 승인, 엉뚱한 시각의 단순 호기심·테스트로 보이면 정리하는 식으로 판단할 수 있습니다.</span></div>
+          </div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#DCFCE7">✅</div>
+            <div class="ldh-text"><strong>정식 배정 승인</strong><span>방문한 전도인에게 그 구역을 정식 배정합니다. 한 번 탭이면 끝이고, 이후 일반 배정 카드와 똑같이 관리됩니다. (인도자 이상)</span></div>
+          </div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#FEE2E2">🧹</div>
+            <div class="ldh-text"><strong>기록 정리</strong><span>테스트·실수로 남은 방문 흔적을 삭제합니다. 방문기록만 지워지고 회차 이력은 보존됩니다. (봉사감독자·관리자 전용)</span></div>
+          </div>
+          <div class="ldh-item">
+            <div class="ldh-icon" style="background:#F1F5F9">🤝</div>
+            <div class="ldh-text"><strong>그대로 두기 / 승인 취소</strong><span>실제 활동이지만 굳이 배정하지 않을 카드는 그냥 두면 완료 시 목록에서 빠집니다. 이미 승인한 카드를 되돌리려면 구역 배정 탭에서 그 구역의 <strong>배정 해제</strong>를 누르면 다시 이 목록으로 돌아옵니다.</span></div>
+          </div>
+        </div>
 
         <!-- 전체 흐름 -->
         <div class="ldh-sec">
@@ -5749,11 +5779,13 @@ window.switchLdTab = function(tab, el) {
   document.querySelectorAll('.ld-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('ld-tab-assign').style.display  = tab === 'assign'  ? 'block' : 'none';
+  document.getElementById('ld-tab-field').style.display   = tab === 'field'   ? 'block' : 'none';
   document.getElementById('ld-tab-meeting').style.display = tab === 'meeting' ? 'block' : 'none';
   document.getElementById('ld-tab-manage').style.display  = tab === 'manage'  ? 'block' : 'none';
   document.getElementById('ld-tab-ldhelp').style.display  = tab === 'ldhelp'  ? 'block' : 'none';
   if (tab === 'manage')  renderLdManageList();
   if (tab === 'meeting') initMeetingTab();
+  if (tab === 'field')   _renderFieldPending();
 };
 
 // ── 구역 추가 팝업 ──
@@ -6959,18 +6991,39 @@ function _fieldPendingList() {
     return Object.values(vm).some(v => v && v.code);
   });
 }
+// 방문기록 시각 범위 표시 (정식 봉사시간대 vs 단순 테스트 구별용)
+function _fmtVisitSpan(vm) {
+  const W = ['일','월','화','수','목','금','토'];
+  const ds = Object.values(vm || {}).map(v => v && v.at).filter(Boolean)
+    .map(s => new Date(s)).filter(d => !isNaN(d)).sort((a,b) => a - b);
+  if (!ds.length) return '';
+  const f = ds[0], l = ds[ds.length-1];
+  const day = d => `${d.getMonth()+1}/${d.getDate()}(${W[d.getDay()]})`;
+  const hm  = d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  if (f.toDateString() === l.toDateString())
+    return f.getTime() === l.getTime() ? `${day(f)} ${hm(f)}` : `${day(f)} ${hm(f)}~${hm(l)}`;
+  return `${day(f)} ${hm(f)} ~ ${day(l)} ${hm(l)}`;
+}
 function _renderFieldPending() {
-  const wrap = document.getElementById('ld-field-pending');
+  const wrap   = document.getElementById('ld-field-pending');
+  const empty  = document.getElementById('ld-field-empty');
+  const badge  = document.getElementById('ld-field-badge');
+  const tabBtn = document.getElementById('ld-tab-field-btn');
   if (!wrap) return;
-  if (!_isLeader) { wrap.style.display = 'none'; return; }
+  if (!_isLeader) { if (tabBtn) tabBtn.style.display = 'none'; wrap.innerHTML = ''; return; }
   const list = _fieldPendingList().sort((a,b)=>parseInt(a.no||0)-parseInt(b.no||0));
-  if (!list.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
-  wrap.style.display = 'block';
+  if (badge) {
+    if (list.length) { badge.textContent = list.length; badge.style.display = 'inline-block'; }
+    else badge.style.display = 'none';
+  }
+  if (!list.length) { wrap.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
   const rows = list.map(t => {
     const vm = t.visitMap || {};
     const done = Object.values(vm).filter(v=>v&&v.code).length;
     const visitors = [...new Set(Object.values(vm).map(v=>v&&v.by).filter(Boolean))];
     const who = visitors.length ? visitors.join(', ') : '—';
+    const when = _fmtVisitSpan(vm);
     const _canClear = _isSO || _permission === '관리자';
     const clearBtn = _canClear
       ? `<button onclick="clearFieldCard('${t.id}')" style="flex:1;padding:9px;background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🧹 기록 정리</button>`
@@ -6980,14 +7033,15 @@ function _renderFieldPending() {
         <strong style="color:#92400E;min-width:30px">${t.no}번</strong>
         <span style="font-size:13px;flex:1;font-weight:500;color:#1E293B">${t.name}</span>
       </div>
-      <div style="font-size:11px;color:#92400E;margin-bottom:9px">방문자: <strong>${who}</strong> · 진행 ${done}세대 (배정 없이 진행됨)</div>
+      <div style="font-size:11px;color:#92400E;margin-bottom:2px">방문자: <strong>${who}</strong> · 진행 ${done}세대 (배정 없이 진행됨)</div>
+      ${when ? `<div style="font-size:11px;color:#B45309;margin-bottom:9px">🕒 진행 시각: <strong>${when}</strong></div>` : '<div style="margin-bottom:9px"></div>'}
       <div style="display:flex;gap:7px">
         <button onclick="approveFieldCard('${t.id}')" style="flex:2;padding:9px;background:#16A34A;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ 정식 배정 승인</button>
         ${clearBtn}
       </div>
     </div>`;
   }).join('');
-  wrap.innerHTML = `<div class="tc-section-hdr" style="color:#92400E;margin-bottom:8px">🔔 비배정 진행 카드 <span style="font-weight:400;font-size:11px;opacity:.8">현장·번호입력으로 진행된 흔적 — 승인 또는 정리</span><span style="margin-left:auto;font-size:11px;background:#F59E0B;color:#fff;padding:2px 8px;border-radius:8px;font-weight:700">${list.length}</span></div>${rows}`;
+  wrap.innerHTML = rows;
 }
 // 방문자에게 정식 배정 (한 번 탭)
 window.approveFieldCard = async function(id) {
