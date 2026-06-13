@@ -6991,18 +6991,20 @@ function _fieldPendingList() {
     return Object.values(vm).some(v => v && v.code);
   });
 }
-// 방문기록 시각 범위 표시 (정식 봉사시간대 vs 단순 테스트 구별용)
+// 방문기록 시각 범위 표시 — KST(Asia/Seoul) 고정 (정식 봉사시간대 vs 단순 테스트 구별용)
 function _fmtVisitSpan(vm) {
-  const W = ['일','월','화','수','목','금','토'];
   const ds = Object.values(vm || {}).map(v => v && v.at).filter(Boolean)
     .map(s => new Date(s)).filter(d => !isNaN(d)).sort((a,b) => a - b);
   if (!ds.length) return '';
-  const f = ds[0], l = ds[ds.length-1];
-  const day = d => `${d.getMonth()+1}/${d.getDate()}(${W[d.getDay()]})`;
-  const hm  = d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  if (f.toDateString() === l.toDateString())
-    return f.getTime() === l.getTime() ? `${day(f)} ${hm(f)}` : `${day(f)} ${hm(f)}~${hm(l)}`;
-  return `${day(f)} ${hm(f)} ~ ${day(l)} ${hm(l)}`;
+  const fmt = d => {
+    const p = new Intl.DateTimeFormat('ko-KR', { timeZone:'Asia/Seoul', hour12:false,
+      month:'numeric', day:'numeric', weekday:'short', hour:'2-digit', minute:'2-digit' }).formatToParts(d);
+    const g = t => (p.find(x => x.type === t) || {}).value || '';
+    return { date:`${g('month')}/${g('day')}(${g('weekday')})`, hm:`${g('hour')}:${g('minute')}`, key:`${g('month')}-${g('day')}` };
+  };
+  const f = fmt(ds[0]), l = fmt(ds[ds.length-1]);
+  if (f.key === l.key) return f.hm === l.hm ? `${f.date} ${f.hm}` : `${f.date} ${f.hm}~${l.hm}`;
+  return `${f.date} ${f.hm} ~ ${l.date} ${l.hm}`;
 }
 function _renderFieldPending() {
   const wrap   = document.getElementById('ld-field-pending');
