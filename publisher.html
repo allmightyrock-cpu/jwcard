@@ -4513,7 +4513,7 @@ function renderUnitList(visitMap) {
     const _sameDong = !!(_prev && _sameJibun && _cur.dong && _cur.dong === _pv.dong);
     let _big;
     if (_sameBldg)      _big = sec.floorLabel || _cur.line || sec.building;
-    else if (_sameDong) _big = (_cur.line || sec.building);
+    else if (_sameDong) { let _ln = _cur.line || sec.building; if (_ln && !/라인|호|층/.test(_ln)) _ln += '라인'; _big = _ln; }
     else                _big = sec.building || sec.floorLabel || '';
     const _showFloorBadge = !!sec.floorLabel && _big !== sec.floorLabel;
     const _showJibun = !_sameJibun;
