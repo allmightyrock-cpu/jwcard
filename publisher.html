@@ -2232,6 +2232,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <!-- 배정 탭 -->
       <div id="ld-tab-assign">
 
+        <!-- ── 비배정 진행 카드(현장/번호입력 흔적) 승인·정리 ── -->
+        <div id="ld-field-pending" style="display:none;margin-bottom:16px"></div>
+
         <!-- ── 오늘 예정 구역 섹션 ── -->
         <div id="ld-today-section" style="display:none;margin-bottom:16px">
           <div class="tc-section-hdr assigned">
@@ -5733,6 +5736,7 @@ window.openLeaderDrawer = async function(standalone) {
   renderTodaySection();
   renderLdTerritoryList();
   _refreshUnallocatedCount();
+  _renderFieldPending();
   if (_isSO) renderLdManageList();
   // iOS/iPadOS 미설치 사용자에게 설치 안내 팝업 (인도자 패널 최초 진입 시)
   if (typeof checkIOSPwaBanner === 'function') checkIOSPwaBanner();
@@ -6013,6 +6017,7 @@ window.renderLdTerritoryList = function() {
   wrap.innerHTML = html;
   if (_ldSelectedTerrId && list.find(t=>t.id===_ldSelectedTerrId)) _showLdAssignSection();
   else { _ldSelectedTerrId=null; document.getElementById('ld-assign-box').style.display='none'; }
+  if (typeof _renderFieldPending === 'function') _renderFieldPending();
 };
 
 window.selectLdTerr = function(id) {
@@ -6943,6 +6948,75 @@ window.goToCardFromLeader = async function() {
 };
 
 // ── 봉사감독자 비활성화 관리 탭 ──
+// ── 비배정 진행 카드(현장/번호입력 흔적) — 인도자 승인·정리 ──
+// 대상: 배정자 없음 + 개인구역 아님 + visitMap에 방문기록 있음 (= 배정 없이 진행된 흔적)
+function _fieldPendingList() {
+  return (_ldAllTerritories || []).filter(t => {
+    if (t.active === false) return false;
+    if (t.personalAssignee) return false;
+    if ((t.assignedPublishers || []).length > 0) return false;
+    const vm = t.visitMap || {};
+    return Object.values(vm).some(v => v && v.code);
+  });
+}
+function _renderFieldPending() {
+  const wrap = document.getElementById('ld-field-pending');
+  if (!wrap) return;
+  if (!_isLeader) { wrap.style.display = 'none'; return; }
+  const list = _fieldPendingList().sort((a,b)=>parseInt(a.no||0)-parseInt(b.no||0));
+  if (!list.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  wrap.style.display = 'block';
+  const rows = list.map(t => {
+    const vm = t.visitMap || {};
+    const done = Object.values(vm).filter(v=>v&&v.code).length;
+    const visitors = [...new Set(Object.values(vm).map(v=>v&&v.by).filter(Boolean))];
+    const who = visitors.length ? visitors.join(', ') : '—';
+    const clearBtn = _isSO
+      ? `<button onclick="clearFieldCard('${t.id}')" style="flex:1;padding:9px;background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🧹 기록 정리</button>`
+      : '';
+    return `<div style="border:1px solid #FDE68A;border-radius:10px;padding:11px 13px;margin-bottom:8px;background:#FFFBEB">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <strong style="color:#92400E;min-width:30px">${t.no}번</strong>
+        <span style="font-size:13px;flex:1;font-weight:500;color:#1E293B">${t.name}</span>
+      </div>
+      <div style="font-size:11px;color:#92400E;margin-bottom:9px">방문자: <strong>${who}</strong> · 진행 ${done}세대 (배정 없이 진행됨)</div>
+      <div style="display:flex;gap:7px">
+        <button onclick="approveFieldCard('${t.id}')" style="flex:2;padding:9px;background:#16A34A;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ 정식 배정 승인</button>
+        ${clearBtn}
+      </div>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = `<div class="tc-section-hdr" style="color:#92400E;margin-bottom:8px">🔔 비배정 진행 카드 <span style="font-weight:400;font-size:11px;opacity:.8">현장·번호입력으로 진행된 흔적 — 승인 또는 정리</span><span style="margin-left:auto;font-size:11px;background:#F59E0B;color:#fff;padding:2px 8px;border-radius:8px;font-weight:700">${list.length}</span></div>${rows}`;
+}
+// 방문자에게 정식 배정 (한 번 탭)
+window.approveFieldCard = async function(id) {
+  if (!_isLeader) return;
+  const t = (_ldAllTerritories || []).find(x => x.id === id); if (!t) return;
+  const visitors = [...new Set(Object.values(t.visitMap || {}).map(v=>v&&v.by).filter(Boolean))];
+  if (!visitors.length) { alert('방문자 정보가 없어 배정할 수 없습니다.'); return; }
+  if (!confirm(`${t.no}번 「${t.name}」을(를)\n${visitors.join(', ')} 전도인에게 정식 배정할까요?`)) return;
+  try {
+    await updateDoc(doc(db, 'territories', id), {
+      assignedPublishers: visitors, status: '진행중', lastAssignedDate: serverTimestamp()
+    });
+    await _loadLdData(); renderLdTerritoryList(); _renderFieldPending();
+    alert(`${t.no}번이 ${visitors.join(', ')}에게 정식 배정되었습니다.`);
+  } catch(e) { alert('오류: ' + e.message); }
+};
+// 방문 기록 정리(테스트·오기록 제거) — 봉사감독자 전용
+window.clearFieldCard = async function(id) {
+  if (!_isSO) return;
+  const t = (_ldAllTerritories || []).find(x => x.id === id); if (!t) return;
+  if (!confirm(`${t.no}번 「${t.name}」의 방문 기록을 모두 지웁니다.\n(테스트·오기록 정리용 · 회차 이력은 유지 · 되돌릴 수 없음)`)) return;
+  try {
+    await updateDoc(doc(db, 'territories', id), {
+      visitMap: {}, sectionStatus: {}, completionRate: 0
+    });
+    await _loadLdData(); renderLdTerritoryList(); _renderFieldPending();
+    alert(`${t.no}번 방문 기록을 정리했습니다.`);
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
 function renderLdManageList() {
   if (!_isSO) return;
   const wrap = document.getElementById('ld-manage-list'); if(!wrap) return;
