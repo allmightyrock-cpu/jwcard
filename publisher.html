@@ -1249,13 +1249,6 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <input type="text" id="no-input" placeholder="구역번호를 입력하세요" inputmode="numeric" oninput="onNoInput(this.value)">
     </div>
 
-    <!-- 최근 작업 구역 이어하기 (어떻게 나갔든 항상 복귀 가능) -->
-    <button id="recent-chip" onclick="resumeRecent()" style="display:none;align-items:center;gap:8px;width:100%;margin:2px 0 10px;padding:11px 14px;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;color:#1D4ED8;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">
-      <span style="font-size:16px;flex-shrink:0">↩</span>
-      <span id="recent-chip-label" style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">최근 구역 이어하기</span>
-      <span style="font-size:11px;font-weight:600;opacity:.7;white-space:nowrap;flex-shrink:0">이어하기 ›</span>
-    </button>
-
     <div class="login-error" id="login-error"></div>
 
     <!-- 버튼 영역 (4-state machine) -->
@@ -3705,7 +3698,6 @@ window.exitCard = function() {
   document.getElementById('no-input').value = '';
   // v2.34 배정 UI 초기화: 배정박스 숨김 + 입력창 그룹 복원 (안 하면 재진입 시 빈 값으로 에러)
   if (typeof setButtonState === 'function') setButtonState('checkin');
-  if (window._renderRecentChip) _renderRecentChip();  // × 종료 후에도 최근 구역 칩 노출
   setTimeout(() => document.getElementById('no-input').focus(), 100);
 };
 
@@ -3736,74 +3728,6 @@ window.resumeNewCard = function() {
   setTimeout(() => document.getElementById('no-input').focus(), 100);
   // 이름은 유지된 상태이므로 인도자 버튼 노출 체크
   if (window.checkLeaderBtn) window.checkLeaderBtn();
-  if (window._renderRecentChip) _renderRecentChip();
-};
-
-// ── 강력 복원: "최근 작업 구역" 기억 (×·종료로도 안 지워짐) ──
-function _saveRecent() {
-  try {
-    if (!_territoryId || !_territory) return;
-    localStorage.setItem('jwcard_recent', JSON.stringify({
-      name: _pubName || localStorage.getItem('jwcard_name') || '',
-      no: _territory.no || localStorage.getItem('jwcard_no') || '',
-      id: _territoryId, terrName: _territory.name || '', ts: Date.now()
-    }));
-  } catch(e) {}
-}
-function _readRecent() {
-  try { return JSON.parse(localStorage.getItem('jwcard_recent') || 'null'); } catch(e) { return null; }
-}
-window._renderRecentChip = function() {
-  const el = document.getElementById('recent-chip');
-  if (!el) return;
-  const r = _readRecent();
-  const FRESH = 14 * 24 * 60 * 60 * 1000; // 14일
-  if (!r || !r.id || !r.no || (r.ts && Date.now() - r.ts > FRESH)) { el.style.display = 'none'; return; }
-  const lbl = document.getElementById('recent-chip-label');
-  if (lbl) lbl.textContent = `최근: ${r.no}번${r.terrName ? ' ' + r.terrName : ''}`;
-  el.style.display = 'flex';
-};
-// 칩 탭 → 최근 구역으로 즉시 복귀 (네트워크 지연 대비 "복원 중" 표시)
-window.resumeRecent = async function() {
-  const r = _readRecent();
-  if (!r || !r.id) return;
-  const lbl = document.getElementById('recent-chip-label');
-  const old = lbl ? lbl.textContent : '';
-  if (lbl) lbl.textContent = '복원 중…';
-  try {
-    await _authReady;
-    const pubSnap = await getDocs(query(collection(db, 'publishers'), where('name','==', r.name)));
-    if (pubSnap.empty || !pubSnap.docs[0].data().approved) {
-      if (lbl) lbl.textContent = old;
-      showErr && showErr('이름 확인이 안 됩니다. 이름을 입력해 주세요.');
-      return;
-    }
-    _pubDoc = { id: pubSnap.docs[0].id, ...pubSnap.docs[0].data() };
-    _pubName = r.name; _permission = _pubDoc.permission || '일반';
-    _isLeader = ['인도자','구역의종','봉사감독자','관리자'].includes(_permission);
-    _isSO = _permission === '봉사감독자'; _canEditAddress = !!_pubDoc.canEditAddress;
-    const snap = await getDoc(doc(db, 'territories', r.id));
-    if (!snap.exists()) {
-      localStorage.removeItem('jwcard_recent'); _renderRecentChip();
-      if (lbl) lbl.textContent = old;
-      alert('이 구역을 더 이상 찾을 수 없습니다.');
-      return;
-    }
-    _territory = snap.data(); _territoryId = snap.id;
-    localStorage.setItem('jwcard_name', r.name);
-    localStorage.setItem('jwcard_no', r.no);
-    localStorage.setItem('jwcard_terr_id', r.id);
-    document.getElementById('resume-screen').style.display = 'none';
-    if (!_pubDoc.consentGiven) {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('consent-screen').style.display = 'block';
-    } else {
-      enterCard();
-    }
-  } catch(e) {
-    if (lbl) lbl.textContent = old;
-    alert('복원에 실패했습니다. 잠시 후 다시 시도해 주세요.');
-  }
 };
 
 // ── 관리자 미리보기 진입 ──
@@ -3851,9 +3775,6 @@ const _LD_SESSION_HOURS = 4;
     document.getElementById('no-input').value = savedNo;
     setTimeout(() => { if (window.onNoInput) window.onNoInput(savedNo); }, 120);
   }
-  // 로그인 화면 "최근 구역 이어하기" 칩 (어떻게 나갔든 항상 복귀 가능)
-  setTimeout(() => { if (window._renderRecentChip) _renderRecentChip(); }, 150);
-
   // ① 진행 중이던 카드(비정상 종료 포함)가 있으면 → 이어하기 확인 화면 (인도자 포함, 최우선)
   if (savedName && savedNo && savedId) {
     setTimeout(() => _autoResumeCard(0), 400);
@@ -3911,7 +3832,7 @@ async function _autoResumeCard(attempt) {
     }
   } catch(e) {
     if ((attempt || 0) < 2) { setTimeout(() => _autoResumeCard((attempt || 0) + 1), 1200); }
-    else { console.log('자동 복원 실패:', e); if (window._renderRecentChip) _renderRecentChip(); }
+    else { console.log('자동 복원 실패:', e); }
   }
 }
 
@@ -4336,7 +4257,6 @@ function stopTerritoryListener() {
 function enterCard() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('consent-screen').style.display = 'none';
-  _saveRecent();  // 카드 열 때마다 "최근 작업 구역" 기억 갱신(종료로도 안 지워짐)
 
   // 구역별 공지사항 표시
   const _tnBanner = document.getElementById('territory-notice-banner');
