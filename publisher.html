@@ -8783,27 +8783,23 @@ window._cartShareTeamSheet  = _cartShareTeamSheet;
            window.matchMedia('(display-mode: standalone)').matches;
   }
 
-  // 팝업 열기 (enterCard / openLeaderDrawer 에서 호출)
-  window.checkIOSPwaBanner = function() {
-    if (!_isIOS())       return; // iOS/iPadOS 아님
-    if (_isInstalled())  return; // 이미 PWA로 실행 중
-    const saved = localStorage.getItem(_IOS_KEY);
-    if (saved === 'done') return; // 영구 비표시
-    if (saved && Date.now() < Number(saved)) return; // 스누즈 기간 중
+  // iOS 자동 설치 팝업 — 비활성화(사용자 요청). 자동으로는 뜨지 않음.
+  //   → 안내는 로그인 화면의 "📲 홈 화면에 앱으로 설치" 링크로만. 필요 시 openIOSInstallSheet()로 수동 호출.
+  window.checkIOSPwaBanner = function() { /* 자동 표시 안 함 */ };
 
-    setTimeout(() => {
-      const popup = document.getElementById('ios-install-popup');
-      const sheet = document.getElementById('ios-install-sheet');
-      if (!popup || !sheet) return;
-      // iPad / iPhone 단계 전환
-      const isPad = _isIPad();
-      document.getElementById('iip-steps-iphone').style.display = isPad ? 'none' : 'block';
-      document.getElementById('iip-steps-ipad').style.display   = isPad ? 'block' : 'none';
-      popup.style.display = 'flex';
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => { sheet.style.transform = 'translateY(0)'; });
-      });
-    }, 2800); // 로그인 직후 즉시 뜨는 느낌 방지 — 2.8초 후 표시
+  // 수동 열기 — iOS 설치 단계 시트 (링크/버튼에서 호출용)
+  window.openIOSInstallSheet = function() {
+    if (!_isIOS()) return;
+    const popup = document.getElementById('ios-install-popup');
+    const sheet = document.getElementById('ios-install-sheet');
+    if (!popup || !sheet) return;
+    const isPad = _isIPad();
+    document.getElementById('iip-steps-iphone').style.display = isPad ? 'none' : 'block';
+    document.getElementById('iip-steps-ipad').style.display   = isPad ? 'block' : 'none';
+    popup.style.display = 'flex';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { sheet.style.transform = 'translateY(0)'; });
+    });
   };
 
   // 닫기: done=true → 영구 비표시 / done=false → 3일 스누즈

@@ -4,7 +4,7 @@
 //   예: 'jwcard-v2.30' → 'jwcard-v2.31'
 //   버전이 바뀌어야 모든 모바일 PWA가 업데이트를 받습니다.
 //
-const CACHE = 'jwcard-v2.79'; // MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편
+const CACHE = 'jwcard-v2.80'; // MINOR(+0.1): 기능추가·버그수정 / MAJOR(+1.0): 화면개편
 
 // 프리캐시 정적 리소스 (오프라인 대비, 기본은 Network First)
 const STATIC = [
@@ -66,6 +66,11 @@ self.addEventListener('activate', e => {
 // 요청 처리
 self.addEventListener('fetch', e => {
   const url = e.request.url;
+
+  // http(s) 외 요청(chrome-extension://, data: 등)·비GET 은 SW가 관여하지 않음
+  // → cache.put('chrome-extension'…) TypeError 방지
+  if (!url.startsWith('http')) return;
+  if (e.request.method !== 'GET') return;
 
   // admin 페이지 및 admin JS/CSS는 캐시하지 않음 (배포 즉시 반영)
   if (url.includes('/admin') ||
