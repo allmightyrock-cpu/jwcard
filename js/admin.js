@@ -4377,6 +4377,31 @@ window.incompleteTerritoryFromCard = function() {
   incompleteTerritory(id);
 };
 
+// 담당 전도인에게 보낼 "완료/미완료 처리 요청" 문구를 클립보드에 복사
+window.copyProcessRequestMsg = async function(id) {
+  const t = (window._territories || []).find(x => x.id === id);
+  if (!t) return;
+  // 대상: 배정된 전도인 우선, 없으면 방문 기록의 전도인
+  let pubs = (t.assignedPublishers || []).slice();
+  if (!pubs.length) pubs = [...new Set(Object.values(t.visitMap || {}).map(v => v && v.by).filter(Boolean))];
+  if (!pubs.length) { alert('이 카드에 배정되거나 방문한 전도인이 없어 보낼 대상이 없습니다.'); return; }
+  const who = pubs.join(', ');
+  const stateLabel = (t.completionStatus === 'incomplete') ? '미완료' : '진행 중';
+  const url = location.origin + '/publisher';
+  const msg = `📋 [구역카드 처리 요청]\n${who}님, ${t.no}번 「${t.name}」 구역이 ${stateLabel} 상태로 남아 있습니다.\n앱에 접속해 완료/미완료 처리를 부탁드립니다 🙏\n\n접속: ${url}`;
+  try {
+    await navigator.clipboard.writeText(msg);
+    alert(`처리 요청 문구를 복사했습니다.\n카카오톡에 붙여넣어 ${who}님께 보내세요.`);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = msg; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); alert(`처리 요청 문구를 복사했습니다.\n카카오톡에 붙여넣어 ${who}님께 보내세요.`); }
+    catch (_) { prompt('아래 문구를 복사해 보내세요:', msg); }
+    ta.remove();
+  }
+};
+
 window.previewTerritoryFromCard = function() {
   const id = window._tcTargetId;
   // 미리보기는 새 탭에서 열리므로 구역 카드 팝업은 그대로 둠 → 돌아왔을 때 어떤 카드였는지 바로 보임
