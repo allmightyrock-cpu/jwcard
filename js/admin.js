@@ -4068,6 +4068,9 @@ window.renderTerritoryTable = function() {
     if (mCyc) { parsedCycle = parseInt(mCyc[1]); kwRest = kwRest.replace(mCyc[0].toLowerCase(),'').trim(); }
   }
 
+  // "완료"는 status로 남지 않고 완료 시 미배정으로 초기화되므로,
+  // 최근 3개월 이내 완료(lastCompletedDate) 기준으로 표시한다.
+  const _recentDoneCutoff = (() => { const d = new Date(); d.setMonth(d.getMonth() - 3); return d.getTime(); })();
   const list = allT.filter(t => {
     if (cat !== '전체' && t.category !== cat) return false;
     if (cmplt==='complete'   && t.completionStatus!=='complete')   return false;
@@ -4075,7 +4078,7 @@ window.renderTerritoryTable = function() {
     if (statusF==='active'   && t.active===false)  return false;
     if (statusF==='inactive' && t.active!==false)  return false;
     if (statusF==='진행중'   && t.status!=='진행중') return false;
-    if (statusF==='완료'     && t.status!=='완료')   return false;
+    if (statusF==='완료') { const _ms = _terrLastDoneMs(t); if (!_ms || _ms < _recentDoneCutoff) return false; } // 최근 3개월 이내 완료
     if (statusF==='미배정'   && t.status!=='미배정') return false;
     if (parsedCycle!==null && (t.cycle||1)!==parsedCycle) return false;
     if (kwRest) {
@@ -4108,6 +4111,9 @@ window.renderTerritoryTable = function() {
     countEl.textContent = isFiltered ? `검색 결과 ${list.length}개` : `전체 ${list.length}개`;
     countEl.style.color = (isFiltered && list.length > 0) ? '#3B82F6' : '#94A3B8';
   }
+  // "완료" 필터 = 최근 3개월 완료 안내문 노출
+  const _doneNote = document.getElementById('terr-recent-done-note');
+  if (_doneNote) _doneNote.style.display = (statusF === '완료') ? 'block' : 'none';
   _renderActiveFilterBar();
   if (!list.length) {
     const af = _activeTerrFilters();
