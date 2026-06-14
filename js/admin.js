@@ -4458,14 +4458,50 @@ window.addTerritory = async function() {
   } catch(e) { alert('저장 중 오류가 발생했습니다: ' + e.message); }
 };
 
+// ── 통합 구역카드 생성 디스패처 (엑셀 있으면 엑셀 경로, 없으면 직접입력 빈 카드) ──
+window.createTerritoryUnified = async function() {
+  const $ = id => document.getElementById(id);
+  const fileSel = !!($('file-input') && $('file-input').files && $('file-input').files.length);
+  if (fileSel && !window._excelData) {
+    alert('엑셀을 읽지 못했습니다. 파일을 다시 확인하거나, 파일을 빼고 직접 입력으로 만들어 주세요.');
+    return;
+  }
+  // 엑셀 경로 — 호별 주소까지 포함
+  if (window._excelData) { return uploadTerritory(); }
+  // 직접 입력 경로 — 주소 없는 빈 카드
+  const rawNo = ($('u-no').value || '').trim();
+  const name  = ($('u-name').value || '').trim();
+  if (!rawNo || !name) { alert('구역 번호와 이름을 입력해 주세요.\n(호별 주소까지 넣으려면 엑셀 파일을 올려 주세요.)'); return; }
+  const no = rawNo.replace(/^0+/,'') || '0';
+  const category = $('u-category').value;
+  const units = parseInt($('u-units').value) || 0;
+  if (window._territories.find(t => t.no === no)) { alert(`구역 번호 ${no}는 이미 존재합니다.`); return; }
+  try {
+    const docRef = await addDoc(collection(db, 'territories'), {
+      no, name, category, totalUnits: units,
+      assignedPublishers: [], status: '미배정',
+      completionRate: 0, cycle: 1,
+      lastAssignedDate: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      units: []
+    });
+    window._territories.push({ id: docRef.id, no, name, category, totalUnits: units, assignedPublishers: [], status: '미배정', completionRate: 0, cycle: 1, units: [] });
+    closeModal('upload-modal');
+    renderTerritoryTable();
+    updateTerritoryStats();
+    alert(`${no}번 구역카드가 생성되었습니다. (호별 주소는 비어 있음 — 필요 시 엑셀로 채울 수 있습니다)`);
+  } catch(e) { alert('저장 중 오류가 발생했습니다: ' + e.message); }
+};
+
 // 엑셀 업로드
 window.openUploadModal = function() {
   const $ = id => document.getElementById(id);
   $('u-no').value = '';
   $('u-name').value = '';
+  if ($('u-units')) $('u-units').value = '';
   $('excel-preview-wrap').style.display = 'none';
   $('upload-label').textContent = '클릭하여 엑셀 파일 선택';
-  $('upload-btn').disabled = true;
+  $('upload-btn').disabled = false; // 엑셀/직접입력 모두 가능하므로 항상 활성
   $('excel-count').textContent = '';
   $('file-input').value = '';
   const autoBox = $('auto-extract-box'); if (autoBox) autoBox.style.display = 'none';
@@ -4685,7 +4721,7 @@ window.handleExcelFile = function(input) {
             '\n\n• 파일 형식이 .xlsx인지 확인해 주세요.\n' +
             '• 헤더에 "도로명/번지/건물명/세부주소/금지/메모" 열이 있는지 확인해 주세요.\n' +
             '• F12 콘솔에서 상세 로그 확인 가능합니다.');
-      document.getElementById('upload-btn').disabled = true;
+      document.getElementById('upload-btn').disabled = false; // 에러여도 직접입력 생성은 가능하게 유지
     }
   };
   reader.onerror = function(e) {

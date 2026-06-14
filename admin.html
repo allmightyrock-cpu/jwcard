@@ -202,8 +202,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               <button class="btn btn-warn" onclick="manualReset()" title="모든 구역을 1회차로 리셋">↺ 전체 리셋</button>
               <button class="btn" onclick="downloadAllTerritoriesExcel()" title="전체 구역 엑셀 백업 (ZIP)">⬇ 엑셀 백업</button>
               <button class="btn" onclick="openBatchUploadModal()" title="여러 엑셀 파일 또는 ZIP을 한 번에 업로드">📦 일괄 업로드</button>
-              <button class="btn" onclick="openUploadModal()">엑셀 업로드</button>
-              <button class="btn btn-navy" onclick="openTerritoryModal()">+ 구역 추가</button>
+              <button class="btn btn-navy" onclick="openUploadModal()" title="엑셀 업로드 또는 직접 입력으로 구역카드 생성"
+                style="font-weight:800;padding:10px 22px;font-size:14px;box-shadow:0 3px 12px rgba(27,58,107,.30)">➕ 구역카드 만들기</button>
             </div>
           </div>
           <!-- 새 툴바 -->
@@ -2958,7 +2958,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 <!-- ══ 엑셀 업로드 모달 ══ -->
 <div class="modal-wrap" id="upload-modal">
   <div class="modal" style="max-width:560px">
-    <div class="modal-title">엑셀로 구역카드 생성</div>
+    <div class="modal-title">구역카드 만들기</div>
     <div class="info-note" style="font-size:12px;line-height:1.6">
       <strong>📋 엑셀 포맷 (두 가지 모두 지원)</strong><br>
       <div style="margin-top:6px;padding:8px;background:#fff;border:1px solid #E2E8F0;border-radius:6px">
@@ -3004,8 +3004,16 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <label style="font-size:12px">구역 이름 *</label>
       <input type="text" id="u-name" placeholder="자동 추출 또는 직접 입력 (예: 에이스5단지)">
     </div>
+    <div class="form-row" style="margin-bottom:4px">
+      <label style="font-size:12px">총 세대수 <span style="font-weight:400;color:#94A3B8">(엑셀 없이 만들 때만)</span></label>
+      <input type="number" id="u-units" placeholder="예: 68 · 엑셀을 올리면 자동 계산" min="1">
+    </div>
+    <div style="font-size:11px;color:#64748B;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:7px 9px;margin-bottom:4px;line-height:1.55">
+      💡 <strong>엑셀 파일을 올리면</strong> 호별 주소까지 포함된 완전한 카드가 만들어집니다.<br>
+      엑셀 없이 <strong>번호·이름·세대수만</strong> 입력하면 주소 없는 빈 카드가 생성됩니다(나중에 엑셀로 채울 수 있음).
+    </div>
     <div class="modal-footer">
-      <button class="btn btn-navy" onclick="uploadTerritory()" id="upload-btn" disabled>구역카드 생성</button>
+      <button class="btn btn-navy" onclick="createTerritoryUnified()" id="upload-btn">구역카드 생성</button>
       <button class="btn" onclick="closeModal('upload-modal')">취소</button>
     </div>
   </div>
