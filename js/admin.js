@@ -4050,15 +4050,10 @@ window.renderTerritoryTable = function() {
   if (mClearBtn) mClearBtn.style.display = monthFilterVal > 0 ? 'inline-block' : 'none';
 
   const allT = window._territories || [];
-  const cReq = allT.filter(t => t.completionStatus === 'complete').length;
   const iReq = allT.filter(t => t.completionStatus === 'incomplete').length;
-  const cEl  = document.getElementById('complete-req-count');
   const iEl  = document.getElementById('incomplete-req-count');
-  if (cEl) cEl.textContent = cReq;
   if (iEl) iEl.textContent = iReq;
-  const cBtn = document.getElementById('filter-complete-req');
   const iBtn = document.getElementById('filter-incomplete-req');
-  if (cBtn) cBtn.classList.toggle('active', cmplt==='complete');
   if (iBtn) iBtn.classList.toggle('active', cmplt==='incomplete');
 
 
