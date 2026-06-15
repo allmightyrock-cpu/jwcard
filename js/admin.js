@@ -4027,7 +4027,7 @@ function _renderTerrListNew(list, now) {
   <div class="tl-groups">${grpChips}</div>
   <div class="tl-right">
     <span class="tl-units">${t.totalUnits||'—'}</span>
-    ${['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'') ? `<button class="tl-retrieve-btn" onclick="event.stopPropagation();toggleTerritoryActiveFromCard('${t.id}',false)" title="${isInactive?'비활성 상태 — 탭하여 활성화':'활성 상태 — 탭하여 비활성화'}" style="background:${isInactive?'#FEE2E2':'#DCFCE7'};color:${isInactive?'#991B1B':'#166534'};border-color:${isInactive?'#FECACA':'#BBF7D0'}">${isInactive?'🔒 비활성':'✅ 활성'}</button>` : ''}
+    ${['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'') ? `<button class="tl-retrieve-btn" onclick="event.stopPropagation();toggleTerritoryActiveFromCard('${t.id}',false)" title="${isInactive?'비활성 상태 — 탭하여 활성화':'활성 상태 — 탭하여 비활성화'}" style="font-weight:400;background:${isInactive?'#FEE2E2':'#DCFCE7'};color:${isInactive?'#991B1B':'#166534'};border-color:${isInactive?'#FECACA':'#BBF7D0'}">${isInactive?'🔒 비활성':'✅ 활성'}</button>` : ''}
     ${(t.assignedPublishers?.length > 0) && ['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'') ? `<button class="tl-retrieve-btn" onclick="event.stopPropagation();openForceReturnModal('${t.id}')" title="강제 회수">🔙 회수</button>` : ''}
     <button class="tl-dot-btn" onclick="openTerritoryCard('${t.id}')">⋮</button>
   </div>
