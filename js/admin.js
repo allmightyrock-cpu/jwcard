@@ -4247,10 +4247,17 @@ window.openTerritoryCard = function(id) {
   const activeBtn = document.getElementById('tc-active-status');
   if (activeBtn) {
     const isInact = t.active === false;
-    activeBtn.textContent = isInact ? '🔒 비활성화' : '✅ 활성화';
+    const canToggle = ['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'');
+    activeBtn.textContent = isInact
+      ? (canToggle ? '🔒 비활성화됨 (탭하여 활성화)' : '🔒 비활성화됨')
+      : (canToggle ? '✅ 활성화됨 (탭하여 비활성화)' : '✅ 활성화됨');
     activeBtn.style.background = isInact ? '#FEE2E2' : '#DCFCE7';
     activeBtn.style.color      = isInact ? '#991B1B' : '#166534';
     activeBtn.style.borderColor= isInact ? '#FECACA' : '#BBF7D0';
+    activeBtn.disabled = !canToggle;
+    activeBtn.style.cursor  = canToggle ? 'pointer' : 'not-allowed';
+    activeBtn.style.opacity = canToggle ? '1' : '0.75';
+    activeBtn.onclick = canToggle ? function(){ toggleTerritoryActiveFromCard(t.id); } : null;
   }
 
   // ── 완료 처리 버튼 ──
@@ -4400,6 +4407,33 @@ window.copyProcessRequestMsg = async function(id) {
     catch (_) { prompt('아래 문구를 복사해 보내세요:', msg); }
     ta.remove();
   }
+};
+
+// 카드 팝업에서 활성/비활성 직접 토글 (봉사감독자·관리자·구역의종)
+window.toggleTerritoryActiveFromCard = async function(id) {
+  if (!['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'')) return;
+  const t = (window._territories||[]).find(x=>x.id===id); if(!t) return;
+  const isInact = t.active === false;
+  try {
+    if (isInact) {
+      if (!confirm(`${t.no}번 「${t.name}」 구역을 활성화하시겠습니까?`)) return;
+      await updateDoc(doc(db,'territories',id), {
+        active:true, activatedAt:serverTimestamp(), activatedBy:(window._adminPermission||'관리자'),
+        deactivatedBy:deleteField(), deactivatedAt:deleteField(), deactivatedReason:deleteField()
+      });
+      t.active = true; delete t.deactivatedBy; delete t.deactivatedAt; delete t.deactivatedReason;
+    } else {
+      const reason = prompt(`${t.no}번 「${t.name}」 구역을 비활성화합니다.\n전도인이 이 카드를 열 수 없게 됩니다.\n\n사유 (생략 가능):`, '');
+      if (reason === null) return;
+      await updateDoc(doc(db,'territories',id), {
+        active:false, deactivatedAt:serverTimestamp(),
+        deactivatedBy:(window._adminPermission||'관리자'), deactivatedReason:(reason.trim()||'사유 없음')
+      });
+      t.active = false; t.deactivatedReason = (reason.trim()||'사유 없음');
+    }
+    renderTerritoryTable();
+    openTerritoryCard(id); // 팝업 새로고침
+  } catch(e) { alert('오류: ' + e.message); }
 };
 
 window.previewTerritoryFromCard = function() {
