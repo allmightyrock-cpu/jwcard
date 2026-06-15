@@ -4027,6 +4027,7 @@ function _renderTerrListNew(list, now) {
   <div class="tl-groups">${grpChips}</div>
   <div class="tl-right">
     <span class="tl-units">${t.totalUnits||'—'}</span>
+    ${['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'') ? `<button class="tl-retrieve-btn" onclick="event.stopPropagation();toggleTerritoryActiveFromCard('${t.id}',false)" title="${isInactive?'비활성 상태 — 탭하여 활성화':'활성 상태 — 탭하여 비활성화'}" style="background:${isInactive?'#FEE2E2':'#DCFCE7'};color:${isInactive?'#991B1B':'#166534'};border-color:${isInactive?'#FECACA':'#BBF7D0'}">${isInactive?'🔒 비활성':'✅ 활성'}</button>` : ''}
     ${(t.assignedPublishers?.length > 0) && ['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'') ? `<button class="tl-retrieve-btn" onclick="event.stopPropagation();openForceReturnModal('${t.id}')" title="강제 회수">🔙 회수</button>` : ''}
     <button class="tl-dot-btn" onclick="openTerritoryCard('${t.id}')">⋮</button>
   </div>
@@ -4409,8 +4410,8 @@ window.copyProcessRequestMsg = async function(id) {
   }
 };
 
-// 카드 팝업에서 활성/비활성 직접 토글 (봉사감독자·관리자·구역의종)
-window.toggleTerritoryActiveFromCard = async function(id) {
+// 활성/비활성 직접 토글 (봉사감독자·관리자·구역의종) — reopen=false면 목록에서 호출(팝업 재오픈 안 함)
+window.toggleTerritoryActiveFromCard = async function(id, reopen) {
   if (!['관리자','봉사감독자','구역의종'].includes(window._adminPermission||'')) return;
   const t = (window._territories||[]).find(x=>x.id===id); if(!t) return;
   const isInact = t.active === false;
@@ -4432,7 +4433,7 @@ window.toggleTerritoryActiveFromCard = async function(id) {
       t.active = false; t.deactivatedReason = (reason.trim()||'사유 없음');
     }
     renderTerritoryTable();
-    openTerritoryCard(id); // 팝업 새로고침
+    if (reopen !== false) openTerritoryCard(id); // 팝업에서 호출 시에만 새로고침
   } catch(e) { alert('오류: ' + e.message); }
 };
 
