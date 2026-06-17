@@ -1687,6 +1687,7 @@ function renderSchedGallery() {
   const filtered = _schedAllTerr.filter(t => {
     // 타 요일에 이미 배분된 카드는 제외 (현재 요일 카드는 ✓ 표시로 유지)
     if (otherAllocated.has(t.id)) return false;
+    if (!existing.has(t.id) && t.pendingCompleteDay) return false; // 오늘 완료(대기) 제외
     if (_schedGalCatFilter && (t.category||'') !== _schedGalCatFilter) return false;
     // 완료 구역: 현재 요일 배분된 카드는 유지, 나머지는 필터 적용
     if (!existing.has(t.id) && _schedGalStatusFilter === 'incomplete' && t.completionStatus === 'complete') return false;
@@ -3524,11 +3525,68 @@ window._currentSort = 'no'; // 정렬: no | old | recent | cycle | progress
 window._assignTargetId = null;
 window._excelData = null;
 
+// KST(서울) 기준 오늘 날짜 "YYYY-MM-DD"
+function _kstToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
+}
+
+// 전도인이 '구역 완료'를 눌렀지만 아직 자정이 지나지 않은 카드는 pendingCompleteDay 만 기록됨.
+// 자정이 지난(완료한 날 ≠ 오늘) 카드는 여기서 최종 확정: S-13 cycleHistory 기록 + 회차 증가 + 초기화.
+async function _finalizeStalePending() {
+  const today = _kstToday();
+  const stale = (window._territories || []).filter(t => t.pendingCompleteDay && t.pendingCompleteDay !== today);
+  if (!stale.length) return false;
+  for (const t of stale) {
+    try {
+      let _assignedAtStr = '';
+      if (t.lastAssignedDate) {
+        try {
+          const _ad = t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate() : new Date(t.lastAssignedDate);
+          if (!isNaN(_ad)) _assignedAtStr = _ad.getFullYear() + '-' + String(_ad.getMonth()+1).padStart(2,'0') + '-' + String(_ad.getDate()).padStart(2,'0');
+        } catch(e) {}
+      }
+      if (!_assignedAtStr && t.personalAssignedDate) _assignedAtStr = t.personalAssignedDate;
+      const _assigned = (t.assignedPublishers && t.assignedPublishers.length > 0)
+        ? t.assignedPublishers
+        : (t.personalAssignee ? [t.personalAssignee] : (t.completedBy ? [t.completedBy] : []));
+      const _visitMap = t.visitMap || {};
+      const _visitedPubs = [...new Set(Object.values(_visitMap).map(v => v && v.by).filter(Boolean))];
+      const _publishers = [...new Set([..._assigned, ..._visitedPubs])];
+      const historyEntry = {
+        cycle:       t.cycle || 1,
+        completedAt: t.pendingCompleteDay,
+        publishers:  _publishers,
+        visitMode:   window._visitMode || '호별',
+        assignedAt:  _assignedAtStr,
+        unitVisits:  _visitMap
+      };
+      await updateDoc(doc(db, 'territories', t.id), {
+        cycle:              (t.cycle || 1) + 1,
+        status:             '미배정',
+        completionRate:     0,
+        completionStatus:   null,
+        assignedPublishers: [],
+        visitMap:           {},
+        sectionStatus:      {},
+        lastCompletedDate:  serverTimestamp(),
+        lastAssignedDate:   serverTimestamp(),
+        cycleHistory:       [...(t.cycleHistory || []), historyEntry],
+        pendingCompleteDay: deleteField()
+      });
+    } catch(e) { console.log('완료 확정 오류', t.id, e); }
+  }
+  return true;
+}
+
 async function loadTerritories() {
   try {
     const q = query(collection(db, 'territories'), orderBy('lastAssignedDate', 'asc'));
     const snap = await getDocs(q);
     window._territories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (await _finalizeStalePending()) {
+      const snapR = await getDocs(q);
+      window._territories = snapR.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
     renderTerritoryTable();
     updateTerritoryStats();
     renderOverdueList();
@@ -3539,6 +3597,10 @@ async function loadTerritories() {
     try {
       const snap2 = await getDocs(collection(db, 'territories'));
       window._territories = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (await _finalizeStalePending()) {
+        const snap2R = await getDocs(collection(db, 'territories'));
+        window._territories = snap2R.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
       renderTerritoryTable();
       updateTerritoryStats();
       renderOverdueList();
@@ -3964,6 +4026,8 @@ function _renderTerrCardsNew(list, now) {
     let badgeHtml = '';
     if (isInactive) {
       badgeHtml = `<div class="tc-mini-badge b-off">비활성</div>`;
+    } else if (t.pendingCompleteDay) {
+      badgeHtml = `<div class="tc-mini-badge b-done" title="오늘 완료 — 자정에 확정">✅ 오늘완료(대기)</div>`;
     } else if (t.completionStatus === 'complete') {
       badgeHtml = `<div class="tc-mini-badge b-done">완료신청</div>`;
     } else if (t.completionStatus === 'incomplete') {
@@ -4001,6 +4065,8 @@ function _renderTerrListNew(list, now) {
     let badge = '';
     if (isInactive) {
       badge = `<span class="tl-badge-off">🔒 비활성</span>`;
+    } else if (t.pendingCompleteDay) {
+      badge = `<span class="tl-badge-ok" title="전도인이 오늘 완료 처리 — 자정에 S-13 기록으로 확정됩니다">✅ 오늘 완료(대기)</span>`;
     } else if (t.completionStatus === 'complete') {
       badge = `<span class="tl-badge-ok">🔔 완료신청</span>`;
     } else if (t.completionStatus === 'incomplete') {
