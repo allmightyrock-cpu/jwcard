@@ -3538,6 +3538,12 @@ async function _finalizeStalePending() {
   if (!stale.length) return false;
   for (const t of stale) {
     try {
+      // 빈 완료(방문 0세대) 가드: 회차 증가·S-13 기록 없이 완료대기만 해제(오완료 취소)
+      const _hasVisits = Object.values(t.visitMap || {}).some(v => v && v.code);
+      if (!_hasVisits) {
+        await updateDoc(doc(db, 'territories', t.id), { pendingCompleteDay: deleteField() });
+        continue;
+      }
       let _assignedAtStr = '';
       if (t.lastAssignedDate) {
         try {

@@ -5441,6 +5441,16 @@ function _buildFinalizePayload(t, fallbackBy) {
 async function _maybeFinalizePending() {
   if (!_territory || !_territoryId || !_territory.pendingCompleteDay) return false;
   if (_territory.pendingCompleteDay === _kstToday()) return false; // 오늘 = 아직 대기(수정 가능)
+  // 빈 완료(방문 0세대) 가드: 회차 증가·S-13 기록 없이 완료대기만 해제(오완료 취소 처리)
+  const _hasVisits = Object.values(_territory.visitMap || {}).some(v => v && v.code);
+  if (!_hasVisits) {
+    try {
+      _ignoreNextSnap = true;
+      await updateDoc(doc(db, 'territories', _territoryId), { pendingCompleteDay: deleteField() });
+      delete _territory.pendingCompleteDay;
+    } catch(e) { console.log('빈 완료 정리 오류', e); }
+    return true;
+  }
   try {
     const payload = _buildFinalizePayload(_territory, _territory.completedBy);
     _ignoreNextSnap = true;
@@ -5458,6 +5468,7 @@ window.submitComplete = async function() {
   const visitMap = _territory.visitMap || {};
   const done      = Object.values(visitMap).filter(v => v?.code).length;
   const unvisited = units.length - done;
+  if (done === 0) { alert('방문 기록이 없어 완료할 수 없습니다.\n최소 한 세대 이상 기록한 뒤 완료해 주세요.'); return; }
   const lines = [`총 ${units.length}세대 중 ${done}세대 방문 완료`];
   if (unvisited > 0) lines.push(`· 미방문 ${unvisited}세대 있음`);
   lines.push('');
