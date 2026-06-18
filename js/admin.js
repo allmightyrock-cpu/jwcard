@@ -3538,6 +3538,12 @@ async function _finalizeStalePending() {
   if (!stale.length) return false;
   for (const t of stale) {
     try {
+      // 같은 날 중복 완료 안전장치: 이미 그 날짜로 완료 기록이 있으면 회차·기록 없이 완료대기만 취소
+      const _lastH = (t.cycleHistory || []).slice(-1)[0];
+      if (_lastH && _lastH.completedAt === t.pendingCompleteDay) {
+        await updateDoc(doc(db, 'territories', t.id), { pendingCompleteDay: deleteField() });
+        continue;
+      }
       let _assignedAtStr = '';
       if (t.lastAssignedDate) {
         try {
