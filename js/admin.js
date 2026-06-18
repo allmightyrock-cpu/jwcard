@@ -3538,12 +3538,6 @@ async function _finalizeStalePending() {
   if (!stale.length) return false;
   for (const t of stale) {
     try {
-      // 빈 완료(방문 0세대) 가드: 회차 증가·S-13 기록 없이 완료대기만 해제(오완료 취소)
-      const _hasVisits = Object.values(t.visitMap || {}).some(v => v && v.code);
-      if (!_hasVisits) {
-        await updateDoc(doc(db, 'territories', t.id), { pendingCompleteDay: deleteField() });
-        continue;
-      }
       let _assignedAtStr = '';
       if (t.lastAssignedDate) {
         try {
@@ -3554,12 +3548,10 @@ async function _finalizeStalePending() {
       if (!_assignedAtStr && t.personalAssignedDate) _assignedAtStr = t.personalAssignedDate;
       const _assigned = (t.assignedPublishers && t.assignedPublishers.length > 0)
         ? t.assignedPublishers
-        : (t.personalAssignee ? [t.personalAssignee] : []);
+        : (t.personalAssignee ? [t.personalAssignee] : (t.completedBy ? [t.completedBy] : []));
       const _visitMap = t.visitMap || {};
       const _visitedPubs = [...new Set(Object.values(_visitMap).map(v => v && v.by).filter(Boolean))];
-      // S-13 귀속: 배정자 + 실제 방문자. 완료자(completedBy)는 둘 다 없을 때만(수동 완료와 동일 기준).
-      let _publishers = [...new Set([..._assigned, ..._visitedPubs])];
-      if (!_publishers.length && t.completedBy) _publishers = [t.completedBy];
+      const _publishers = [...new Set([..._assigned, ..._visitedPubs])];
       const historyEntry = {
         cycle:       t.cycle || 1,
         completedAt: t.pendingCompleteDay,
