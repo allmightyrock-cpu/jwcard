@@ -1545,13 +1545,13 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
     <div class="card-name" id="c-name">—</div>
     <div class="card-sub" id="c-sub">—</div>
-    <!-- 동반 짝(봉사팀) 표시 -->
-    <div id="c-team" style="display:none;margin-top:7px;font-size:13px"></div>
     <div class="card-last" id="c-last" style="display:none">
       <span class="card-last-label">최근완료</span>
       <span class="card-last-date" id="c-last-date"></span>
       <span class="card-last-pubs" id="c-last-pubs"></span>
     </div>
+    <!-- 동반 짝(봉사팀) 표시 — presence 바와 동일 양식 -->
+    <div id="c-team" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0 2px;border-top:1px solid rgba(255,255,255,0.15);margin-top:6px"></div>
     <!-- 실시간 접속자 표시 -->
     <div id="presence-bar" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0 2px;border-top:1px solid rgba(255,255,255,0.15);margin-top:6px">
       <span style="font-size:10px;color:rgba(255,255,255,0.55);flex-shrink:0">함께 활동중</span>
@@ -4419,29 +4419,38 @@ function buildCard() {
     ? `배정: ${_pubLabel}  ${_assignDateStr}`
     : `배정: ${_pubLabel}`;
 
-  // ── 동반 짝(봉사팀) 표시 — 배정 전원을 2인씩(홀수면 마지막 팀 3인) 자동 편성 ──
+  // ── 동반 짝(봉사팀) 표시 — '함께 활동중'(presence) 바와 동일 칩 양식 ──
+  // 내 팀: 초록 점(pc-dot) 칩 / 다른 팀: 파란 점 흐린 칩. 내 이름은 굵게.
   const _teamEl = document.getElementById('c-team');
   if (_teamEl) {
     const _teamPubs = _allPubs.filter(Boolean);
     if (_teamPubs.length >= 2) {
       const _teams = _makeTeams(_teamPubs);
       const _me = (_pubName || '').trim();
-      const _fmtNm = nm => (nm === _me) ? `<b style="color:#fff">${nm}</b>` : nm;
+      const _chip = (nm, mine) => {
+        const dot = mine
+          ? '<span class="pc-dot"></span>'
+          : '<span style="width:6px;height:6px;background:#60A5FA;border-radius:50%;flex-shrink:0;display:inline-block"></span>';
+        const nameHtml = (nm === _me) ? `<span style="font-weight:700">${nm}</span>` : nm;
+        const bg = mine ? '' : ' style="background:rgba(255,255,255,0.10)"';
+        return `<span class="pc-chip"${bg}>${dot}${nameHtml}</span>`;
+      };
+      const _grp = (label, color, chips) =>
+        `<span style="display:inline-flex;align-items:center;gap:5px"><span style="font-size:10px;${color}">${label}</span>${chips}</span>`;
+      let _inner;
       if (_teams.length === 1) {
-        _teamEl.innerHTML = `<span style="display:inline-block;padding:4px 11px;border-radius:9px;background:rgba(96,165,250,0.28);border:1px solid rgba(147,197,253,0.6);color:#EAF2FF">👥 우리 팀 · ${_teams[0].map(_fmtNm).join(' · ')}</span>`;
+        _inner = _teams[0].map(n => _chip(n, true)).join(' ');
       } else {
         const _myIdx = _teams.findIndex(g => g.includes(_me));
-        const _rows = _teams.map((g, gi) => {
-          const isMine = gi === _myIdx;
-          const lbl = isMine ? '👥 내 동반' : `${gi + 1}팀`;
-          const st = isMine
-            ? 'background:rgba(96,165,250,0.30);border:1px solid rgba(147,197,253,0.7);color:#fff;font-weight:700'
-            : 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.78)';
-          return `<span style="display:inline-block;padding:4px 11px;border-radius:9px;margin:0 5px 4px 0;${st}">${lbl}: ${g.map(_fmtNm).join(' · ')}</span>`;
-        }).join('');
-        _teamEl.innerHTML = `${_rows}<div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:1px">※ 한 구역을 팀별로 나눠 진행하세요</div>`;
+        _inner = _teams.map((g, gi) => {
+          const mine = gi === _myIdx;
+          const lbl = mine ? '내 동반' : `${gi + 1}팀`;
+          const col = mine ? 'color:#BBF7D0;font-weight:700' : 'color:rgba(255,255,255,0.5)';
+          return _grp(lbl, col, g.map(n => _chip(n, mine)).join(' '));
+        }).join('<span style="color:rgba(255,255,255,0.25);margin:0 1px">|</span>');
       }
-      _teamEl.style.display = 'block';
+      _teamEl.innerHTML = `<span style="font-size:10px;color:rgba(255,255,255,0.55);flex-shrink:0">동반 짝</span><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${_inner}</div>`;
+      _teamEl.style.display = 'flex';
     } else {
       _teamEl.style.display = 'none';
     }
