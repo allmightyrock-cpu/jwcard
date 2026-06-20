@@ -3661,22 +3661,44 @@ function renderTerritoryDashboard() {
   // ② 6개월 방문율: cycleHistory 완료 건수 / 전체 구역
   const now = Date.now();
   const MS6M = 180 * 24 * 60 * 60 * 1000;
-  let done6m = 0;
-  T.forEach(t => {
+  // 구역 1개가 6개월 내 1회라도 완료됐으면 1로 카운트(완료 '고유 구역 수' 기준 — 중복완료 중복집계 안 함)
+  const _completedIn6m = (t) => {
+    let recent = false;
     (t.cycleHistory || []).forEach(h => {
       if (!h.completedAt) return;
       const ms = h.completedAt.toMillis ? h.completedAt.toMillis()
                : h.completedAt.toDate ? h.completedAt.toDate().getTime()
                : new Date(h.completedAt).getTime();
-      if (!isNaN(ms) && (now - ms) <= MS6M) done6m++;
+      if (!isNaN(ms) && (now - ms) <= MS6M) recent = true;
     });
-    // lastCompletedDate 도 체크 (cycleHistory 없는 레거시 구역)
-    if (!t.cycleHistory?.length && t.lastCompletedDate) {
+    if (!recent && t.lastCompletedDate) {
       const ms = t.lastCompletedDate.toMillis ? t.lastCompletedDate.toMillis() : new Date(t.lastCompletedDate).getTime();
-      if ((now - ms) <= MS6M) done6m++;
+      if (!isNaN(ms) && (now - ms) <= MS6M) recent = true;
     }
-  });
+    return recent;
+  };
+  let done6m = 0;
+  T.forEach(t => { if (_completedIn6m(t)) done6m++; });
   const visitRate = T.length ? Math.round(done6m / T.length * 100) : 0;
+
+  // ⑦ 구역 그룹(유형)별 6개월 방문율 — 그룹별 완료 고유 구역 수 / 그룹 전체
+  const _grpMap = {};
+  T.forEach(t => {
+    const g = (t.category && String(t.category).trim()) || '미분류';
+    if (!_grpMap[g]) _grpMap[g] = { total: 0, done: 0 };
+    _grpMap[g].total++;
+    if (_completedIn6m(t)) _grpMap[g].done++;
+  });
+  const _grpBars = Object.entries(_grpMap).sort((a, b) => b[1].total - a[1].total).map(([g, s]) => {
+    const rate = s.total ? Math.round(s.done / s.total * 100) : 0;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+      <div style="width:104px;text-align:right;font-size:12px;color:#475569;font-weight:500;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${g}">${g}</div>
+      <div style="flex:1;background:#f1f5f9;border-radius:6px;height:20px;position:relative;overflow:hidden">
+        <div style="width:${rate}%;background:linear-gradient(90deg,#0F766E 0%,#14B8A6 100%);height:100%;border-radius:6px"></div>
+      </div>
+      <div style="width:92px;font-size:12px;font-weight:600;color:#0F766E;text-align:right;flex-shrink:0">${rate}% <span style="color:#94a3b8;font-weight:400">${s.done}/${s.total}</span></div>
+    </div>`;
+  }).join('');
 
   // ③ 1년 부재율: visitMap 에서 최근 1년 기록 중 absent 세대 비율
   const MS1Y = 365 * 24 * 60 * 60 * 1000;
@@ -3769,6 +3791,11 @@ function renderTerritoryDashboard() {
       <div style="font-size:11px;font-weight:500;color:#64748B;letter-spacing:.5px;margin-bottom:12px">회차별 구역 수</div>
       ${bars}
       <div style="font-size:10px;color:#94a3b8;margin-top:6px">전체 ${T.length}개 구역 기준</div>
+    </div>
+    <div style="margin-top:18px;padding-top:16px;border-top:1.5px solid #f1f5f9">
+      <div style="font-size:11px;font-weight:500;color:#64748B;letter-spacing:.5px;margin-bottom:12px">구역 그룹별 6개월 방문율</div>
+      ${_grpBars || '<div style="font-size:11px;color:#94a3b8">그룹 데이터 없음</div>'}
+      <div style="font-size:10px;color:#94a3b8;margin-top:6px">최근 6개월 내 완료한 구역 수 ÷ 그룹 전체 구역 수</div>
     </div>`;
 }
 
