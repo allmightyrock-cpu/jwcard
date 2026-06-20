@@ -3714,7 +3714,7 @@ function renderTerritoryDashboard() {
   const bars = sortedCycles.map(([cycle, count]) => {
     const pct = Math.round(count / maxCount * 100);
     return `<div onclick="window.filterByCycle(${cycle})" title="클릭하면 ${cycle}회차 구역만 목록에 표시됩니다" style="display:flex;align-items:center;gap:10px;margin-bottom:9px;cursor:pointer;border-radius:6px;padding:2px 3px;transition:background .12s" onmouseover="this.style.background='#eef2f9'" onmouseout="this.style.background=''">
-      <div style="width:52px;text-align:right;font-size:12px;color:#2563eb;font-weight:600;flex-shrink:0;cursor:pointer;border-radius:6px;padding:2px 6px;transition:color .13s,background .13s,transform .13s" onmouseover="this.style.color='#1B3A6B';this.style.background='#EFF4FE';this.style.transform='translateX(-2px)'" onmouseout="this.style.color='#2563eb';this.style.background='transparent';this.style.transform='none'">${cycle}회차</div>
+      <div style="width:52px;text-align:right;font-size:12px;color:#64748B;font-weight:500;flex-shrink:0;cursor:pointer;border-radius:6px;padding:2px 6px;transition:color .13s,background .13s,transform .13s" onmouseover="this.style.color='#1B3A6B';this.style.background='#EFF4FE';this.style.transform='translateX(-2px)'" onmouseout="this.style.color='#64748B';this.style.background='transparent';this.style.transform='none'">${cycle}회차</div>
       <div style="flex:1;background:#f1f5f9;border-radius:6px;height:20px;position:relative;overflow:hidden">
         <div style="width:${pct}%;background:linear-gradient(90deg,#1B3A6B 0%,#2563eb 100%);height:100%;border-radius:6px"></div>
       </div>
