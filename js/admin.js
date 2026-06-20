@@ -5519,7 +5519,7 @@ const VISIT_CODE_META = {
   absent:   { label:'부재',            icon:'—',  color:'#64748B', bg:'#F1F5F9' },
   resp:     { label:'응답',            icon:'✓',  color:'#166534', bg:'#DCFCE7' },
   revisit:  { label:'재방문',          icon:'⏰', color:'#1D4ED8', bg:'#DBEAFE' },
-  refuse:   { label:'거절',            icon:'✕',  color:'#991B1B', bg:'#FEE2E2' },
+  refuse:   { label:'(방문)거절',       icon:'✕',  color:'#991B1B', bg:'#FEE2E2' },
   vacant:   { label:'공실',            icon:'□',  color:'#475569', bg:'#F8FAFC' },
   escort:   { label:'형제동반필수',        icon:'⚠',  color:'#92400E', bg:'#FEF3C7' },
   jwmember: { label:'형제/자매댁',     icon:'🏠', color:'#5B21B6', bg:'#EDE9FE' },
@@ -5847,7 +5847,7 @@ window.openVisitDetailModal = function(id) {
       const vm = visitMap[String(idx)];
       const who = _isRealVisit(vm) ? vm.by : '';
       const code = vm && vm.code ? vm.code : '';
-      const codeLabel = { resp:'응답', revisit:'재방문', refuse:'거절', absent:'부재', vacant:'공실' }[code] || '';
+      const codeLabel = { resp:'응답', revisit:'재방문', refuse:'(방문)거절', absent:'부재', vacant:'공실' }[code] || '';
       if (who) {
         currentCell = '<td style="' + td + ';text-align:center;background:#ECFDF5;color:#065F46;font-weight:600">' +
           who + (codeLabel ? '<div style="font-size:9px;color:#047857;font-weight:400">' + codeLabel + '</div>' : '') + '</td>';

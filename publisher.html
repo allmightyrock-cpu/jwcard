@@ -2716,7 +2716,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
             <svg width="13" height="13" viewBox="0 0 14 14"><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="10.5" y1="3.5" x2="3.5" y2="10.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
           </div>
         </div>
-        <div class="sec-code-lbl" style="color:#991B1B">거절</div>
+        <div class="sec-code-lbl" style="color:#991B1B">(방문)거절</div>
       </button>
       <button class="sec-code-btn" onclick="pickCode('vacant')">
         <div class="sec-code-ico"><svg width="22" height="22" viewBox="0 0 14 14"><rect x="1.5" y="4.5" width="11" height="8" rx="1" stroke="#9CA3AF" stroke-width="1.5" fill="none"/><polyline points="1.5,6.5 7,1.5 12.5,6.5" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -4811,7 +4811,7 @@ function updateProgress(units, visitMap) {
   document.getElementById('c-addr-sub').textContent = `총 ${total}세대 · 완료 ${done}세대 · 잔여 ${total-done}세대`;
   document.getElementById('c-chips').innerHTML = [
     ['pc-abs','부재',counts.absent],['pc-resp','응답',counts.resp],
-    ['pc-rev','재방문',counts.revisit],['pc-ref','거절',counts.refuse],
+    ['pc-rev','재방문',counts.revisit],['pc-ref','(방문)거절',counts.refuse],
     ['pc-esc','형제동반필수',counts.escort],
     ['pc-jwm','형제/자매',counts.jwmember]
   ].filter(c=>c[2]>0).map(c=>`<span class="pchip ${c[0]}">${c[1]} ${c[2]}</span>`).join('');
@@ -4820,7 +4820,7 @@ function updateProgress(units, visitMap) {
 
 // ── 코드 시트 ──
 const CODE_LABELS = {
-  absent:'부재', resp:'응답', revisit:'재방문', refuse:'거절',
+  absent:'부재', resp:'응답', revisit:'재방문', refuse:'(방문)거절',
   vacant:'공실', escort:'형제동반필수', jwmember:'형제/자매댁', interest:'관심자/성서연구'
 };
 window.openCodeSheet = function(idx) {
