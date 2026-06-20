@@ -4665,7 +4665,8 @@ function renderUnitList(visitMap) {
       }
 
       const visit = visitMap[globalIdx];
-      const code = visit?.code || null;
+      // 방문금지(영구) 세대는 visitMap과 무관하게 항상 거절(refuse) 마크로 표시
+      const code = u.banned ? 'refuse' : (visit?.code || null);
       const isDimmed = status === 'done' || isBeforePartial || allVisited
         || (status === 'partial' && hereAt !== undefined && globalIdx <= hereAt);
       const isEscort = code === 'escort' || u.escortRequired;
