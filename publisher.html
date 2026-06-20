@@ -4885,13 +4885,18 @@ window.openCodeSheet = function(idx) {
 // 선택 취소 (되돌리기)
 window.clearCode = async function() {
   if (_activeUnitIdx === null) return;
+  // 방문금지(unit.banned) 세대면 해제 확인 후 함께 해제
+  const _bu = (_territory.units || [])[_activeUnitIdx];
+  const _clearBan = !!(_bu && _bu.banned);
+  if (_clearBan && !confirm('이 세대의 (방문)거절 표시를 해제할까요?\n다시 방문 가능 상태가 됩니다.')) return;
+  if (_clearBan) _bu.banned = false;
   const visitMap = { ...(_territory.visitMap || {}) };
   delete visitMap[_activeUnitIdx];
   try {
     _ignoreNextSnap = true;
-    await updateDoc(doc(db, 'territories', _territoryId), {
-      [`visitMap.${_activeUnitIdx}`]: deleteField()
-    });
+    const _upd = { [`visitMap.${_activeUnitIdx}`]: deleteField() };
+    if (_clearBan) _upd.units = _territory.units;
+    await updateDoc(doc(db, 'territories', _territoryId), _upd);
     _territory.visitMap = visitMap;
     closeSheets();
     renderUnitList(visitMap);
@@ -4902,6 +4907,13 @@ window.clearCode = async function() {
 
 window.pickCode = async function(code) {
   if (_activeUnitIdx === null) return;
+  // 방문금지(영구): '(방문)거절' 선택 → unit.banned=true, 다른 반응 선택 → 해제(false).
+  const _bu = (_territory.units || [])[_activeUnitIdx];
+  const _willBan = (code === 'refuse');
+  const _wasBanned = !!(_bu && _bu.banned);
+  if (_wasBanned && !_willBan && !confirm('이 세대는 (방문)거절 상태입니다.\n해제하고 이 반응으로 기록할까요?')) return;
+  const _banChanged = !!_bu && (_wasBanned !== _willBan);
+  if (_banChanged) _bu.banned = _willBan;
   const visitMap = { ...(_territory.visitMap || {}) };
   const _stamp = new Date().toISOString();
   visitMap[_activeUnitIdx] = { code, by: _pubName, at: _stamp };
@@ -4909,9 +4921,9 @@ window.pickCode = async function(code) {
     _ignoreNextSnap = true;
     const batch = writeBatch(db);
     const terrRef = doc(db, 'territories', _territoryId);
-    batch.update(terrRef, {
-      [`visitMap.${_activeUnitIdx}`]: { code, by: _pubName, at: _stamp }
-    });
+    const _terrUpd = { [`visitMap.${_activeUnitIdx}`]: { code, by: _pubName, at: _stamp } };
+    if (_banChanged) _terrUpd.units = _territory.units;
+    batch.update(terrRef, _terrUpd);
     // 재방문 코드 → 본인 재방문 목록(publisherRevisits)에 함께 기록
     if (code === 'revisit' && _pubName) {
       const u = (_territory.units || [])[_activeUnitIdx] || {};
