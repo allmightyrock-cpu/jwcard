@@ -3585,37 +3585,36 @@ async function _finalizeStalePending() {
 }
 
 async function loadTerritories() {
+  // 1) 데이터 조회 — 이 단계 실패 시에만 '불러오기 오류' 표시
   try {
     const q = query(collection(db, 'territories'), orderBy('lastAssignedDate', 'asc'));
     const snap = await getDocs(q);
     window._territories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (await _finalizeStalePending()) {
-      const snapR = await getDocs(q);
-      window._territories = snapR.docs.map(d => ({ id: d.id, ...d.data() }));
-    }
-    renderTerritoryTable();
-    updateTerritoryStats();
-    renderOverdueList();
-    // 지도 탭이 먼저 열려 있던 경우 마커·범례 갱신
-    if (typeof plotTerritoryMarkers === 'function' && window._adminMapReady) plotTerritoryMarkers();
   } catch(e) {
     // 인덱스 없을 경우 기본 조회
     try {
       const snap2 = await getDocs(collection(db, 'territories'));
       window._territories = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (await _finalizeStalePending()) {
-        const snap2R = await getDocs(collection(db, 'territories'));
-        window._territories = snap2R.docs.map(d => ({ id: d.id, ...d.data() }));
-      }
-      renderTerritoryTable();
-      updateTerritoryStats();
-      renderOverdueList();
-      if (typeof plotTerritoryMarkers === 'function' && window._adminMapReady) plotTerritoryMarkers();
     } catch(e2) {
-      document.getElementById('territory-table-wrap').innerHTML =
-        '<div class="loading" style="color:#EF4444">데이터를 불러오는 중 오류가 발생했습니다.</div>';
+      const w = document.getElementById('territory-table-wrap');
+      if (w) w.innerHTML = '<div class="loading" style="color:#EF4444">데이터를 불러오는 중 오류가 발생했습니다.</div>';
+      return;
     }
   }
+  // 2) 밀린 완료 확정 (실패해도 목록에는 영향 없음)
+  try {
+    if (await _finalizeStalePending()) {
+      const snapR = await getDocs(collection(db, 'territories'));
+      window._territories = snapR.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+  } catch(e) { console.warn('완료 확정 처리 오류', e); }
+  // 3) 렌더 — 각각 독립 격리. 특히 지도 마커 실패가 구역 목록을 깨지 않도록 분리.
+  try { renderTerritoryTable(); } catch(e) { console.error('구역 목록 렌더 오류', e); }
+  try { updateTerritoryStats(); } catch(e) { console.warn('통계 갱신 오류', e); }
+  try { renderOverdueList(); } catch(e) { console.warn('미반납 목록 오류', e); }
+  try {
+    if (typeof plotTerritoryMarkers === 'function' && window._adminMapReady) plotTerritoryMarkers();
+  } catch(e) { console.warn('지도 마커 표시 오류(목록과 무관)', e); }
 }
 
 function updateTerritoryStats() {
