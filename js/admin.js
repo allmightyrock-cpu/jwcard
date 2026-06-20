@@ -3798,7 +3798,7 @@ function renderTerritoryDashboard() {
       <div style="font-size:10px;color:#94a3b8;margin-top:6px">전체 ${T.length}개 구역 기준</div>
     </div>
     <div style="margin-top:18px;padding-top:16px;border-top:1.5px solid #f1f5f9">
-      <div style="font-size:11px;font-weight:500;color:#64748B;letter-spacing:.5px;margin-bottom:12px">구역 그룹별 6개월 방문율</div>
+      <div style="font-size:11px;font-weight:500;color:#64748B;letter-spacing:.5px;margin-bottom:12px">구역 그룹별 방문율</div>
       ${_grpBars || '<div style="font-size:11px;color:#94a3b8">그룹 데이터 없음</div>'}
       <div style="font-size:10px;color:#94a3b8;margin-top:6px">설정 기간 내 완료한 구역 수 ÷ 그룹 전체 구역 수</div>
     </div>`;
