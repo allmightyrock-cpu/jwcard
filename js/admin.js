@@ -5805,7 +5805,7 @@ window.openVisitDetailModal = function(id) {
 
   const rows = units.map((u, idx) => {
     const td = idx % 2 === 0 ? tdBase : tdAlt;
-    const restricted = u.restricted || u.noVisit || false;
+    const restricted = u.restricted || u.noVisit || u.banned || false;
     const restrCell = restricted
       ? '<td style="' + td + ';text-align:center;color:#EF4444;font-weight:700">Y</td>'
       : '<td style="' + td + '"></td>';
