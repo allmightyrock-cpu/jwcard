@@ -5806,8 +5806,9 @@ window.openVisitDetailModal = function(id) {
   const rows = units.map((u, idx) => {
     const td = idx % 2 === 0 ? tdBase : tdAlt;
     const restricted = u.restricted || u.noVisit || u.banned || false;
+    const _banTip = u.banReason ? ' title="사유: ' + String(u.banReason).replace(/"/g,'&quot;') + '"' : '';
     const restrCell = restricted
-      ? '<td style="' + td + ';text-align:center;color:#EF4444;font-weight:700">Y</td>'
+      ? '<td style="' + td + ';text-align:center;color:#EF4444;font-weight:700' + (u.banReason?';cursor:help':'') + '"' + _banTip + '>Y</td>'
       : '<td style="' + td + '"></td>';
 
     const cycleCells = cycles.map(h => {
