@@ -3793,12 +3793,12 @@ function renderTerritoryDashboard() {
       </div>
     </div>
     <div>
-      <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><span style="width:4px;height:15px;background:#1B3A6B;border-radius:2px;flex-shrink:0"></span><span style="font-size:14px;font-weight:600;color:#1B3A6B">회차별 구역 수</span></div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><span style="width:4px;height:15px;background:#1B3A6B;border-radius:2px;flex-shrink:0"></span><span style="font-size:14px;font-weight:400;color:#1B3A6B">회차별 구역 수</span></div>
       ${bars}
       <div style="font-size:10px;color:#94a3b8;margin-top:6px">전체 ${T.length}개 구역 기준</div>
     </div>
     <div style="margin-top:18px;padding-top:16px;border-top:1.5px solid #f1f5f9">
-      <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><span style="width:4px;height:15px;background:#0F766E;border-radius:2px;flex-shrink:0"></span><span style="font-size:14px;font-weight:600;color:#0F766E">구역 그룹별 방문율</span></div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><span style="width:4px;height:15px;background:#0F766E;border-radius:2px;flex-shrink:0"></span><span style="font-size:14px;font-weight:400;color:#0F766E">구역 그룹별 방문율</span></div>
       ${_grpBars || '<div style="font-size:11px;color:#94a3b8">그룹 데이터 없음</div>'}
       <div style="font-size:10px;color:#94a3b8;margin-top:6px">설정 기간 내 완료한 구역 수 ÷ 그룹 전체 구역 수</div>
     </div>`;
