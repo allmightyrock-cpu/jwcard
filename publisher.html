@@ -5946,7 +5946,7 @@ window.addTerrToPopup = async function(id, btnEl) {
       const newIds = [..._todaySchedIds, id];
       await setDoc(doc(db,'weeklySchedule',String(_todayDayOfWeek)), {
         terrIds: newIds, active: true,
-        allocatedDate: new Date().toISOString().slice(0,10),
+        allocatedDate: new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10),
         updatedAt: serverTimestamp()
       });
       _todaySchedIds = newIds;
@@ -6255,7 +6255,7 @@ window.confirmLdAssign = async function() {
         const newIds = [..._todaySchedIds, assignedId];
         await setDoc(doc(db,'weeklySchedule',String(_todayDayOfWeek)), {
           terrIds: newIds, active: true,
-          allocatedDate: new Date().toISOString().slice(0,10),
+          allocatedDate: new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10),
           updatedAt: serverTimestamp()
         });
         _todaySchedIds = newIds;
@@ -6720,7 +6720,7 @@ async function _completeReassign(newId) {
       const newIds = [..._todaySchedIds, newId];
       await setDoc(doc(db, 'weeklySchedule', String(_todayDayOfWeek)), {
         terrIds: newIds, active: true,
-        allocatedDate: new Date().toISOString().slice(0,10),
+        allocatedDate: new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10),
         updatedAt: serverTimestamp()
       });
       _todaySchedIds = newIds; _allSchedIds.add(newId);
@@ -6767,7 +6767,7 @@ window.returnTodayTerr = async function(id) {
     await setDoc(doc(db, 'weeklySchedule', String(_todayDayOfWeek)), {
       terrIds:       newIds,
       active:        true,
-      allocatedDate: new Date().toISOString().slice(0, 10),
+      allocatedDate: new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10),
       updatedAt:     serverTimestamp()
     });
     _todaySchedIds = newIds;
@@ -7017,7 +7017,7 @@ window.addUnallocatedToToday = async function(id) {
     await setDoc(doc(db, 'weeklySchedule', String(_todayDayOfWeek)), {
       terrIds:       newIds,
       active:        true,
-      allocatedDate: new Date().toISOString().slice(0, 10),
+      allocatedDate: new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10),
       updatedAt:     serverTimestamp()
     });
     _todaySchedIds = newIds;
@@ -7040,7 +7040,7 @@ window.toggleLeaderAutoReturn = async function() {
       terrIds:       _todaySchedIds,
       active:        true,
       autoReturn:    _todayAutoReturn,
-      allocatedDate: new Date().toISOString().slice(0, 10),
+      allocatedDate: new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10),
       updatedAt:     serverTimestamp()
     });
   } catch(e) {

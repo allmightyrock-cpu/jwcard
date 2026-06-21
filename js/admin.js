@@ -1035,7 +1035,7 @@ window.toggleSchedAutoReturn = async function() {
     terrIds:       _schedData[_schedDay] || [],
     active:        _schedDayActive[_schedDay] !== false,
     autoReturn:    _schedDayAutoReturn[_schedDay],
-    allocatedDate: new Date().toISOString().slice(0, 10),
+    allocatedDate: new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10),
     updatedAt:     serverTimestamp()
   });
   const msg = document.getElementById('sched-save-msg');
