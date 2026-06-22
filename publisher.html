@@ -4781,6 +4781,11 @@ window._quickResp = function(idx) {
   pickCode('resp');
 };
 
+// 관리자 미리보기(상태 확인 전용) — 모든 쓰기 동작 차단(읽기 전용)
+function _previewBlock(){
+  if (_isPreview){ alert('관리자 미리보기 모드 — 상태 확인 전용입니다. 방문기록·완료/미완료는 저장되지 않습니다.'); return true; }
+  return false;
+}
 function bookmarkSVG() {
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.137,24a2.8,2.8,0,0,1-1.987-.835L12,17.051,5.85,23.169a2.8,2.8,0,0,1-3.095.609A2.8,2.8,0,0,1,1,21.154V5A5,5,0,0,1,6,0H18a5,5,0,0,1,5,5V21.154a2.8,2.8,0,0,1-1.751,2.624A2.867,2.867,0,0,1,20.137,24ZM6,2A3,3,0,0,0,3,5V21.154a.843.843,0,0,0,1.437.6h0L11.3,14.933a1,1,0,0,1,1.41,0l6.855,6.819a.843.843,0,0,0,1.437-.6V5a3,3,0,0,0-3-3Z"/></svg>';
 }
@@ -4884,6 +4889,7 @@ window.openCodeSheet = function(idx) {
 
 // 선택 취소 (되돌리기)
 window.clearCode = async function() {
+  if (_previewBlock()) return;
   if (_activeUnitIdx === null) return;
   // 방문금지(unit.banned) 세대면 해제 확인 후 함께 해제
   const _bu = (_territory.units || [])[_activeUnitIdx];
@@ -4906,6 +4912,7 @@ window.clearCode = async function() {
 };
 
 window.pickCode = async function(code) {
+  if (_previewBlock()) return;
   if (_activeUnitIdx === null) return;
   // 방문금지(영구): '(방문)거절' 선택 → unit.banned=true, 다른 반응 선택 → 해제(false).
   const _bu = (_territory.units || [])[_activeUnitIdx];
@@ -5179,6 +5186,7 @@ window.toggleRevisitMenu = function(e, taskId) {
 };
 
 window.addRevisitVisit = async function(taskId) {
+  if (_previewBlock()) return;
   if (!_revisitName || !db) return;
   try {
     const ref = doc(db, 'publisherRevisits', _revisitName, 'items', taskId);
@@ -5191,6 +5199,7 @@ window.addRevisitVisit = async function(taskId) {
 };
 
 window.endRevisit = async function(taskId) {
+  if (_previewBlock()) return;
   if (!_revisitName || !db) return;
   if (!confirm('이 분을 재방문 목록에서 종료할까요?\n\n더 이상 방문이 필요 없을 때만 사용하세요.\n목록에서 사라지고, 구역카드의 재방문 표시도 해제됩니다.')) return;
   try {
@@ -5230,6 +5239,7 @@ window.openSecSheet = function(key, label) {
 };
 
 window.setSectionStatus = async function(status) {
+  if (_previewBlock()) return;
   const key = _activeSectionKey;
   if (!key) return;
   const sec = _sections.find(s => s.key === key);
@@ -5264,6 +5274,7 @@ window.setSectionStatus = async function(status) {
 };
 
 window.toggleSectionBookmark = async function(key) {
+  if (_previewBlock()) return;
   const sec = _sections.find(s => s.key === key);
   if (!sec) return;
   const sectionStatus = { ...(_territory.sectionStatus || {}) };
@@ -5304,6 +5315,7 @@ window.openUnitMoreSheet = function(globalIdx, secKey) {
 };
 
 window.setHereAtUnit = async function() {
+  if (_previewBlock()) return;
   if (_unitMoreIdx === null || !_unitMoreSecKey) return;
   const sectionStatus = { ...(_territory.sectionStatus || {}) };
   sectionStatus[_unitMoreSecKey] = { status: 'partial', hereAt: _unitMoreIdx };
@@ -5456,6 +5468,7 @@ function updateBottomBar(units, visitMap) {
 
 // 미완료 마치기
 window.submitIncomplete = async function() {
+  if (_previewBlock()) return;
   const sectionStatus = _territory.sectionStatus || {};
   const partialSections = Object.entries(sectionStatus)
     .filter(([,v]) => v.status === 'partial')
@@ -5531,6 +5544,7 @@ async function _maybeFinalizePending() {
 }
 
 window.submitComplete = async function() {
+  if (_previewBlock()) return;
   const units    = _territory.units    || [];
   const visitMap = _territory.visitMap || {};
   const done      = Object.values(visitMap).filter(v => v?.code).length;
@@ -5563,6 +5577,7 @@ window.submitComplete = async function() {
 
 // 완료(대기) 취소 — 당일 다시 진행
 window.cancelPendingComplete = async function() {
+  if (_previewBlock()) return;
   if (!_territory || !_territory.pendingCompleteDay) return;
   if (!confirm('완료를 취소하고 계속 진행하시겠습니까?')) return;
   try {
@@ -5589,6 +5604,7 @@ function _refreshCompleteBanner() {
 
 // 완료 신청 취소
 window.cancelComplete = async function() {
+  if (_previewBlock()) return;
   if (!confirm('완료 신청을 취소하시겠습니까?\n구역카드를 계속 사용할 수 있습니다.')) return;
   try {
     _ignoreNextSnap = true;
@@ -7170,6 +7186,7 @@ function _renderFieldPending() {
 }
 // 방문자에게 정식 배정 (한 번 탭)
 window.approveFieldCard = async function(id) {
+  if (_previewBlock()) return;
   if (!_isLeader) return;
   const t = (_ldAllTerritories || []).find(x => x.id === id); if (!t) return;
   const visitors = [...new Set(Object.values(t.visitMap || {}).map(v=>v&&v.by).filter(Boolean))];
@@ -7185,6 +7202,7 @@ window.approveFieldCard = async function(id) {
 };
 // 방문 기록 정리(테스트·오기록 제거) — 봉사감독자 전용
 window.clearFieldCard = async function(id) {
+  if (_previewBlock()) return;
   if (!_isSO && _permission !== '관리자') return;
   const t = (_ldAllTerritories || []).find(x => x.id === id); if (!t) return;
   if (!confirm(`${t.no}번 「${t.name}」의 방문 기록을 모두 지웁니다.\n(테스트·오기록 정리용 · 회차 이력은 유지 · 되돌릴 수 없음)`)) return;
