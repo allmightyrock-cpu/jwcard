@@ -7099,12 +7099,19 @@ window.goToCardFromLeader = async function() {
 // ── 비배정 진행 카드(현장/번호입력 흔적) — 인도자 승인·정리 ──
 // 대상: 배정자 없음 + 개인구역 아님 + visitMap에 방문기록 있음 (= 배정 없이 진행된 흔적)
 function _fieldPendingList() {
+  const _ms = ts => ts ? (ts.toMillis ? ts.toMillis() : (ts.toDate ? ts.toDate().getTime() : new Date(ts).getTime())) : 0;
   return (_ldAllTerritories || []).filter(t => {
     if (t.active === false) return false;
     if (t.personalAssignee) return false;
     if ((t.assignedPublishers || []).length > 0) return false;
     const vm = t.visitMap || {};
-    return Object.values(vm).some(v => v && v.code);
+    const visits = Object.values(vm).filter(v => v && v.code);
+    if (!visits.length) return false;
+    // 이미 처리(회수/미완료)된 카드 제외: 처리 시각이 마지막 방문 이후면 '관리자에서 처리됨'으로 보고 목록에서 뺀다.
+    const lastVisitMs = Math.max(0, ...visits.map(v => { const m = new Date(v.at || 0).getTime(); return isNaN(m) ? 0 : m; }));
+    const procMs = Math.max(_ms(t.forceRetrievedAt), _ms(t.incompleteAt));
+    if (procMs && procMs >= lastVisitMs) return false;
+    return true;
   });
 }
 // 방문기록 시각 범위 표시 — KST(Asia/Seoul) 고정 (정식 봉사시간대 vs 단순 테스트 구별용)
