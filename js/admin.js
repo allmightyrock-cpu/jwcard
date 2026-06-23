@@ -2606,7 +2606,7 @@ async function resetAllTerritories() {
         visitMap: {},
         sectionStatus: {},
         lastCompletedDate: serverTimestamp(),
-        lastAssignedDate: serverTimestamp(),
+        lastAssignedDate: deleteField(),  // 재활용(리셋) 시 배정일 비움
         cycleHistory: [...(t.cycleHistory || []), historyEntry]
       });
       t.cycle = 1;
@@ -2907,7 +2907,7 @@ window.completeTerritory = async function(id, name) {
       visitMap:           {},           // 다음 회차를 위해 초기화
       sectionStatus:      {},           // 다음 회차를 위해 초기화
       lastCompletedDate:  serverTimestamp(),
-      lastAssignedDate:   serverTimestamp(),
+      lastAssignedDate:   deleteField(),  // 재활용 시 배정일 비움 — 다음 배정 때 기록
       cycleHistory:       [...(t.cycleHistory || []), historyEntry]
     });
     t.cycle = newCycle;
@@ -3593,7 +3593,7 @@ async function _finalizeStalePending() {
         visitMap:           {},
         sectionStatus:      {},
         lastCompletedDate:  serverTimestamp(),
-        lastAssignedDate:   serverTimestamp(),
+        lastAssignedDate:   deleteField(),  // 재활용(자정 확정) 시 배정일 비움
         cycleHistory:       [...(t.cycleHistory || []), historyEntry],
         pendingCompleteDay: deleteField()
       });

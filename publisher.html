@@ -5524,7 +5524,7 @@ function _buildFinalizePayload(t, fallbackBy) {
     cycle: (t.cycle || 1) + 1, status: '미배정', completionRate: 0, completionStatus: null,
     completedBy: t.completedBy || fallbackBy || '',
     assignedPublishers: [], visitMap: {}, sectionStatus: {},
-    lastCompletedDate: serverTimestamp(), lastAssignedDate: serverTimestamp(),
+    lastCompletedDate: serverTimestamp(), lastAssignedDate: deleteField(),  // 재활용 시 배정일 비움 — 다음 배정 때 기록(직전 완료일이 배정일로 오염되는 것 방지)
     cycleHistory: [...(t.cycleHistory || []), historyEntry],
     pendingCompleteDay: deleteField()
   };
