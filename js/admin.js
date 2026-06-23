@@ -2829,10 +2829,28 @@ window.bulkForceReturn = async function() {
   alert(`✅ ${ids.length}개 구역을 회수했습니다.`);
 };
 
+// 마지막 '확정 완료'로부터 경과일 — 단기 재완료(중복) 경고용. 완료 이력 없으면 null.
+function _daysSinceLastDone(t) {
+  let ms = 0;
+  (t.cycleHistory || []).forEach(h => { if (h && h.completedAt) { const m = new Date(h.completedAt).getTime(); if (!isNaN(m)) ms = Math.max(ms, m); } });
+  if (t.lastCompletedDate) { try { const d = t.lastCompletedDate.toDate ? t.lastCompletedDate.toDate() : new Date(t.lastCompletedDate); if (!isNaN(d)) ms = Math.max(ms, d.getTime()); } catch(e) {} }
+  if (!ms) return null;
+  return Math.floor((Date.now() - ms) / 86400000);
+}
+
 // 완료 처리
 window.completeTerritory = async function(id, name) {
   const t = window._territories.find(t => t.id === id);
   if (!t) return;
+  // 단기 재완료 경고 — 구역은 보통 3~6개월 후 재방문. 최근 완료 카드 재완료는 오작동 가능.
+  // 전도인 완료 신청 확정(complete)·완료대기(pending)·미완료 이어서(incomplete)는 정상이므로 예외.
+  // 관리자는 정리 목적이 있을 수 있어 차단이 아니라 경고 후 진행 가능(오버라이드).
+  if (t.completionStatus !== 'complete' && t.completionStatus !== 'incomplete' && !t.pendingCompleteDay) {
+    const _ds = _daysSinceLastDone(t);
+    if (_ds !== null && _ds < 30) {
+      if (!confirm(`⚠️ "${name}" 구역은 ${_ds}일 전에 완료된 구역입니다.\n\n구역은 보통 3~6개월 후 재방문합니다.\n단기 재완료는 오작동(중복 완료)일 수 있습니다.\n\n그래도 완료 처리하시겠습니까? (관리자 권한)`)) return;
+    }
+  }
   // 완료 처리 확인
   if (t.status === '미배정' && _isInformalUse(t)) {
     // 배정 없이 비공식 사용 중인 구역 — 전도인명 확인 필요

@@ -5493,6 +5493,16 @@ window.submitIncomplete = async function() {
 function _kstToday() {
   return new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
 }
+// 구역 재완료 최소 간격(일). 정상 순환은 3~6개월 — 이보다 짧은 재완료는 오작동으로 보고 차단.
+const _MIN_RECOMPLETE_DAYS = 30;
+// 마지막 '확정 완료'로부터 경과일 — 단기 재완료(오작동) 차단용. 완료 이력 없으면 null.
+function _daysSinceLastDone(t) {
+  let ms = 0;
+  (t.cycleHistory || []).forEach(h => { if (h && h.completedAt) { const m = new Date(h.completedAt).getTime(); if (!isNaN(m)) ms = Math.max(ms, m); } });
+  if (t.lastCompletedDate) { try { const d = t.lastCompletedDate.toDate ? t.lastCompletedDate.toDate() : new Date(t.lastCompletedDate); if (!isNaN(d)) ms = Math.max(ms, d.getTime()); } catch(e) {} }
+  if (!ms) return null;
+  return Math.floor((Date.now() - ms) / 86400000);
+}
 // 완료 확정(자정 이후) 페이로드: 현재 visitMap → S-13 회차이력 + 카드 재활용
 function _buildFinalizePayload(t, fallbackBy) {
   const visitMap = t.visitMap || {};
@@ -5558,6 +5568,15 @@ window.submitComplete = async function() {
   if (_territory.pendingCompleteDay === _todayKST || (_lastHist && _lastHist.completedAt === _todayKST)) {
     alert('이 구역은 오늘 이미 완료 처리되었습니다.\n(같은 카드는 하루에 한 번만 완료됩니다)');
     return;
+  }
+  // 단기 재완료 차단 — 구역은 보통 3~6개월 후 재방문. 최근 완료된 카드를 또 완료하려는 건 오작동(잘못 누름).
+  // 단, 미완료 상태에서 이어서 완료하는 경우는 정상이므로 예외.
+  if (_territory.completionStatus !== 'incomplete') {
+    const _ds = _daysSinceLastDone(_territory);
+    if (_ds !== null && _ds < _MIN_RECOMPLETE_DAYS) {
+      alert(`이 구역은 ${_ds}일 전에 이미 완료된 구역입니다.\n\n구역은 보통 3~6개월 후에 다시 방문합니다.\n잘못 누르신 것 같습니다 — 완료하지 않습니다.\n\n정말 다시 완료해야 한다면 봉사감독자에게 문의해 주세요.`);
+      return;
+    }
   }
   const lines = [`총 ${units.length}세대 중 ${done}세대 방문 완료`];
   if (unvisited > 0) lines.push(`· 미방문 ${unvisited}세대 있음`);
