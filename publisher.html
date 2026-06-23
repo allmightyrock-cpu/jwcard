@@ -4621,6 +4621,8 @@ function renderUnitList(visitMap) {
   _sections.forEach((sec, si) => {
     const status = sectionStatus[sec.key]?.status || 'none';
     const hereAt = sectionStatus[sec.key]?.hereAt;
+    // hereAt(글로벌 인덱스)의 '표시 순서상 위치' — 회색처리·마커 판정은 인덱스 크기가 아니라 이 위치로 비교(내림차순 정렬 대응).
+    const herePos = (typeof hereAt === 'number') ? sec.indices.indexOf(hereAt) : -1;
     // 구분선은 세대 수에서 제외
     const realIndices = sec.indices.filter((_,li) => sec.units[li]?.type !== 'divider');
     const doneCnt = realIndices.filter(i => visitMap[i]?.code).length;
@@ -4668,13 +4670,13 @@ function renderUnitList(visitMap) {
       // 방문금지(영구) 세대는 visitMap과 무관하게 항상 거절(refuse) 마크로 표시
       const code = u.banned ? 'refuse' : (visit?.code || null);
       const isDimmed = status === 'done' || isBeforePartial || allVisited
-        || (status === 'partial' && hereAt !== undefined && globalIdx <= hereAt);
+        || (status === 'partial' && herePos >= 0 && localIdx <= herePos);
       const isEscort = code === 'escort' || u.escortRequired;
 
       // 층 구분선: 입구 순서 우선으로 표시 안 함 (엑셀 입력 순서 유지)
 
       // 여기까지 마커
-      if (status === 'partial' && hereAt !== undefined && globalIdx === hereAt + 1 && !shownHere) {
+      if (status === 'partial' && herePos >= 0 && localIdx === herePos + 1 && !shownHere) {
         shownHere = true;
         html += `<div class="here-marker bookmark-here-marker">
           <div class="here-line"></div>
