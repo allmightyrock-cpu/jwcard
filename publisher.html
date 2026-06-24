@@ -2263,6 +2263,8 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
               <button class="assign-confirm-btn" id="ld-today-confirm-btn" disabled onclick="confirmTodayAssign()">전도인을 선택하세요</button>
               <button class="assign-unassign-btn" id="ld-today-change-btn" style="display:none" onclick="changeTodayAssign()">🔄 배정 변경</button>
             </div>
+            <!-- 동반짝 편성 미리보기 (3명 이상=2팀+ 선택 시 노출, 이름 둘 탭으로 짝 조정) -->
+            <div id="ld-team-preview" style="display:none;margin:2px 0 8px;padding:9px 11px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:9px"></div>
             <div class="pub-chip-list" id="ld-today-pub-chips" style="max-height:48vh;overflow-y:auto"></div>
           </div>
         </div>
@@ -3440,7 +3442,7 @@ function _renderMtgStep2() {
   // 봉사감독자가 배당/할당한 구역 + 인도자가 구역배정 탭에서 추가한 구역만 표시
   const todaySet = new Set(_todaySchedIds || []);
   const list = _ldAllTerritories
-    .filter(t => todaySet.has(t.id) && t.active !== false)
+    .filter(t => todaySet.has(t.id) && t.active !== false && !_isOverLimit(t))
     .sort((a,b) => parseInt(a.no||0) - parseInt(b.no||0));
   if (!list.length) {
     wrap.innerHTML = '<div class="meeting-empty">오늘 배당된 구역이 없습니다<br><small style="color:#94A3B8;font-size:11px">구역배정 탭에서 구역을 먼저 추가하세요</small></div>';
@@ -4446,7 +4448,8 @@ function buildCard() {
   if (_teamEl) {
     const _teamPubs = _allPubs.filter(Boolean);
     if (_teamPubs.length >= 2) {
-      const _teams = _makeTeams(_teamPubs);
+      // 인도자가 명시 편성한 동반짝(assignedTeams)을 우선 사용, 없으면 순서대로 자동 묶기
+      const _teams = (t.assignedTeams && t.assignedTeams.length) ? t.assignedTeams.map(g=>(g||[]).filter(Boolean)).filter(g=>g.length) : _makeTeams(_teamPubs);
       const _me = (_pubName || '').trim();
       const _chip = (nm, mine) => {
         const dot = mine
@@ -5936,6 +5939,7 @@ window.openLeaderDrawer = async function(standalone) {
 
   // 전체 데이터 + 오늘 예정 구역 병렬 로드
   await Promise.all([_loadLdData(), loadTodaySchedule()]);
+  await _pruneInactiveScheduled();   // 사용대기(회차제한)·비활성 카드를 오늘 예정에서 자동 제외
   renderTodaySection();
   renderLdTerritoryList();
   _refreshUnallocatedCount();
@@ -6300,6 +6304,7 @@ window.confirmLdAssign = async function() {
     };
     await updateDoc(doc(db,'territories',_ldSelectedTerrId), {
       assignedPublishers: _ldSelectedPubs,
+      assignedTeams: _makeTeams(_ldSelectedPubs),
       status: '진행중',
       lastAssignedDate: serverTimestamp(),
       assignHistory: arrayUnion(historyEntry),
@@ -6338,6 +6343,7 @@ window.unassignLdTerr = async function() {
   try {
     await updateDoc(doc(db,'territories',_ldSelectedTerrId), {
       assignedPublishers: [],
+      assignedTeams: [],
       status: '미배정',
     });
     alert(`배정이 해제되었습니다.\n${t.no}번 ${t.name}`);
@@ -6359,6 +6365,25 @@ let _todaySelectedPubs = [];
 let _todayChipData = null;      // 출석자 우선 정렬 결과 캐시 (검색 시 재사용)
 let _todaySearchQuery = '';     // 전도인 검색어
 let _todaySearchTimer = null;   // 검색 debounce 타이머
+
+// 사용대기(회차제한 도달)·비활성 카드를 오늘 예정(terrIds)에서 자동 제거.
+// 로컬 _todaySchedIds 즉시 정리(표시) + 인도자/봉사감독자면 weeklySchedule에도 영구 반영(self-heal).
+// 평가 가능한(=목록에 로드된) 카드만 판단 → 미로딩 id는 보존(오삭제 방지).
+async function _pruneInactiveScheduled() {
+  if (_todayDayOfWeek < 0 || !_todaySchedIds.length) return;
+  const _bad = id => { const t = _ldAllTerritories.find(x => x.id === id); return t && (t.active === false || _isOverLimit(t)); };
+  const cleaned = _todaySchedIds.filter(id => !_bad(id));
+  if (cleaned.length === _todaySchedIds.length) return; // 제거 대상 없음
+  _todaySchedIds.filter(_bad).forEach(id => _allSchedIds.delete(id));
+  _todaySchedIds = cleaned;
+  if (_isLeader) {
+    try {
+      await updateDoc(doc(db, 'weeklySchedule', String(_todayDayOfWeek)), {
+        terrIds: cleaned, updatedAt: serverTimestamp()
+      });
+    } catch(e) { /* 쓰기 실패해도 로컬 정리는 유지 */ }
+  }
+}
 
 async function loadTodaySchedule() {
   try {
@@ -6413,10 +6438,11 @@ function renderTodaySection() {
   const sec = document.getElementById('ld-today-section');
   if (!sec) return;
 
-  // 오늘 예정 구역 중 _ldAllTerritories에 있는 것만
+  // 오늘 예정 구역 중 _ldAllTerritories에 있는 것만 (사용대기·비활성 카드는 제외 — 세션 중 변경 안전망)
   const todayTerrs = _todaySchedIds
     .map(id => _ldAllTerritories.find(t => t.id === id))
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter(t => t.active !== false && !_isOverLimit(t));
 
   // 섹션은 항상 노출 — 예정 0개일 때도 미배정 카드 추가 기능을 사용할 수 있도록
   sec.style.display = 'block';
@@ -6608,11 +6634,46 @@ function _updateTodayConfirmBtn() {
   if (!btn) return;
   const n = _todaySelectedPubs.length;
   btn.disabled = !n;
-  if (!n) { btn.textContent = '전도인을 선택하세요'; return; }
-  const label = n <= 2 ? _todaySelectedPubs.join(', ')
-    : `${_todaySelectedPubs[0]} 외 ${n - 1}명`;
-  btn.textContent = `✅ ${label} 배정 확정 (${n}명)`;
+  if (!n) { btn.textContent = '전도인을 선택하세요'; }
+  else {
+    const label = n <= 2 ? _todaySelectedPubs.join(', ')
+      : `${_todaySelectedPubs[0]} 외 ${n - 1}명`;
+    btn.textContent = `✅ ${label} 배정 확정 (${n}명)`;
+  }
+  _renderTeamPreview();
 }
+
+// ── 동반짝 편성 미리보기 + 짝 조정(이름 둘을 탭하면 자리 교환) ──
+let _teamSwapPick = null;
+function _renderTeamPreview() {
+  const box = document.getElementById('ld-team-preview');
+  if (!box) return;
+  if (_teamSwapPick && !_todaySelectedPubs.includes(_teamSwapPick)) _teamSwapPick = null;
+  if (_todaySelectedPubs.length < 3) { box.style.display = 'none'; _teamSwapPick = null; return; }
+  const teams = _makeTeams(_todaySelectedPubs);
+  const esc = s => String(s).replace(/'/g, "\\'");
+  let html = `<div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:7px">🤝 동반짝 편성 <span style="background:#0369A1;color:#fff;border-radius:8px;padding:1px 6px;margin-left:2px">${teams.length}팀</span><span style="font-weight:400;color:#64748B;margin-left:6px">이름 둘을 탭하면 짝이 바뀝니다</span></div>`;
+  html += teams.map((g, gi) => {
+    const chips = g.map(nm => {
+      const on = _teamSwapPick === nm;
+      return `<button onclick="_teamPick('${esc(nm)}')" style="border:1.5px solid ${on?'#0369A1':'#BAE6FD'};background:${on?'#0369A1':'#fff'};color:${on?'#fff':'#0F172A'};border-radius:20px;padding:5px 12px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer">${nm}</button>`;
+    }).join(' ');
+    return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span style="font-size:11px;font-weight:700;color:#0369A1;min-width:30px">팀 ${gi+1}</span><div style="display:flex;gap:6px;flex-wrap:wrap">${chips}</div></div>`;
+  }).join('');
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+window._teamPick = function(name) {
+  if (_teamSwapPick === null) { _teamSwapPick = name; }
+  else if (_teamSwapPick === name) { _teamSwapPick = null; }
+  else {
+    const i = _todaySelectedPubs.indexOf(_teamSwapPick);
+    const j = _todaySelectedPubs.indexOf(name);
+    if (i >= 0 && j >= 0) { const t = _todaySelectedPubs[i]; _todaySelectedPubs[i] = _todaySelectedPubs[j]; _todaySelectedPubs[j] = t; }
+    _teamSwapPick = null;
+  }
+  _renderTeamPreview();
+};
 
 window.toggleTodayPub = function(name) {
   if (_todaySelectedPubs.includes(name)) {
@@ -6630,7 +6691,15 @@ window.toggleTodayPub = function(name) {
 window.confirmTodayAssign = async function() {
   if (!_todaySelectedId || !_todaySelectedPubs.length) return;
   const t = _ldAllTerritories.find(t => t.id === _todaySelectedId);
-  if (!confirm(`"${t ? t.no + '번 ' + t.name : ''}" 구역을\n[${_todaySelectedPubs.join(', ')}]에게 배정하시겠습니까?`)) return;
+  const _terrLbl = t ? t.no + '번 ' + t.name : '';
+  let _confMsg;
+  if (_todaySelectedPubs.length >= 3) {
+    const _tm = _makeTeams(_todaySelectedPubs);
+    _confMsg = `"${_terrLbl}" 구역 동반짝 편성:\n\n` + _tm.map((g, i) => `  팀 ${i+1}:  ${g.join('  ·  ')}`).join('\n') + `\n\n이 편성으로 배정하시겠습니까?`;
+  } else {
+    _confMsg = `"${_terrLbl}" 구역을\n[${_todaySelectedPubs.join(', ')}]에게 배정하시겠습니까?`;
+  }
+  if (!confirm(_confMsg)) return;
   try {
     await _saveAssignment([{ terrId: _todaySelectedId, pubs: _todaySelectedPubs }]);
     alert(`배정 완료!\n${t ? t.no + '번 ' + t.name : ''} → ${_todaySelectedPubs.join(', ')}`);
@@ -6660,6 +6729,7 @@ async function _saveAssignment(pairs) {
     const histEntry = { assignedAt: today, assignedBy: (typeof _pubName !== 'undefined' ? _pubName : ''), publishers: [...pubs] };
     await updateDoc(doc(db, 'territories', terrId), {
       assignedPublishers: pubs,
+      assignedTeams: pubs.length ? _makeTeams(pubs) : [],   // 동반짝 명시 저장(순서=편성)
       status: pubs.length ? '진행중' : '미배정',
       lastAssignedDate: serverTimestamp(),
       assignHistory: arrayUnion(histEntry),
