@@ -114,7 +114,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 /* 헤더 영역 */
 .login-header{text-align:center;margin-bottom:12px}
 .login-pin-icon{margin-bottom:8px}
-.login-pin-icon svg{filter:drop-shadow(0 4px 12px rgba(27,58,107,0.3));width:38px;height:46px}
+.login-pin-icon svg{filter:drop-shadow(0 4px 12px rgba(27,58,107,0.3));width:44px;height:44px}
+.login-pin-icon img{width:46px;height:46px;display:inline-block;filter:drop-shadow(0 4px 12px rgba(27,58,107,0.3))}
 .login-header h1{font-size:18px;font-weight:700;color:#1B3A6B;letter-spacing:-0.3px;line-height:1.2}
 .login-header p{font-size:10px;color:#7B9EC8;margin-top:3px;font-weight:500;letter-spacing:0.5px}
 /* 입력 필드 */
@@ -125,14 +126,15 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   text-transform:uppercase;margin-bottom:5px;
 }
 .field-group input{
-  width:100%;padding:3px 0 6px;
-  border:none;border-bottom:1.5px solid #D4E4F0;
-  background:transparent;font-size:15px;color:#1E293B;
+  width:100%;padding:11px 12px;
+  border:none;border-radius:10px;
+  background:#fff;font-size:15px;color:#1E293B;
   font-family:inherit;outline:none;
-  transition:border-color 0.2s;box-sizing:border-box;text-align:center;font-weight:500;
+  transition:box-shadow 0.2s;box-sizing:border-box;text-align:center;font-weight:500;
+  box-shadow:0 1px 3px rgba(0,0,0,0.07);
 }
 .field-group input::placeholder{color:#4A6B8A;font-size:13px;opacity:1;}
-.field-group input:focus{border-bottom-color:#2B5299}
+.field-group input:focus{box-shadow:0 0 0 2px rgba(43,82,153,0.35)}
 /* 로그인(시작) 버튼 — 세련된 3D 네이비 */
 .login-btn{
   width:100%;padding:9px 14px;
@@ -162,6 +164,15 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
   padding:0;text-decoration:none;font-weight:500;
 }
 .login-manual-link:hover{color:#2B5299}
+/* 하단 푸터 링크 (구역카드 사용방법/재접속/앱 설치) — 좌측정렬 그룹 */
+.login-foot-link{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:13px;color:#203c6d;font-weight:400;
+  cursor:pointer;background:none;border:none;font-family:inherit;padding:2px 4px;
+}
+.login-foot-link img{height:12px;width:auto;display:block;flex-shrink:0}
+.login-foot-link:hover{color:#16284a}
+.login-foot-link:active{opacity:0.6}
 /* ════ 버튼 영역 (4-state machine) ════ */
 .btn-area{width:100%;margin-top:6px;}
 
@@ -208,20 +219,20 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .dot-1{animation-delay:0s;}.dot-2{animation-delay:0.2s;}.dot-3{animation-delay:0.4s;}
 @keyframes dot-bounce{0%,80%,100%{opacity:0.25;transform:translateY(0);}40%{opacity:1;transform:translateY(-3px);}}
 
-/* ① 체크인 — 3D 초록 */
+/* ① 체크인 — 3D 블루 */
 .main-btn.s-checkin{
-  background:linear-gradient(180deg,#12BA82 0%,#059669 55%,#047857 100%);
+  background:linear-gradient(180deg,#324f80 0%,#345285 55%,#2f4a78 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.28),inset 0 -1px 0 rgba(0,0,0,0.14),
-    0 2px 0 #065f46,0 4px 14px rgba(5,150,105,0.38),0 8px 24px rgba(0,0,0,0.12);
+    0 2px 0 #1e3f75,0 4px 14px rgba(43,82,153,0.38),0 8px 24px rgba(0,0,0,0.12);
   transition:all 0.18s cubic-bezier(0.34,1.2,0.64,1);
 }
 .main-btn.s-checkin::before{content:'';position:absolute;top:0;left:0;right:0;height:45%;
   background:linear-gradient(180deg,rgba(255,255,255,0.16) 0%,transparent 100%);
   border-radius:50px 50px 0 0;pointer-events:none;z-index:2;}
 .main-btn.s-checkin:hover{transform:translateY(-1px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.28),0 3px 0 #065f46,0 6px 20px rgba(5,150,105,0.50),0 10px 28px rgba(0,0,0,0.14);}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.28),0 3px 0 #1e3f75,0 6px 20px rgba(43,82,153,0.50),0 10px 28px rgba(0,0,0,0.14);}
 .main-btn.s-checkin:active{transform:translateY(2px)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.18),0 0 0 #065f46,0 2px 8px rgba(5,150,105,0.28);}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.18),0 0 0 #1e3f75,0 2px 8px rgba(43,82,153,0.28);}
 
 /* ② 배정 진행 중 — 앰버 + shimmer */
 .main-btn.s-pending{
@@ -289,9 +300,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .badge-leader:hover{background:rgba(239,246,255,0.22);border-color:rgba(147,197,253,0.5);}
 .badge-cart{background:rgba(237,233,254,0.14);border-color:rgba(196,181,253,0.3);color:rgba(220,210,255,0.9);}
 .badge-cart:hover{background:rgba(237,233,254,0.22);border-color:rgba(196,181,253,0.5);}
-.badge-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
-.badge-leader .badge-icon{background:rgba(59,130,246,0.2);}
-.badge-cart .badge-icon{background:rgba(139,92,246,0.2);}
+.badge-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;overflow:hidden;}
+.badge-icon img{width:100%;height:100%;display:block;}
+.badge-leader .badge-icon{background:none;}
+.badge-cart .badge-icon{background:none;}
 .badge-text{flex:1;}
 .badge-name{font-weight:700;font-size:11px;opacity:0.7;margin-bottom:1px;}
 .badge-label{font-size:12px;font-weight:600;}
@@ -311,7 +323,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .revisit-btn:hover{transform:translateY(-1px);background:rgba(251,191,36,0.22);border-color:rgba(251,191,36,0.55);}
 .revisit-btn:active{transform:scale(0.97);}
 .revisit-btn.hidden{display:none;}
-.revisit-btn-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(245,158,11,0.22);}
+.revisit-btn-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:none;overflow:hidden;}
+.revisit-btn-icon img{width:100%;height:100%;display:block;}
 .revisit-btn-text{flex:1;min-width:0;}
 .revisit-btn-name{font-weight:700;font-size:11px;opacity:0.7;margin-bottom:1px;color:rgba(254,243,199,0.95);}
 .revisit-btn-label{font-size:12px;font-weight:600;color:rgba(254,243,199,0.95);}
@@ -1194,15 +1207,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <!-- 헤더: 위치핀 아이콘 + 제목 -->
     <div class="login-header">
       <div class="login-pin-icon">
-        <svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-          <rect width="56" height="56" rx="14" fill="#2B5299"/>
-          <svg x="8" y="8" width="40" height="40" viewBox="0 0 24 24">
-            <path d="M16.243,9.757a6,6,0,0,0-8.486,8.486L12,22.392l4.243-4.149A6,6,0,0,0,16.243,9.757ZM12,16a2,2,0,1,1,2-2A2,2,0,0,1,12,16Zm12-5.868V24H14.647l3.067-3H21V10.132a.408.408,0,0,0-.158-.323l-8.59-6.722a.41.41,0,0,0-.505,0L3.157,9.81A.407.407,0,0,0,3,10.132V21H6.286l3.067,3H0V10.132A3.4,3.4,0,0,1,1.307,7.447L9.9.724a3.407,3.407,0,0,1,4.2,0l8.592,6.723A3.4,3.4,0,0,1,24,10.132Z" fill="white"/>
-          </svg>
-        </svg>
+        <img src="/img/ic-home.png" alt="전자 구역 카드" width="46" height="46">
       </div>
       <h1>전자 구역 카드</h1>
-      <p>— 우리 회중 —</p>
+      <p>우리 회중</p>
     </div>
 
 
@@ -1241,12 +1249,10 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
     <!-- 입력 필드 -->
     <div class="field-group">
-      <label>전도인 이름</label>
-      <input type="text" id="name-input" placeholder="전도인 이름을 입력하세요" autocomplete="name" oninput="onNameInput(this.value)">
+      <input type="text" id="name-input" placeholder="이름" autocomplete="name" oninput="onNameInput(this.value)">
     </div>
     <div class="field-group" id="no-input-group">
-      <label>구역 번호</label>
-      <input type="text" id="no-input" placeholder="구역번호를 입력하세요" inputmode="numeric" oninput="onNoInput(this.value)">
+      <input type="text" id="no-input" placeholder="구역 번호" inputmode="numeric" oninput="onNoInput(this.value)">
     </div>
 
     <div class="login-error" id="login-error"></div>
@@ -1284,28 +1290,24 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
     </div><!-- /btn-area -->
 
-    <!-- 하단 링크 영역 -->
-    <div style="text-align:center;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:16px">
-      <button class="login-manual-link" onclick="openHelpDrawer()">
-        구역 카드 사용방법 보기 ↗
-      </button>
-    </div>
-    <div style="text-align:center;margin-top:6px">
-      <button onclick="clearSavedName()" style="background:none;border:none;font-size:11px;color:rgba(60,100,160,0.75);cursor:pointer;font-family:inherit;font-weight:500">다른 사람으로 접속</button>
-    </div>
-
-    <!-- PWA 설치 버튼 -->
-    <div id="pwa-install-section" style="margin-top:16px;border-top:1px solid rgba(200,217,232,0.5);padding-top:14px">
-      <button onclick="showPwaBanner()" style="width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(240,253,244,0.85);border:1.5px solid rgba(134,239,172,0.6);border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;backdrop-filter:blur(8px)">
-        <span style="font-size:24px;flex-shrink:0">📲</span>
-        <span style="flex:1">
-          <span style="display:block;font-size:13px;font-weight:600;color:#166534">홈 화면에 앱으로 설치</span>
-          <span style="display:block;font-size:11px;color:#4ADE80;margin-top:1px">탭하면 설치 방법을 안내해 드려요</span>
-        </span>
-        <span style="font-size:16px;color:#86EFAC">›</span>
-      </button>
-      <div style="text-align:center;margin-top:6px">
-        <button onclick="dismissInstallSection()" style="background:none;border:none;font-size:11px;color:rgba(60,100,160,0.6);cursor:pointer;font-family:inherit">이미 설치했어요 · 그만 보기</button>
+    <!-- 하단 링크 영역 — 좌측 정렬 그룹(공통 좌측 모서리) + 그룹은 중앙 배치 -->
+    <div style="text-align:center;margin-top:16px">
+      <div style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:9px">
+        <button class="login-foot-link" onclick="openHelpDrawer()">
+          <img src="/img/ic-arrow.png" alt="">
+          구역카드 사용방법
+        </button>
+        <button class="login-foot-link" onclick="clearSavedName()">
+          <img src="/img/ic-arrow.png" alt="">
+          재접속
+        </button>
+        <!-- PWA 설치 (JS가 설치상태에 따라 표시/숨김) -->
+        <div id="pwa-install-section">
+          <button class="login-foot-link" onclick="showPwaBanner()">
+            <img src="/img/ic-arrow.png" alt="">
+            앱 설치
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1324,7 +1326,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <!-- 인도자 배정패널 뱃지 -->
     <button class="badge-btn badge-leader" id="badge-leader" style="display:none" onclick="enterLeaderOnly()">
       <div class="badge-icon">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="rgba(147,197,253,0.9)" xmlns="http://www.w3.org/2000/svg"><path d="M23.961,17.336h0c-.332-2.997-2.878-5.336-5.961-5.336-7.514,.194-8.097,10.912-.702,11.955,3.767,.499,7.135-2.85,6.663-6.62Zm-3.961,2.664c-.391,.391-1.023,.391-1.414,0l-1.293-1.293c-.188-.188-.293-.442-.293-.707v-2c.006-1.308,1.995-1.307,2,0v1.586l1,1c.391,.391,.391,1.023,0,1.414Zm-2-10c2.393,0,4.534,1.056,6,2.721v-3.721c0-2.757-2.243-5-5-5h-1.101c-.465-2.279-2.484-4-4.899-4h-2c-2.414,0-4.434,1.721-4.899,4h-1.101C2.243,4,0,6.243,0,9v3H12.721c1.409-1.241,3.254-2,5.279-2ZM11,2h2c1.302,0,2.402,.839,2.816,2h-7.631c.414-1.161,1.514-2,2.816-2Zm1.721,22H5c-2.757,0-5-2.243-5-5v-5H11.079c-1.939,3.109-1.132,7.725,1.642,10Z"/></svg>
+        <img src="/img/ic-leader.png" alt="배정 패널">
       </div>
       <div class="badge-text">
         <div class="badge-name" id="leader-name-label"></div>
@@ -1337,7 +1339,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <button class="badge-btn badge-cart" id="badge-cart" style="display:none;position:relative" onclick="toggleCartSection()">
       <span id="cart-badge-notice-dot" style="display:none;position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:#EF4444;box-shadow:0 0 0 2px rgba(255,255,255,0.85);animation:cartDotPulse 1.8s ease-in-out infinite"></span>
       <div class="badge-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(196,181,253,0.9)" xmlns="http://www.w3.org/2000/svg"><path d="M3.5,2.5c0-1.38,1.12-2.5,2.5-2.5s2.5,1.12,2.5,2.5-1.12,2.5-2.5,2.5-2.5-1.12-2.5-2.5Zm7.5,7.5v3c0,1.48-.81,2.77-2,3.46v6.54c0,.55-.45,1-1,1s-1-.45-1-1v-6h-2v6c0,.55-.45,1-1,1s-1-.45-1-1v-6.54c-1.19-.69-2-1.99-2-3.46v-3c0-2.21,1.79-4,4-4h2c2.21,0,4,1.79,4,4Zm-2,0c0-1.1-.9-2-2-2h-2c-1.1,0-2,.9-2,2v3c0,1.1,.9,2,2,2h2c1.1,0,2-.9,2-2v-3Zm9-5c1.38,0,2.5-1.12,2.5-2.5s-1.12-2.5-2.5-2.5-2.5,1.12-2.5,2.5,1.12,2.5,2.5,2.5Zm4.25,13.99c-.34,.39-.77,.67-1.25,.84v3.17c0,.55-.45,1-1,1s-1-.45-1-1v-3h-2v3c0,.55-.45,1-1,1s-1-.45-1-1v-3.17c-.48-.17-.91-.46-1.25-.84-.57-.65-.83-1.5-.73-2.36l.88-7.01c.26-2.06,2.02-3.62,4.1-3.62s3.84,1.56,4.1,3.62l.88,7.01c.11,.85-.16,1.71-.73,2.36Zm-1.26-2.11l-.88-7.01c-.13-1.07-1.04-1.87-2.12-1.87s-1.98,.8-2.12,1.87l-.88,7.01c-.04,.29,.05,.57,.24,.79,.19,.22,.46,.34,.75,.34h4c.29,0,.56-.12,.75-.34,.19-.22,.28-.5,.24-.79Z"/></svg>
+        <img src="/img/ic-cart.png" alt="전시대봉사">
       </div>
       <div class="badge-text">
         <div class="badge-name" id="cart-name-label"></div>
@@ -1351,7 +1353,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
   <!-- 내 재방문 버튼 (재방문 1건 이상일 때만 표시) -->
   <button class="revisit-btn hidden" id="revisit-btn" onclick="openRevisitPage()">
     <div class="revisit-btn-icon">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(253,224,71,0.95)" xmlns="http://www.w3.org/2000/svg"><path d="M18,0H8A5,5,0,0,0,3.424,3H2A1,1,0,0,0,2,5H3V7H2A1,1,0,0,0,2,9H3v2H2a1,1,0,0,0,0,2H3v2H2a1,1,0,0,0,0,2H3v2H2a1,1,0,0,0,0,2H3.424A5,5,0,0,0,8,24H18a5.006,5.006,0,0,0,5-5V5A5.006,5.006,0,0,0,18,0Zm3,19a3,3,0,0,1-3,3H8a3,3,0,0,1-3-3V5A3,3,0,0,1,8,2H18a3,3,0,0,1,3,3Zm-8-7a3,3,0,0,0,0-6A3,3,0,0,0,13,12Zm5,6a1,1,0,0,1-2,0,3,3,0,0,0-6,0,1,1,0,0,1-2,0C8.211,11.392,17.791,11.394,18,18Z"/></svg>
+      <img src="/img/ic-revisit.png" alt="나의 재방문">
     </div>
     <div class="revisit-btn-text">
       <div class="revisit-btn-name" id="revisit-name-label"></div>
@@ -3200,6 +3202,8 @@ window.onNameInput = async function(val) {
       const data      = snap.docs[0].data();
       const perm      = data.permission || '일반';
       const approved  = data.approved;
+      // 유효한 이름 확인 즉시 저장 — 전시대/인도자 모드 경유·재진입 시에도 이름이 유지되도록
+      if (approved) { try { localStorage.setItem('jwcard_name', name); } catch(e) {} }
       const isLeader  = ['인도자','봉사감독자','관리자','구역의종'].includes(perm);
       const hasCart   = data.cartRole === 'member' || data.cartRole === 'admin' || (!data.cartRole && data.cartApproved);
       let badgeVisible = false;
@@ -3739,10 +3743,21 @@ window.exitCard = function() {
 };
 
 window.clearSavedName = function() {
+  // 재접속 = 이전 사용자 신원·세션 완전 정리 후 새 로그인 가능 상태로
   localStorage.removeItem('jwcard_name');
-  document.getElementById('name-input').value = '';
-  document.getElementById('name-input').focus();
-  // 이름이 비워졌으므로 인도자 버튼도 즉시 숨김
+  localStorage.removeItem('jwcard_no');
+  localStorage.removeItem('jwcard_terr_id');
+  if (typeof _clearLeaderSession === 'function') _clearLeaderSession();
+  _pubName = ''; _permission = ''; _isLeader = false; _isSO = false; _pubDoc = null;
+  _territory = null; _territoryId = null;
+  if (typeof stopPubMeetingListener === 'function') stopPubMeetingListener();
+  const ni = document.getElementById('name-input'); if (ni) ni.value = '';
+  const no = document.getElementById('no-input');   if (no) no.value = '';
+  const drawer = document.getElementById('leader-drawer'); if (drawer) drawer.classList.remove('open');
+  const fab = document.getElementById('leader-fab');       if (fab) fab.style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  if (ni) ni.focus();
+  // 이름이 비워졌으므로 인도자/전시대 뱃지도 즉시 숨김
   if (window.checkLeaderBtn) window.checkLeaderBtn();
 };
 
