@@ -4448,8 +4448,8 @@ function buildCard() {
   if (_teamEl) {
     const _teamPubs = _allPubs.filter(Boolean);
     if (_teamPubs.length >= 2) {
-      // 인도자가 명시 편성한 동반짝(assignedTeams)을 우선 사용, 없으면 순서대로 자동 묶기
-      const _teams = (t.assignedTeams && t.assignedTeams.length) ? t.assignedTeams.map(g=>(g||[]).filter(Boolean)).filter(g=>g.length) : _makeTeams(_teamPubs);
+      // 동반짝 = assignedPublishers 순서대로 2명씩 묶기 (편성=순서, 인도자 편집 시 순서가 바뀜)
+      const _teams = _makeTeams(_teamPubs);
       const _me = (_pubName || '').trim();
       const _chip = (nm, mine) => {
         const dot = mine
@@ -6304,7 +6304,6 @@ window.confirmLdAssign = async function() {
     };
     await updateDoc(doc(db,'territories',_ldSelectedTerrId), {
       assignedPublishers: _ldSelectedPubs,
-      assignedTeams: _makeTeams(_ldSelectedPubs),
       status: '진행중',
       lastAssignedDate: serverTimestamp(),
       assignHistory: arrayUnion(historyEntry),
@@ -6343,7 +6342,6 @@ window.unassignLdTerr = async function() {
   try {
     await updateDoc(doc(db,'territories',_ldSelectedTerrId), {
       assignedPublishers: [],
-      assignedTeams: [],
       status: '미배정',
     });
     alert(`배정이 해제되었습니다.\n${t.no}번 ${t.name}`);
@@ -6729,7 +6727,6 @@ async function _saveAssignment(pairs) {
     const histEntry = { assignedAt: today, assignedBy: (typeof _pubName !== 'undefined' ? _pubName : ''), publishers: [...pubs] };
     await updateDoc(doc(db, 'territories', terrId), {
       assignedPublishers: pubs,
-      assignedTeams: pubs.length ? _makeTeams(pubs) : [],   // 동반짝 명시 저장(순서=편성)
       status: pubs.length ? '진행중' : '미배정',
       lastAssignedDate: serverTimestamp(),
       assignHistory: arrayUnion(histEntry),
