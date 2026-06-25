@@ -3499,6 +3499,7 @@ function _renderMtgStep3() {
         <span class="match-card-meta">${t.totalUnits||0}세대</span>
       </div>
       <div class="match-assigned" id="ma-${tid}">${chips || '<span style="font-size:12px;color:#CBD5E1">배정 없음</span>'}</div>
+      <div id="mt-${tid}">${_mtgTeamPreviewHtml(tid, assigned)}</div>
       <button class="match-add-btn" onclick="toggleMtgPicker('${tid}')">➕ 전도인 추가</button>
       <div class="match-picker" id="mp-${tid}">
         <div class="match-picker-title">추가할 전도인을 선택하세요</div>
@@ -3550,6 +3551,37 @@ window.mtgUnassignPub = function(tid, name) {
   _refreshAllMatchCards(tid); // 전체 갱신
 };
 
+// ── 카드별 동반짝 편성 미리보기 (3명 이상=2팀+) + 짝 조정(이름 둘 탭하면 자리 교환) ──
+let _mtgTeamPick = null; // {tid, name}
+function _mtgTeamPreviewHtml(tid, assigned) {
+  assigned = (assigned || []).filter(Boolean);
+  if (assigned.length < 3) return '';
+  const teams = _makeTeams(assigned);
+  const esc = s => String(s).replace(/'/g, "\\'");
+  let html = `<div style="margin-top:7px;padding:8px 10px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px">`;
+  html += `<div style="font-size:10.5px;font-weight:700;color:#0369A1;margin-bottom:6px">🤝 동반짝 <span style="background:#0369A1;color:#fff;border-radius:7px;padding:1px 6px">${teams.length}팀</span> <span style="font-weight:400;color:#64748B">· 이름 둘을 탭하면 짝이 바뀝니다</span></div>`;
+  html += teams.map((g, gi) => {
+    const chips = g.map(nm => {
+      const on = _mtgTeamPick && _mtgTeamPick.tid === tid && _mtgTeamPick.name === nm;
+      return `<button onclick="_mtgTeamPickFn('${tid}','${esc(nm)}')" style="border:1.5px solid ${on?'#0369A1':'#BAE6FD'};background:${on?'#0369A1':'#fff'};color:${on?'#fff':'#0F172A'};border-radius:16px;padding:4px 11px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">${nm}</button>`;
+    }).join(' ');
+    return `<div style="display:flex;align-items:center;gap:7px;margin:3px 0"><span style="font-size:10.5px;font-weight:700;color:#0369A1;min-width:26px">팀 ${gi+1}</span><div style="display:flex;gap:5px;flex-wrap:wrap">${chips}</div></div>`;
+  }).join('');
+  html += `</div>`;
+  return html;
+}
+window._mtgTeamPickFn = function(tid, name) {
+  const arr = _mtgAssignments[tid] || [];
+  if (!_mtgTeamPick || _mtgTeamPick.tid !== tid) { _mtgTeamPick = { tid, name }; }
+  else if (_mtgTeamPick.name === name) { _mtgTeamPick = null; }
+  else {
+    const i = arr.indexOf(_mtgTeamPick.name), j = arr.indexOf(name);
+    if (i >= 0 && j >= 0) { const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp; }
+    _mtgTeamPick = null;
+  }
+  _refreshAllMatchCards(tid);
+};
+
 // 변경된 카드(칩+피커) + 나머지 카드(열린 피커만) 전체 갱신
 function _refreshAllMatchCards(changedTid) {
   _mtgSelectedTerrs.forEach(tid => {
@@ -3565,6 +3597,9 @@ function _refreshAllMatchCards(changedTid) {
           : '<span style="font-size:12px;color:#CBD5E1">배정 없음</span>';
       }
     }
+    // 모든 카드: 동반짝 미리보기 갱신 (집은 상태 하이라이트 일관성)
+    const mtEl = document.getElementById('mt-' + tid);
+    if (mtEl) mtEl.innerHTML = _mtgTeamPreviewHtml(tid, _mtgAssignments[tid] || []);
     // 모든 카드: 피커가 열려 있으면 목록 즉시 재계산
     const mpEl = document.getElementById('mp-' + tid);
     if (mpEl && mpEl.classList.contains('open')) {
