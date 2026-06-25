@@ -4693,8 +4693,10 @@ function renderUnitList(visitMap) {
       const visit = visitMap[globalIdx];
       // 방문금지(영구) 세대는 visitMap과 무관하게 항상 거절(refuse) 마크로 표시
       const code = u.banned ? 'refuse' : (visit?.code || null);
-      const isDimmed = status === 'done' || isBeforePartial || allVisited
-        || (status === 'partial' && herePos >= 0 && localIdx <= herePos);
+      // 흐림(회색) 처리는 카드가 '미완료'로 저장된 뒤에만 — 진행 중 방문 체크 시엔 호수가 흐려지지 않도록
+      const showCarryoverDim = _territory.completionStatus === 'incomplete';
+      const isDimmed = showCarryoverDim && (status === 'done' || isBeforePartial || allVisited
+        || (status === 'partial' && herePos >= 0 && localIdx <= herePos));
       const isEscort = code === 'escort' || u.escortRequired;
 
       // 층 구분선: 입구 순서 우선으로 표시 안 함 (엑셀 입력 순서 유지)
