@@ -260,7 +260,7 @@
 
 <!-- 헤더 -->
 <div class="doc-header">
-  <div class="tag">제품 설계서 v1.0</div>
+  <div class="tag">제품 설계서 v1.1</div>
   <h1>📋 전자구역카드 시스템</h1>
   <p>
     종이 구역카드를 완전히 대체하는 웹 기반 구역관리 시스템<br>
@@ -457,7 +457,7 @@
       </tr>
       <tr>
         <td>🗺 구역관리</td>
-        <td>구역 목록·현황 대시보드, 배정·회수·완료 처리, 엑셀 업로드, 세대 편집, 연체 구역 관리</td>
+        <td>구역 목록·현황 대시보드, 배정·회수·완료 처리, 동반짝 편성, 엑셀 업로드, 세대 편집, 연체 구역 관리, 사용대기(회차제한) 표시</td>
         <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span> <span class="badge badge-blue">구역의 종</span></td>
       </tr>
       <tr>
@@ -477,7 +477,7 @@
       </tr>
       <tr>
         <td>💬 메모관리</td>
-        <td>전도인 제출 메모 승인·삭제, 관리자 직접 메모 작성</td>
+        <td>전도인 제출 메모 승인·삭제, 관리자 직접 메모 작성, 개인정보 키워드 경고 표시</td>
         <td><span class="badge badge-blue">관리자</span> <span class="badge badge-blue">봉사감독자</span></td>
       </tr>
       <tr>
@@ -487,7 +487,7 @@
       </tr>
       <tr>
         <td>⚙ 설정</td>
-        <td>회중명, 비밀번호, 구역 유형, 인증 방식, API 키 등</td>
+        <td>회중명, 비밀번호, 구역 유형, 인증 방식, API 키, 구역카드 사진 기능 등</td>
         <td><span class="badge badge-red">관리자 전용</span></td>
       </tr>
     </table>
@@ -505,10 +505,13 @@
   <div class="card-body">
     <table>
       <tr><th>화면</th><th>내용</th></tr>
-      <tr><td>로그인</td><td>이름 입력 → Firestore 조회 → 동의 화면 → PIN 인증 (첫 방문 시 PIN 설정)</td></tr>
-      <tr><td>이어하기</td><td>localStorage 저장 세션으로 빠른 재접속</td></tr>
-      <tr><td>구역카드</td><td>배정 구역 정보·지도·세대 목록·방문 코드 기록 (도로명·지번·건물명)</td></tr>
-      <tr><td>방문 기록</td><td>세대별 방문 코드 선택 (재방문·부재·거절 등) · 타임스탬프 자동 저장</td></tr>
+      <tr><td>로그인</td><td>아이콘·회중명을 표시하는 개편된 화면 · 이름 입력 → Firestore 조회 → 동의 화면 → PIN 인증 (첫 방문 시 PIN 설정)</td></tr>
+      <tr><td>이어하기 / 재접속</td><td>localStorage 저장 세션으로 빠른 재접속 · '재접속'으로 저장 정보 초기화</td></tr>
+      <tr><td>구역카드</td><td>배정 구역 정보·지도·세대 목록·방문 코드 기록 (도로명·지번·건물명) · <b>여기까지/여기부터</b> 진행 위치 표시</td></tr>
+      <tr><td>방문 기록</td><td>세대별 방문 코드 선택 (재방문·부재·거절 등) · 타임스탬프 자동 저장 · 거절 세대 영구 표시</td></tr>
+      <tr><td>완료/미완료 처리</td><td>구역 방문을 완료·미완료로 처리 · 미처리 구역은 상단 안내 배너로 이어서 처리 유도</td></tr>
+      <tr><td>재방문</td><td>관심을 보인 세대를 모아 다음 방문을 이어가도록 기록·관리</td></tr>
+      <tr><td>동반짝 표시</td><td>같은 구역에 함께 배정된 짝(동반자) 이름을 카드 상단에 표시</td></tr>
       <tr><td>주소 수정 요청</td><td>주소 오류 발견 시 카카오톡 또는 클립보드로 수정 요청 전송</td></tr>
       <tr><td>전시대봉사 패널</td><td>이번 주 전시대봉사 일정·팀 배정 확인, 팀 배정표 카카오톡 공유</td></tr>
       <tr><td>메모 제출</td><td>구역 관련 메모 작성 (관리자 승인 후 활성화)</td></tr>
@@ -690,10 +693,11 @@
       <tr><td><code>congregation</code></td><td>string</td><td>회중명 — 앱 전체 타이틀에 표시</td></tr>
       <tr><td><code>cycleLimit</code></td><td>number</td><td>구역 순환 회차 상한 (기본 6)</td></tr>
       <tr><td><code>visitMode</code></td><td>string</td><td>방문 방식 (호별 등)</td></tr>
-      <tr><td><code>territoryGroups</code></td><td>array&lt;string&gt;</td><td>구역 유형 그룹 목록 (기본 8개)</td></tr>
+      <tr><td><code>territoryGroups</code></td><td>array&lt;string&gt;</td><td>구역 유형 그룹 목록 (기본 8개: 주택·상가·격지·형제동반필수·아파트·인터폰·편지·개인)</td></tr>
       <tr><td><code>naverClientId</code></td><td>string</td><td>네이버 지도 API 키 (Firestore 저장 우선)</td></tr>
       <tr><td><code>mapRegion</code></td><td>string</td><td>주소 검색 프리픽스 (예: 경기도 ○○시)</td></tr>
       <tr><td><code>cartAdminPw</code></td><td>string</td><td>전시대봉사 인도자 암호</td></tr>
+      <tr><td><code>territoryImageAddon</code></td><td>boolean</td><td>구역카드 사진 첨부 기능 사용 여부</td></tr>
       <tr><td><code>passwordChangedAt</code></td><td>timestamp</td><td>비밀번호 마지막 변경일</td></tr>
     </table>
   </div>
@@ -761,7 +765,7 @@
         <tr><td><code>name</code></td><td>구역 이름</td></tr>
         <tr><td><code>category</code></td><td>구역 유형 (주택·상가 등)</td></tr>
         <tr><td><code>totalUnits</code></td><td>총 세대 수</td></tr>
-        <tr><td><code>units</code></td><td>세대 배열 (도로명·지번·건물명·호수 등)</td></tr>
+        <tr><td><code>units</code></td><td>세대 배열 (도로명·지번·건물명·호수 등) · 각 세대에 <code>banned</code>(거절 영구표시) 포함 가능</td></tr>
         <tr><td><code>status</code></td><td>미배정 / 진행중 / 완료</td></tr>
         <tr><td><code>assignedPublishers</code></td><td>배정 전도인 이름 배열</td></tr>
         <tr><td><code>lastAssignedDate</code></td><td>마지막 배정일</td></tr>
@@ -776,6 +780,10 @@
         <tr><td><code>memo</code></td><td>구역 메모</td></tr>
         <tr><td><code>territoryNotice</code></td><td>구역 공지</td></tr>
         <tr><td><code>active</code></td><td>활성 구역 여부</td></tr>
+        <tr><td><code>completionStatus</code></td><td>완료 / 미완료(incomplete) 처리 상태</td></tr>
+        <tr><td><code>pendingCompleteDay</code></td><td>완료 처리한 날(자정 확정 대기)</td></tr>
+        <tr><td><code>hereAt</code></td><td>방문 진행 위치(여기까지) 세대 인덱스</td></tr>
+        <tr><td><code>revisit</code></td><td>재방문(관심 세대) 기록</td></tr>
         <tr><td><code>personalAssignee</code></td><td>개인 구역 담당자</td></tr>
         <tr><td><code>createdAt</code></td><td>생성일</td></tr>
       </table>
@@ -798,7 +806,7 @@
   <div class="card-body">
     <table>
       <tr><th>컬렉션</th><th>문서 수</th><th>용도</th></tr>
-      <tr><td><code>presence/{이름}</code></td><td>접속자 수</td><td>실시간 접속 현황 (active, lastSeen, territoryNo) · 300분 비활동 시 자동 만료</td></tr>
+      <tr><td><code>presence/{이름}</code></td><td>접속자 수</td><td>실시간 접속 현황 (active, lastSeen, territoryId) · 같은 구역 접속자 표시 · 날짜가 바뀌면 자동으로 active:false 처리</td></tr>
       <tr><td><code>weeklySchedule/{0~6}</code></td><td>7</td><td>요일별(인덱스) 구역 배정 일정 관리</td></tr>
       <tr><td><code>adminNotices/{id}</code></td><td>다수</td><td>관리자 공지사항 (target: all 등)</td></tr>
       <tr><td><code>addressRequests/{id}</code></td><td>다수</td><td>전도인 주소 수정 요청</td></tr>
@@ -979,7 +987,7 @@
     <table>
       <tr><th style="width:18%">API</th><th style="width:20%">키 위치</th><th>사용 목적</th><th style="width:12%">필수 여부</th></tr>
       <tr>
-        <td><b>Firebase Firestore</b><br><small>v10 모듈 SDK</small></td>
+        <td><b>Firebase Firestore</b><br><small>v12 모듈 SDK</small></td>
         <td><code>config.js → firebase{}</code></td>
         <td>전체 데이터 저장소. 구역·전도인·일정·방문기록·메모·공지·presence 등 모든 데이터</td>
         <td><span class="badge badge-red">필수</span></td>
@@ -1065,7 +1073,7 @@
       </tr>
       <tr>
         <td>데이터베이스</td>
-        <td><span class="badge badge-orange">Firebase Firestore v10</span></td>
+        <td><span class="badge badge-orange">Firebase Firestore v12</span></td>
         <td>실시간 동기화(<code>onSnapshot</code>), 무료 한도 충분, 서버 불필요, 오프라인 지원</td>
       </tr>
       <tr>
@@ -1085,7 +1093,7 @@
       </tr>
       <tr>
         <td>엑셀 처리</td>
-        <td><span class="badge badge-purple">SheetJS (XLSX) + JSZip</span></td>
+        <td><span class="badge badge-purple">SheetJS (XLSX) + JSZip 3.10.1</span></td>
         <td>서버 없이 브라우저에서 .xlsx 파싱·생성</td>
       </tr>
       <tr>
@@ -1127,7 +1135,7 @@
         <li>명령어: <code>npx wrangler deploy</code></li>
         <li>회중 고유 정보 포함 (Firebase 키, API 키, 구역 데이터)</li>
         <li>URL: <code>your-worker.example.workers.dev</code></li>
-        <li>Service Worker 버전 관리 (<code>CACHE = 'jwcard-v1.xx'</code>)</li>
+        <li>Service Worker 버전 관리 (<code>CACHE = 'jwcard-v2.xx'</code> · <code>version.json</code>과 함께 갱신)</li>
         <li>버전 변경 시 전도인 앱에 업데이트 배너 자동 표시</li>
       </ul>
     </div>
