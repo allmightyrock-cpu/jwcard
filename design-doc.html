@@ -268,7 +268,7 @@
   </p>
   <div class="doc-meta">
     <span>최초 작성: 2026-05-23</span>
-    <span>현재 버전: v1.78</span>
+    <span>현재 버전: v2.91 (최종 갱신 2026-06-29)</span>
     <span>운영 환경: Cloudflare Workers / Pages</span>
     <span>DB: Firebase Firestore (asia-northeast3 서울)</span>
   </div>
@@ -884,6 +884,90 @@
   </div>
 </div>
 
+<div class="info-box" style="margin:18px 0 14px;background:var(--blue-light);border-color:var(--blue-mid)">
+  ✨ <b>v2.x 신규 기능</b> — 아래는 종이 카드 대체 이후 현장 사용 피드백을 반영해 추가된 기능들입니다.
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🤝</div>
+    <div>
+      <div class="card-title">동반짝·동행팀 자동 편성</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul style="padding-left:18px;font-size:12px;line-height:2.2">
+      <li>한 구역에 2명 이상 배정되면 둘씩 묶어 <b>동반짝</b>을 자동 구성 (인원이 홀수면 마지막 짝은 3명)</li>
+      <li>구역 배정 화면과 '오늘의 봉사' 배정에서 짝 구성과 순서를 직접 편집 (짝 바꾸기)</li>
+      <li>전도인 카드 상단에 같은 짝의 이름을 함께 표시 — 누구와 동행하는지 한눈에 확인</li>
+      <li>짝 정보는 별도 저장하지 않고 <code>assignedPublishers</code> 배열 순서에서 파생 (Firestore 중첩 배열 미사용)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">📍</div>
+    <div>
+      <div class="card-title">방문 진행 위치 표시 — 여기까지 / 여기부터</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul style="padding-left:18px;font-size:12px;line-height:2.2">
+      <li>방문을 끝낸 지점에 <b>여기까지</b>, 다음에 시작할 지점에 <b>여기부터</b> 표시 — 이어서 봉사하기 편리</li>
+      <li>주소 목록은 동·라인 단위로 묶고 <b>최고층 → 1층 내림차순</b> 정렬 (엘리베이터 하향 동선)</li>
+      <li>미완료 구역은 완료한 호수만 회색 처리 — 진행 상황을 시각적으로 구분</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🔔</div>
+    <div>
+      <div class="card-title">완료 / 미완료 이어서 처리 안내</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul style="padding-left:18px;font-size:12px;line-height:2.2">
+      <li>방문을 했지만 완료·미완료 처리를 하지 않은 구역이 있으면 전도인 화면 상단에 안내 배너 표시</li>
+      <li>배너를 누르면 해당 구역카드로 바로 이동해 처리 가능</li>
+      <li>이미 완료를 누른 구역(자정 확정 대기)은 안내에서 자동 제외 — 중복 안내 방지</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🔁</div>
+    <div>
+      <div class="card-title">재방문 관리 · 방문금지(거절) 세대</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul style="padding-left:18px;font-size:12px;line-height:2.2">
+      <li><b>재방문</b>: 관심을 보인 세대를 따로 모아 다음 방문을 이어갈 수 있도록 기록·관리</li>
+      <li><b>방문금지(거절)</b>: 거절 의사를 밝힌 세대를 영구 표시(<code>banned</code>)하여 다음 회차에도 자동 유지 — 불필요한 재방문 방지</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">⚙️</div>
+    <div>
+      <div class="card-title">사용대기 자동 제외 · 구역카드 사진 · 로그인 화면 개편</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul style="padding-left:18px;font-size:12px;line-height:2.2">
+      <li><b>사용대기 자동 제외</b>: 회차 제한에 도달했거나 비활성인 구역카드는 배정 목록에서 자동으로 빠져 오배정 방지</li>
+      <li><b>구역카드 사진</b>: 관리자가 설정하면 구역카드에 안내 이미지(약도·주의사항 등)를 첨부해 전도인에게 표시 (<code>js/territory-image.js</code>)</li>
+      <li><b>로그인 화면 개편</b>: 아이콘·흰색 입력창·회중명 동적 표시 등 디자인 개선 (회중명은 설정에서 변경)</li>
+    </ul>
+  </div>
+</div>
+
 
 <!-- ════════════════════════════════════ -->
 <!-- 8. 외부 API 연동 -->
@@ -1145,7 +1229,7 @@ service cloud.firestore {
 <!-- 하단 -->
 <div class="footer">
   <p style="font-weight:700;color:var(--navy);margin-bottom:4px">전자구역카드 시스템 제품 설계서</p>
-  <p>이 문서는 실제 코드베이스(v1.78 기준)를 분석하여 역방향으로 작성된 설계 문서입니다.</p>
+  <p>이 문서는 실제 코드베이스(v2.91 기준)를 분석하여 역방향으로 작성된 설계 문서입니다.</p>
   <p style="margin-top:8px;color:#CBD5E1;font-size:11px">
     이 소프트웨어는 한국 여호와의 증인 회중 전용입니다.
   </p>
