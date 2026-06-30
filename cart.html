@@ -131,7 +131,7 @@ select:focus,input:focus{border-color:var(--navy);}
   filter:blur(4px) brightness(0.5);transform:scale(1.05);}
 .login-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;}
 .login-emblem{margin-bottom:16px;}
-.login-title{font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700;
+.login-title{font-family:'Noto Sans KR',sans-serif;font-size:24px;font-weight:700;
   color:#fff;margin-bottom:4px;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,0.4);}
 .login-sub{font-size:13px;color:rgba(255,255,255,0.85);margin-bottom:32px;text-align:center;}
 .login-card{background:#fff;border:1.5px solid var(--border);border-radius:18px;
@@ -169,6 +169,8 @@ select:focus,input:focus{border-color:var(--navy);}
 .cw-sel-option.selected{background:#eef4fb;font-weight:600;}
 .cw-sel-option.placeholder-opt{color:var(--text-muted);}
 .cw-shield{flex-shrink:0;display:flex;align-items:center;}
+.cw-licon{width:15px;height:20px;flex-shrink:0;background:url('/img/leader-blue.png') center/contain no-repeat;}
+.cw-sel-option.selected .cw-licon{background-image:url('/img/leader-pastel.png');}
 
 /* DETAIL BACK */
 .detail-back{display:flex;align-items:center;gap:6px;color:var(--text-dim);
@@ -514,7 +516,7 @@ function loginHTML(){
   // 인도자만 표시
   const opts = CONDUCTORS.map(m =>
     `<div class="cw-sel-option conductor-opt" data-value="${m}" onclick="selectCwName(this)">
-      ${SHIELD_SVG}<span>${m}</span>
+      <span class="cw-licon"></span><span>${m}</span>
     </div>`
   ).join('') || `<div style="padding:10px 14px;font-size:12px;color:#94a3b8">등록된 인도자가 없습니다</div>`;
 
@@ -524,8 +526,8 @@ function loginHTML(){
       <div class="login-emblem">
         <img src="${IMG_LOGO}" style="width:72px;height:72px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3)">
       </div>
-      <div class="login-title">Cart Witnessing</div>
-      <div class="login-sub">${_congregationName ? _congregationName + ' ' : ''}전시대 봉사 일정</div>
+      <div class="login-title">전시대 봉사</div>
+      <div class="login-sub">${_congregationName || ''}</div>
       <div class="login-card">
         <div class="login-label">인도자 이름 선택</div>
         <input type="hidden" id="lname" value="">
@@ -549,17 +551,20 @@ function loginHTML(){
 
         <button class="btn btn-navy btn-full" id="lbtn"
                 style="padding:13px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px">
-          ${SHIELD_SVG.replace(/fill="#1a4f8a"/g,'fill="#ffffff"').replace(/stroke="#1a4f8a"/g,'stroke="#ffffff"')}
-          인도자로 입장
+          <img class="cw-shield" src="/img/leader-white.png" style="height:22px;width:auto" alt="">
+          인도자
         </button>
 
-        <div style="margin-top:12px;padding:11px 14px;background:#f4f8fc;border-radius:10px;border:1px solid #ccdaeb;font-size:12px;line-height:1.8;color:#4a6480;text-align:left">
-          이름 선택 후 바로 입장됩니다.<br>
-          <span style="color:#94a3b8;font-size:11px">전시대 봉사 신청·배정 확인은 구역카드 앱(publisher)을 이용하세요.</span>
+        <a href="/publisher.html" class="btn btn-full"
+           style="background:#5082B9;color:#fff;padding:13px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;text-decoration:none">
+          구역 카드
+        </a>
+
+        <div style="margin-top:6px;text-align:center">
+          <span style="color:#94a3b8;font-size:11px">구역 카드 앱에서 전시대 봉사 신청·배정을 확인하세요</span>
         </div>
 
-        <a href="/publisher.html" style="display:block;text-align:center;margin-top:14px;font-size:12px;color:var(--text-muted);text-decoration:none">← 구역카드로 돌아가기</a>
-        <a href="/credits.html" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:6px;font-size:10px;color:var(--text-muted);opacity:.6;text-decoration:none">아이콘 출처</a>
+        <a href="/credits.html" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:12px;font-size:10px;color:var(--text-muted);opacity:.6;text-decoration:none">아이콘 출처</a>
       </div>
     </div>
   </div>`;
@@ -584,7 +589,7 @@ function headerHTML(){
     <div class="header-title">
       <img src="${IMG_LOGO}" style="width:36px;height:36px;border-radius:6px;flex-shrink:0">
       <div class="header-title-text">
-        <strong>Cart Witnessing</strong>
+        <strong>전시대 봉사</strong>
         <span>${_congregationName ? _congregationName + ' ' : ''}${badge}</span>
       </div>
     </div>
