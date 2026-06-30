@@ -1018,16 +1018,15 @@ body.nav-mode-active #nav-footer-bar{display:flex}
 
 /* 길 안내 앱 버튼 */
 .nav-app-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-.nav-app-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 6px;border-radius:14px;text-decoration:none;font-family:inherit;font-size:12px;font-weight:700;text-align:center;cursor:pointer;transition:transform .1s;-webkit-tap-highlight-color:transparent}
-.nav-app-btn:active{transform:scale(.95)}
-.nav-tmap {background:#E8F0FF;color:#1D4ED8}
-.nav-naver{background:#E6F7EE;color:#15803D}
-.nav-kakao{background:#FEF9C3;color:#92400E}
-.nav-app-icon{font-size:22px;margin-bottom:1px}
-.nav-app-hint{font-size:10px;font-weight:400;opacity:.7}
+.nav-app-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;border-radius:12px;text-decoration:none;font-family:inherit;font-size:12px;font-weight:700;text-align:center;cursor:pointer;transition:transform .1s,border-color .1s;-webkit-tap-highlight-color:transparent;background:#fff;border:1px solid #f1f1f1;color:#334155}
+.nav-app-btn:active{transform:scale(.95);border-color:#e2e2e2}
+.nav-tmap,.nav-naver,.nav-kakao{background:#fff;color:#334155}
+.nav-app-icon{display:flex;align-items:center;justify-content:center;height:48px;margin-bottom:1px}
+.nav-app-icon img{height:48px;width:auto;display:block}
+.nav-app-hint{font-size:10px;font-weight:400;color:#94A3B8}
 
 /* 방문 완료 / 건너뛰기 */
-.nav-done-btn{width:100%;padding:14px;background:linear-gradient(135deg,#16A34A,#15803D);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(22,163,74,.25)}
+.nav-done-btn{width:100%;padding:15px;background:linear-gradient(to right,#0055ff,#33cc99);color:#fff;border:none;border-radius:15px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,.1)}
 .nav-skip-btn{width:100%;padding:9px;background:transparent;color:#94A3B8;border:none;font-size:12px;font-family:inherit;cursor:pointer;margin-top:4px;text-decoration:underline}
 
 /* 완료 상태 카드 */
@@ -1073,8 +1072,8 @@ body.nav-mode-active #nav-footer-bar{display:flex}
 .nav-sheet-addr-sub{font-size:12px;color:#64748B}
 /* 세그먼트 컨트롤 — 카드 내 토글 */
 .nav-mode-toggle{display:flex;background:#F1F5F9;border-radius:14px;padding:4px;gap:3px;margin-bottom:14px}
-.nav-mode-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;border-radius:10px;border:none;background:transparent;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;color:#94A3B8;transition:all .2s;-webkit-tap-highlight-color:transparent}
-.nav-mode-btn.nav-mode-sel{background:#fff;color:#1E293B;box-shadow:0 1px 6px rgba(0,0,0,.10)}
+.nav-mode-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;border-radius:10px;border:none;background:transparent;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;color:#ababab;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.nav-mode-btn.nav-mode-sel{background:#fff;color:#000;box-shadow:0 1px 6px rgba(0,0,0,.10)}
 /* 세그먼트 컨트롤 — 바텀시트 토글 */
 .nav-sheet-mode{display:flex;background:#F1F5F9;border-radius:14px;padding:4px;gap:3px;margin-bottom:16px}
 .nav-sheet-mode-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 12px;border-radius:10px;border:none;background:transparent;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;color:#94A3B8;transition:all .2s;-webkit-tap-highlight-color:transparent}
@@ -1663,15 +1662,15 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     </div>
     <div class="nav-sheet-apps">
       <button class="nav-app-btn nav-tmap"  onclick="navOpenSheetApp('tmap')">
-        <span class="nav-app-icon">🗺️</span>T맵
+        <span class="nav-app-icon"><img src="/img/map-tmap.png" alt=""></span>T맵
         <span class="nav-app-hint" id="nav-sheet-hint-tmap">경로 안내</span>
       </button>
       <button class="nav-app-btn nav-naver" onclick="navOpenSheetApp('naver')">
-        <span class="nav-app-icon">📍</span>네이버지도
+        <span class="nav-app-icon"><img src="/img/map-naver.png" alt=""></span>네이버지도
         <span class="nav-app-hint" id="nav-sheet-hint-naver">경로 안내</span>
       </button>
       <button class="nav-app-btn nav-kakao" onclick="navOpenSheetApp('kakao')">
-        <span class="nav-app-icon">🟡</span>카카오맵
+        <span class="nav-app-icon"><img src="/img/map-kakao.png" alt=""></span>카카오맵
         <span class="nav-app-hint" id="nav-sheet-hint-kakao">경로 안내</span>
       </button>
     </div>
@@ -2055,7 +2054,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <div class="help-icon" style="background:#EFF6FF">✅</div>
           <div class="help-text">
             <strong>방문 완료 기록</strong>
-            <span>상단 카드의 <strong>[✅ 방문 완료]</strong> 버튼을 탭해 결과를 선택합니다. 완료 후 자동으로 다음 미방문 세대로 이동합니다.</span>
+            <span>상단 카드의 <strong>[방문 완료]</strong> 버튼을 탭해 결과를 선택합니다. 완료 후 자동으로 다음 미방문 세대로 이동합니다.</span>
           </div>
         </div>
         <div class="help-item">
@@ -2078,7 +2077,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <div>② 방문할 주소 탭 → 앱 선택 팝업</div>
           <div>③ 도보/자동차 선택 후 지도 앱(T맵·네이버·카카오) 탭</div>
           <div>④ 지도 앱에서 경로 안내 받으며 이동</div>
-          <div>⑤ 방문 후 앱으로 돌아와 <strong>[✅ 방문 완료]</strong> 탭</div>
+          <div>⑤ 방문 후 앱으로 돌아와 <strong>[방문 완료]</strong> 탭</div>
           <div>⑥ 하단 <strong>[← 구역카드로]</strong>로 언제든 복귀 가능</div>
         </div>
       </div>
@@ -2202,7 +2201,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
 
 <!-- ── 인도자/봉사감독자 플로팅 버튼 (카드 화면에서 패널 재진입용) ── -->
 <div id="leader-fab">
-  <button class="fab-btn" onclick="openLeaderDrawer()" title="구역 배정 및 관리"><svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(186,224,255,0.95)" xmlns="http://www.w3.org/2000/svg"><path d="M23.961,17.336h0c-.332-2.997-2.878-5.336-5.961-5.336-7.514,.194-8.097,10.912-.702,11.955,3.767,.499,7.135-2.85,6.663-6.62Zm-3.961,2.664c-.391,.391-1.023,.391-1.414,0l-1.293-1.293c-.188-.188-.293-.442-.293-.707v-2c.006-1.308,1.995-1.307,2,0v1.586l1,1c.391,.391,.391,1.023,0,1.414Zm-2-10c2.393,0,4.534,1.056,6,2.721v-3.721c0-2.757-2.243-5-5-5h-1.101c-.465-2.279-2.484-4-4.899-4h-2c-2.414,0-4.434,1.721-4.899,4h-1.101C2.243,4,0,6.243,0,9v3H12.721c1.409-1.241,3.254-2,5.279-2ZM11,2h2c1.302,0,2.402,.839,2.816,2h-7.631c.414-1.161,1.514-2,2.816-2Zm1.721,22H5c-2.757,0-5-2.243-5-5v-5H11.079c-1.939,3.109-1.132,7.725,1.642,10Z"/></svg></button>
+  <button class="fab-btn" onclick="openLeaderDrawer()" title="구역 배정 및 관리" style="background:transparent;padding:0;overflow:hidden"><img src="/img/fab-leader.png" alt="" style="width:52px;height:52px;display:block"></button>
 </div>
 
 <!-- ── 인도자/봉사감독자 전체화면 패널 ── -->
@@ -7679,7 +7678,7 @@ function _navRestoreState() {
       var footerEl = document.getElementById('nav-footer-bar');
       if (cardEl)   cardEl.classList.add('nav-mode');
       if (footerEl) footerEl.style.display = 'flex';
-      if (btnEl)    { btnEl.textContent = '📋 구역카드'; btnEl.style.background = 'rgba(56,189,248,0.25)'; }
+      if (btnEl)    { btnEl.innerHTML = '<img src="/img/ic-jwcard.png" style="height:19px;width:auto;margin-right:1px" alt="">구역카드'; btnEl.style.background = 'rgba(56,189,248,0.25)'; }
       renderNavPanel();
       _updateNavFooter();
     }
@@ -7712,7 +7711,7 @@ window.toggleNavMode = function() {
   if (_navMode) {
     cardEl.classList.add('nav-mode');
     if (footerEl) footerEl.style.display = 'flex';
-    btnEl.textContent = '📋 구역카드';
+    btnEl.innerHTML = '<img src="/img/ic-jwcard.png" style="height:19px;width:auto;margin-right:1px" alt="">구역카드';
     btnEl.style.background = 'rgba(56,189,248,0.25)';
     if (_navIdx < 0) _navIdx = _navFindNext(0);
     renderNavPanel();
@@ -7797,13 +7796,14 @@ function _renderNavNextCard() {
   if (isEscort)   chips += '<span class="nav-chip nav-chip-warn">⚠ 형제동반필수</span>';
 
   var coordBadge = hasCached
-    ? '<span style="font-size:10px;color:#38BDF8;margin-left:6px">📡 좌표 준비됨</span>'
-    : '<span style="font-size:10px;color:rgba(255,255,255,.4);margin-left:6px">📡 좌표 로딩 중…</span>';
+    ? '<span style="font-size:10px;color:#38BDF8;margin-left:6px;display:inline-flex;align-items:center;gap:3px"><img src="/img/ic-loc.png" style="height:13px;width:auto" alt="">좌표 준비됨</span>'
+    : '<span style="font-size:10px;color:rgba(255,255,255,.4);margin-left:6px;display:inline-flex;align-items:center;gap:3px"><img src="/img/ic-loc.png" style="height:13px;width:auto;opacity:.5" alt="">좌표 로딩 중…</span>';
 
   el.innerHTML =
     '<div class="nav-card-header">'
     + '<div class="nav-dot"></div>'
     + '<span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:1px">다음 방문</span>'
+    + '<img src="/img/ic-nextvisit.png" style="height:15px;width:auto;margin-left:5px" alt="">'
     + coordBadge
     + '<span style="margin-left:auto;font-size:11px;color:rgba(255,255,255,.5)">' + done + '/' + total + ' 완료</span>'
     + '</div>'
@@ -7818,27 +7818,25 @@ function _renderNavNextCard() {
     // 도보 / 자동차 토글 (세그먼트 컨트롤)
     + '<div class="nav-mode-toggle">'
     + '<button id="nav-mode-walk" class="nav-mode-btn' + (_navWalk ? ' nav-mode-sel' : '') + '" onclick="navSetMode(true)">'
-    + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="M9 22l1-7 2 2 1.5-5.5"/><path d="M8 9h8M10 12l-3 4M14 12l3 4"/></svg>'
-    + '도보</button>'
+    + '도보 안내</button>'
     + '<button id="nav-mode-car" class="nav-mode-btn' + (!_navWalk ? ' nav-mode-sel' : '') + '" onclick="navSetMode(false)">'
-    + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12L6.5 7h11L20 12"/><rect x="2" y="12" width="20" height="5" rx="2"/><circle cx="7" cy="17" r="1.8"/><circle cx="17" cy="17" r="1.8"/><path d="M2 14h1M21 14h1"/></svg>'
-    + '자동차</button>'
+    + '자동차 안내</button>'
     + '</div>'
 
     // 길 안내 앱 버튼 (좌표 → 루트, 없으면 검색 폴백)
     + '<div class="nav-app-row">'
     + '<button id="nav-app-tmap"  class="nav-app-btn nav-tmap"  onclick="navOpenApp(\'tmap\')">'
-    + '<span class="nav-app-icon">🗺️</span>T맵'
+    + '<span class="nav-app-icon"><img src="/img/map-tmap.png" alt=""></span>T맵'
     + '<span class="nav-app-hint">' + (_navWalk?'도보':'자동차') + ' 안내</span></button>'
     + '<button id="nav-app-naver" class="nav-app-btn nav-naver" onclick="navOpenApp(\'naver\')">'
-    + '<span class="nav-app-icon">📍</span>네이버지도'
+    + '<span class="nav-app-icon"><img src="/img/map-naver.png" alt=""></span>네이버지도'
     + '<span class="nav-app-hint">' + (_navWalk?'도보':'자동차') + ' 안내</span></button>'
     + '<button id="nav-app-kakao" class="nav-app-btn nav-kakao" onclick="navOpenApp(\'kakao\')">'
-    + '<span class="nav-app-icon">🟡</span>카카오맵'
+    + '<span class="nav-app-icon"><img src="/img/map-kakao.png" alt=""></span>카카오맵'
     + '<span class="nav-app-hint">' + (_navWalk?'도보':'자동차') + ' 안내</span></button>'
     + '</div>'
 
-    + '<button class="nav-done-btn" onclick="navVisit()">✅ 방문 완료</button>'
+    + '<button class="nav-done-btn" onclick="navVisit()">방문 완료</button>'
     + '<button class="nav-skip-btn" onclick="navSkip()">이 집 건너뛰기</button>'
     + '</div>';
 
@@ -7847,7 +7845,7 @@ function _renderNavNextCard() {
     _navGetCoords(secKey, addrFull.trim()).then(function(coords) {
       if (!_navMode) return;
       var badge = document.querySelector('.nav-card-header span[style*="color:rgba(255,255,255,.4)"]');
-      if (badge) badge.outerHTML = '<span style="font-size:10px;color:#38BDF8;margin-left:6px">📡 좌표 준비됨</span>';
+      if (badge) badge.outerHTML = '<span style="font-size:10px;color:#38BDF8;margin-left:6px;display:inline-flex;align-items:center;gap:3px"><img src="/img/ic-loc.png" style="height:13px;width:auto" alt="">좌표 준비됨</span>';
     });
   }
 }
@@ -7903,7 +7901,7 @@ function renderNavList() {
       + (unitLbl  ? '<div class="nav-item-unit">' + _escHtml(unitLbl) + '</div>' : '')
       + '</div>'
       + '<div class="' + stCls + '">' + stLbl + '</div>'
-      + '<button class="nav-item-go" onclick="event.stopPropagation();navOpenSheet(' + i + ')" title="길 안내">🗺️</button>'
+      + '<button class="nav-item-go" onclick="event.stopPropagation();navOpenSheet(' + i + ')" title="길 안내"><img src="/img/ic-loc.png" style="height:22px;width:auto;display:block" alt=""></button>'
       + '</div>';
   });
 
