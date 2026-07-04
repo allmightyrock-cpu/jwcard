@@ -463,7 +463,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .agree-btn:disabled{background:#CBD5E1;cursor:not-allowed}
 
 /* ── 구역카드 ── */
-#card-screen{display:none;min-height:100vh;background:#F1F5F9;padding-bottom:80px}
+#card-screen{display:none;min-height:100vh;background:#F1F5F9;padding-bottom:0}
+#card-screen.nav-mode{padding-bottom:80px}
 .card-header{
   position:relative;
   padding:16px;
@@ -502,7 +503,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .card-num{font-size:26px;font-weight:500;color:#fff;line-height:1;text-shadow:0 1px 4px rgba(0,0,0,0.4)}
 .card-type{background:#2563EB;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px}
 .card-cycle{background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:3px 10px;border-radius:10px;margin-left:auto}
-.card-name{font-size:18px;font-weight:500;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.4)}
+.card-name{font-size:15px;font-weight:600;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.4);line-height:1.3}
 .card-sub{font-size:12px;color:#BFD9FF;margin-top:3px}
 .card-last{font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 .card-sub-date{color:#93C5FD;font-weight:500}
@@ -584,7 +585,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .unit-more{padding:6px 10px;color:#CBD5E1;font-size:14px;letter-spacing:2px}
 
 /* 하단 버튼 */
-.bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid #E2E8F0;padding:10px 16px 14px;display:flex;gap:8px;z-index:50}
+.bottom-bar{background:#fff;border-top:1px solid #E2E8F0;padding:16px 14px calc(20px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;margin-top:8px}
 .bot-btn{flex:1;padding:11px 8px;border-radius:12px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid transparent;text-align:center;font-family:inherit;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.2}
 .bot-btn:disabled{opacity:0.3;cursor:not-allowed}
 .bot-incomplete{background:#FFF7ED;border-color:#FED7AA;color:#92400E}
@@ -997,9 +998,8 @@ body.nav-mode-active #nav-footer-bar{display:flex}
 .nav-footer-progress strong{display:block;font-size:15px;font-weight:800;color:#1E293B}
 #card-screen.nav-mode .map-area,
 #card-screen.nav-mode .addr-bar,
-#card-screen.nav-mode #addr-edit-bar,
-#card-screen.nav-mode .progress-area,
-#card-screen.nav-mode #help-bar,
+#card-screen.nav-mode #addr-edit-btn,
+#card-screen.nav-mode #c-prog-row,
 #card-screen.nav-mode .unit-list,
 #card-screen.nav-mode .bottom-bar{display:none!important}
 #card-screen.nav-mode #nav-mode-panel{display:block}
@@ -1296,10 +1296,11 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           <img src="/img/ic-arrow.png" alt="">
           구역카드 사용방법
         </button>
-        <button class="login-foot-link" onclick="clearSavedName()">
+        <button class="login-foot-link" id="return-card-btn" onclick="returnToCard()">
           <img src="/img/ic-arrow.png" alt="">
-          재접속
+          내 구역으로 돌아가기
         </button>
+        <div id="return-hint" style="display:none;font-size:11px;color:#F59E0B;padding-left:2px;margin-top:-3px;line-height:1.4">신호가 약해 자동 복귀에 실패했어요 — 위 버튼을 눌러 다시 시도해 주세요</div>
         <!-- PWA 설치 (JS가 설치상태에 따라 표시/숨김) -->
         <div id="pwa-install-section">
           <button class="login-foot-link" onclick="showPwaBanner()">
@@ -1542,6 +1543,7 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <span class="card-type">호별 방문</span>
       <span class="card-cycle" id="c-cycle">1회차</span>
       <button id="nav-toggle-btn" onclick="toggleNavMode()" style="margin-left:auto;min-height:30px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.16);color:rgba(255,255,255,0.92);font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;display:inline-flex;align-items:center;gap:3px">🧭 길 안내</button>
+      <button id="addr-edit-btn" onclick="openAddrEdit()" aria-label="주소 목록 편집" title="주소 목록 편집" style="display:none;width:30px;height:30px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);font-size:13px;line-height:1;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:8px;align-items:center;justify-content:center">✏️</button>
       <button onclick="exitCard()" aria-label="구역카드 나가기" title="나가기" style="width:30px;height:30px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.62);font-size:16px;line-height:1;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:8px;display:inline-flex;align-items:center;justify-content:center">×</button>
     </div>
     <div class="card-name" id="c-name">—</div>
@@ -1557,6 +1559,16 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
     <div id="presence-bar" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0 2px;border-top:1px solid rgba(255,255,255,0.15);margin-top:6px">
       <span style="font-size:10px;color:rgba(255,255,255,0.55);flex-shrink:0">함께 활동중</span>
       <div id="presence-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+    </div>
+    <!-- 전체 진행률 (헤더로 이동) -->
+    <div id="c-prog-row" style="margin-top:10px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;color:rgba(255,255,255,0.6);flex-shrink:0">진행률</span>
+        <div style="flex:1;height:5px;background:rgba(255,255,255,0.22);border-radius:3px;overflow:hidden"><div id="c-prog" style="height:100%;width:0%;background:#38BDF8;border-radius:3px;transition:width .3s"></div></div>
+        <span id="c-pct" style="font-size:12px;font-weight:700;color:#fff;flex-shrink:0">0%</span>
+      </div>
+      <div id="c-addr-sub" style="font-size:11px;color:rgba(255,255,255,0.72);margin-top:6px">—</div>
+      <div class="progress-chips" id="c-chips" style="margin-top:7px"></div>
     </div>
   </div>
   <!-- 구역별 공지사항 배너 -->
@@ -1592,25 +1604,6 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <div class="cb-sub" id="cb-sub-text">관리자 처리 대기 중입니다</div>
     </div>
     <button class="cb-cancel" onclick="cancelComplete()">신청 취소</button>
-  </div>
-  <div class="addr-bar">
-    <div class="addr-main" id="c-addr">—</div>
-    <div class="addr-sub" id="c-addr-sub">—</div>
-  </div>
-  <div id="addr-edit-bar" style="display:none;padding:4px 14px 6px">
-    <button onclick="openAddrEdit()" style="background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ 주소 목록 편집</button>
-  </div>
-  <div class="progress-area">
-    <div class="progress-top">
-      <span>전체 진행률</span>
-      <span id="c-pct">0%</span>
-    </div>
-    <div class="progress-track"><div class="progress-fill" id="c-prog" style="width:0%"></div></div>
-    <div class="progress-chips" id="c-chips"></div>
-  </div>
-  <div id="help-bar" onclick="openHelpDrawer()">
-    <div class="help-bar-label">❓ 사용 방법 · 주의사항 보기</div>
-    <div class="help-bar-arrow">▲</div>
   </div>
   <div class="unit-list" id="unit-list"></div>
   <div class="bottom-bar">
@@ -2973,7 +2966,7 @@ function _drawMarker(position, label, count) {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, collection, collectionGroup, query, where, orderBy, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion, arrayRemove, writeBatch } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, collection, collectionGroup, query, where, orderBy, updateDoc, onSnapshot, serverTimestamp, deleteField, arrayUnion, arrayRemove, writeBatch } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // Firebase 설정은 config.js 에서 로드됩니다
@@ -2981,7 +2974,17 @@ const firebaseConfig = (window.APP_CONFIG && window.APP_CONFIG.firebase)
   ? window.APP_CONFIG.firebase
   : (console.error('⚠ config.js를 찾을 수 없습니다.'), {});
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// 영구 오프라인 캐시 — 약전파/오프라인에서도 카드 열람 + 방문기록 저장(대기) 후 신호 오면 자동 동기화.
+// 실패(사생활모드·미지원 등) 시 기본(메모리) 모드로 폴백.
+let db;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  console.warn('오프라인 캐시 초기화 실패 — 기본 모드로 진행:', e);
+  db = getFirestore(app);
+}
 
 // ── 익명 인증 (Firestore 보안 규칙: request.auth != null 대응) ──
 const _authReady = signInAnonymously(getAuth(app)).catch(e => console.warn('익명 인증 실패:', e));
@@ -3773,8 +3776,8 @@ window.exitCard = function() {
   stopPresenceListener();
   stopTerritoryListener();
   stopPubMeetingListener();
-  localStorage.removeItem('jwcard_terr_id');
-  localStorage.removeItem('jwcard_no');
+  // 복귀 포인터(jwcard_terr_id·jwcard_no)는 지우지 않는다 — ×·오조작·튕김에도 "마지막 카드"를 계속 기억.
+  // 다른 구역은 번호를 새로 입력하거나 복귀화면에서 '다른 구역' 선택 시에만 교체된다.
   _territory = null; _territoryId = null;
   document.getElementById('card-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
@@ -3897,38 +3900,157 @@ const _LD_SESSION_HOURS = 4;
   if (savedName) { setTimeout(() => document.getElementById('no-input').focus(), 100); }
 })();
 
-// 진행 중이던 카드 자동 복원 — 네트워크 지연 시 재시도(최대 2회)
+// ── 활성 카드 로컬 캐시 (오프라인/약전파 복귀용) ──
+function _cacheActiveTerr() {
+  try {
+    if (_isPreview || !_territoryId || !_territory) return;
+    localStorage.setItem('jwcard_last_terr', JSON.stringify({
+      id: _territoryId,
+      no: localStorage.getItem('jwcard_no') || (_territory.no || ''),
+      perm: _permission || '일반',
+      canEdit: !!_canEditAddress,
+      terr: _territory,
+      ts: Date.now()
+    }));
+  } catch(e) { /* 용량초과 등 무시 */ }
+}
+function _loadCachedTerr(id) {
+  try {
+    const c = JSON.parse(localStorage.getItem('jwcard_last_terr') || 'null');
+    if (!c || !c.terr) return null;
+    if (id && c.id !== id) return null;
+    return c;
+  } catch(e) { return null; }
+}
+
+// 진행 중이던 카드 확정: 온라인 우선 → 실패 시 로컬 캐시(오프라인). _territory/_territoryId/신원 세팅.
+// 반환 'ok'(성공) | 'gone'(구역 없음/데이터 없음) | throw(네트워크 실패 & 캐시 없음)
+async function _resolveActiveCard() {
+  const savedName = localStorage.getItem('jwcard_name');
+  let   savedId   = localStorage.getItem('jwcard_terr_id');
+  if (!savedName) return 'gone';
+  if (!savedId) {
+    const c = _loadCachedTerr(null);
+    if (c && c.id) { savedId = c.id; localStorage.setItem('jwcard_terr_id', c.id); if (c.no) localStorage.setItem('jwcard_no', c.no); }
+    else return 'gone';
+  }
+  try {
+    await _authReady;
+    const pubSnap = await getDocs(query(collection(db, 'publishers'), where('name','==',savedName)));
+    if (!pubSnap.empty && pubSnap.docs[0].data().approved) {
+      _pubDoc         = { id: pubSnap.docs[0].id, ...pubSnap.docs[0].data() };
+      _pubName        = savedName;
+      _permission     = _pubDoc.permission || '일반';
+      _isLeader       = ['인도자','구역의종','봉사감독자','관리자'].includes(_permission);
+      _isSO           = _permission === '봉사감독자';
+      _canEditAddress = !!_pubDoc.canEditAddress;
+    }
+    const matched = await getDoc(doc(db, 'territories', savedId));
+    if (matched.exists()) {
+      _territory = matched.data(); _territoryId = matched.id;
+      _cacheActiveTerr();
+      return 'ok';
+    }
+    return 'gone';                       // 구역 문서가 실제로 사라짐
+  } catch(e) {
+    // 네트워크 실패 → 로컬 캐시로 오프라인 복귀 (리스너가 온라인 시 최신화)
+    const cached = _loadCachedTerr(savedId);
+    if (cached && cached.terr) {
+      if (!_pubName) {
+        _pubName        = savedName;
+        _permission     = cached.perm || '일반';
+        _isLeader       = ['인도자','구역의종','봉사감독자','관리자'].includes(_permission);
+        _isSO           = _permission === '봉사감독자';
+        _canEditAddress = !!cached.canEdit;
+        _pubDoc         = { consentGiven: true };
+      }
+      _territory = cached.terr; _territoryId = cached.id;
+      return 'ok';
+    }
+    throw e;                             // 캐시도 없으면 상위에서 재시도
+  }
+}
+
+function _showResumeScreen(name, no) {
+  if (_pubDoc && _pubDoc.consentGiven === false) { document.getElementById('no-input').focus(); return; }
+  document.getElementById('resume-name-txt').textContent = (name || '') + '님';
+  document.getElementById('resume-terr-no-txt').textContent = ((_territory && _territory.no) || no || '') + '번 구역';
+  document.getElementById('resume-terr-name-txt').textContent = (_territory && _territory.name) || '';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('resume-screen').style.display = 'flex';
+}
+
+function _showReturnHint() {
+  const h = document.getElementById('return-hint');
+  if (h) h.style.display = 'block';
+}
+
+// 진행 중이던 카드 자동 복원 — 재시도(최대 4회)·캐시 폴백·조용한 포기 방지
 async function _autoResumeCard(attempt) {
   const savedName = localStorage.getItem('jwcard_name');
   const savedNo   = localStorage.getItem('jwcard_no');
   const savedId   = localStorage.getItem('jwcard_terr_id');
   if (!(savedName && savedNo && savedId)) return;
   try {
-    await _authReady;
-    const pubSnap = await getDocs(query(collection(db, 'publishers'), where('name','==',savedName)));
-    if (pubSnap.empty || !pubSnap.docs[0].data().approved) { localStorage.removeItem('jwcard_terr_id'); return; }
-    _pubDoc         = { id: pubSnap.docs[0].id, ...pubSnap.docs[0].data() };
-    _pubName        = savedName;
-    _permission     = _pubDoc.permission || '일반';
-    _isLeader       = ['인도자','구역의종','봉사감독자','관리자'].includes(_permission);
-    _isSO           = _permission === '봉사감독자';
-    _canEditAddress = !!_pubDoc.canEditAddress;
-    const matched = await getDoc(doc(db, 'territories', savedId));
-    if (!matched.exists()) { localStorage.removeItem('jwcard_terr_id'); document.getElementById('no-input').focus(); return; }
-    _territory = matched.data();
-    _territoryId = matched.id;
-    if (_pubDoc.consentGiven) {
-      document.getElementById('resume-name-txt').textContent = savedName + '님';
-      document.getElementById('resume-terr-no-txt').textContent = (_territory.no || savedNo) + '번 구역';
-      document.getElementById('resume-terr-name-txt').textContent = _territory.name || '';
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('resume-screen').style.display = 'flex';
-    }
+    const r = await _resolveActiveCard();
+    if (r === 'ok') { _showResumeScreen(savedName, savedNo); }
+    else { localStorage.removeItem('jwcard_terr_id'); document.getElementById('no-input').focus(); }
   } catch(e) {
-    if ((attempt || 0) < 2) { setTimeout(() => _autoResumeCard((attempt || 0) + 1), 1200); }
-    else { console.log('자동 복원 실패:', e); }
+    if ((attempt || 0) < 4) { setTimeout(() => _autoResumeCard((attempt || 0) + 1), 1200 + (attempt || 0) * 700); }
+    else { _showReturnHint(); console.log('자동 복원 실패:', e); }
   }
 }
+
+// ── 수동 강력 복귀: "내 구역으로 돌아가기" (구 '재접속' 버튼) ──
+window.returnToCard = async function() {
+  const savedName = localStorage.getItem('jwcard_name');
+  if (!savedName) { alert('저장된 로그인이 없습니다.\n이름과 구역 번호를 입력해 주세요.'); const ni = document.getElementById('name-input'); if (ni) ni.focus(); return; }
+  const btn = document.getElementById('return-card-btn');
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.innerHTML = '<img src="/img/ic-arrow.png" alt="">돌아가는 중…'; }
+  try {
+    const r = await _resolveActiveCard();
+    if (r === 'ok') {
+      const h = document.getElementById('return-hint'); if (h) h.style.display = 'none';
+      document.getElementById('resume-screen').style.display = 'none';
+      enterCard();                       // 확인 없이 바로 카드로 직행
+    } else {
+      alert('돌아갈 진행 중인 구역 카드가 없습니다.\n구역 번호를 입력해 열어 주세요.');
+      const no = document.getElementById('no-input'); if (no) no.focus();
+    }
+  } catch(e) {
+    alert('신호가 약해 구역 카드를 불러오지 못했습니다.\n잠시 후 다시 눌러 주세요.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.innerHTML = orig; }
+  }
+};
+
+// ── 오프라인 상태 표시 (약전파 안심 안내: 기록은 저장·자동 동기화) ──
+(function() {
+  if (!document.body) return;
+  const bar = document.createElement('div');
+  bar.id = 'offline-bar';
+  bar.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:99998;display:none;align-items:center;gap:7px;background:#334155;color:#fff;font-size:12px;font-weight:600;padding:9px 15px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.32);max-width:92%;font-family:inherit;line-height:1.35';
+  const _OFFLINE_HTML = '<span style="font-size:14px">📶</span><span>오프라인 — 기록은 저장되며 신호가 오면 자동 동기화됩니다</span>';
+  bar.innerHTML = _OFFLINE_HTML;
+  document.body.appendChild(bar);
+  let hideTimer = null;
+  function update(online) {
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    if (!online) {
+      bar.innerHTML = _OFFLINE_HTML;
+      bar.style.background = '#334155';
+      bar.style.display = 'flex';
+    } else if (bar.style.display === 'flex') {
+      bar.innerHTML = '<span style="font-size:14px">✓</span><span>다시 연결됨 — 기록을 동기화했습니다</span>';
+      bar.style.background = '#15803D';
+      hideTimer = setTimeout(() => { bar.style.display = 'none'; }, 2500);
+    }
+  }
+  window.addEventListener('offline', () => update(false));
+  window.addEventListener('online',  () => update(true));
+  if (!navigator.onLine) update(false);
+})();
 
 // ── 동의서 ──
 let _consented = false;
@@ -4375,6 +4497,7 @@ function enterCard() {
 
   document.getElementById('card-screen').style.display = 'block';
   buildCard();
+  _cacheActiveTerr();   // 오프라인/약전파 복귀용 캐시 (미리보기는 내부에서 제외)
   // 지도 초기화: 카드 렌더 직후 짧게 지연(렌더 블로킹 방지)하되,
   // 빈 칸이 어색하지 않도록 "불러오는 중" 표시 후 빠르게 초기화한다.
   if (!_isPreview) setMapStatus('지도 불러오는 중…');
@@ -4532,12 +4655,6 @@ function buildCard() {
 
   // 주소 바
   const units = t.units || [];
-  // 구역 내 첫 번째 주소 (도로명+번지)
-  const firstUnit = units[0] || {};
-  const firstAddr = [firstUnit.road, firstUnit.jibun].filter(Boolean).join(' ');
-  document.getElementById('c-addr').innerHTML = firstAddr
-    ? `<span class="addr-num">${firstAddr}</span> ${t.name}`
-    : t.name;
 
   // 형제동반필수 세대 확인
   const visitMap = t.visitMap || {};
@@ -4548,8 +4665,8 @@ function buildCard() {
   // 지도는 enterCard에서 초기화
 
   // 주소 편집 버튼 표시 제어
-  const _editBar = document.getElementById('addr-edit-bar');
-  if (_editBar) _editBar.style.display = (_canEditAddress && !_isPreview) ? 'block' : 'none';
+  const _editBar = document.getElementById('addr-edit-btn');
+  if (_editBar) _editBar.style.display = (_canEditAddress && !_isPreview) ? 'inline-flex' : 'none';
 
   // 섹션 빌드 (건물별로 그룹)
   buildSections(units, visitMap);
