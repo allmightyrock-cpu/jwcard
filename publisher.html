@@ -4769,6 +4769,24 @@ function buildSections(units, visitMap) {
 //  - 제목과 다른 '포함' 단지는 단지명을 그대로 유지해 구분
 //      예) 제목 "○○아파트 (△△ 포함)" + "△△ 1단지 105동" → "△△ 1단지 105동"
 //  - 동 토큰이 없으면 원문 그대로
+// 정규화: 괄호(포함표기) 제거 + '아파트' 제거 + 공백 제거
+const _secNorm = s => (s || '').replace(/\(.*$/, '').replace(/아파트/g, '').replace(/\s+/g, '').trim();
+// building 에서 단지명(동 앞부분) 추출. 동이 없으면 building 전체가 단지명.
+function _secComplexOf(b) {
+  b = (b || '').trim();
+  if (!b) return '';
+  const m = b.match(/\d+\s*동/);
+  return m ? b.slice(0, b.indexOf(m[0])).trim() : b;
+}
+// 이 카드에 서로 다른 단지가 몇 개나 있는지
+function _secComplexCount() {
+  const set = new Set();
+  (_sections || []).forEach(s => {
+    const c = _secNorm(_secComplexOf(s.building));
+    if (c) set.add(c);
+  });
+  return set.size;
+}
 function _secBldDisplay(b) {
   b = (b || '').trim();
   if (!b) return '';
@@ -4778,11 +4796,12 @@ function _secBldDisplay(b) {
   const complex = b.slice(0, idx).trim();   // 동 앞부분 = 단지명
   const tail    = b.slice(idx).trim();      // 동부터
   if (!complex) return tail;
-  // 정규화: 괄호(포함표기) 제거 + '아파트' 제거 + 공백 제거
-  const norm = s => (s || '').replace(/\(.*$/, '').replace(/아파트/g, '').replace(/\s+/g, '').trim();
-  const titleBase = norm((typeof _territory !== 'undefined' && _territory && _territory.name) || '');
-  const nc = norm(complex);
-  // 카드 제목의 주 단지명과 일치 → 단지명 생략, 다른 단지 → 단지명 유지(전체 표시)
+  // 한 카드에 단지가 2개 이상이면 단지명을 절대 생략하지 않는다.
+  // (여러 단지가 섞인 카드에서 이름을 빼면 어느 단지의 102동인지 알 수 없음)
+  if (_secComplexCount() > 1) return b;
+  const titleBase = _secNorm((typeof _territory !== 'undefined' && _territory && _territory.name) || '');
+  const nc = _secNorm(complex);
+  // 단일 단지 카드에서 제목과 같은 단지명 → 생략(간결하게)
   if (nc && titleBase && (titleBase.includes(nc) || nc.includes(titleBase))) return tail;
   return b;
 }
