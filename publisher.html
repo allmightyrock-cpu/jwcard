@@ -7669,20 +7669,30 @@ function _navSectionOf(idx) {
 }
 
 // ── 섹션 주소 → 좌표 (캐시 우선, 없으면 지오코딩) ─────────────
-function _navGetCoords(secKey, addr) {
+// 지오코딩 결과 검증: 요청한 건물번호(예: 58-3)가 실제 매칭 주소에 있는지 확인.
+// 없으면 도로만 잡은 부분매칭(예: '평화로 2238')이므로 좌표를 신뢰하지 않는다.
+function _navGeoVerify(item, expectNum) {
+  if (!expectNum) return true;                       // 대조할 번호가 없으면 검증 생략
+  var esc = String(expectNum).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var re  = new RegExp('(^|\\s)' + esc + '(\\s|$)');
+  return re.test(item.roadAddress || '') || re.test(item.jibunAddress || '');
+}
+function _navGetCoords(secKey, addr, expectNum) {
   return new Promise(function(resolve) {
     if (_navCoordCache[secKey]) { resolve(_navCoordCache[secKey]); return; }
     if (!window.naver || !naver.maps || !naver.maps.Service) { resolve(null); return; }
     naver.maps.Service.geocode({ query: addr }, function(status, response) {
-      if (status === naver.maps.Service.Status.OK
-          && response.v2 && response.v2.meta.totalCount > 0) {
-        var item = response.v2.addresses[0];
-        var coords = { lat: parseFloat(item.y), lng: parseFloat(item.x) };
-        _navCoordCache[secKey] = coords;
-        resolve(coords);
-      } else {
-        resolve(null);
+      if (status !== naver.maps.Service.Status.OK
+          || !response.v2 || !response.v2.meta || !response.v2.meta.totalCount) { resolve(null); return; }
+      var list = response.v2.addresses || [];
+      var hit  = null;
+      for (var i = 0; i < list.length; i++) {
+        if (_navGeoVerify(list[i], expectNum)) { hit = list[i]; break; }
       }
+      if (!hit) { resolve(null); return; }           // 검증 실패 → 좌표 버림 → 주소 search 폴백
+      var coords = { lat: parseFloat(hit.y), lng: parseFloat(hit.x) };
+      _navCoordCache[secKey] = coords;
+      resolve(coords);
     });
   });
 }
@@ -7727,12 +7737,15 @@ function _navAddrInfo(idx) {
                : jibun            ? jibun
                :                    (_territory && _territory.name) || '';
   var addrFull = (region + addrMain + (bldg ? ' ' + bldg : '')).trim();
+  // 지오코딩 전용 주소: 건물명을 빼고 '지역 + 도로명 + 건물번호'만 — 건물명이 붙으면
+  // 네이버 지오코더가 정확매칭에 실패해 도로만 잡는 부분매칭으로 떨어진다.
+  var geoAddr  = (region + addrMain).trim();
   var name     = (addrMain + (bldg ? ' ' + bldg : '')).trim();
   var secKey   = (sec && sec.key) || ('idx_' + idx);
   // 표시용: 번지수를 크게 앞에, 도로명을 작게
   var dispNum  = jibun || addrMain;   // 번지수 (굵게 크게)
   var dispRoad = jibun ? road : '';   // 도로명 (작게, 번지 있을 때만)
-  return { addrMain: addrMain, addrFull: addrFull, name: name,
+  return { addrMain: addrMain, addrFull: addrFull, geoAddr: geoAddr, name: name,
            unitLbl: unitLbl, secKey: secKey,
            road: road, jibun: jibun, bldg: bldg,
            dispNum: dispNum, dispRoad: dispRoad };
@@ -7743,7 +7756,7 @@ window.navOpenApp = async function(app) {
   var info   = _navAddrInfo(_navIdx);
   var btnEl  = document.getElementById('nav-app-' + app);
   if (btnEl) { btnEl.style.opacity = '0.5'; btnEl.style.pointerEvents = 'none'; }
-  var coords = await _navGetCoords(info.secKey, info.addrFull);
+  var coords = await _navGetCoords(info.secKey, info.geoAddr, info.jibun);
   if (btnEl) { btnEl.style.opacity = ''; btnEl.style.pointerEvents = ''; }
   var links  = _navBuildLinks(coords, info.name, info.addrFull, _navWalk);
   if (!links.ready && !confirm('좌표를 찾지 못했습니다. 주소 검색으로 열까요?')) return;
@@ -7856,15 +7869,9 @@ window.toggleNavMode = function() {
 function _navPrefetchCoords(idx) {
   [idx, _navFindNext(idx + 1)].forEach(function(i) {
     if (i < 0) return;
-    var sec    = _navSectionOf(i);
-    var secKey = (sec && sec.key) || ('idx_' + i);
-    if (_navCoordCache[secKey]) return;
-    var region = (window._mapRegion || '지역명') + ' ';
-    var road   = (sec && sec.road)     || '';
-    var jibun  = (sec && sec.jibun)    || '';
-    var bldg   = (sec && sec.building) || '';
-    var addr   = (region + (road || jibun) + (bldg ? ' ' + bldg : '')).trim();
-    if (addr) _navGetCoords(secKey, addr);
+    var info = _navAddrInfo(i);              // 정확한 주소 조합(도로명+건물번호)을 그대로 사용
+    if (_navCoordCache[info.secKey]) return; // (기존엔 road||jibun 이라 건물번호가 누락됐었음)
+    if (info.geoAddr) _navGetCoords(info.secKey, info.geoAddr, info.jibun);
   });
 }
 
@@ -7967,8 +7974,9 @@ function _renderNavNextCard() {
 
   // 좌표 아직 없으면 비동기 획득 후 배지 갱신
   if (!hasCached) {
-    _navGetCoords(secKey, addrFull.trim()).then(function(coords) {
+    _navGetCoords(secKey, (region + addrMain).trim(), jibun).then(function(coords) {
       if (!_navMode) return;
+      if (!coords) return;   // 검증 실패 → '좌표 준비됨'으로 바꾸지 않음(주소 검색으로 안내됨)
       var badge = document.querySelector('.nav-card-header span[style*="color:rgba(255,255,255,.4)"]');
       if (badge) badge.outerHTML = '<span style="font-size:10px;color:#38BDF8;margin-left:6px;display:inline-flex;align-items:center;gap:3px"><img src="/img/ic-loc.png" style="height:13px;width:auto" alt="">좌표 준비됨</span>';
     });
@@ -8091,7 +8099,7 @@ window.navOpenSheet = function(idx) {
   document.getElementById('nav-sheet-backdrop').classList.add('open');
   document.getElementById('nav-sheet').classList.add('open');
   // 좌표 미리 로드
-  _navGetCoords(info.secKey, info.addrFull);
+  _navGetCoords(info.secKey, info.geoAddr, info.jibun);
 };
 
 window.closeNavSheet = function() {
@@ -8124,7 +8132,7 @@ window.navOpenSheetApp = async function(app) {
   // 버튼 로딩 상태
   var btns = document.querySelectorAll('#nav-sheet .nav-app-btn');
   btns.forEach(function(b){ b.style.opacity = '0.5'; b.style.pointerEvents = 'none'; });
-  var coords = await _navGetCoords(info.secKey, info.addrFull);
+  var coords = await _navGetCoords(info.secKey, info.geoAddr, info.jibun);
   btns.forEach(function(b){ b.style.opacity = ''; b.style.pointerEvents = ''; });
   var links = _navBuildLinks(coords, info.name, info.addrFull, _navWalk);
   if (!links.ready && !confirm('좌표를 찾지 못했습니다. 주소 검색으로 열까요?')) return;
