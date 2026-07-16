@@ -4769,6 +4769,25 @@ function buildSections(units, visitMap) {
 //  - 제목과 다른 '포함' 단지는 단지명을 그대로 유지해 구분
 //      예) 제목 "○○아파트 (△△ 포함)" + "△△ 1단지 105동" → "△△ 1단지 105동"
 //  - 동 토큰이 없으면 원문 그대로
+// 시각값 → ms. Firestore Timestamp / 캐시된 {seconds} / ISO 문자열 모두 대응.
+function _tsMs(v) {
+  if (!v) return 0;
+  try {
+    if (typeof v.toMillis === 'function') return v.toMillis();
+    if (typeof v.seconds === 'number') return v.seconds * 1000;
+    const t = new Date(v).getTime();
+    return isNaN(t) ? 0 : t;
+  } catch (e) { return 0; }
+}
+// 이월(미완료 처리) '이전'에 찍힌 방문인가 = 이전 전도인의 기록 → 회색 대상.
+// 내가 지금 찍은 방문(이월 이후)은 회색 처리하지 않는다.
+function _isCarryoverVisit(visit, carryoverMs) {
+  if (!visit || !visit.code) return false;   // 방문 안 한 호수는 절대 회색 아님
+  if (!carryoverMs) return true;             // 이월 시각 불명 → 방문한 호수만 회색(그룹 전체 X)
+  const ms = _tsMs(visit.at);
+  if (!ms) return true;                      // 방문 시각 불명 → 예전 기록으로 간주
+  return ms <= carryoverMs;
+}
 // 정규화: 괄호(포함표기) 제거 + '아파트' 제거 + 공백 제거
 const _secNorm = s => (s || '').replace(/\(.*$/, '').replace(/아파트/g, '').replace(/\s+/g, '').trim();
 // building 에서 단지명(동 앞부분) 추출. 동이 없으면 building 전체가 단지명.
@@ -4809,7 +4828,6 @@ function _secBldDisplay(b) {
 function renderUnitList(visitMap) {
   const sectionStatus = _territory.sectionStatus || {};
   // '여기까지' 마커가 있는 섹션의 순서 인덱스 (없으면 -1)
-  const partialSecIdx = _sections.findIndex(s => (sectionStatus[s.key]?.status || 'none') === 'partial');
   let html = '';
 
   _sections.forEach((sec, si) => {
@@ -4820,10 +4838,6 @@ function renderUnitList(visitMap) {
     // 구분선은 세대 수에서 제외
     const realIndices = sec.indices.filter((_,li) => sec.units[li]?.type !== 'divider');
     const doneCnt = realIndices.filter(i => visitMap[i]?.code).length;
-    // 여기까지 마커보다 위에 있는 섹션은 전체 회색 (방문 여부 무관)
-    const isBeforePartial = partialSecIdx >= 0 && si < partialSecIdx;
-    // 섹션 내 모든 세대 방문 완료 시 자동 회색
-    const allVisited = realIndices.length > 0 && doneCnt === realIndices.length;
     const badgeClass = status==='done'?'sb-done':status==='partial'?'sb-partial':'sb-none';
     const badgeText = status==='done'?'✓ 완료':status==='partial'?'⏸ 여기까지':'—';
 
@@ -4865,8 +4879,18 @@ function renderUnitList(visitMap) {
       const code = u.banned ? 'refuse' : (visit?.code || null);
       // 흐림(회색) 처리는 카드가 '미완료'로 저장된 뒤에만 — 진행 중 방문 체크 시엔 호수가 흐려지지 않도록
       const showCarryoverDim = _territory.completionStatus === 'incomplete';
-      const isDimmed = showCarryoverDim && (status === 'done' || isBeforePartial || allVisited
-        || (status === 'partial' && herePos >= 0 && localIdx <= herePos));
+      // 이월 처리 시각 — 이 시각 '이전' 방문만 이전 전도인의 기록으로 보고 회색 처리한다.
+      const carryoverMs = showCarryoverDim ? _tsMs(_territory.incompleteAt) : 0;
+      // 회색 처리:
+      //  · '완료'(done) 그룹 → 전부 회색
+      //  · '여기까지'(partial) 그룹 → 마커(hereAt)까지만 회색, 이후는 다음 전도인이 이어서 (회색 X)
+      //  · 마커 없는 그룹 → '이월 전에 방문한 호수'만 회색. 내가 지금 찍은 방문은 회색 X
+      //  · 손 안 댄 호수 → 회색 X
+      let isDimmed;
+      if (!showCarryoverDim) isDimmed = false;
+      else if (status === 'done') isDimmed = true;
+      else if (status === 'partial' && herePos >= 0) isDimmed = (localIdx <= herePos);
+      else isDimmed = _isCarryoverVisit(visit, carryoverMs);
       const isEscort = code === 'escort' || u.escortRequired;
 
       // 층 구분선: 입구 순서 우선으로 표시 안 함 (엑셀 입력 순서 유지)
