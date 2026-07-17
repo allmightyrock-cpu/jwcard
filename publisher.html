@@ -4568,6 +4568,12 @@ function buildCard() {
     _maybeFinalizePending().then(() => buildCard());
     return;
   }
+  // 자정 지난 미처리 카드 + '여기까지' 표시 있음 → 자동 미완료 후 재렌더 (이월 성립)
+  if (_needsAutoIncomplete(t) && window._autoIncTried !== _territoryId) {
+    window._autoIncTried = _territoryId;
+    _maybeAutoIncomplete().then(() => buildCard());
+    return;
+  }
   _refreshCompleteBanner();
 
   // 구역별 공지사항 배너
@@ -5758,6 +5764,51 @@ function _buildFinalizePayload(t, fallbackBy) {
   };
 }
 // 카드 열 때: 완료 대기가 어제(이전)면 자정 지난 것 → 최종 확정(지연 확정)
+// KST 기준 날짜 'YYYY-MM-DD' (임의 시각)
+function _kstDayOf(ms) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date(ms));
+}
+// 마지막 방문 { day, by } — 기록 없으면 null
+function _lastVisitOf(t) {
+  const vm = (t && t.visitMap) || {};
+  let ms = 0, by = '';
+  Object.keys(vm).forEach(k => {
+    const v = vm[k]; if (!v || !v.code) return;
+    const m = _tsMs(v.at); if (m > ms) { ms = m; by = v.by || ''; }
+  });
+  return ms ? { day: _kstDayOf(ms), by } : null;
+}
+// 자동 미완료 대상? — 완료/미완료 미처리 + '여기까지' 표시 있음 + 마지막 방문이 오늘 이전(자정 경과)
+// '여기까지' = 전도인이 "오늘 여기서 멈춘다"는 의사를 이미 표현한 것 → 미완료 버튼을 대신 눌러준다.
+// ※ '여기까지'가 없는 카드는 대상 아님 → 관리자가 목록에서 보고 수동 처리
+function _needsAutoIncomplete(t) {
+  if (_isPreview || !t || t.completionStatus || t.pendingCompleteDay) return false;
+  const ss = t.sectionStatus || {};
+  const hasHere = Object.keys(ss).some(k => ss[k] && ss[k].status === 'partial' && typeof ss[k].hereAt === 'number');
+  if (!hasHere) return false;
+  const last = _lastVisitOf(t);
+  return !!last && last.day < _kstToday();
+}
+// 자정 지난 미처리 카드 자동 미완료 — 전도인이 버튼을 안 눌러도 이월(회색·이어서 시작)이 성립하게 한다.
+// incompleteBy 는 실제 방문 전도인 이름으로 기록 (자동/관리자 흔적을 남기지 않음 → S-13 오염 방지)
+async function _maybeAutoIncomplete() {
+  if (!_territoryId || !_needsAutoIncomplete(_territory)) return false;
+  const last = _lastVisitOf(_territory);
+  try {
+    _ignoreNextSnap = true;
+    await updateDoc(doc(db, 'territories', _territoryId), {
+      completionStatus: 'incomplete',
+      incompleteAt: serverTimestamp(),
+      incompleteBy: last.by,
+      incompleteNote: '자정 경과 자동 미완료'
+    });
+    _territory.completionStatus = 'incomplete';
+    _territory.incompleteBy = last.by;
+    _territory.incompleteAt = new Date();
+    return true;
+  } catch(e) { console.log('자동 미완료 오류', e); return false; }
+}
+
 async function _maybeFinalizePending() {
   if (!_territory || !_territoryId || !_territory.pendingCompleteDay) return false;
   if (_territory.pendingCompleteDay === _kstToday()) return false; // 오늘 = 아직 대기(수정 가능)
