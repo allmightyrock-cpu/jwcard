@@ -191,6 +191,21 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
           </div>
         </div>
 
+        <!-- ── 미완료 처리요청 패널 ── -->
+        <div id="pending-inc-panel" style="margin-bottom:12px;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff">
+          <div onclick="togglePendingIncPanel()" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#f8fafc;cursor:pointer;user-select:none" id="pending-inc-hdr">
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:#475569;letter-spacing:0.3px">
+              ⏳ <span>미완료 처리요청</span>
+              <span id="pending-inc-badge" style="display:none;background:#EF4444;color:#fff;font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px">0</span>
+              <span style="font-size:11px;font-weight:400;color:#94a3b8">(클릭하여 펼치기)</span>
+            </div>
+            <span id="pending-inc-arrow" style="font-size:11px;color:#94a3b8">▼</span>
+          </div>
+          <div id="pending-inc-body" style="display:none;padding:14px 16px">
+            <div style="text-align:center;color:#94a3b8;padding:12px;font-size:13px">로딩 중…</div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:8px">

@@ -3631,6 +3631,11 @@ async function loadTerritories() {
   try { updateTerritoryStats(); } catch(e) { console.warn('통계 갱신 오류', e); }
   try { renderOverdueList(); } catch(e) { console.warn('미반납 목록 오류', e); }
   try {
+    refreshPendingIncBadge();
+    const _pib = document.getElementById('pending-inc-body');
+    if (_pib && _pib.style.display !== 'none') renderPendingIncomplete();
+  } catch(e) { console.warn('미완료 처리요청 갱신 오류', e); }
+  try {
     if (typeof plotTerritoryMarkers === 'function' && window._adminMapReady) plotTerritoryMarkers();
   } catch(e) { console.warn('지도 마커 표시 오류(목록과 무관)', e); }
 }
@@ -3929,6 +3934,107 @@ window.resolveAddrRequest = async function(docId) {
     await updateDoc(doc(db, 'addressRequests', docId), { status: 'resolved', resolvedAt: serverTimestamp() });
     await loadAddressRequests(); // 목록 새로고침
   } catch(e) { alert('처리 실패: ' + e.message); }
+};
+
+// ══════════ 미완료 처리요청 ══════════
+// 전도인이 '여기까지'를 못 찍고 마친 카드 = 자동 미완료가 처리할 수 없는 나머지.
+// (여기까지가 있는 카드는 전도인 앱이 카드를 열 때 자동으로 미완료 처리한다.)
+// 여기까지가 없으면 다음 전도인에게 그 그룹이 통째로 건너뛰어지므로 관리자가 지정해 줘야 한다.
+const _KST_FMT = { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit' };
+function _incKstToday() { return new Intl.DateTimeFormat('en-CA', _KST_FMT).format(new Date()); }
+function _incKstDayOf(ms) { return new Intl.DateTimeFormat('en-CA', _KST_FMT).format(new Date(ms)); }
+function _incTsMs(v) {
+  if (!v) return 0;
+  try {
+    if (typeof v.toMillis === 'function') return v.toMillis();
+    if (typeof v.seconds === 'number') return v.seconds * 1000;
+    const t = new Date(v).getTime(); return isNaN(t) ? 0 : t;
+  } catch(e) { return 0; }
+}
+// 마지막 방문 { day, by, ms } — 기록 없으면 null
+function _incLastVisit(t) {
+  const vm = (t && t.visitMap) || {};
+  let ms = 0, by = '';
+  Object.keys(vm).forEach(k => {
+    const v = vm[k]; if (!v || !v.code) return;
+    const m = _incTsMs(v.at); if (m > ms) { ms = m; by = v.by || ''; }
+  });
+  return ms ? { day: _incKstDayOf(ms), by, ms } : null;
+}
+// 관리자 수동 처리 대상? — 완료/미완료 미처리 + 방문기록 있음 + '여기까지' 없음 + 마지막 방문이 오늘 이전
+function _needsManualIncomplete(t) {
+  if (!t || t.completionStatus || t.pendingCompleteDay) return false;
+  const ss = t.sectionStatus || {};
+  const hasHere = Object.keys(ss).some(k => ss[k] && ss[k].status === 'partial' && typeof ss[k].hereAt === 'number');
+  if (hasHere) return false;   // 여기까지 있음 → 전도인 앱이 자동 처리
+  const last = _incLastVisit(t);
+  return !!last && last.day < _incKstToday();
+}
+function _pendingIncList() {
+  return (window._territories || []).filter(_needsManualIncomplete).sort((a, b) => {
+    const la = _incLastVisit(a), lb = _incLastVisit(b);
+    return (la ? la.ms : 0) - (lb ? lb.ms : 0);   // 오래된 것부터
+  });
+}
+// 뱃지 갱신 — 패널을 펼치지 않아도 건수가 보이도록
+window.refreshPendingIncBadge = function() {
+  const badge = document.getElementById('pending-inc-badge');
+  if (!badge) return;
+  const n = _pendingIncList().length;
+  badge.textContent = n;
+  badge.style.display = n ? '' : 'none';
+};
+window.togglePendingIncPanel = function() {
+  const body  = document.getElementById('pending-inc-body');
+  const arrow = document.getElementById('pending-inc-arrow');
+  const hdr   = document.getElementById('pending-inc-hdr');
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? '' : 'none';
+  if (arrow) arrow.textContent = open ? '▲' : '▼';
+  if (hdr)   hdr.style.borderBottom = open ? '1px solid #e2e8f0' : 'none';
+  const hint = hdr && hdr.querySelector('span[style*="94a3b8"]:last-child');
+  if (hint)  hint.textContent = open ? '(클릭하여 접기)' : '(클릭하여 펼치기)';
+  if (open)  renderPendingIncomplete();
+};
+window.renderPendingIncomplete = function() {
+  const el = document.getElementById('pending-inc-body');
+  if (!el) return;
+  const list = _pendingIncList();
+  window.refreshPendingIncBadge();
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:16px;font-size:13px">처리할 구역이 없습니다.</div>';
+    return;
+  }
+  const rows = list.map(t => {
+    const last  = _incLastVisit(t);
+    const units = (t.units || []).filter(u => u && u.type !== 'divider');
+    const done  = Object.values(t.visitMap || {}).filter(v => v && v.code).length;
+    const dateStr = last ? last.day.slice(5).replace('-', '/') : '—';
+    return `<div style="padding:11px 14px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#1E293B;margin-bottom:3px">
+            구역 ${t.no ?? '—'} <span style="font-weight:500;color:#475569">${_escH(t.name || '')}</span>
+          </div>
+          <div style="font-size:12px;color:#475569;margin-bottom:2px">진행: <b>${done}/${units.length}</b>세대 · <span style="color:#B45309">여기까지 표시 없음</span></div>
+          <div style="font-size:11px;color:#94a3b8">마지막 방문: ${_escH(last && last.by ? last.by : '—')} · ${dateStr}</div>
+        </div>
+        <button onclick="fixTerritory('${t.id}')" style="flex-shrink:0;padding:6px 12px;background:#B45309;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">처리하기</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div style="font-size:11.5px;color:#92400E;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">
+      전도인이 <b>「여기까지」</b>를 지정하지 않고 마친 구역입니다. 표시가 없으면 다음 전도인이 <b>그 그룹을 통째로 건너뜁니다.</b><br>
+      [처리하기]로 카드를 열어 어디까지 방문했는지 지정한 뒤 <b>미완료 마치기</b>를 눌러 주세요.
+    </div>` + rows
+    + `<div style="font-size:11px;color:#94a3b8;margin-top:6px;text-align:right">총 ${list.length}건 대기 중</div>`;
+};
+// 관리자 미완료 처리 — publisher.html을 처리 모드로 열기 (섹션 로직을 그대로 재사용)
+window.fixTerritory = function(id) {
+  if (!id) return;
+  try { sessionStorage.setItem('jwcard_admin_fix', id); } catch(e) {}
+  window.open('publisher.html?fix=1&id=' + encodeURIComponent(id) + '&_t=' + Date.now(), '_blank', 'width=480,height=860,resizable=yes');
 };
 
 window.filterTerritory = function(cat, el) {
