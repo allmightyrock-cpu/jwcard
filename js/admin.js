@@ -3304,10 +3304,18 @@ window.saveBasicInfo = async function() {
     const cycleChanged = t && (t.cycle || 1) !== cycle;
     const updateData = { no, name, category, cycle };
     if (cycleChanged) { updateData.visitMap = {}; updateData.sectionStatus = {}; }
+    // 유형을 '개인 구역'이 아닌 것으로 바꾸면 개인구역 담당자도 함께 해제한다.
+    // 전도인 화면의 개인구역 경고는 category가 아니라 personalAssignee 필드로 판정하므로,
+    // 유형만 바꾸고 담당자를 남겨 두면 경고가 계속 떠서 그 구역을 아무도 못 연다.
+    if (category !== '개인 구역' && t && t.personalAssignee) {
+      updateData.personalAssignee = '';
+      updateData.personalAssignedDate = '';
+    }
     await updateDoc(doc(db, 'territories', _editTargetId), updateData);
     if (t) {
       t.no = no; t.name = name; t.category = category; t.cycle = cycle;
       if (cycleChanged) { t.visitMap = {}; t.sectionStatus = {}; }
+      if (category !== '개인 구역') { t.personalAssignee = ''; t.personalAssignedDate = ''; }
     }
     closeModal('edit-modal');
     renderTerritoryTable();
