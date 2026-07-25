@@ -468,7 +468,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#F1F5F9;color:#1E293B;max-
 .card-header{
   position:relative;
   padding:16px;
-  padding-top:calc(16px + env(safe-area-inset-top, 0px)); /* 아이폰 상태바/노치에 상단 버튼 가림 방지 */
+  padding-top:max(52px, calc(16px + env(safe-area-inset-top, 0px))); /* 아이폰 상태바/노치/다이나믹아일랜드에 상단 버튼 가림 방지. Safari 브라우저 모드는 inset=0이라 최소 52px 확보 */
   overflow:hidden;
   background:#1B3A6B;
 }
@@ -1538,9 +1538,9 @@ if (window.APP_CONFIG && window.APP_CONFIG.naverClientId) {
       <span class="card-num" id="c-no">—</span>
       <span class="card-type">호별 방문</span>
       <span class="card-cycle" id="c-cycle">1회차</span>
-      <button id="nav-toggle-btn" onclick="toggleNavMode()" style="margin-left:auto;min-height:30px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.16);color:rgba(255,255,255,0.92);font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;display:inline-flex;align-items:center;gap:3px">🧭 길 안내</button>
-      <button id="addr-edit-btn" onclick="openAddrEdit()" aria-label="주소 목록 편집" title="주소 목록 편집" style="display:none;width:30px;height:30px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);font-size:13px;line-height:1;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:8px;align-items:center;justify-content:center">✏️</button>
-      <button onclick="exitCard()" aria-label="구역카드 나가기" title="나가기" style="width:30px;height:30px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.62);font-size:16px;line-height:1;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:8px;display:inline-flex;align-items:center;justify-content:center">×</button>
+      <button id="nav-toggle-btn" onclick="toggleNavMode()" style="margin-left:auto;min-height:38px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.16);color:rgba(255,255,255,0.92);font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;display:inline-flex;align-items:center;gap:3px">🧭 길 안내</button>
+      <button id="addr-edit-btn" onclick="openAddrEdit()" aria-label="주소 목록 편집" title="주소 목록 편집" style="display:none;width:38px;height:38px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);font-size:13px;line-height:1;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:8px;align-items:center;justify-content:center">✏️</button>
+      <button onclick="exitCard()" aria-label="구역카드 나가기" title="나가기" style="width:38px;height:38px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.62);font-size:16px;line-height:1;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:8px;display:inline-flex;align-items:center;justify-content:center">×</button>
     </div>
     <div class="card-name" id="c-name">—</div>
     <div class="card-sub" id="c-sub">—</div>
