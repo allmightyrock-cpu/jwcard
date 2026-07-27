@@ -1581,9 +1581,13 @@ function _renderSignupEditor(){
       const row=t.rows[si]||["","",""];
       const cells=[0,1,2].map(ci=>{
         const name=row[ci];
-        return name
-          ?`<div style="flex:1;padding:5px 4px;border-right:${ci<2?"1px solid rgba(0,0,0,.07)":"none"}"><div style="width:100%;display:flex;align-items:center;gap:3px;background:${c.bg};border-radius:6px;padding:5px 7px;border:1px solid ${c.border};cursor:pointer" onclick="_seClearCell(${ti},${si},${ci})"><span style="font-size:12px;font-weight:600;color:${c.ac};flex:1">${name}</span><span style="font-size:11px;color:${c.ac};opacity:.5">×</span></div></div>`
-          :`<div style="flex:1;padding:5px 4px;border-right:${ci<2?"1px solid rgba(0,0,0,.07)":"none"}"><button style="width:100%;padding:5px 3px;border-radius:6px;border:1.5px ${ci===2?"dashed":"solid"} ${c.border};${ci===2?"opacity:.5;":""}background:transparent;color:${c.ac};font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;-webkit-tap-highlight-color:transparent" ontouchend="event.preventDefault();event.stopPropagation();_seOpenPicker(${ti},${si},${ci})" onclick="_seOpenPicker(${ti},${si},${ci})">+ 선택</button></div>`;
+        const filled=!!name;
+        // 셀을 드롭다운으로 — 탭할 때만 신청자 목록이 열린다(스크롤 중 오작동 방지).
+        // 이미 다른 칸에 배정된 사람은 목록에서 제외(중복 방지). 현재 칸 값은 유지.
+        const opts=`<option value="">${ci===2?"③ 추가":"— 선택 —"}</option>`
+          + signups.filter(m=>m===name||!allUsed.has(m))
+                   .map(m=>`<option${m===name?" selected":""}>${m}</option>`).join("");
+        return `<div style="flex:1;padding:5px 4px;border-right:${ci<2?"1px solid rgba(0,0,0,.07)":"none"}"><select onchange="_seSelectCell(${ti},${si},${ci},this.value)" style="width:100%;padding:7px 4px;border-radius:6px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;outline:none;-webkit-appearance:menulist;border:1.5px ${filled?"solid":(ci===2?"dashed":"solid")} ${c.border};background:${filled?c.bg:"#fff"};color:${filled?c.ac:"#94A3B8"}${ci===2&&!filled?";opacity:.6":""}">${opts}</select></div>`;
       }).join("");
       return `<div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr;border-top:1px solid rgba(0,0,0,.06)">
         <div style="padding:6px 4px;border-right:1px solid rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;background:${c.bg}88"><div style="font-size:12px;font-weight:700;color:${c.ac};font-variant-numeric:tabular-nums">${time}</div><div style="font-size:9px;color:#94A3B8">${intv}분</div></div>
@@ -1722,6 +1726,12 @@ function _sePickMember(name){
   const {ti,si,ci}=_sePicker;
   if(_seTeams[ti]) _seTeams[ti].rows[si][ci]=name;
   _seClosePicker();
+  _renderSignupEditor();
+}
+
+// 셀 드롭다운에서 이름 선택(빈 값이면 비우기). 셀당 팝업 없이 그 자리에서 배치.
+function _seSelectCell(ti,si,ci,name){
+  if(_seTeams[ti]) _seTeams[ti].rows[si][ci]=name||"";
   _renderSignupEditor();
 }
 
