@@ -3781,7 +3781,7 @@ window.exitCard = function() {
   document.getElementById('no-input').value = '';
   // v2.34 배정 UI 초기화: 배정박스 숨김 + 입력창 그룹 복원 (안 하면 재진입 시 빈 값으로 에러)
   if (typeof setButtonState === 'function') setButtonState('checkin');
-  setTimeout(() => document.getElementById('no-input').focus(), 100);
+  // 자동 포커스 제거 — iOS 숫자 키패드 자동 노출 방지 (번호칸은 사용자가 직접 탭)
 };
 
 window.clearSavedName = function() {
@@ -3819,7 +3819,7 @@ window.resumeNewCard = function() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('no-input').value = '';
   if (typeof setButtonState === 'function') setButtonState('checkin'); // 배정박스 숨김 + 입력창 복원
-  setTimeout(() => document.getElementById('no-input').focus(), 100);
+  // 자동 포커스 제거 — iOS 숫자 키패드 자동 노출 방지 (번호칸은 사용자가 직접 탭)
   // 이름은 유지된 상태이므로 인도자 버튼 노출 체크
   if (window.checkLeaderBtn) window.checkLeaderBtn();
 };
@@ -3936,8 +3936,8 @@ const _LD_SESSION_HOURS = 4;
     }, 300);
     return;
   }
-  // ③ 이름만 있으면 번호칸 포커스
-  if (savedName) { setTimeout(() => document.getElementById('no-input').focus(), 100); }
+  // ③ 이름이 저장돼 있어도 번호칸에 자동 포커스하지 않는다.
+  //    (iOS에서 홈 화면을 열자마자 숫자 키패드가 떠 화면을 가리는 불편 → 사용자가 번호칸을 직접 탭)
 })();
 
 // ── 활성 카드 로컬 캐시 (오프라인/약전파 복귀용) ──
