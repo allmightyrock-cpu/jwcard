@@ -3648,6 +3648,18 @@ async function loadTerritories() {
   } catch(e) { console.warn('지도 마커 표시 오류(목록과 무관)', e); }
 }
 
+// 미완료 처리 팝업(publisher.html?fix=1)에서 처리를 마치면 구역 데이터를 다시 불러온다.
+// 관리자 화면은 territories를 실시간 구독하지 않고 1회 로드하므로, 이 신호가 없으면
+// 처리한 카드가 '미완료 처리요청' 목록에서 사라지지 않는다.
+window.addEventListener('storage', (e) => {
+  if (e && e.key === 'jwcard_admin_fix_done') { try { loadTerritories(); } catch(err){} }
+});
+// 팝업을 닫고 관리자 창으로 돌아왔을 때도(목록이 열려 있으면) 최신 상태로 갱신
+window.addEventListener('focus', () => {
+  const pib = document.getElementById('pending-inc-body');
+  if (pib && pib.style.display !== 'none') { try { loadTerritories(); } catch(e){} }
+});
+
 function updateTerritoryStats() {
   const t = window._territories;
   document.getElementById('t-stat-total').textContent = t.length;
