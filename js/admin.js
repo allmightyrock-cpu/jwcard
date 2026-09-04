@@ -4059,13 +4059,17 @@ window.renderPendingIncomplete = function() {
           <div style="font-size:12px;color:#475569;margin-bottom:2px">진행: <b>${done}/${units.length}</b>세대 · <span style="color:#B45309">여기까지 표시 없음</span></div>
           <div style="font-size:11px;color:#94a3b8">마지막 방문: ${_escH(last && last.by ? last.by : '—')} · ${dateStr}</div>
         </div>
-        <button onclick="fixTerritory('${t.id}')" style="flex-shrink:0;padding:6px 12px;background:#B45309;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">처리하기</button>
+        <div style="flex-shrink:0;display:flex;flex-direction:column;gap:5px">
+          <button onclick="finalizeAsComplete('${t.id}')" style="padding:6px 12px;background:#166534;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">완료 마감</button>
+          <button onclick="fixTerritory('${t.id}')" style="padding:6px 12px;background:#fff;color:#B45309;border:1px solid #FCD34D;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">미완료 처리</button>
+        </div>
       </div>
     </div>`;
   }).join('');
   el.innerHTML = `<div style="font-size:11.5px;color:#92400E;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">
       전도인이 <b>「여기까지」</b>를 지정하지 않고 마친 구역입니다. 표시가 없으면 다음 전도인이 <b>그 그룹을 통째로 건너뜁니다.</b><br>
-      [처리하기]로 카드를 열어 어디까지 방문했는지 지정한 뒤 <b>미완료 마치기</b>를 눌러 주세요.
+      <b>미완료 처리</b>: 카드를 열어 어디까지 방문했는지 지정한 뒤 <b>미완료 마치기</b>(다음 전도인이 이어감).<br>
+      <b>완료 마감</b>: 더 돌지 않고 <b>마지막 방문일·방문자로 구역완료</b> 처리(회차 올라감).
     </div>` + rows
     + `<div style="font-size:11px;color:#94a3b8;margin-top:6px;text-align:right">총 ${list.length}건 대기 중</div>`;
 };
@@ -4074,6 +4078,59 @@ window.fixTerritory = function(id) {
   if (!id) return;
   try { sessionStorage.setItem('jwcard_admin_fix', id); } catch(e) {}
   window.open('publisher.html?fix=1&id=' + encodeURIComponent(id) + '&_t=' + Date.now(), '_blank', 'width=480,height=860,resizable=yes');
+};
+
+// 미완료 처리요청 카드를 '마지막 방문일·방문자'로 구역완료 처리한다.
+// publisher.html의 _buildFinalizePayload와 동일 구조로 회차 이력을 남긴다.
+// (더 돌지 않고 마감하는 관리자 결정용. 진행률이 낮아도 그대로 완료로 기록됨.)
+window.finalizeAsComplete = async function(id) {
+  const t = (window._territories || []).find(x => x.id === id);
+  if (!t) { alert('구역을 찾을 수 없습니다.'); return; }
+  const last = _incLastVisit(t);
+  if (!last || !last.day) { alert('방문 기록이 없어 완료 처리할 수 없습니다.'); return; }
+  const units = (t.units || []).filter(u => u && u.type !== 'divider');
+  const doneCnt = Object.values(t.visitMap || {}).filter(v => v && v.code).length;
+  if (!confirm(
+      '구역 ' + (t.no ?? '') + ' "' + (t.name || '') + '" 완료 처리\n\n'
+    + '· 완료일: ' + last.day + '\n'
+    + '· 완료자: ' + (last.by || '(방문자 없음)') + '\n'
+    + '· 진행: ' + doneCnt + '/' + units.length + '세대\n\n'
+    + (t.cycle || 1) + '회차 완료로 기록되고 회차가 올라갑니다. 진행할까요?')) return;
+  try {
+    const visitMap = t.visitMap || {};
+    let assignedAtStr = '';
+    if (t.lastAssignedDate) { try { const ad = t.lastAssignedDate.toDate ? t.lastAssignedDate.toDate() : new Date(t.lastAssignedDate); if (!isNaN(ad)) assignedAtStr = ad.getFullYear()+'-'+String(ad.getMonth()+1).padStart(2,'0')+'-'+String(ad.getDate()).padStart(2,'0'); } catch(e) {} }
+    if (!assignedAtStr && t.personalAssignedDate) assignedAtStr = t.personalAssignedDate;
+    const assigned = (t.assignedPublishers && t.assignedPublishers.length > 0)
+      ? t.assignedPublishers : (t.personalAssignee ? [t.personalAssignee] : (last.by ? [last.by] : []));
+    const visitedPubs = [...new Set(Object.values(visitMap).map(v => v && v.by).filter(Boolean))];
+    const publishers = [...new Set([...assigned, ...visitedPubs, ...(last.by ? [last.by] : [])])];
+    const historyEntry = {
+      cycle: t.cycle || 1,
+      completedAt: last.day,                 // 마지막 방문일을 완료일로 기록
+      publishers, visitMode: '호별', assignedAt: assignedAtStr, unitVisits: visitMap
+    };
+    const payload = {
+      cycle: (t.cycle || 1) + 1, status: '미배정', completionRate: 0, completionStatus: null,
+      completedBy: last.by || '',
+      assignedPublishers: [], visitMap: {}, sectionStatus: {},
+      lastCompletedDate: new Date(last.day + 'T12:00:00+09:00'),  // 완료일(정오 KST) → Firestore Timestamp
+      lastAssignedDate: deleteField(),
+      cycleHistory: [...(t.cycleHistory || []), historyEntry],
+      pendingCompleteDay: deleteField()
+    };
+    await updateDoc(doc(db, 'territories', id), payload);
+    Object.assign(t, {
+      cycle: payload.cycle, status: '미배정', completionRate: 0, completionStatus: null,
+      completedBy: payload.completedBy, assignedPublishers: [], visitMap: {}, sectionStatus: {},
+      cycleHistory: payload.cycleHistory
+    });
+    delete t.pendingCompleteDay; delete t.lastAssignedDate;
+    try { renderPendingIncomplete(); refreshPendingIncBadge(); } catch(e) {}
+    try { if (typeof renderTerritoryTable === 'function') renderTerritoryTable(); } catch(e) {}
+    try { if (typeof updateTerritoryStats === 'function') updateTerritoryStats(); } catch(e) {}
+    alert('완료 처리되었습니다.\n' + last.day + ' · ' + (last.by || ''));
+  } catch(e) { alert('완료 처리 실패: ' + e.message); }
 };
 
 window.filterTerritory = function(cat, el) {
