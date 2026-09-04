@@ -2140,6 +2140,22 @@ async function loadNotices() {
   }
 }
 
+function noticeToDate(v) {
+  if (!v) return null;
+  if (v.toDate) return v.toDate();
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function isNoticeExpired(n) {
+  const expDate = noticeToDate(n && n.expiresAt);
+  return !!(expDate && new Date() > expDate);
+}
+
+function isNoticeCurrentlyActive(n) {
+  return !!(n && n.active && !isNoticeExpired(n));
+}
+
 function renderNoticeList() {
   const wrap = document.getElementById('notice-list');
   if (!wrap) return;
@@ -2149,16 +2165,19 @@ function renderNoticeList() {
   }
   const targetLabel = { all:'📢 전체', publisher:'🗺 구역카드', cart:'🛒 전시대' };
   wrap.innerHTML = _notices.map(n => {
-    const isActive = !!n.active;
-    const dateStr  = n.createdAt ? n.createdAt.toDate().toLocaleDateString('ko-KR') : '';
-    const expDate  = n.expiresAt ? (n.expiresAt.toDate ? n.expiresAt.toDate() : new Date(n.expiresAt)) : null;
+    const expired = isNoticeExpired(n);
+    const isActive = isNoticeCurrentlyActive(n);
+    const dateStr  = n.createdAt ? noticeToDate(n.createdAt).toLocaleDateString('ko-KR') : '';
+    const expDate  = noticeToDate(n.expiresAt);
     const expStr   = expDate ? expDate.toLocaleDateString('ko-KR') + ' 만료' : '';
     const bodyHtml = (n.body || '').replace(/</g,'&lt;').replace(/\n/g,'<br>');
     const tLabel   = targetLabel[n.target || 'all'] || '📢 전체';
+    const statusLabel = expired ? '⏱ 만료' : (isActive ? '🔴 활성' : '비활성');
+    const statusClass = isActive ? 'notice-badge-active' : 'notice-badge-inactive';
     return `<div class="notice-item${isActive ? ' is-active' : ''}">
       <div class="notice-item-body">
         <div class="notice-item-header">
-          <span class="${isActive ? 'notice-badge-active' : 'notice-badge-inactive'}">${isActive ? '🔴 활성' : '비활성'}</span>
+          <span class="${statusClass}">${statusLabel}</span>
           <span style="font-size:11px;background:#EFF6FF;color:#1D4ED8;border-radius:20px;padding:1px 8px;font-weight:600">${tLabel}</span>
           <span class="notice-item-title">${n.title || '(제목 없음)'}</span>
         </div>
@@ -2181,7 +2200,7 @@ window.saveNotice = async function() {
   if (!body) { alert('공지 내용을 입력해 주세요.'); return; }
 
   // 같은 대상의 기존 활성 공지만 비활성화 (대상별 1개 유지)
-  const sameTarget = _notices.filter(n => n.active && (n.target || 'all') === target);
+  const sameTarget = _notices.filter(n => isNoticeCurrentlyActive(n) && (n.target || 'all') === target);
   for (const n of sameTarget) {
     await setDoc(doc(db, 'adminNotices', n.id), {active: false}, {merge: true});
   }
@@ -2209,7 +2228,7 @@ window.saveNotice = async function() {
 window.toggleNotice = async function(id, active, target = 'all') {
   if (active) {
     // 같은 대상의 기존 활성 공지만 비활성화
-    for (const n of _notices.filter(n => n.active && n.id !== id && (n.target || 'all') === target)) {
+    for (const n of _notices.filter(n => isNoticeCurrentlyActive(n) && n.id !== id && (n.target || 'all') === target)) {
       await setDoc(doc(db, 'adminNotices', n.id), {active: false}, {merge: true});
     }
   }
