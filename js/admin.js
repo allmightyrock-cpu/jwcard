@@ -3630,21 +3630,19 @@ async function _finalizeStalePending() {
 }
 
 async function loadTerritories() {
-  // 1) 데이터 조회 — 이 단계 실패 시에만 '불러오기 오류' 표시
+  // 1) 데이터 조회 — 컬렉션 전체 로드.
+  //    ※ orderBy('lastAssignedDate')는 그 필드가 없는 문서(=배정일 삭제된 '미배정' 구역)를 조용히
+  //      누락시켜, 목록·통계·구역현황 그래프가 실제보다 적게 잡혔다(예: 611개 중 424개만). 그래서
+  //      orderBy를 쓰지 않고 전체를 읽은 뒤 JS에서 정렬한다.
   try {
-    const q = query(collection(db, 'territories'), orderBy('lastAssignedDate', 'asc'));
-    const snap = await getDocs(q);
+    const snap = await getDocs(collection(db, 'territories'));
     window._territories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const _laMs = v => { if (v == null) return Infinity; try { const m = v.toMillis ? v.toMillis() : (v.toDate ? v.toDate().getTime() : new Date(v).getTime()); return isNaN(m) ? Infinity : m; } catch(e) { return Infinity; } };
+    window._territories.sort((a, b) => _laMs(a.lastAssignedDate) - _laMs(b.lastAssignedDate));  // 배정일 오름차순, 없는(미배정) 것은 뒤로
   } catch(e) {
-    // 인덱스 없을 경우 기본 조회
-    try {
-      const snap2 = await getDocs(collection(db, 'territories'));
-      window._territories = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch(e2) {
-      const w = document.getElementById('territory-table-wrap');
-      if (w) w.innerHTML = '<div class="loading" style="color:#EF4444">데이터를 불러오는 중 오류가 발생했습니다.</div>';
-      return;
-    }
+    const w = document.getElementById('territory-table-wrap');
+    if (w) w.innerHTML = '<div class="loading" style="color:#EF4444">데이터를 불러오는 중 오류가 발생했습니다.</div>';
+    return;
   }
   // 2) 밀린 완료 확정 (실패해도 목록에는 영향 없음)
   try {
