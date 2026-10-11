@@ -124,6 +124,14 @@ function buildS13Row(t, range) {
     });
   }
 
+  // 좌우 날짜 보정(표시만): 한쪽 날짜만 있으면 빈 쪽을 같은 날짜로 채워 '완료'로 보이게 한다.
+  //  · 개인구역/진행중(배정만 있음) → 완료 = 배정  · 과거이력 배정날짜 빈칸 → 배정 = 완료
+  //  데이터(cycleHistory·개인구역 지정)는 전혀 바꾸지 않는다. 양쪽 다 없으면(진짜 미기록) 그대로 둔다.
+  assignments.forEach(function(a) {
+    if (a.assignedDate && !a.completedDate)      a.completedDate = a.assignedDate;
+    else if (!a.assignedDate && a.completedDate) a.assignedDate  = a.completedDate;
+  });
+
   return {
     no:            String(t.no || ''),
     name:          t.name || '',
