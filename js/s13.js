@@ -361,14 +361,14 @@ window.printS13 = function() {
 
   var css = [
     '* { box-sizing:border-box; margin:0; padding:0; }',
-    'body { font-family:"KoPub돋움체 Light","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif; font-size:9pt; color:#000; background:#fff; }',
+    'body { font-family:"KoPub돋움체 Light","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif; font-size:9pt; color:#000; background:#fff; width:184mm; }',
     '@page { size: A4 portrait; margin: 19mm 12.7mm 17mm 12.7mm; }',
     '.pb { page-break-before: always; }',
     '.doc-title { font-family:"KoPub돋움체 Bold","Malgun Gothic",sans-serif; font-size:12.5pt; font-weight:700; text-align:center; margin-bottom:1.5mm; }',
     '.doc-year-row { text-align:left; margin-bottom:2mm; }',
     '.doc-year-label { font-size:10.5pt; font-weight:700; }',
     '.doc-year-val   { font-size:10.5pt; font-weight:700; margin-left:4pt; border-bottom:1pt solid #000; padding-bottom:1pt; display:inline-block; min-width:14mm; }',
-    '.s13t { width:100%; border-collapse:collapse; table-layout:fixed; border:2pt solid #000; }',
+    '.s13t { width:184mm; max-width:184mm; border-collapse:collapse; table-layout:fixed; border:2pt solid #000; }',
     '.col-no   { width:6.74%; }',
     '.col-last { width:12.13%; }',
     '.col-dt   { width:10.14%; }',
