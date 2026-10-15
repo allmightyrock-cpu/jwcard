@@ -3066,6 +3066,10 @@ let _canEditAddress  = false;  // 주소 편집 허용 여부
 // ── 실시간 리스너 핸들 ──
 let _pubMeetingListener = null;   // 전도인 — 배정 감시
 let _mtgTabListener     = null;   // 인도자 — 출석 실시간
+let _pubMtgName         = '';     // 감시 중인 전도인 이름
+let _pubMtgBoundDate    = '';     // 리스너가 묶인 KST 날짜 (자정 이월 감지용)
+let _pubMtgAssigned     = false;  // 현재 구역 배정 여부
+let _pubMtgRollTimer    = null;   // 자정 이월 감시 타이머
 
 // ════ 메인 버튼 상태 머신 ════
 let _btnState = 'checkin'; // checkin | pending | start
@@ -3156,32 +3160,60 @@ function _kstDate(){ return new Date(Date.now() + 9 * 3600000).toISOString().sli
 function startPubMeetingListener(pubName) {
   stopPubMeetingListener();
   const today = _kstDate();
+  _pubMtgName      = pubName;
+  _pubMtgBoundDate = today;
   _pubMeetingListener = onSnapshot(doc(db,'meetings',today), (snap) => {
-    if (!snap.exists()) return;
+    if (!snap.exists()) { _pubMtgAssigned = false; return; }
     const data      = snap.data();
     const attendees = data.attendees || [];
     const asgn      = (data.pubAssignments || {})[pubName];
     const noInput   = document.getElementById('no-input');
     if (asgn) {
       // 배정 완료 → 번호 채우고 start 상태로 (자동 배정: assigned 플래그)
+      _pubMtgAssigned = true;
       if (noInput && !noInput.value) noInput.value = String(asgn.terrNo);
       setButtonState('start', asgn.terrNo, { assigned: true });
     } else if (attendees.includes(pubName)) {
       // 신청했지만 아직 미배정 → pending. 직전에 자동배정 상태였다면 해제(번호 회수됨)
+      _pubMtgAssigned = false;
       if (_btnState === 'start') { if (noInput) noInput.value = ''; }
       if (_btnState !== 'pending') setButtonState('pending');
     } else {
       // 출석도 배정도 없음 → 자동배정 상태였다면 초기 상태로 복귀 (회수 반영)
+      _pubMtgAssigned = false;
       if (_btnState === 'start') {
         if (noInput) noInput.value = '';
         setButtonState('checkin');
       }
     }
   });
+  // 자정(KST) 이월 감시 — 앱(PWA)을 켜 둔 채 날짜를 넘기는 경우 대응
+  if (!_pubMtgRollTimer) _pubMtgRollTimer = setInterval(_checkMtgDateRoll, 60000);
 }
 function stopPubMeetingListener() {
   if (_pubMeetingListener) { _pubMeetingListener(); _pubMeetingListener = null; }
+  _pubMtgName = ''; _pubMtgBoundDate = ''; _pubMtgAssigned = false;
 }
+
+// ── 자정(KST) 이월 감지 → 미배정 '오늘의 봉사 참여' 자동 취소 ──
+// 앱을 켜 둔 채 자정을 넘기면 리스너가 어제 meetings 문서에 묶여 'pending'("참여 중")이 그대로 남는다.
+// 구역카드 자정 자동반납과 동일하게, 날짜가 바뀌면 아직 배정 안 된 전도인의 신청을 취소하고
+// 새 날짜 문서로 리스너를 재바인딩한다. (이미 배정받은 start 상태는 구역 로직 소관이라 건드리지 않음)
+function _checkMtgDateRoll() {
+  if (!_pubMtgName) return;
+  if (_kstDate() === _pubMtgBoundDate) return;
+  if (!_pubMtgAssigned) {
+    const noInput = document.getElementById('no-input');
+    if (noInput) noInput.value = '';
+    if (_btnState !== 'checkin') setButtonState('checkin');
+  }
+  startPubMeetingListener(_pubMtgName);  // 새 날짜 문서로 재바인딩
+}
+// 앱 재진입·bfcache 복원 시 즉시 날짜 확인 (타이머를 기다리지 않도록)
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') _checkMtgDateRoll();
+});
+window.addEventListener('pageshow', _checkMtgDateRoll);
 
 // ── 이름 입력 → 뱃지 토글 + DB 역할 확인 ──
 window.onNameInput = async function(val) {

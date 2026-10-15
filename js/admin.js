@@ -667,6 +667,28 @@ let _schedCalYear  = 0;
 let _schedCalMonth = 0;
 let _notices = [];
 
+// ── 유령 출석 정리 (B) ──
+// 지난 날짜(todayStr 이전) meetings 문서에서 pubAssignments에 없는 attendees
+// (= '오늘의 봉사 참여'만 누르고 끝내 배정받지 못한 체크인)를 제거한다.
+// 배정받은 전도인은 보존하여 기록 무결성을 지킨다.
+async function _cleanStaleMeetingCheckins(todayStr) {
+  try {
+    const snap = await getDocs(query(collection(db, 'meetings'), where('date', '<', todayStr)));
+    const jobs = [];
+    snap.forEach(ds => {
+      const d = ds.data() || {};
+      const attendees = Array.isArray(d.attendees) ? d.attendees : [];
+      if (!attendees.length) return;
+      const assigned = d.pubAssignments || {};
+      const kept = attendees.filter(n => assigned[n]);   // 배정받은 사람만 보존
+      if (kept.length !== attendees.length) {
+        jobs.push(updateDoc(doc(db, 'meetings', ds.id), { attendees: kept }));
+      }
+    });
+    if (jobs.length) await Promise.all(jobs);
+  } catch(e) { console.warn('유령 출석 정리 실패:', e); }
+}
+
 window.initScheduleTab = async function() {
   if (_schedInitDone) { _refreshSchedWeeklyBoard(); _renderSchedDayManager(); if (_isCalendarVisible()) renderSchedCalendar(); return; }
   _schedInitDone = true;
@@ -726,6 +748,11 @@ window.initScheduleTab = async function() {
     }
   });
   if (_autoReturnBatch.length) await Promise.all(_autoReturnBatch);
+
+  // ── 유령 출석 정리: 어제 이전 meetings 문서에서 배정받지 못한 체크인 제거 ──
+  // '오늘의 봉사 참여'만 누르고 배정 안 된 전도인이 지난 날짜 문서에 영구히 남는 것을 정리.
+  // (구역카드 자정 자동반납과 동일 철학 — 로드 시 lazy, 서버 cron 없음. fire-and-forget)
+  _cleanStaleMeetingCheckins(_autoReturnToday);
 
   _renderSchedDayManager();
   _refreshSchedWeeklyBoard();
