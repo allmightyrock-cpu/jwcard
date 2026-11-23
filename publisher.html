@@ -5620,7 +5620,7 @@ window.clearHere = async function(key) {
 window.moveTerritoryMap = function moveTerritoryMap() {
   if (!_territory) return;
   if (!window.naver || !naver.maps || !naver.maps.Service) {
-    setMapStatus('📍 지도 SDK 로드 실패\n지도에서 찾기 버튼을 이용해 주세요');
+    setMapStatus('📍 주소 검색(geocoder)이 로드되지 않았습니다\n네이버 키를 config.js에 넣고 재배포해야 자동 검색이 됩니다\n우선 "지도에서 찾기" 버튼을 이용해 주세요');
     return;
   }
   const units = _territory.units || [];
@@ -5635,7 +5635,7 @@ window.moveTerritoryMap = function moveTerritoryMap() {
   // ── 참조 코드 방식: road + jibun 공백 없이 붙임 ──
   // 참조앱: $(".road_name").text() + $(".tr_no").text()
   // → "행선로" + "123-19" = "행선로123-19"
-  const BASE = '지역명 ';
+  const BASE = window._mapRegion ? window._mapRegion + ' ' : '';
   const queries = [];
 
   // ① 참조 코드와 동일: road+jibun 공백 없이 결합 (최우선)
@@ -5678,7 +5678,7 @@ window.openMapSearch = function() {
   const firstUnit = units.find(u => u.road || u.jibun) || {};
   const query = [firstUnit.road, firstUnit.jibun, firstUnit.building]
     .filter(Boolean).join(' ') || _territory.name;
-  const encoded = encodeURIComponent(query + ' 지역명');
+  const encoded = encodeURIComponent((window._mapRegion ? window._mapRegion + ' ' : '') + query);
   window.open('https://map.naver.com/v5/search/' + encoded, '_blank');
 };
 
