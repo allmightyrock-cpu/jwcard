@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>전자구역카드</title>
+<style>
+  :root{--bg:#f1f5f9;--card:#fff;--ink:#1e293b;--soft:#64748b;--line:#e2e8f0;--blue:#2563eb;--blue-d:#1d4ed8}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f172a;--card:#1e293b;--ink:#e2e8f0;--soft:#94a3b8;--line:#334155;--blue:#60a5fa;--blue-d:#3b82f6}}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);min-height:100vh;
+    font-family:system-ui,-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px max(16px,env(safe-area-inset-left)) 24px max(16px,env(safe-area-inset-right))}
+  .wrap{width:100%;max-width:420px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:28px 22px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+  h1{font-size:21px;margin:0 0 4px;text-align:center;letter-spacing:-.01em}
+  .sub{text-align:center;color:var(--soft);font-size:13px;margin:0 0 22px}
+  .btns{display:flex;flex-direction:column;gap:10px}
+  a.b{display:flex;align-items:center;gap:12px;text-decoration:none;border-radius:12px;
+    padding:15px 16px;border:1.5px solid var(--line);color:var(--ink);font-weight:700;font-size:16px}
+  a.b .ic{font-size:22px;line-height:1}
+  a.b .d{font-weight:400;font-size:12px;color:var(--soft);margin-top:1px}
+  a.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  a.primary .d{color:rgba(255,255,255,.85)}
+  a.b:active{transform:translateY(1px)}
+  .mini{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+  .mini a{color:var(--soft);font-size:12.5px;text-decoration:none;border:1px solid var(--line);
+    border-radius:20px;padding:6px 12px}
+  .foot{text-align:center;color:var(--soft);font-size:11px;margin-top:16px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>전자구역카드</h1>
+      <p class="sub">사용할 화면을 선택하세요</p>
+      <div class="btns">
+        <a class="b primary" href="publisher.html"><span class="ic">🧭</span><span>전도인 화면<span class="d">구역 현황 확인·사용</span></span></a>
+        <a class="b" href="admin.html"><span class="ic">🛠️</span><span>관리자 화면<span class="d">구역 배정·회수·설정</span></span></a>
+        <a class="b" href="cart.html"><span class="ic">🛒</span><span>노방 카트<span class="d">카트 전도 관리</span></span></a>
+      </div>
+      <div class="mini">
+        <a href="install-guide.html">설치 안내</a>
+        <a href="diagnostics.html">설치 점검</a>
+        <a href="guide.html">사용법</a>
+      </div>
+      <p class="foot">여호와의 증인 회중 전용 · 전자구역카드</p>
+    </div>
+  </div>
+</body>
+</html>

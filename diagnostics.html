@@ -81,6 +81,21 @@ function setItem(key, title, state, msg, fix){
 
 function ph(v){ return !v || /^YOUR_/i.test(String(v)) || String(v).trim()===''; }
 
+// ── 0. 배포 위치(호스트) ──
+function checkHost(){
+  var host = location.hostname || '';
+  if (location.protocol === 'file:'){
+    setItem('host','배포 위치','warn','로컬 파일(file://)로 열렸습니다. 실제 배포 주소(http/https)에서 열어야 version.json·앱설치 등이 정확히 점검됩니다.');
+    return;
+  }
+  if (/\.workers\.dev$/i.test(host)){
+    setItem('host','배포 위치','bad','Cloudflare <b>Workers</b>에 올라가 있습니다 ('+host+'). 이 배포본은 Cloudflare <b>Pages</b>에 올려야 합니다.',
+      '대시보드 Workers &amp; Pages에서 이 워커를 삭제하고, <b>Create → Pages → Upload assets</b>로 폴더 전체를 다시 올리세요. 정상이면 주소가 <code>…pages.dev</code>로 나옵니다.');
+    return;
+  }
+  setItem('host','배포 위치','ok','배포 호스트 정상 ('+host+').');
+}
+
 // ── 1. 설정 파일(config.js) ──
 function checkConfig(){
   var c = window.APP_CONFIG, fb = c && c.firebase;
@@ -194,7 +209,7 @@ function afterChecks(){ if(_afterDone) return; _afterDone = true; document.getEl
 document.getElementById('run').addEventListener('click', function(){
   _afterDone = false; DIAG = {}; document.getElementById('list').innerHTML = '';
   document.getElementById('report').style.display = 'none';
-  checkConfig(); checkKakao(); checkPWA(); checkVersion(); checkNaver(); startModuleChecks();
+  checkHost(); checkConfig(); checkKakao(); checkPWA(); checkVersion(); checkNaver(); startModuleChecks();
 });
 
 document.getElementById('copy').addEventListener('click', function(){
